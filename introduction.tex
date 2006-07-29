@@ -1,55 +1,79 @@
 \input{header.tex}
 
+\setchapterpreamble[u]{% 
+\dictum[Anonymous]{Forecasting is the art of saying 
+what is going to happen and then to explain 
+why it didn’t.}} 
+
 \chapter{Introduction}
+
+
+\section{Beginnings}\label{sec:beginnings}
 
 ggplot is a new R package for producing statistical graphics.  It builds on the grid graphics system, and uses the philosophy outlined in the Grammar of Graphics to produce a powerful and flexible plotting system that is still easy to use.  This book provides a practical introduction to ggplot with lots of example code and graphics.  
 
+ggplot grew out of my frustrations with the graphics packages of R, and the inability to write functions that encapsulate certain graphical operations, or easily build on the work done by others.  For these reasons ggplot has been designed from the ground up with extensibility in mind, and should hopefully smooth the path from novice user of ggplot to seasonsed developer.  This book follows a similar path. 
 
-This book is available online for free (\url{http://had.co.nz/ggplot/book}), or if you would like to support the development of ggplot (and have a handy desktop reference) you can also buy a hardcopy version for a very reasonable price.
+\begin{itemize}
+	\item In chapter XXX I describe how you can quickly get started using ggplot to make graphics in a way very similar to using the {\tt plot} function. 
+	
+	\item While this is a quick way to get started, you don't get full control over the option in ggplot, so the next chapter describes how to build up a plot piece by piece, exercising full control over the available options.  Chapter two discusses the components of a plot laying the ground for the next chapters which describe these components in detail, and teach you how to build you own.  You will also learn some techniques using the reshape package to get data into a form convenient for using with ggplot.
 
-You can find online updates to this book, information about features in the latest version of ggplot, as well as talks and papers at \url{http://had.co.nz/ggplot}.  There is also a gallery of example graphics.  If you would like your graphics to be included in the gallery, please send me reproducible code and a paragraph or two describing your plot.
+	\item The most basic component of the plot is a graphical object, and chapter XXX describes the most importatn graphic objects available in ggplot.  The chapter concludes by showing you how to build your own.
+
+	\item You will probably customise the scales of your plot less often, but when you need to chapter XXX will show you what is available and how to create your own
+
+\end{itemize}
+
+This book is available online for free (\url{http://had.co.nz/ggplot/book}), or if you would like to support the development of ggplot (and have a handy colour desktop reference) you can also buy a hardcopy version.  You can find online updates to this book, information about features in the latest version of ggplot, as well as talks and papers at \url{http://had.co.nz/ggplot}.  There is also a gallery of example graphics.  If you would like your graphics to be included in the gallery, please send me reproducible code and a paragraph or two describing your plot.
 
 \section{Installation}\label{sub:installation}
 
-There are usually two versions of ggplot available, one stable version and one development version.
+To get started using ggplot, the first thing you need to do is install it.  Make sure you have a recent version of R from \url{http://r-project.org}, and then follow the instructions below to download and install the ggplot package.  If you are not familiar with R, I'd suggest you get a good an R book (I'd recommend XXX) and work through it along with this book.
 
-The stable version is well-tested and well-documented before release.  It is available on CRAN, and can be installed with the following R code:
-
-\begin{verbatim}
-	install.packages("ggplot")
-\end{verbatim}
-
-The development version is not so well tested or documented, but includes new features that I'm working on.  It may also contain bug fixes for recently discovered bugs.  It can be installed by:
+There are usually two versions of ggplot available, one stable version and one development version. The stable version is well-tested and well-documented before release.  It is available on CRAN, and can be installed with the following R code:
 
 \begin{verbatim}
-	install.packages("ggplot", repos="http://www.ggobi.org/r")
+	install.packages("ggplot", dep=TRUE)
 \end{verbatim}
+
+The development version is not so well tested or documented, but includes new features that I'm working on.  It may also contain bug fixes for recently discovered bugs.  It can be installed with this code:
+
+\begin{verbatim}
+	install.packages("ggplot", repos="http://www.ggobi.org/r", dep=TRUE)
+\end{verbatim}
+
+A changelog listing changes between versions is available on the ggplot website.  I will do my best to make sure that changes are backward compatible, so you shouldn't have to rewrite your old code.  However, from time to time, I may need to make bigger changes that do affect your code.  If you need to ensure that your old code will continue to run, I would recommend using use R's versioned installs:
+
+\begin{verbatim}
+	install.packages("ggplot", dep=TRUE, installWithVers=TRUE))
+\end{verbatim}
+
+Now installed packages will have a version number associated with them, and you can load a specific version like so:
+
+\begin{verbatim}
+	library(ggplot, version="0.3.3")
+\end{verbatim}
+
+% Find out more about this.
 
 \section{R graphics overview}
 
 To give you some idea of how ggplot fits into the broader landscape of R graphics, this section describes some of the other graphics packages available in R.
 
-\begin{itemize}
-	\item  the problem with base graphics: is that it's basically a pen on
-	paper model - you can only draw on top, not modify or delete existing
-	content or change the axes etc...  Base graphics includes both tools for drawing primitives and entire plots.  No other plotting system does this.
+\begin{itemize} 
+	\item the problem with base graphics: is that it's basically a pen on paper model - you can only draw on top, not modify or delete existing content or change the axes etc... Base graphics includes both tools for drawing primitives and entire plots. No other plotting system does this.
 
-	\item Grid graphics are a big step up from the drawing capabilities of base graphics.  The plot objects can be represented independently of the plot and modified later on.  A system of viewports (each containing its own coordinate system) makes it easier to layout complex graphics.  
+	\item Grid graphics are a big step up from the drawing capabilities of base graphics. The plot objects can be represented independently of the plot and modified later on. A system of viewports (each containing its own coordinate system) makes it easier to layout complex graphics.
 
-	\item trellis/lattice builds on grid graphics, and improves on base graphics a bit with a rudimentary object
-	model independent of the plot on screen.  The chief advantage of
-	lattice over base graphics is that you can easily produce
-	trellised/conditioned plots - basically where you reproduce the same
-	plot for different subsets of the data
+	\item trellis/lattice builds on grid graphics, and improves on base graphics a bit with a rudimentary object model independent of the plot on screen. The chief advantage of lattice over base graphics is that you can easily produce trellised/conditioned plots - basically where you reproduce the same plot for different subsets of the data
 
-	\item ggplot is an attempt to substantially improve on this by having a
-	model which supports the production of an kind of statistical graphic,
-	build on principles outlined in the Grammar of Graphics (by Lee
-	Wilkinson)
+	\item ggplot is an attempt to substantially improve on this by having a model which supports the production of an kind of statistical graphic, build on principles outlined in the Grammar of Graphics (by Lee Wilkinson)
 
-	\item Many other packages implement specialist graphics but no others provide a framework for producing statistical graphics.  While this is useful for producing a one-off graphic, it is generally harder to combine these with other graphics you may be using.  
+	\item Many other packages implement specialist graphics but no others provide a framework for producing statistical graphics. While this is useful for producing a one-off graphic, it is generally harder to combine these with other graphics you may be using.
 
 \end{itemize}
 
-\wholefalse
+\section{Gallery}
+
 \input{footer.tex}
