@@ -1,19 +1,158 @@
 \input{header.tex}
 
+% decumar<<< 
+% library(ggplot)
+% doptions(width=6, height=4)
+% .img(.print( <- function(...) .img(.print(qplot(...)))
+% >>>
+
+% decumar <<< 
+% interweave({
+% })
+% |||
+% >>>
+\dominitoc \faketableofcontents
+
+\setchapterpreamble[u]{% 
+\dictum[Friedrich Nietzsche]{He who fights with monsters might take care lest he thereby become a monster. And if you gaze for long into an abyss, the abyss gazes also into you.}} 
 \chapter{Getting started with ggplot: qplot}
+
+%\minitoc
 
 \section{Introduction}
 
-Plotting data is the most important part of a graphics package and this chapter gets you started with you first ggplot function, {\tt qplot} (short for {\bf q}uick plot).  If you have used the {\tt plot} function in base R before, {\tt qplot} should be easy to use as most of the arguments have the same use.  
+Plotting data is the most important part of a graphics package and this chapter gets you started with you first ggplot function, {\tt qplot} (short for {\bf q}uick plot).  If you have used the {\tt plot} function in base R before, {\tt qplot} should be easy to use as most of the arguments have the same use.  While you don't get full control over the options with {\tt qplot}, you can start producing plots very quickly. 
+
+\section{Basic use}\label{sec:basic_use}
+
+Remember that you can get a summary of this chapter within R using {\tt ?qplot}.
+
+Let get started using {\tt qplot}.  Just like {\tt plot}, the first two arguments are {\tt x} and {\tt x}, giving the x- and y-coordinates for the objects on the plot.  
+
+There is also an option {\tt data} argument.  If this is specified, {\tt qplot} will look inside that data.frame first before looking for objects in your workspace.  I'd highly recommend that you store all the data necessary in one data.frame.  This makes it very easy to produce the same plot for different data sets.  A single data.frame is also easier to save than a multitude of vectors, which means it's easier to reproduce your results later or send them to someone else.  Chapter XXX provides more suggestions on the best way to deal with your data.  
+
+\begin{figure}[htbp]
+	\begin{center}
+		% decumar<<< 
+		% .img(.print(qplot(mpg, wt, data=mtcars)))
+		% |||
+\includegraphics[scale=1]{./include/280ea111effb4b6398794ce57fefed0c-001.pdf}
+		% >>>
+	\end{center}
+	\caption{{\tt qplot(mpg, wt, data=mtcars)}}
+	
+	\label{fig:first}
+\end{figure}
+
+Figure \ref{fig:first} shows a simple example of using {\tt qplot}.
+
+The big difference with using {\tt qplot} compared to traditional R graphics comes when you want to assign colours or sizes to your plot.  In the past, you always had to work out how to convert your data (eg. ``apples'', ``bananas'', ``pears'') to something that the plot knew how to use (eg. ``red'', ``yellow'', ``green'').  Now, {\tt qplot} will do this for you automatically, and provide a legend to make it easier to map back from the appearance on the plot to the original data values.
+
+Thoroughout the rest of the book, I will avoid using colour alone so that the book still makes sense plotted in black and white.  To this end, I have provide the {\tt group} visual attribute which will map a variable to multiple visual attributes, and produce only one legend.  (This was inspired by the lattice {\tt group} argument which performs much the same role.)
+
+% decumar<<< 
+% .img(.print(qplot(mpg, wt, data=mtcars, col=cyl)))
+% catn()
+% .img(.print(qplot(mpg, wt, data=mtcars, size=cyl)), lscale=0.5)
+% .img(.print(qplot(mpg, wt, data=mtcars, shape=cyl)), lscale=0.5)
+% |||
+\includegraphics[scale=1]{./include/9468bcf3167b9f818e834f4370ed53b4-001.pdf}
+
+\includegraphics[scale=0.5]{./include/6c809a44dea177172fea08e271413981-001.pdf}
+\includegraphics[scale=0.5]{./include/447474a097d579e496ff027075cd81a3-001.pdf}
+% >>>
+
+\section{Plot types}\label{sec:plot_types}
+
+The default plot type is a scatterplot, but you can easily change this using the the {\tt type} argument.  Simple plot types just display the data in some way:
+
+\begin{itemize}
+	\item point (the default), produces scatterplot
+	\item path and line
+	\item bar
+	\item polygon
+	\item tile
+	\item error bars
+	\item box and whisker plot
+\end{itemize}
+
+More complicated plot types perform some kind of statistical processing on the data first.
+
+\begin{itemize}
+	\item smooth, fits a smoother to the data and displays the smooth and standard errors.  You can change the type of smooth using the 
+	\item contours
+	\item histogram
+	\item densityplot
+\end{itemize}
+
+These correspond to the graphic objects (grobs) described in chapter XXX, and you can find out more about them there.  To get help on the different options that these types take, add {\tt gg} to the front of their name and look them up with {\tt ?}. For example, if you want help on the point type, you will need {\tt ?ggpoint}. 
+
+If you provide a vector of type names, the types will be overlayed in the order that you specified them:
+
+% decumar<<< 
+% .img(.print(qplot(mpg, wt, data=mtcars, type=c("line", "point"))))
+% |||
+\includegraphics[scale=1]{./include/65ee3f9ccb33b22e6690cda02ffb8346-001.pdf}
+% >>>
 
 
-\section{Examples}
+\subsection{Line and path plot}\label{sub:line_plot}
 
-\section{Other arguments}
+Line and path plots take the following options in addition to .  Remember that the difference between line and path plots is that line plots always join the points from left to right, path plots join them in the order that they appear in the data set.
 
-\section{Adding output}
+\begin{itemize}
+	\item {\tt linetype}: The type of the line, dotted, dashed etc.
+	\item {\tt id}: A variable that identifies different lines.  If a line is represented by multiple variables, use {\tt interaction} to create a single key from them.
+\end{itemize}
+
+You can still use {\tt col} and {\tt size} to control the colour and size of the lines respectively.
+
+% decumar<<< 
+% .img(.print(qplot(time, potato, data=french_fries, type="line", id=interaction(subject,treatment,rep))), lscale=0.5)
+% .img(.print(qplot(time, potato, data=french_fries, col=treatment, type="line", id=interaction(subject,treatment,rep))), lscale=0.5)
+% |||
+\includegraphics[scale=0.5]{./include/73f179e15a9b48317bbb5b226af83048-001.pdf}
+\includegraphics[scale=0.5]{./include/c83721ac4f289ca11a5c531ce4b52343-001.pdf}
+% >>>
+
+\subsection{Bar plots}\label{sub:bar_plots}
+
+Bar plot are typically used for displaying categorical data.  Bar plots in {\tt ggplot} can be adjusted to be stacked or dodged (displayed side-by-side) using the {\tt position} argument.  For bar plots, there is really only one visual attribute that you can control, {\tt fill}, because all of the others are constrained by the shape of the bar.	
+
+
+
+\section{Facetting}\label{sec:facetting}
+
+Facetting allows you to display small multiples of subsets of your data.  It is very similar to trellising or latticing (reference), but currently a little more restricted.  Facetting always produces a grid of facets, each containing a single plot.  You have control over how the grid is broken down into columns and rows.  Facetting is specified by a facetting formula which looks like $row\_var1 + row\_var2 \sim col\_var1 + col\_var2$.  You can specify as many row and column variables as you like, but in most cases more than one or two variables will produce a plot so large that it is difficult to see on screen.  If you want to facet on columns, or rows, not both, you can use {\tt .} as a place holder.  For example, $row\_var1 \sim .$ will facet by rows with a single variable.  This may sound a little complicated but it is easy to use in practice.
+
+Facetting is useful to investigate conditional relationships, e.g. conditional on sex, what is the relationship between amount of smoking and lung cancer.  Facetting can also be useful for creating tables of graphics, although you may need to rearrange your data with {\tt melt} and {\tt cast} first.  For some examples of this, see chapter XXX.
+
+If you want to facet on a continuous variable, you will first need to convert it into a categorical variable.  The {\tt chop} function provides a number of ways to do this, including creating equally spaced intervals, or intervals with equal numbers of points in (recommended).  Currently shingles (overlapping continuous subsets) are not supported.  
+
+
+\subsection{Margins}\label{sub:margins}
+
+Facetting a plot like this is very much like creating a contigency table.  In contingency tables it is often useful to display marginal totals (totals over a row or column) as well as the individual cells.  It is also useful to be able to do this with graphics, as with the {\tt margins} argument to {\tt qplot}.  
+
+You can either specify that all margins should be displayed, using {\tt margins = TRUE}, or by listing the names of the variables that you want margins for, {\tt margins = c("sex","age" )}.  You can also use {\tt "grand\_row"} or {\tt "grand\_col"} to produce grand row and grand column margins respectively.
+
+\section{Other options}\label{sec:other_options}
+
+There are a few other options that {\tt qplot} provides to control the output of your graphic.  These all have the same effect as their {\tt plot} equivalents.
+
+\begin{itemize}
+	\item {\tt xlim}, {\tt ylim}: limits for the x- and y-axes 
+	\item {\tt log}: a character vector indicating which (if any) axes should be logged.  For example, {\tt "x"} will log the x-axis, {\tt "xy"} will log both.
+	\item {\tt main}: main title for the plot, displayed in large text at the top-centre of the plot
+	\item {\tt xlab}, {\tt y-lab}: labels for the x- and y-axes
+\end{itemize}
+
+\section{Combining plots}\label{sec:combining_plots}
 
 You can also use qplot to add more elements to an existing plot.  This is useful when building up a plot from multiple data sources.  Note, however, that there are some limitations on legends which means that you may need to arrange your data into one data frame first.  XXX describes this in detail.
 
+\section{Summary}
+
+In this chapter you have learned how to 
 
 \input{footer.tex}
