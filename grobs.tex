@@ -1,0 +1,217 @@
+\input{header.tex}
+
+\setchapterpreamble[u]{% 
+\dictum[Anonymous]{Forecasting is the art of saying 
+what is going to happen and then to explain 
+why it didn’t.}} 
+
+\chapter{Graphical objects}
+
+\section{Introduction}\label{sec:introduction}
+
+Add graphical objects, all functions start with \grobref{gg} and are singular, eg. \grobref{ggpoint}, {\tt errorbar}.  Grob functions take the following arguments:
+
+\begin{itemize}
+	\item {\tt plot}, the plot to add the grobs to 
+	\item {\tt aesthetics} (optional), a list describing which variables should be mapped to which aesthetics
+	\item {\tt data} (optional), a data set to get the data from
+\end{itemize}
+
+Most grob functions take additional arguments that control the appearance of the plot.  
+
+\section{Categories}\label{sec:categories}
+
+This section provides an index to grobs based on the tasks that they are useful for.
+
+\subsection{Displaying distributions}\label{sec:distributions}
+
+There are quite a few grobs associated with displaying densities:
+
+\begin{itemize}
+	\item \grobref{ggboxplot}: box and whisker plot, for a continuous variable possibly conditioned by a categorical variable
+	\item \grobref{ggjitter}: a crude way of investigating densities
+	\item \grobref{ggquantile}: quantiles, for a continuous variable conditional on another continuous variable.
+	\item \grobref{ggdensity}: 
+	\item \grobref{gghistogram}: 
+	\item \grobref{gg2ddensity}: for displaying the density of points on the plot surface.
+\end{itemize}
+
+(Ask Heike about this)
+
+We have a number of plots available to investigate distributions, depending on the number of variables, and whether we are interested in the conditional or joint distribution.
+
+Single variable
++ cont: histogram, density plot, boxplot
++ cat:  barchart
+
+Two variables: conditional
++ cat  | cat:  mosaic plot
++ cat  | cont: ?
++ cont | cont: quantiles
++ cat  | cont: boxplot
+
+Two variables: joint
++ cat  * cat:  fluctuation diagram
++ cat  * cont: boxplots?
++ cont * cont: bagplot, gg2ddensity
+
+Jittered points can be used for any joint distribution (or conditional if one or both variables are categorical)
+
+\subsection{Dealing with overplotting}\label{sec:overplotting}
+
+Can estimate the density of points in a given region
+
+\begin{itemize}
+	\item discrete \grobref{gghexagon}: bin points into hexagons
+	\item continuous \grobref{gg2ddensity}: for displaying the density of points on the plot surface.
+\end{itemize}
+
+You can also add supplemental information (use statistical estimation) to alleviate the problem.
+
+\begin{itemize}
+	\item \grobref{ggsmooth}: add a smooth line representing the mean
+	\item \grobref{ggquantile}: add a smooth line representing any quantile
+\end{itemize}
+
+\subsection{``3d`` plots}\label{sub:_3d_plots}
+
+\grobref{ggplot} currently does not support true 3D plots.  However, it does offer two tools for producing pseudo-3d plots, the imageplot and the contour plot.
+
+\begin{itemize}
+	\item \grobref{ggtile}: map z variable to fill colour
+	\item \grobref{ggcontour}: useful for smoother surfaces
+	\item \grobref{ggpoint}: can map abs(z) variable to size and sign(z) to colour
+\end{itemize}
+
+These are often better than ``true'' 3d for static plots anyway, because many perceptual cues neccessary for accurate depth perception (eg. occusion, parallax) are lacking in static plots.  You can also manually project data points in a higher dimensional space by multiplying by a projection matrix.  To correctly visualise occlusion will require considerably more effort, however.  You may want to look at RGL and rggobi for other solutions.
+
+\subsection{Revealing uncertainty}\label{sub:displaying_uncertainty}
+
+\begin{itemize}
+	\item \grobref{ggerrorbar}: for pointwise confidence intervals
+	\item \grobref{ggribbon}: ribbons of variable width, useful for displaying confidence intervals around functions
+\end{itemize}
+
+\subsection{Annotating a plot}\label{sub:annotating_a_plot}
+
+Any of the basic plots can be used to annotate a plot with additional output, for example, text (\grobref{ggtext}) or point illustrating the mean (\grobref{ggpoint}).  Additionally, there are several grobs whose use is almost entirely for annotation.  These are:
+
+\begin{itemize}
+	\item \grobref{ggvline}, \grobref{gghline}: add vertical or horizontal lines to a plot
+	\item \grobref{ggabline}: add lines with arbitary slope and intercet to a plot
+\end{itemize}
+
+\subsection{Basics}\label{sub:basics}
+
+These grobs are the basic grobs used to build up almost all of the other grobs.  These are useful for creating basic graphics, and when building your own grob function (see section \ref{sec:writing_your_own}).
+
+\begin{itemize}
+  \item \grobref{ggpoint}
+  \item \grobref{ggline}, ggpath
+  \item \grobref{ggpolygon}
+  \item \grobref{ggbar}
+  \item \grobref{ggtext}
+  \item \grobref{ggtile}
+\end{itemize}
+
+\subsection{Grouping}\label{sub:grouping}
+
+There is one speical grob function that does not do any drawing of its own, but makes it possible to split up other grobs to display separate subsets within a plot.  This is \grobref{gggroup}.
+
+\section{In detail}\label{sec:in_detail}
+
+In the following sections I describe each of the grob functions available in {\tt ggplot}, what it does and how it might be used in a practical situation.  
+
+\subsection{gg2ddensity}\label{sub:gg2ddensity}
+\subsection{ggabline}\label{sub:ggabline}
+\subsection{ggbar}\label{sub:ggbar}
+\subsection{ggboxplot}\label{sub:ggboxplot}
+\subsection{ggcontour}\label{sub:ggcontour}
+\subsection{ggdensity}\label{sub:ggdensity}
+\subsection{ggerrorbar}\label{sub:ggerrorbar}
+\subsection{gghexagon}\label{sub:gghexagon}
+\subsection{gghistogram}\label{sub:gghistogram}
+\subsection{gghline}\label{sub:gghline}
+\subsection{ggjitter}\label{sub:ggjitter}
+\subsection{ggline}\label{sub:ggline}
+\subsection{ggpath}\label{sub:ggpath}
+\subsection{ggpoint}\label{sub:ggpoint}
+\subsection{ggpolygon}\label{sub:ggpolygon}
+\subsection{ggquantile}\label{sub:ggquantile}
+\subsection{ggribbon}\label{sub:ggribbon}
+\subsection{ggsmooth}\label{sub:ggsmooth}
+\subsection{ggtext}\label{sub:ggtext}
+\subsection{ggtile}\label{sub:ggtile}
+\subsection{ggvline}\label{sub:ggvline}
+
+
+\section{Writing your own}\label{sec:writing_your_own}
+
+If a grob function (or a combination of grobs) does not meet your needs, it may be necessary to create your own grob function.  
+
+As you use \texttt{ggplot} more, you may discover some of the limitations of the included grob functions and want to write your own.  (Although I'm very open to suggestions and if you develop a useful grob function I will be happy to include in the main package).  This document will discuss in detail how grob functions work and what you need to do to build your own.  As an example I will work through the process of creating a grob function that produces a 1d density plot with jittered rug plot, not unlike that created by \texttt{densityplot} in \texttt{lattice}.
+
+\texttt{ggplot} uses grid graphics, so to be able to create new grob functions you will need some familiarity with basic grid functions.  This isn't too hard to acquire, and I suggest you look at the code for the basic grob functions (eg. \texttt{grob\_points}, \texttt{grob\_rect}) for some simple examples.
+
+There are three functions you will need to write when creating a new grob function:
+
+\begin{itemize}
+	\item A convenient function for adding your grob function to a plot.  This is what the users uses to add the grob to the plot.  This provides a convenient place to modify other plot settings (eg. scales) that your grob might need.  See \texttt{gghistogram} and \texttt{ggpoint} for examples.
+	\item The grob function.  This converts a list of aesthetics, plus some optional parameters to a gList of grobs.  This function is prefixed with \texttt{grob\_}.  
+	\item The preprocessor function (optional).  If your grob function creates new aesthetics (like the densityplot will, by creating a new y position aesthetic) you will need this preprocessing stage so that the new aesthetics are available for the scale functions.  This function is prefixed with \texttt{pre\_}
+\end{itemize}
+
+\subsection{Example}\label{sub:example}
+
+In this example, we're going to develop a grob function to display a 1d density with jittered grob plot.  We first need to decide what aesthetics and what optional parameters this function will take.  We want to give the user some flexibility over the how the density is computed, and the appearance of the density plot.  So let's use the following option parameters:
+
+\begin{itemize}
+	\item adjust: adjustment to default bandwidth
+	\item kernel: type of kernel to use
+	\item colour: the colour of the density line
+\end{itemize}
+
+There is only one aesthetic we need: $x$.  From this we will compute the density and create a y aesthetic.  We do this in the \texttt{pre\_density} function.  Remember that this function returns a data frame that will be used by scales, and then by \texttt{grob\_density}
+
+\begin{verbatim}
+pre_density <- function(data, adjust=1, kernel="gaussian", ...) {
+   dens <- density(data$x, adjust=adjust, kernel=kernel)
+   dens$'.type' <- "density"
+
+   rug <- data.frame(x = jitter(data$x), y=-0.5, .type="rug")
+   rbind(as.data.frame(dens[c("x","y",".type")]), rug)
+}
+\end{verbatim}
+
+We can only return one data frame, so we need to package up the data for both the density and rug somehow.  I've chosen to do this by adding an extra column to the data frame called \texttt{.type} (so named to avoid conflict with user variables) that we will use to determine where the data should go.
+
+The next task is to write grob function to draw the density (with lines) and the jittered rug plot (if necessary).
+
+\begin{verbatim}
+grob_density <- function(aesthetics, colour="black", ...) {
+   aesthetics <- data.frame(aesthetics)
+   dens <- subset(aesthetics, .type == "density")
+   rug <- subset(aesthetics, .type == "rug")
+
+   dens$colour <- colour
+
+   gTree(children = gList(
+      grob_line(dens),
+      grob_rect(rug, colour="black")
+   ))
+
+}
+\end{verbatim}
+
+Finally, we write a convenience function to make it easy to for users.  This function also changes the y label to density, and sets up an appropriate scale.
+
+\begin{verbatim}
+ggdensity <- function(plot = .PLOT, aesthetics=list(), ..., data=plot$data) {
+   plot$ylabel <- "Density"
+   plot <- pscontinuous(plot, "y", range=c(0,NA), expand=c(0.05,0))
+   gg_add("density", plot, aesthetics, ..., data=data)
+}  
+\end{verbatim}
+
+
+\input{footer.tex}
