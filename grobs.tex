@@ -9,23 +9,68 @@ why it didn’t.}}
 
 \section{Introduction}\label{sec:introduction}
 
-Add graphical objects, all functions start with \grobref{gg} and are singular, eg. \grobref{ggpoint}, {\tt errorbar}.  Grob functions take the following arguments:
+Graphical objects, or grobs for short, are a key feature of {\tt ggplot}.  Grobs create visual objects on the plot that allow you to see you data.  By choosing various types of grobs, you can recreate common plots.  For example, the {\tt ggpoint} grob will make a scatterplot, and the {\tt ggline} grob will create a line plot.  The advantage of the grob based system is that you can easily combine different grobs to create almost any plot that you can think of.  This section describes grob functions in detail, including what grobs are currently available in {\tt ggplot} and how you can go about creating your own.
+
+Philosophically, there are two basic types of grobs.  Those that display the data directly, and those that perform some kind of statistical transformation, and then display the data using the simpler components.  In practical use there is no difference between the two.
+ 
+\section{Details}\label{sec:details}
+
+All grob functions start with {\tt gg} and are singular, eg. \grobref{ggpoint}, \grobref{ggerrorbar}.  They all have the following basic form:
+
+\begin{alltt}
+ggXXX <- function(plot, aesthetics, data, ...) {}
+\end{alltt}
+
+\noindent and they take three types of input:
 
 \begin{itemize}
-	\item {\tt plot}, the plot to add the grobs to 
-	\item {\tt aesthetics} (optional), a list describing which variables should be mapped to which aesthetics
-	\item {\tt data} (optional), a data set to get the data from
+	\item Plot and data settings: {\tt plot}, the plot to add the grobs to. If not specified, this will use the ``current'' plot, i.e. the plot which was last modified. Note that this can differ from the plot currently displayed on screen.  {\tt data} (optional), a data set to get the data from
+	\item Aesthetic mappings: {\tt aesthetics} (optional), a list describing which variables should be mapped to which aesthetics.  If not specified, these will be drawn from the defaults in the plot object
+	\item Other parameters which differ from grob to grob.  These parameters control various settings of the grob, for example, bin width in the histogram, or bandwidth for a loess smoother.  Any aesthetic can also be used as a parameter, in which case it will be applied to all points.
 \end{itemize}
 
-Most grob functions take additional arguments that control the appearance of the plot.  
+Grob functions add grobs to a plot object, as you can see in the following example.
+
+\begin{alltt}
+p <- ggplot(data=mtcars, aes=list(x=mpg, y=wt))
+str(p$grobs) 
+str(ggpoint(p)$grobs)
+str(p$grobs)
+p <- ggpoint(p)
+str(p$grobs)
+\end{alltt}
 
 \section{Categories}\label{sec:categories}
 
-This section provides an index to grobs based on the tasks that they are useful for.
+This section indexes grobs based on the tasks for which you might use them: 
+
+\begin{itemize}
+	\item Basic plot types
+	\item For displaying distributions
+	\item Dealing with overplotting
+	\item ``3d'' plots
+	\item Revealing uncertainty
+	\item Annotating a plot
+	\item Grouping
+\end{itemize}
+
+
+\subsection{Basics}\label{sub:basics}
+
+These grobs are the basic grobs used to build up almost all of the other grobs.  These are useful for creating basic graphics, and when building your own grob function (see section \ref{sec:writing_your_own}).
+
+\begin{itemize}
+  \item \grobref{ggpoint}: points
+  \item \grobref{ggline}, \grobref{ggpath}: paths and lines.  Lines are paths that have their x-axis values ordered in increasing value.
+  \item \grobref{ggpolygon}: polygons
+  \item \grobref{ggbar}: bars
+  \item \grobref{ggtext}: text
+  \item \grobref{ggtile}: tiles, rectangles which form a regular tessellation of the plane
+\end{itemize}
 
 \subsection{Displaying distributions}\label{sec:distributions}
 
-There are quite a few grobs associated with displaying densities:
+There are quite a few grobs associated with displaying distributions:
 
 \begin{itemize}
 	\item \grobref{ggboxplot}: box and whisker plot, for a continuous variable possibly conditioned by a categorical variable
@@ -59,23 +104,20 @@ Jittered points can be used for any joint distribution (or conditional if one or
 
 \subsection{Dealing with overplotting}\label{sec:overplotting}
 
-Can estimate the density of points in a given region
+The simplest way to deal with overplotting is to bin the plot into small squares and count the number of points that lies in each square, much like a 2D histogram.  This count can then be visualised as the third variable on a plot.  However, breaking the plot into many small squares produces distracting visual artefacts.  Carr (reference) suggests using hexagons instead, and this is implemented with \grobref{gghexagon}, using the capabilities of the {\tt hexbin package}.
+
+A continuous analogue of this is to compute a 2D density function and then visualise this as coloured tiles or contour lines.  This can be done with \grobref{gg2ddensity}.
+
+Another approach to dealing with overplotting is to add supplemental information to help guide the eye to the true shape of or pattern within the data:
 
 \begin{itemize}
-	\item discrete \grobref{gghexagon}: bin points into hexagons
-	\item continuous \grobref{gg2ddensity}: for displaying the density of points on the plot surface.
-\end{itemize}
-
-You can also add supplemental information (use statistical estimation) to alleviate the problem.
-
-\begin{itemize}
-	\item \grobref{ggsmooth}: add a smooth line representing the mean
-	\item \grobref{ggquantile}: add a smooth line representing any quantile
+	\item \grobref{ggsmooth} add a smooth line showing the mean.
+	\item \grobref{ggquantile} add a smooth line showing any quantile you are interested in.
 \end{itemize}
 
 \subsection{``3d`` plots}\label{sub:_3d_plots}
 
-\grobref{ggplot} currently does not support true 3D plots.  However, it does offer two tools for producing pseudo-3d plots, the imageplot and the contour plot.
+{\tt ggplot} currently does not support true 3D plots.  However, it does offer two tools for producing pseudo-3d plots, the imageplot and the contour plot.
 
 \begin{itemize}
 	\item \grobref{ggtile}: map z variable to fill colour
@@ -83,9 +125,11 @@ You can also add supplemental information (use statistical estimation) to allevi
 	\item \grobref{ggpoint}: can map abs(z) variable to size and sign(z) to colour
 \end{itemize}
 
-These are often better than ``true'' 3d for static plots anyway, because many perceptual cues neccessary for accurate depth perception (eg. occusion, parallax) are lacking in static plots.  You can also manually project data points in a higher dimensional space by multiplying by a projection matrix.  To correctly visualise occlusion will require considerably more effort, however.  You may want to look at RGL and rggobi for other solutions.
+These are often better than ``true'' 3d for static plots anyway, because many perceptual cues necessary for accurate depth perception (eg. occlusion, parallax) are not present in static plots.  You can also manually project data points in a higher dimensional space by multiplying by a projection matrix.  However, correctly representing occlusion or generating correct perspective effects will require considerably more effort.  You may want to look at RGL (\url{http://www.rgl.com}) and rggobi (\url{http://www.ggobi.org/rggobi}) for other solutions.
 
 \subsection{Revealing uncertainty}\label{sub:displaying_uncertainty}
+
+If you have information about the uncertainty present in your data, possibly from a model or distributional assumptions, it is often useful to visualise.  There are two grobs that allow you to do this depending on whether you have point or functional confidence intervals:
 
 \begin{itemize}
 	\item \grobref{ggerrorbar}: for pointwise confidence intervals
@@ -94,33 +138,22 @@ These are often better than ``true'' 3d for static plots anyway, because many pe
 
 \subsection{Annotating a plot}\label{sub:annotating_a_plot}
 
-Any of the basic plots can be used to annotate a plot with additional output, for example, text (\grobref{ggtext}) or point illustrating the mean (\grobref{ggpoint}).  Additionally, there are several grobs whose use is almost entirely for annotation.  These are:
+Any of the basic grobs can be used to annotate a plot with additional output, for example, adding text with \grobref{ggtext}, or a point illustrating the mean with \grobref{ggpoint}.  Additionally, there are several grobs whose use is almost entirely for annotation.  These are:
 
 \begin{itemize}
 	\item \grobref{ggvline}, \grobref{gghline}: add vertical or horizontal lines to a plot
-	\item \grobref{ggabline}: add lines with arbitary slope and intercet to a plot
+	\item \grobref{ggabline}: add lines with arbitrary slope and intercept to a plot
 \end{itemize}
 
-\subsection{Basics}\label{sub:basics}
-
-These grobs are the basic grobs used to build up almost all of the other grobs.  These are useful for creating basic graphics, and when building your own grob function (see section \ref{sec:writing_your_own}).
-
-\begin{itemize}
-  \item \grobref{ggpoint}
-  \item \grobref{ggline}, ggpath
-  \item \grobref{ggpolygon}
-  \item \grobref{ggbar}
-  \item \grobref{ggtext}
-  \item \grobref{ggtile}
-\end{itemize}
+See also \secref{sec:adding_annotation} for ways to add more general types of annotation using grid graphics.
 
 \subsection{Grouping}\label{sub:grouping}
 
-There is one speical grob function that does not do any drawing of its own, but makes it possible to split up other grobs to display separate subsets within a plot.  This is \grobref{gggroup}.
+There is one special grob function that does not do any drawing of its own, but makes it possible to split up other grobs to display separate subsets within a plot.  This is \grobref{gggroup}.  This is equivalent to the {\tt lattice} {\tt group} argument, except that it works with all types of grobs.  
 
 \section{In detail}\label{sec:in_detail}
 
-In the following sections I describe each of the grob functions available in {\tt ggplot}, what it does and how it might be used in a practical situation.  
+In the following sections I describe each of the grob functions available in {\tt ggplot}, what it does and how it might be used in a practical situation.  These are arranged in alphabetical order.
 
 \subsection{gg2ddensity}\label{sub:gg2ddensity}
 \subsection{ggabline}\label{sub:ggabline}
