@@ -29,7 +29,7 @@ Remember that you can get a summary of this chapter within R using {\tt ?qplot}.
 
 Let get started using {\tt qplot}.  Just like {\tt plot}, the first two arguments are {\tt x} and {\tt x}, giving the x- and y-coordinates for the objects on the plot.  
 
-There is also an optional {\tt data} argument.  If this is specified, {\tt qplot} will look inside that data.frame first before looking for objects in your workspace.  I'd highly recommend that you store all the data necessary in one data.frame.  This makes it very easy to produce the same plot for different data sets.  A single data.frame is also easier to save than a multitude of vectors, which means it's easier to reproduce your results later or send them to someone else.  Chapter XXX provides more suggestions on the best way to deal with your data.  
+There is also an optional {\tt data} argument.  If this is specified, {\tt qplot} will look inside that data frame first before looking for objects in your workspace.  I'd highly recommend that you store all the data necessary in one data.frame.  This makes it very easy to produce the same plot for different data sets.  A single data.frame is also easier to save than a multitude of vectors, which means it's easier to reproduce your results later or send them to someone else.  Chapter XXX provides more suggestions on the best way to deal with your data.  
 
 \begin{figure}[htbp]
 	\begin{center}
@@ -57,12 +57,12 @@ Thoroughout the rest of the book, I will avoid using colour alone so that the bo
 % catn()
 % .img(.print(qplot(mpg, wt, data=mtcars, size=factor(cyl))), lscale=0.5)
 % .img(.print(qplot(mpg, wt, data=mtcars, shape=cyl)), lscale=0.5)
-% .img(.print(qplot(mpg, wt, data=mtcars, group=cyl)), lscale=0.5)
+% #.img(.print(qplot(mpg, wt, data=mtcars, group=cyl)), lscale=0.5)
 % |||
-\includegraphics[width=\textwidth]{./include/9468bcf3167b9f818e834f4370ed53b4-001.pdf}
+\includegraphics[scale=1]{./include/8619fc99b901709d6a94acf854e77166-001.pdf}
 
-\includegraphics[width=0.5\textwidth]{./include/6c809a44dea177172fea08e271413981-001.pdf}
-\includegraphics[width=0.5\textwidth]{./include/447474a097d579e496ff027075cd81a3-001.pdf}
+\includegraphics[scale=0.5]{./include/377ce93cf309882725b0fce8967a6e7f-001.pdf}
+\includegraphics[scale=0.5]{./include/447474a097d579e496ff027075cd81a3-001.pdf}
 % >>>
 
 Note that you are not limited to specifying names of existing vectors.  You can apply functions to them or create new ones, as shown in this example.
@@ -95,6 +95,16 @@ More complicated plot types perform some kind of statistical processing on the d
 	\item contours
 	\item histogram
 	\item densityplot
+\end{itemize}
+
+Visual attributes:
+
+\begin{itemize}
+	\item colour
+	\item size
+	\item shape
+	\item id
+	\item weight
 \end{itemize}
 
 These correspond to the graphical objects (grobs) described in chapter XXX, and you can find out more about them there.  To get help on the different options that these types take, add {\tt gg} to the front of their name and look them up with {\tt ?}. For example, if you want help on the point type, you will need {\tt ?ggpoint}. 
@@ -139,8 +149,10 @@ You can also use qplot to add more elements to an existing plot.  This is useful
 
 Doing this is pretty easy: all you have to do is save the output of the {\tt qplot} function and pass it as the {\tt add} argument to the next {\tt qplot} call.
 
+\begin{altt}
 p <- qplot(wt, mpg, data=mtcars)
-qplot(  add=p)
+qplot(add=p)	
+\end{altt}
 
 Notice that the scales automatically increase to make sure that all data points are displayed.
 
@@ -192,6 +204,26 @@ qplot(wt, mpg, data=mtcars,
   main="Small cars", ylim=c(10,20), log="xy")
 \end{verbatim}
 
+\section{Weighted data}\label{sec:weighted_data}
+
+When you have aggregated data where each row in the dataset represents multiple observations, you need some way to take into account the weighting variable.  There are two aesthetic attributes that control this in {\tt ggplot}.  Firstly, for simple graphical objects like lines and points, you can make the size of the grob proportional to the number of points, using the size aesthetic. eg:
+
+\begin{alltt}
+qplot(x, y, size=w)
+qplot(x, y, size=w, id=id, type="line")
+\end{alltt}
+
+For more complicate grobs which involve some statistical transformation, you need to use the {\tt weight} argument.  These weights will be passed on to the statistical summary function.  Weights are supported for every case where it makes sense: smoothers ({\tt smooth}), quantile regression ({\tt quantile}), box plots ({\tt boxplot}), hexagon plots ({\tt hexagon}), histograms ({\tt histogram}), and density plots ({\tt density}).  You can't see this weighting variable directly, and it doesn't produce a legend, but it will change the results of the statistical summary.
+
+\begin{alltt}
+qplot(wt, mpg, data=mtcars, type=c("point", "smooth"), method=lm)
+qplot(wt, mpg, data=mtcars, weight=cyl, size=cyl, type=c("point", "smooth"), method=lm)
+
+qplot(wt, data=mtcars, type=c("density", "histogram"))
+qplot(wt, data=mtcars, weight=cyl, type=c("density", "histogram"))
+\end{alltt}
+
+
 
 \section{Summary}
 
@@ -204,5 +236,7 @@ In this chapter you have learned how to use {\tt qplot} to create plots quickly 
 \end{itemize}
 
 While it is very easy to create a plot with {\tt qplot}, you don't have that much control over the options for each graphic type.  The next chapter teaches you about the components of a plot and how to build up a plot piece by piece.  This gives you full control and lets you exercise the full powers of ggplot.  
+
+
 
 \input{footer.tex}

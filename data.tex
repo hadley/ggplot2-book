@@ -23,27 +23,75 @@ Use lower case column names (a bit easier to type, but main thing is to be consi
 
 \section{Using reshape}\label{sec:using_reshape}
 
-A useful tool for getting data into the right shape to plot.  See the reshape documentation for more details.  Here is a basic introduction and some examples particularly relevant for {\tt ggplot}.
+A useful tool for getting data into the right shape to plot.  See the reshape documentation for more details, especially the introductory pdf.  The ``molten'' form can be useful in conjunction with {\tt ggplot} if your variables are all on the same scale, as you can plot many of the variables at once using line grobs (\grobref{ggline}) and the {\tt group} attribute.  This is similar to what the parallel coordinates plot does.
+
+Here is a basic introduction and some examples particularly relevant for {\tt ggplot}.
+
+% decumar<<< 
+% interweave({
+% str(smiths)
+% })
+% |||
+%>>>
+
 
 \section{Facetting}\label{sec:facetting}
 
-Facetting is discussed previous in XXX and XXX.  Here I will go into more detail, and provide more examples.
+Facetting is discussed previous in XXX and XXX.  Here I will go into more detail, and provide more examples.  When specifying a facetting formula, you specify a grid of row and column variables.  Variables appearing on a row or column together, is like nesting, only combinations that appear in the data will appear in the plot.  If variables that are specified on rows and columns are crossed: all combinations will be shown, including those that didn't appear in the original data set.  
 
 You can set up facetting when you create the plot, {\tt ggplot(df, a ~ b)}, or later using \texttt{setfacets(p, formula = . ~ . , margins = FALSE)}.
 
-\subsection{Multiple categorical variables}\label{sub:multiple_categorical_variables}
+You can also specify margins to display, by giving the names of the variables you want margins for.  
 
-\subsection{Structural vs non-structural missings}\label{sub:structural_vs_non_structural_missings}
+% decumar<<< 
+% interweave({
+% str(smiths)
+% })
+% |||
+%>>>
 
-(Ask Phil if there is a better name)
+Currently, {\tt ggplot} doesn't make any distinction between structural and non-structural missings in the facets - you can't tell whether a combination did not appear in the original dataset, or if it had no data.  Dealing with this properly may require some extensions to R's missing value system.  
 
 \subsection{Continuous variables}\label{sub:continuous_variables}
 
-To use continuous variables as facetting variables, you will first need to convert them to categorical.  Also, the facetting formula currently does not support calculated variables, so you will need to save them in the data frame first.
+To use continuous variables as facetting variables, you will first need to convert them to categorical.  Also, as the facetting formula currently does not support calculated variables, so you will need to save them in the data frame first.
+
+{\tt ggplot} provides a convenient function for converting a continuous variable to a categorical variable: {\tt chop}.  Chop takes the following arguments:
+
+\begin{itemize}
+	\item {\tt x}: vector of numbers to chop up into categorical variable
+	\item {\tt n}: number of bins to cut the variable into
+	\item {\tt method}: method to use, equal ranges, equal numbers in each range or pretty ranges
+\end{itemize}
+
+The following examples shows the use of chop to explore the earthquakes data set.
+
+% decumar<<< 
+% ggopt(aspect.ratio = 1)
+% interweave({
+% quakes$depthc <- chop(quakes$depth)
+% qplot(long, lat, . ~ depthc, data=quakes)
+% quakes$magc <- chop(quakes$mag, n=6, method="pretty")
+% qplot(long, lat, . ~ magc, data=quakes)
+% })
+% |||
+% >>>
+
+Breaking by quantiles, so that each facet has approximately the same number of points, is usually the best choice as it is easier to compare the facets because you know the same number of points are in each, even in the presences of overplotting.
 
 \subsection{Missing facetting columns}\label{sub:missing_facetting_columsn}
 
-If you facet on the original data set and later add columns
+If you facet on the original data set and add grobs with a new dataset, {\tt ggplot} follows some simple heuristics to try and do what you want.  
 
+If the new dataset contains all of the facetting columns then each facet will have a specialised grob. If the new dataset contains none of the facetting columns, then each facet will use the same grob.  For anything in between, i.e. the new dataset contains some of the existing facetting columns, then the grobs will be duplicated over the facetting columns that are not present.  This sounds complicated, but most of the time it should do what you want.  If you need precise control, just make sure that every new dataset contains all the facetting columns used in the original dataset.
+
+% decumar<<< 
+% interweave({
+% auckland <- data.frame(lat=-20 , lat=-25, long=175, label="Auck" )
+% p <- ggpoint(ggplot(quakes, formula=. ~ depth, aes=list(x=lat, y=long)))
+% ggtext(p, data=auckland, aes=list(label=label))
+% })
+% |||
+% >>>  
 
 \input{footer.tex}
