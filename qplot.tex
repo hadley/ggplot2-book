@@ -12,13 +12,26 @@
 
 \chapter{Getting started with ggplot: {\tt qplot}}
 
-\section{Introduction} In this chapter, you will learn to make a wide variety of plots with your first ggplot function, qplot, short for quick plot. qplot makes it easy to produce complex plots, normally requiring several lines of code in R or S, in one line. qplot can do this [I'm punting here] because it is based on a grammar () that allows users to create simple yet expressive descriptions of the plot, and because ...
+\section{Introduction} 
 
-Plotting data is obviously the most important part of a graphics package.  This chapter will get you started plotting data with your first ggplot function, {\tt qplot}, short for {\bf q}uick plot.  {\tt qplot} has been designed be very similar to {\tt plot}, which should make it easy if you are already familiar with plotting in R.  You can get a summary of all the arguments to {\tt qplot} with R help, {\tt ?qplot}.  As the name implies, {\tt qplot} is a quick way of producing a plot.  It is simple and terse, but can not access the full power of ggplot.  More complex and powerful ways of specifying a plot will be described in later chapters.
+In this chapter, you will learn to make a wide variety of plots with your first ggplot function, {\tt qplot}, short for {\bf q}uick plot. qplot makes it easy to produce complex plots, normally requiring several lines of code in R, in one line. qplot can do this because it's based on the grammar of graphics, which allows users to create simple yet expressive descriptions of the plot.  In later chapters you will learn to fully use the expressive power of the grammar, here you'll get started reproducing relatively simple plots.
+
+{\tt qplot} has been designed be very similar to {\tt plot}, which should make it easy if you're already familiar with plotting in R.  Remember, during an R session you can get a summary of all the arguments to {\tt qplot} with R help, {\tt ?qplot}.
+
+This section with cover: 
+
+\begin{itemize}
+	\item Basic use
+	\item Mapping variables to aesthetic attributes (colour, size, shape, etc)
+	\item Creating many different types of plots by specifying different geoms
+	\item Combining plots 
+	\item Facetting, or conditioned plots
+	\item Specifying some basic scale options
+\end{itemize}
 
 \section{Basic use}\label{sec:basic_use}
 
-Just like {\tt plot}, the first two arguments to {\tt qplot} are {\tt x} and {\tt y}, giving the x- and y-coordinates for the objects on the plot. There is also an optional {\tt data} argument.  If this is specified, {\tt qplot} will look inside that data frame before looking for objects in your workspace.  I recommend that you store all the data for a plot in one data frame.  Chapter XXX provides justification for this, as well as more suggestions on the best way to deal with your data.  
+Just like {\tt plot}, the first two arguments to {\tt qplot} are {\tt x} and {\tt y}, giving the x- and y-coordinates for the objects on the plot. There is also an optional {\tt data} argument.  If this is specified, {\tt qplot} will look inside that data frame before looking for objects in your workspace.  It's generally a good idea to keep all the data for one plot in a data frame.  
 
 Here is a  simple example of using {\tt qplot}, producing a scatterplot of weight vs miles per gallon for the {\tt mtcars} dataset.  
 
@@ -90,7 +103,7 @@ Volvo 142E & 21.4 & 4 & 121 & 109 & 4.1 & 2.8 & 19 & 1 & 1 & 4 & 2 \\
 % >>>
 \clearpage
 
-You are not limited to specifying names of existing vectors.  You can apply functions to them or generate new data:
+You are not limited to specifying names of existing vectors.  You can use functions of them or generate new data:
 
 % decumar<<< 
 % interweave({
@@ -114,7 +127,7 @@ You are not limited to specifying names of existing vectors.  You can apply func
 
 \section{Aesthetic attributes}\label{sec:aesthetic_attributes}
 
-The big difference with using {\tt qplot} compared to traditional R graphics comes when you want to assign colours or sizes or shapes to the points on your plot.  With {\tt plot}, it's your responsibility to change your data (eg. ``apples'', ``bananas'', ``pears'') into something that {\tt plot} knows how to use (eg. ``red'', ``yellow'', ``green'').  {\tt qplot} will do this for you automatically, and will also provide a legend to make it easier to map back from the appearance on the plot to the original data values.  This makes it easy to include additional data on the plot.  Here we map the number of cylinders to the colour, size and shape of the points.
+The first big difference with using {\tt qplot} compared to traditional R graphics comes when you want to assign colours or sizes or shapes to the points on your plot.  With {\tt plot}, it's your responsibility to change your data (eg. ``apples'', ``bananas'', ``pears'') into something that {\tt plot} knows how to use (eg. ``red'', ``yellow'', ``green'').  {\tt qplot} will do this for you automatically, and will also provide a legend to make it easier to map back from the plot to the original data values.  This makes it easy to include additional data on the plot.  In the next example, we map the number of cylinders to the colour, size and shape of the points:
 
 % decumar<<< 
 % interweave({
@@ -178,36 +191,36 @@ Colour, size and shape are all examples of aesthetic attributes.  An aesthetic a
 
 Different types of aesthetic attributes work better with different types of variables.  For example, colour and shape work well with categorical variables, while size works better with continuous variables.  You can always convert a continuous variable to a categorical one using the {\tt chop} function.  These issues are discussed more in XXX.
 
-\section{Plot types}\label{sec:plot_types}
+\section{Plot geoms}\label{sec:plot_geoms}
 
-{\tt qplot} is not limited to producing just scatterplots.  In fact, it can produce many plots, using the {\tt type} argument.  Some of the plot types available in ggplot are:
+{\tt qplot} is not limited to just producing scatterplots.  In fact, it can produce many plots, by varying the geom used. Geom, short for geometric object, Some of the plot geoms available in ggplot are:
 
 \begin{itemize}
-	\item {\tt type="point"} draws points to produce a scatterplot (this the default)
-	\item {\tt type="path"} and {\tt type="line"} draw lines between the data points.  A line plot is constrained to produce lines that travel from left to right, while paths can go in any direction.
-	\item {\tt type="bar"} makes a barchart.
-	\item {\tt type="errorbar"} adds error bars to help indicate uncertainty associated with measurements.
-	\item {\tt type="boxplot"} produces a box and whisker plot to summarise the distribution of a set of points.
-	\item {\tt type="smooth"} fits a smoother to the data and displays the smooth and its standard error.
-	\item {\tt type="histogram"} draws a histogram of the $x$ variable
-	\item {\tt type="density"} creates a density plot for the $x$ variable
+	\item {\tt geom="point"} draws points to produce a scatterplot (this the default)
+	\item {\tt geom="path"} and {\tt geom="line"} draw lines between the data points.  A line plot is constrained to produce lines that travel from left to right, while paths can go in any direction.
+	\item {\tt geom="bar"} makes a barchart.
+	\item {\tt geom="errorbar"} adds error bars to help indicate uncertainty associated with measurements.
+	\item {\tt geom="boxplot"} produces a box and whisker plot to summarise the distribution of a set of points.
+	\item {\tt geom="smooth"} fits a smoother to the data and displays the smooth and its standard error.
+	\item {\tt geom="histogram"} draws a histogram of the $x$ variable
+	\item {\tt geom="density"} creates a density plot for the $x$ variable
 \end{itemize}
 
-In this example you can see the effect of changing type.  In the first plot we have a scatterplot, and in the second, a line plot.
+In this example you can see the effect of changing geom.  In the first plot we have a scatterplot, and in the second, a line plot.
 
 % decumar<<< 
 % interweave({
-% qplot(wt, mpg, data=mtcars, type="point")
-% qplot(wt, mpg, data=mtcars, type="line")
+% qplot(wt, mpg, data=mtcars, geom="point")
+% qplot(wt, mpg, data=mtcars, geom="line")
 % })
 % |||
 \begin{alltt}
-> qplot(wt, mpg, data = mtcars, type = "point")
+> qplot(wt, mpg, data = mtcars, geom = "point")
 \end{alltt}
 \includegraphics[scale=0.5]{./include/1d97a5fdb9f35ecb26960d7a5802ce19-001.pdf}
 \begin{alltt}
 
-> qplot(wt, mpg, data = mtcars, type = "line")
+> qplot(wt, mpg, data = mtcars, geom = "line")
 \end{alltt}
 \includegraphics[scale=0.5]{./include/dc1558c6064c5ea0ff4b3063c24caa4c-001.pdf}
 \begin{alltt}
@@ -216,13 +229,11 @@ In this example you can see the effect of changing type.  In the first plot we h
 % >>>
 
 
-These plots are different because they use different ``graphical objects''.  A graphical object is the thing that you see on the plot.  Chapter Four describes all the graphical objects available ggplot, as well as what parameters they take.  In the remainder of this chapter we will give examples of using the most common graphical objects that we have listed above.
-
-In the following sections, we illustrate {\tt qplot} using some of the most commonly used plot types: line and path plots, bar charts, error bars, smoothers and histograms.  You can find out more about these plot types in chapter XXX.
+These plots are different because they use a different ``geom''.  A {\bf geom}, short for geometric object, is the thing that you see on the plot.  Chapter XXX describes all the geoms available ggplot, as well as what parameters they take.  In the remainder of this chapter we will give examples of using the most common geoms listed above.
 
 \subsection{Time series with line and path plots}\label{sub:line_plot}
 
-Line and path plots are typically used for time series data.  Line plots always join the points from left to right, while path plots join them in the order that they appear in the data set.  Line plots usually have time on the x-axis, showing how a single variable has changed over time.  Path plots show how two variables have simultaneously changed over time, with time encoded in the way that the points are joined together (and often with some other information).
+Line and path plots are typically used for time series data.  Line plots always join the points from left to right, while path plots join them in the order that they appear in the data set.  Line plots usually have time on the x-axis, showing how a single variable has changed over time.  Path plots show how two variables have simultaneously changed over time, with time encoded in the way that the points are joined together.
 
 To illustrate these types of plots, we will create an example data frame.  This has a very simple sinusoidal pattern in two variables.
 
@@ -251,11 +262,11 @@ Let's start with a time series plot of {\tt a}.
 
 % decumar<<< 
 % interweave({
-% qplot(year, a, data=df, type="line")
+% qplot(year, a, data=df, geom="line")
 % })
 % |||
 \begin{alltt}
-> qplot(year, a, data = df, type = "line")
+> qplot(year, a, data = df, geom = "line")
 \end{alltt}
 \includegraphics[scale=0.5]{./include/9ac32f9e1bd947afaa1373eb55a1d7bf-001.pdf}
 \begin{alltt}
@@ -263,13 +274,13 @@ Let's start with a time series plot of {\tt a}.
 \end{alltt}
 % >>>
 
-If we want to display the two variables on the same plot we need to reshape our dataset so that we have a new column which represents the variable the observation was taken on.  The {\tt melt} function from the {\tt reshape} package will do this for us.  Notice how we use {\tt id} to define which observations should be linked together, and {\tt colour} so we can tell which series is which.
+If we want to display the two variables on the same plot we need to reshape our dataset so that we have a new column which represents the variable the observation was taken on.  The {\tt melt} function from the {\tt reshape} package will do this for us.  Notice that how specifying the {\tt colour} automatically draws two series.
 
 % decumar<<< 
 % interweave({
 % dfm <- melt(df, id="year")
 % head(dfm)
-% qplot(year, value, data=dfm, type="line", id=variable, colour=variable)
+% qplot(year, value, data=dfm, geom="line", colour=variable)
 % })
 % |||
 \begin{alltt}
@@ -283,7 +294,7 @@ If we want to display the two variables on the same plot we need to reshape our 
 5    5        a -0.3229663
 6    6        a -0.4653612
 
-> qplot(year, value, data = dfm, type = "line", id = variable, 
+> qplot(year, value, data = dfm, geom = "line", id = variable, 
 +     colour = variable)
 \end{alltt}
 \includegraphics[scale=0.5]{./include/560600f96482046a82a038c5fa937019-001.pdf}
@@ -294,21 +305,21 @@ If we want to display the two variables on the same plot we need to reshape our 
 
 These plots show the behaviour of {\tt a} and {\tt b} individually, but it is not so easy to see the joint pattern.  Each time point occupies a point on the 2d grid of {\tt a} and {\tt b}, and if we joint up each point to its neighbours we get a 2d trajectory.
 
-This can be illustrated with a path plot.  Below we plot {\tt a} vs {\tt b} and then join the individual observations with a path to show the pattern over time.  To make it more obvious in which direction time flows, we can use the {\tt size} aesthetic as in the second plot.   This allows us to see that it follows a cyclical pattern over time.
+This can be illustrated with a path plot.  Below we plot {\tt a} vs {\tt b} and then join the individual observations with a path to show the pattern over time.  To make it more obvious in which direction time flows, we can use the {\tt size} aesthetic, as in the second plot.   This allows us to see that it follows a cyclical pattern over time.
 
 % decumar<<< 
 % interweave({
-% qplot(a, b, data=df, type="path")
-% qplot(a, b, data=df, type="path", size=year)
+% qplot(a, b, data=df, geom="path")
+% qplot(a, b, data=df, geom="path", size=year)
 % })
 % |||
 \begin{alltt}
-> qplot(a, b, data = df, type = "path")
+> qplot(a, b, data = df, geom = "path")
 \end{alltt}
 \includegraphics[scale=0.5]{./include/8a57f38c79f92a01e99cec996ad8c005-001.pdf}
 \begin{alltt}
 
-> qplot(a, b, data = df, type = "path", size = year)
+> qplot(a, b, data = df, geom = "path", size = year)
 \end{alltt}
 \includegraphics[scale=0.5]{./include/b03316773b960001e3c275eb2e292f25-001.pdf}
 \begin{alltt}
@@ -316,11 +327,11 @@ This can be illustrated with a path plot.  Below we plot {\tt a} vs {\tt b} and 
 \end{alltt}
 % >>>
 
-The examples above illustrate the three most common used aesthetics for path and line plots: {\tt colour}, {\tt size}, and {\tt id}.  The final aesthetic attribute that line and path plots use is {\tt linetype}, which species the dashing pattern of the line: solid, dashed, dotted etc.
+The examples above illustrate the two most common aesthetics for path and line plots: {\tt colour}, and {\tt size}.  The final aesthetic attribute that line and path plots use is {\tt linetype}, which species the dashing pattern of the line: solid, dashed, dotted etc.
 
 % decumar<<< 
 % interweave({
-% qplot(year, value, data=dfm, type="line", id=variable, linetype=variable)
+% qplot(year, value, data=dfm, geom="line", id=variable, linetype=variable)
 % })
 % |||
 \begin{alltt}
@@ -369,11 +380,11 @@ We can then plot as follows:
 
 % decumar<<< 
 % interweave({
-% qplot(cyl, Freq, data=counts, type="bar", avoid="stack")
+% qplot(cyl, Freq, data=counts, geom="bar", avoid="stack")
 % })
 % |||
 \begin{alltt}
-> qplot(cyl, Freq, data = counts, type = "bar", avoid = "stack")
+> qplot(cyl, Freq, data = counts, geom = "bar", avoid = "stack")
 \end{alltt}
 \includegraphics[scale=0.5]{./include/aac696e5594c4d57fa719f9bcce6e767-001.pdf}
 \begin{alltt}
@@ -389,24 +400,24 @@ If your data is not already in contingency table form, you can use a shortcut.  
 
 % decumar<<< 
 % interweave({
-% qplot(factor(cyl), 1, data=mtcars, type="bar", avoid="stack")
-% qplot(factor(cyl), 1, data=mtcars, type="bar", avoid="stack", fill=mpg)
-% qplot(factor(cyl), 1, data=mtcars, type="bar", avoid="stack", fill=mpg, sort=TRUE)
+% qplot(factor(cyl), 1, data=mtcars, geom="bar", avoid="stack")
+% qplot(factor(cyl), 1, data=mtcars, geom="bar", avoid="stack", fill=mpg)
+% qplot(factor(cyl), 1, data=mtcars, geom="bar", avoid="stack", fill=mpg, sort=TRUE)
 % })
 % |||
 \begin{alltt}
-> qplot(factor(cyl), 1, data = mtcars, type = "bar", avoid = "stack")
+> qplot(factor(cyl), 1, data = mtcars, geom = "bar", avoid = "stack")
 \end{alltt}
 \includegraphics[scale=0.5]{./include/15aa398ed4eeaf6a1a76871f6ce7a1c7-001.pdf}
 \begin{alltt}
 
-> qplot(factor(cyl), 1, data = mtcars, type = "bar", avoid = "stack", 
+> qplot(factor(cyl), 1, data = mtcars, geom = "bar", avoid = "stack", 
 +     fill = mpg)
 \end{alltt}
 \includegraphics[scale=0.5]{./include/01a63f72f5f38ac3c8f008c99fbe1e35-001.pdf}
 \begin{alltt}
 
-> qplot(factor(cyl), 1, data = mtcars, type = "bar", avoid = "stack", 
+> qplot(factor(cyl), 1, data = mtcars, geom = "bar", avoid = "stack", 
 +     fill = mpg, sort = TRUE)
 \end{alltt}
 \includegraphics[scale=0.5]{./include/b6aeadd37468429e050138c38fef6001-001.pdf}
@@ -421,17 +432,17 @@ If you have one categorical variable, and one or more continuous variables, you 
 
 % decumar<<< 
 % interweave({
-% qplot(wt, factor(cyl), data=mtcars, type="jitter")
-% qplot(wt, factor(cyl), data=mtcars, type="boxplot")
+% qplot(wt, factor(cyl), data=mtcars, geom="jitter")
+% qplot(wt, factor(cyl), data=mtcars, geom="boxplot")
 % })
 % |||
 \begin{alltt}
-> qplot(wt, factor(cyl), data = mtcars, type = "jitter")
+> qplot(wt, factor(cyl), data = mtcars, geom = "jitter")
 \end{alltt}
 \includegraphics[scale=0.5]{./include/dc83e209eacb0dcca0662599d3fff1c3-001.pdf}
 \begin{alltt}
 
-> qplot(wt, factor(cyl), data = mtcars, type = "boxplot")
+> qplot(wt, factor(cyl), data = mtcars, geom = "boxplot")
 \end{alltt}
 \includegraphics[scale=0.5]{./include/6687340c76327bbdb023434a6bec0440-001.pdf}
 \begin{alltt}
@@ -449,17 +460,17 @@ Histogram and density plots show the distribution of a single variable.  They pr
 
 % decumar<<< 
 % interweave({
-% qplot(wt, data=mtcars, type="histogram")
-% qplot(wt, data=mtcars, type="density")
+% qplot(wt, data=mtcars, geom="histogram")
+% qplot(wt, data=mtcars, geom="density")
 % })
 % |||
 \begin{alltt}
-> qplot(wt, data = mtcars, type = "histogram")
+> qplot(wt, data = mtcars, geom = "histogram")
 \end{alltt}
 \includegraphics[scale=0.5]{./include/44d52db99a4d8236f55f2a7bceea2e20-001.pdf}
 \begin{alltt}
 
-> qplot(wt, data = mtcars, type = "density")
+> qplot(wt, data = mtcars, geom = "density")
 \end{alltt}
 \includegraphics[scale=0.5]{./include/6b8d8985dc0842c15e5e2b2e7905dd6a-001.pdf}
 \begin{alltt}
@@ -471,29 +482,29 @@ You can control the amount of smoothing using the {\tt breaks} argument for the 
 
 % decumar<<< 
 % interweave({
-% qplot(wt, data=mtcars, type="histogram", breaks=dhist)
-% qplot(wt, data=mtcars, type="density", adjust=1)
-% qplot(wt, data=mtcars, type="density", adjust=2)
-% qplot(wt, data=mtcars, type="density", adjust=0.5)
+% qplot(wt, data=mtcars, geom="histogram", breaks=dhist)
+% qplot(wt, data=mtcars, geom="density", adjust=1)
+% qplot(wt, data=mtcars, geom="density", adjust=2)
+% qplot(wt, data=mtcars, geom="density", adjust=0.5)
 % })
 % |||
 \begin{alltt}
-> qplot(wt, data = mtcars, type = "histogram", breaks = dhist)
+> qplot(wt, data = mtcars, geom = "histogram", breaks = dhist)
 \end{alltt}
 \includegraphics[scale=0.5]{./include/43b81eee9bc8404e3a1a4f9387648f98-001.pdf}
 \begin{alltt}
 
-> qplot(wt, data = mtcars, type = "density", adjust = 1)
+> qplot(wt, data = mtcars, geom = "density", adjust = 1)
 \end{alltt}
 \includegraphics[scale=0.5]{./include/5c42d0d035da5c06667b096a077d3bdd-001.pdf}
 \begin{alltt}
 
-> qplot(wt, data = mtcars, type = "density", adjust = 2)
+> qplot(wt, data = mtcars, geom = "density", adjust = 2)
 \end{alltt}
 \includegraphics[scale=0.5]{./include/91120143ef3cd8ed013c15cedbf47b99-001.pdf}
 \begin{alltt}
 
-> qplot(wt, data = mtcars, type = "density", adjust = 0.5)
+> qplot(wt, data = mtcars, geom = "density", adjust = 0.5)
 \end{alltt}
 \includegraphics[scale=0.5]{./include/8fbead606775557f6df61247a1a3773d-001.pdf}
 \begin{alltt}
@@ -501,16 +512,15 @@ You can control the amount of smoothing using the {\tt breaks} argument for the 
 \end{alltt}
 % >>>
 
-If you do want to compare the distributions of different subgroups, you can overlay density plots for each group. You do this using the {\tt group} graphical object.  This splits a dataset up and applies the graphical object to each subset defined by the {\tt id} aesthetic.  You use it as follows:
+If you want to compare the distributions of different subgroups, all you need to do is add an aesthetic mapping that differentiates the different groups, as follows:
 
 % decumar<<< 
 % interweave({
-% qplot(wt, data=mtcars, type="group", grob="density", id=cyl, colour=cyl)
+% qplot(wt, data=mtcars, geom="density", colour=factor(cyl))
 % })
 % |||
 \begin{alltt}
-> qplot(wt, data = mtcars, type = "group", grob = "density", id = cyl, 
-+     colour = cyl)
+> qplot(wt, data=mtcars, geom="density", colour=factor(cyl))
 \end{alltt}
 \includegraphics[scale=0.5]{./include/edeb9ddafd78d7674cbd110521b1c48e-001.pdf}
 \begin{alltt}
@@ -520,15 +530,15 @@ If you do want to compare the distributions of different subgroups, you can over
 
 \subsection{Adding a smoother to a plot}\label{sub:smooth}
 
-If you have a scatterplot with many data points, it can be hard to see exactly what trend is shown by the data.  In this case you may want to add a smoothed line to the plot.  This is easily done using the {\tt smooth} graphical object:
+If you have a scatterplot with many data points, it can be hard to see exactly what trend is shown by the data.  In this case you may want to add a smoothed line to the plot.  This is easily done using the {\tt smooth} geom:
 
 % decumar<<< 
 % interweave({
-% qplot(mpg, wt, data=mtcars, type=c("point", "smooth"))
+% qplot(mpg, wt, data=mtcars, geom=c("point", "smooth"))
 % })
 % |||
 \begin{alltt}
-> qplot(mpg, wt, data = mtcars, type = c("point", "smooth"))
+> qplot(mpg, wt, data = mtcars, geom = c("point", "smooth"))
 \end{alltt}
 \includegraphics[scale=0.5]{./include/10515da05be3cfa56975e379612092a8-001.pdf}
 \begin{alltt}
@@ -536,7 +546,7 @@ If you have a scatterplot with many data points, it can be hard to see exactly w
 \end{alltt}
 % >>>
 
-Notice that we have combined multiple graphical objects by supplying a vector of type names to {\tt qplot}.  The types will be overlaid in the order that you specified them.
+Notice that we have combined multiple geoms by supplying a vector of geom names to {\tt qplot}.  The geoms will be overlaid in the order that you specified them.
 
 There are many different smoothers you can use by specifying the {\tt method} argument:
 
@@ -554,46 +564,46 @@ Additionally, if you don't want to show the standard errors, use {\tt se=FALSE}.
 
 % decumar<<< 
 % interweave({
-% qplot(mpg, wt, data=mtcars, type=c("point", "smooth"))
-% qplot(mpg, wt, data=mtcars, type=c("point", "smooth"), se=FALSE)
-% qplot(mpg, wt, data=mtcars, type=c("point", "smooth"), span=0.3)
-% qplot(mpg, wt, data=mtcars, type=c("point", "smooth"), method=lm)
+% qplot(mpg, wt, data=mtcars, geom=c("point", "smooth"))
+% qplot(mpg, wt, data=mtcars, geom=c("point", "smooth"), se=FALSE)
+% qplot(mpg, wt, data=mtcars, geom=c("point", "smooth"), span=0.3)
+% qplot(mpg, wt, data=mtcars, geom=c("point", "smooth"), method=lm)
 % library(splines)
-% qplot(mpg, wt, data=mtcars, type=c("point", "smooth"), method=lm, formula=y ~ ns(x,3))
+% qplot(mpg, wt, data=mtcars, geom=c("point", "smooth"), method=lm, formula=y ~ ns(x,3))
 % library(mgcv)
-% qplot(mpg, wt, data=mtcars, type=c("point", "smooth"), method=gam, formula= y ~ s(x))
+% qplot(mpg, wt, data=mtcars, geom=c("point", "smooth"), method=gam, formula= y ~ s(x))
 % })
 % |||
 \begin{alltt}
-> qplot(mpg, wt, data = mtcars, type = c("point", "smooth"))
+> qplot(mpg, wt, data = mtcars, geom = c("point", "smooth"))
 \end{alltt}
 \includegraphics[scale=0.5]{./include/10515da05be3cfa56975e379612092a8-001.pdf}
 \begin{alltt}
 
-> qplot(mpg, wt, data = mtcars, type = c("point", "smooth"), se = FALSE)
+> qplot(mpg, wt, data = mtcars, geom = c("point", "smooth"), se = FALSE)
 \end{alltt}
 \includegraphics[scale=0.5]{./include/5ad725ac0e4b4297f1c6513a743db4ca-001.pdf}
 \begin{alltt}
 
-> qplot(mpg, wt, data = mtcars, type = c("point", "smooth"), span = 0.3)
+> qplot(mpg, wt, data = mtcars, geom = c("point", "smooth"), span = 0.3)
 \end{alltt}
 \includegraphics[scale=0.5]{./include/3d48af38dd0b38ea90d2bd7480165bf0-001.pdf}
 \begin{alltt}
 
-> qplot(mpg, wt, data = mtcars, type = c("point", "smooth"), method = lm)
+> qplot(mpg, wt, data = mtcars, geom = c("point", "smooth"), method = lm)
 \end{alltt}
 \includegraphics[scale=0.5]{./include/a1e77fea89074e1e002ac162d02b8295-001.pdf}
 \begin{alltt}
 
 > library(splines)
-> qplot(mpg, wt, data = mtcars, type = c("point", "smooth"), method = lm, 
+> qplot(mpg, wt, data = mtcars, geom = c("point", "smooth"), method = lm, 
 +     formula = y ~ ns(x, 3))
 \end{alltt}
 \includegraphics[scale=0.5]{./include/07789c6d0db8deb7d4e37d9ddc88fcf7-001.pdf}
 \begin{alltt}
 
 > library(mgcv)
-> qplot(mpg, wt, data = mtcars, type = c("point", "smooth"), method = gam, 
+> qplot(mpg, wt, data = mtcars, geom = c("point", "smooth"), method = gam, 
 +     formula = y ~ s(x))
 \end{alltt}
 \includegraphics[scale=0.5]{./include/0d31b1601be9288b32dd162c68bb309c-001.pdf}
@@ -604,7 +614,7 @@ Additionally, if you don't want to show the standard errors, use {\tt se=FALSE}.
 
 \subsection{Displaying uncertainty with error bars and ribbons}\label{sub:error_bars}
 
-There are two ways to display standard errors with {\tt ggplot}.  For point standard errors, you can use the {\tt errorbar} graphical object.  For continuous or functional standard errors, you can use the {\tt ribbon} grob.  We've have already seen an example of this: the {\tt ribbon} grob is used inside {\tt smooth} to display the standard errors of the smooth.  Because there are so many different ways to calculate standard errors, the calculation is up to you.  {\tt ggplot} only provides facilities for displaying them once you have them.
+There are two ways to display standard errors with {\tt ggplot}.  For point standard errors, you can use the {\tt errorbar} geom.  For continuous or functional standard errors, you can use the {\tt ribbon} grob.  We've have already seen an example of this: the {\tt ribbon} grob is used inside {\tt smooth} to display the standard errors of the smooth.  Because there are so many different ways to calculate standard errors, the calculation is up to you.  {\tt ggplot} only provides facilities for displaying them once you have them.
 
 For both {\tt ribbon} and {\tt errobar} you can specify confidence internals in two ways:
 
@@ -629,7 +639,7 @@ There are few different things we might want to weight by:
 	\item area, to investigate geographic effects
 \end{itemize}
 
-\noindent The choice of a weighting variable profoundly effects what we are looking at in the plot and the conclusions that we will draw.  There are two aesthetic attributes that can be used to adjust for weights.  Firstly, for simple graphical objects like lines and points, you can make the size of the grob proportional to the number of points, using the {\tt size} aesthetic, as follows:
+\noindent The choice of a weighting variable profoundly effects what we are looking at in the plot and the conclusions that we will draw.  There are two aesthetic attributes that can be used to adjust for weights.  Firstly, for simple geoms like lines and points, you can make the size of the grob proportional to the number of points, using the {\tt size} aesthetic, as follows:
 
 % decumar<<< 
 % interweave({
@@ -665,19 +675,19 @@ The following example shows how weighting by population density effects the rela
 
 % decumar<<< 
 % interweave({
-% qplot(percwhite, percbelowpoverty, data=midwest, type=c("point","smooth"), method=lm)
-% qplot(percwhite, percbelowpoverty, data=midwest, size=popdensity, weight=popdensity,type=c("point","smooth"), method=lm)
+% qplot(percwhite, percbelowpoverty, data=midwest, geom=c("point","smooth"), method=lm)
+% qplot(percwhite, percbelowpoverty, data=midwest, size=popdensity, weight=popdensity,geom=c("point","smooth"), method=lm)
 % })
 % |||
 \begin{alltt}
-> qplot(percwhite, percbelowpoverty, data = midwest, type = c("point", 
+> qplot(percwhite, percbelowpoverty, data = midwest, geom = c("point", 
 +     "smooth"), method = lm)
 \end{alltt}
 \includegraphics[scale=0.5]{./include/8672f3ee19e182cb1e8e9e621f2af190-001.pdf}
 \begin{alltt}
 
 > qplot(percwhite, percbelowpoverty, data = midwest, size = popdensity, 
-+     weight = popdensity, type = c("point", "smooth"), method = lm)
++     weight = popdensity, geom = c("point", "smooth"), method = lm)
 \end{alltt}
 \includegraphics[scale=0.5]{./include/886ea47e1c0e14d7921ce8ddff67f58f-001.pdf}
 \begin{alltt}
@@ -689,18 +699,18 @@ When we weight a histogram or density plot by total population, we change from l
 
 % decumar<<< 
 % interweave({
-% qplot(percbelowpoverty, data=midwest, type=c("histogram", "density"))
-% qplot(percbelowpoverty, data=midwest, type=c("histogram", "density"), weight=poptotal/sum(poptotal))
+% qplot(percbelowpoverty, data=midwest, geom=c("histogram", "density"))
+% qplot(percbelowpoverty, data=midwest, geom=c("histogram", "density"), weight=poptotal/sum(poptotal))
 % })
 % |||
 \begin{alltt}
-> qplot(percbelowpoverty, data = midwest, type = c("histogram", 
+> qplot(percbelowpoverty, data = midwest, geom = c("histogram", 
 +     "density"))
 \end{alltt}
 \includegraphics[scale=0.5]{./include/d20c35f49eb07a47f6525127e7acc4e0-001.pdf}
 \begin{alltt}
 
-> qplot(percbelowpoverty, data = midwest, type = c("histogram", 
+> qplot(percbelowpoverty, data = midwest, geom = c("histogram", 
 +     "density"), weight = poptotal/sum(poptotal))
 \end{alltt}
 \includegraphics[scale=0.5]{./include/882adf272a050c07d7b9d5913d9caa9c-001.pdf}
@@ -711,34 +721,34 @@ When we weight a histogram or density plot by total population, we change from l
 
 \section{Combining plots}\label{sec:combining_plots}
 
-As we have seen, you can combine multiple plot types by supplying a vector of type names to {\tt qplot}.  The types will be overlaid in the order that you specified them:
+As we have seen, you can combine multiple plot geoms by supplying a vector of geom names to {\tt qplot}.  The geoms will be overlaid in the order that you specified them:
 
 % decumar<<< 
 % interweave({
-% qplot(year, value, data=dfm, type=c("line", "point"), id=variable, colour=variable)
-% qplot(mpg, wt, data=mtcars, type=c("point", "smooth"))
-% qplot(mpg, factor(cyl), data=mtcars, type=c("jitter", "boxplot"))
-% qplot(mpg, factor(cyl), data=mtcars, type=c("boxplot", "jitter"))
+% qplot(year, value, data=dfm, geom=c("line", "point"), id=variable, colour=variable)
+% qplot(mpg, wt, data=mtcars, geom=c("point", "smooth"))
+% qplot(mpg, factor(cyl), data=mtcars, geom=c("jitter", "boxplot"))
+% qplot(mpg, factor(cyl), data=mtcars, geom=c("boxplot", "jitter"))
 % })
 % |||
 \begin{alltt}
-> qplot(year, value, data = dfm, type = c("line", "point"), id = variable, 
+> qplot(year, value, data = dfm, geom = c("line", "point"), id = variable, 
 +     colour = variable)
 \end{alltt}
 \includegraphics[scale=0.5]{./include/cd93492c8e57c3312ea3785285ca720f-001.pdf}
 \begin{alltt}
 
-> qplot(mpg, wt, data = mtcars, type = c("point", "smooth"))
+> qplot(mpg, wt, data = mtcars, geom = c("point", "smooth"))
 \end{alltt}
 \includegraphics[scale=0.5]{./include/10515da05be3cfa56975e379612092a8-001.pdf}
 \begin{alltt}
 
-> qplot(mpg, factor(cyl), data = mtcars, type = c("jitter", "boxplot"))
+> qplot(mpg, factor(cyl), data = mtcars, geom = c("jitter", "boxplot"))
 \end{alltt}
 \includegraphics[scale=0.5]{./include/4ca578a27fde877528d6e5738d6b1149-001.pdf}
 \begin{alltt}
 
-> qplot(mpg, factor(cyl), data = mtcars, type = c("boxplot", "jitter"))
+> qplot(mpg, factor(cyl), data = mtcars, geom = c("boxplot", "jitter"))
 \end{alltt}
 \includegraphics[scale=0.5]{./include/0b38c96c4ac4dafd415f69a0cfc6a44d-001.pdf}
 \begin{alltt}
@@ -746,19 +756,19 @@ As we have seen, you can combine multiple plot types by supplying a vector of ty
 \end{alltt}
 % >>>
 
-The limitation with this technique is that you are plotting exactly the same data, but just using a different type of graphical object.  You can also use the {\tt add} argument to add more elements to an existing plot.  This is useful when building up a plot from multiple data sources. Doing this is pretty easy: all you have to do is save the output of the {\tt qplot} function and pass it as the {\tt add} argument to the next {\tt qplot} call.
+The limitation with this technique is that you are plotting exactly the same data, but just using a different geom.  You can also use the {\tt add} argument to add more elements to an existing plot.  This is useful when building up a plot from multiple data sources. Doing this is pretty easy: all you have to do is save the output of the {\tt qplot} function and pass it as the {\tt add} argument to the next {\tt qplot} call.
 
 In this example, we add a rug plot to a density plot of weight.
 
 % decumar<<< 
 % interweave({
-% (p <- qplot(wt, data=mtcars, type="group", grob="density", id=cyl, colour=cyl))
+% (p <- qplot(wt, data=mtcars, geom="group", grob="density", id=cyl, colour=cyl))
 % qplot(wt, 0, add=p)
-% qplot(wt, 0, add=p, type="jitter")
+% qplot(wt, 0, add=p, geom="jitter")
 % })
 % |||
 \begin{alltt}
-> (p <- qplot(wt, data = mtcars, type = "group", grob = "density", 
+> (p <- qplot(wt, data = mtcars, geom = "group", grob = "density", 
 +     id = cyl, colour = cyl))
 \end{alltt}
 \includegraphics[scale=0.5]{./include/edeb9ddafd78d7674cbd110521b1c48e-001.pdf}
@@ -769,7 +779,7 @@ In this example, we add a rug plot to a density plot of weight.
 \includegraphics[scale=0.5]{./include/dfee7d276f567e8c1f28128745cd8fd7-001.pdf}
 \begin{alltt}
 
-> qplot(wt, 0, add = p, type = "jitter")
+> qplot(wt, 0, add = p, geom = "jitter")
 \end{alltt}
 \includegraphics[scale=0.5]{./include/f99ddd786bfa20707b2cc948c7652c88-001.pdf}
 \begin{alltt}
@@ -785,7 +795,7 @@ In this example, we supplement the scatterplot of mpg vs wt with results from a 
 % model <- lm(wt ~ poly(mpg,2) * cyl, data=mtcars)
 % grid <- expand.grid(mpg = 10:35, cyl=c(4,6,8))
 % grid$fitted <- predict(model, grid)
-% qplot(mpg, fitted, data=grid, colour=cyl, type="line", id=cyl, add=p)
+% qplot(mpg, fitted, data=grid, colour=cyl, geom="line", id=cyl, add=p)
 % })
 % |||
 \begin{alltt}
@@ -797,7 +807,7 @@ In this example, we supplement the scatterplot of mpg vs wt with results from a 
 > model <- lm(wt ~ poly(mpg, 2) * cyl, data = mtcars)
 > grid <- expand.grid(mpg = 10:35, cyl = c(4, 6, 8))
 > grid$fitted <- predict(model, grid)
-> qplot(mpg, fitted, data = grid, colour = cyl, type = "line", 
+> qplot(mpg, fitted, data = grid, colour = cyl, geom = "line", 
 +     id = cyl, add = p)
 \end{alltt}
 \includegraphics[scale=0.5]{./include/ea045260a467d7a8d49c2c31f33a3793-001.pdf}
@@ -848,7 +858,7 @@ Facetting is used to investigate conditional relationships, e.g. conditional on 
 
 Facetting a plot is like creating a contingency table.  In contingency tables it is often useful to display marginal totals (totals over a row or column) as well as the individual cells.  It is also useful to be able to do this with graphics.  We can produce graphical margins using the the {\tt margins} argument.  This allows you to compare the conditional patterns with the marginal patterns.
 
-You can either specify that all margins should be displayed, using {\tt margins = TRUE}, or by listing the names of the variables that you want margins for, {\tt margins = c("sex","age" )}.  You can also use \verb|"grand_row"| or \verb|"grand_col"| to produce grand row and grand column margins respectively.
+You can either specify that all margins should be displayed, using {\tt margins = TRUE}, or by listing the names of the variables that you want margins for, {\tt margins = c("sex","age")}.  You can also use \verb|"grand_row"| or \verb|"grand_col"| to produce grand row and grand column margins respectively.
 
 This example shows how the margins appear.  In the first plot, there are no margins, and we only see conditional plots.  In the second example, we see margins over columns, but not rows, and in the final example we see all possible margins.  The facet in the lower right corner displays all data points.
 
@@ -878,7 +888,7 @@ This example shows how the margins appear.  In the first plot, there are no marg
 \end{alltt}
 % >>>
 
-Plot with many facets and margins may be more appropriate for printing as the higher resolution allows you to compare many more subsets.
+Plots with many facets and margins may be more appropriate for printing, rather than on screen display, as the higher resolution allows you to compare many more subsets.
 
 \section{Other options}\label{sec:other_options}
 
@@ -891,7 +901,7 @@ There are a few other options that {\tt qplot} provides to control the output of
 	\item {\tt xlab}, {\tt ylab}: labels for the x- and y-axes.  As with the plot title, these can be character strings or mathematical expressions.
 \end{itemize}
 
-The following examples shows the options in action.
+The following examples show the options in action.
 
 % decumar<<< 
 % interweave({
@@ -927,7 +937,7 @@ The following examples shows the options in action.
 In this chapter you have learned how to use {\tt qplot} to create plots quickly and easily. You have learned how to:
 
 \begin{itemize}
-	\item change the plot type to create many different types of plots
+	\item change the plot geom to create many different types of plots
 	\item use facets and margining to explore condition and marginal relationships
 	\item fine tune the appearance of your graphic using additional options
 \end{itemize}
