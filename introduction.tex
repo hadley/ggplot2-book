@@ -5,11 +5,69 @@
 % what is going to happen and then to explain 
 % why it didn’t.}} 
 
+% what is ggplot
+% how to get ggplot
+% how does it fit in with other r packages (including comparison table)
+% what is the grammar of graphics etc? what the grammar doesn't do
+% outline of book
+% formatting conventions
+
 \chapter{Introduction}
 
 Ggplot is an R package for producing statistical graphics.  It builds on the grid graphics system [ref], and uses the philosophy outlined in the Grammar of Graphics [ref] to produce a powerful and flexible plotting system that is still easy to use.  This model of graphics is quite different to the existing base and lattice graphic system and so you'll need to learn a new way of thinking about graphics.  This book provides helps you to do this as well as providing a practical introduction to Ggplot with lots of example code and graphics.
 
-Ggplot grew out of my frustrations with the graphics packages in R, particularly how difficult it was to write functions that encapsulated certain graphical operations.  For example, it is very difficult to write a function that will add a smoother to a plot without making strong assumptions about the structure of the plot.  Ggplot has been designed from the ground up with extensibility in mind.  This extensibility should hopefully smooth the path from being a novice user of ggplot, to an expert and then a developer of new types of graphics.  This book follows a similar path. 
+\section{What is the grammar of graphics?}
+
+The grammar of graphics is a way of describing a plot.
+
+A graphic is a mapping from data to aesthetic attributes of geometric objects.  The plot may also contain statistical transformations of the data, and is drawn on a specific coordinate system.  Facetting is used to generate the same plot for different subsets of the dataset.
+
+A plot is made up of the following components:
+
+\begin{itemize}
+	\item Data: the most important thing, and the thing that 
+	\item Scales
+	\item Statistics
+	\item Geometric objects (geoms for short)
+	\item A coordinate system
+	\item Facetting specification
+\end{itemize}
+
+My view of the grammar has diverged somewhat from that described in Lee's book.  I will try and highlight places in the text where the divergence is particularly profound.
+
+It is also important to talk about what the grammar doesn't do:
+
+\begin{itemize}
+	\item It doesn't specify what a good graphic is.  It doesn't offer any guidance in what variables should be mapped to what aesthetic properties.  It describes what a valid plot is, and many valid plots are quite hideous and useless.
+
+	\item Ironically, it doesn't actually specify what a graphic should look like.  The finer points of display, for example font size or background colour, are not specified by the grammar.  In practice to create a useful plotting system we will need to describe these in some way.
+
+	\item It does not describe interaction - the grammar of graphics describes purely static graphics, and there essentially no benefit to displaying on a computer screen as opposed to on a piece of paper.
+\end{itemize}
+
+\section{How does ggplot fit in with other R graphics?}
+
+There are a number of other graphics systems available in R: base graphics, grid graphics and trellis/lattice graphics.  How does ggplot from them?
+
+\begin{itemize} 
+	\item The problem with base graphics is that it's basically a pen on paper model: you can only draw on top, not modify or delete existing content or change the axes etc.  Base graphics includes both tools for drawing primitives and entire plots. No other plotting system does this.
+
+	\item Grid graphics are a big step up from the drawing capabilities of base graphics. The plot objects can be represented independently of the plot and modified later on. A system of viewports (each containing its own coordinate system) makes it easier to layout complex graphics.
+
+	\item Trellis/lattice uses grid graphics, and is a considerable improvement over base graphics.  The chief advantage of lattice over base graphics is that you can easily produce trellised (or conditioned) plots.  A trellised plot reproduces the same plot for different subsets of the data, a type of small multiple.  Lattice graphics also provide automatic legends, and a range of 3D plots.  However, lattice graphics does not use a formal model of graphics, which can make it hard to extend.
+
+	\item ggplot is an attempt to take the good things about base and lattice graphics and improve on them by having a model which supports the production of any kind of statistical graphic, build on principles outlined in the Grammar of Graphics.  The chief advantage of ggplot are that it has a solid underlying model.  This makes it easy to describe a wide range of graphics with a compact syntax, and separates out different components to make extension easier.  ggplot uses grid to draw the graphics, which means you can exercise a huge amount of low level control over the appearance of the plot
+
+	\item Many other R packages implement specialist graphics but no others provide a framework for producing statistical graphics. While this is fine if you just want to produce a one-off graphic, it is generally hard to combine these with other graphics you may be using.
+\end{itemize}
+
+\section{About this book}\label{sec:about_this_book}
+
+% This book is available online for free at \url{http://had.co.nz/ggplot/book}.  However, if you want to support the development of ggplot (and save yourself the hassle of printing and binding a large pdf) you can also buy a printed version for \$US 40 (price may change).  
+
+The ggplot website, \url{http://had.co.nz/ggplot}, provides updates to this book, information about features in the latest version of ggplot, and talks and papers related to ggplot.  All graphics used on the book are listed, along with the code and data needed to reproduce them.  There is also a gallery of example graphics used in real life: if you would like your graphics to be included in the gallery, please send me reproducible code and a paragraph or two describing your plot.
+
+The book is structured to lead you from a new user of ggplot to a developer creating new components for specialised plots:
 
 \begin{itemize}
 	\item In Chapter One I describe how you can quickly get started using {\tt qplot} to make graphics, just like you can using {\tt plot}.  This chapter introduces several important ggplot concepts: grob functions, aesthetic mappings and facetting.
@@ -27,12 +85,6 @@ Ggplot grew out of my frustrations with the graphics packages in R, particularly
 	\item Sometimes you need even more control over the output than {\tt ggplot} provides.  In this case, you need to modify the low level grid output that {\tt ggplot} uses to draw the graphics.  In Chapter Eight, you will how the output is built up, how to control and modify the output, and how to add additional annotations to the plot.
 
 \end{itemize}
-
-\section{About this book}\label{sec:about_this_book}
-
-% This book is available online for free at \url{http://had.co.nz/ggplot/book}.  However, if you want to support the development of ggplot (and save yourself the hassle of printing and binding a large pdf) you can also buy a printed version for \$US 40 (price may change).  
-
-You can find online updates to this book, information about features in the latest version of ggplot, as well as talks and papers at \url{http://had.co.nz/ggplot}.  There is also a gallery of example graphics.  If you would like your graphics to be included in the gallery, please send me reproducible code and a paragraph or two describing your plot.
 
 \section{Installation}\label{sub:installation}
 
@@ -62,27 +114,11 @@ Now installed packages will have a version number associated with them, and you 
 	library(ggplot, version="0.3.3")
 \end{verbatim}
 
-% Find out more about this.
-
 \section{Problems}\label{sec:problems}
 
 {\tt ggplot} isn't perfect (yet!), so from time-to-time you may encounter something that doesn't way the way you think it should.  If this happens, please email me \href{mailto:h.wickham@gmail.com}{h.wickham@gmail.com} a reproducible example of your problem, as well as a description of what you think should happen.  The more information you provide, the more likely I am going to be able to help you.
 
-\section{R graphics overview}
 
-To give you some idea of how {\tt ggplot} fits into the broader landscape of R graphics, this section describes some of the other graphics packages available in R.
-
-\begin{itemize} 
-	\item The problem with base graphics is that it's basically a pen on paper model: you can only draw on top, not modify or delete existing content or change the axes etc.  Base graphics includes both tools for drawing primitives and entire plots. No other plotting system does this.
-
-	\item Grid graphics are a big step up from the drawing capabilities of base graphics. The plot objects can be represented independently of the plot and modified later on. A system of viewports (each containing its own coordinate system) makes it easier to layout complex graphics.
-
-	\item Trellis/lattice uses grid graphics, and is a considerable improvement over base graphics.  The chief advantage of lattice over base graphics is that you can easily produce trellised (or conditioned) plots.  A trellised plot reproduces the same plot for different subsets of the data, a type of small multiple.  Lattice graphics also provide automatic legends, and a range of 3D plots.  However, lattice graphics does not use a formal model of graphics, which can make it hard to extend.
-
-	\item ggplot is an attempt to take the good things about base and lattice graphics and improve on them by having a model which supports the production of any kind of statistical graphic, build on principles outlined in the Grammar of Graphics.  The chief advantage of ggplot are that it has a solid underlying model.  This makes it easy to describe a wide range of graphics with a compact syntax, and separates out different components to make extension easier.
-
-	\item Many other R packages implement specialist graphics but no others provide a framework for producing statistical graphics. While this is fine if you just want to produce a one-off graphic, it is generally hard to combine these with other graphics you may be using.
-\end{itemize}
 
 \section{Why a new plotting system?}\label{sec:why_a_new_plotting_system_} 
 
