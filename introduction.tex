@@ -2,21 +2,19 @@
 
 \chapter{Introduction}
 
-ggplot is an R package for producing statistical graphics.  It builds on top of the grid graphics system \citep{grid}, and uses the philosophy outlined in the Grammar of Graphics \citep{wilkinson:2006}.  Because ggplot is based on a formal model of graphics, it provides a powerful and flexible plotting system that is still easy to use.  ggplot provides many features that take the hassle out of making graphics.  For example, it produces legends automatically, makes it easy to combine data from multiple sources and you can build up a plot step-by-step.
+ggplot is an R package for producing statistical graphics.  It builds on top of the grid graphics system \citep{grid}, and uses the philosophy outlined in the Grammar of Graphics \citep{wilkinson:2006}.  Because ggplot is based on a formal model of graphics, it provides a powerful and flexible plotting system that is still easy to use.  ggplot also provides many features that take the hassle out of making graphics. For example, it produces legends automatically, makes it easy to combine data from multiple sources, to produce the same plot for different subsets of a data set.
 
 This book provides a practical introduction to ggplot with lots of example code and graphics. It also explains the grammar on which ggplot is based. As with any other formal system, you can use ggplot with almost no understanding of the underlying model, but the more you learn about the grammar, the more effectively you'll be able to use ggplot.  This book will guide you from a novice unfamiliar with the grammar, to an expert who can build new components which extend the grammar.
 
 This book assumes some familiarity with R, to the level described in Dalgaard’s Introductory Statistics with R.
 
-% From words (scatterplot, pie chart) to sentences which describe completely the structure of a plot.
-% 
-% Objected oriented design
-% 
-% Revision and iteration
-
 \section{What is the grammar of graphics?}
 
-\citet{wilkinson:2006} created the grammar of graphics to describe the deep foundation that underlies all statistical graphics.  The grammar of graphics is an answer to a question: what is a statistical graphic?  My take on the grammar is that a graphic is a mapping from {\bf data} to {\bf aes}thetic attributes (colour, shape, size) of {\bf geom}etric objects (points, lines, bars).  The plot may also contain {\bf stat}istical transformations of the data, and is drawn on a specific {\bf coord}inate system.  {\bf Facet}ting can be used to generate the same plot for different subsets of the dataset.  It is the combination of these independent component that make up a graphic.  The components are described in more detail below.
+\citet{wilkinson:2006} created the grammar of graphics to describe the deep features that underlie all statistical graphics.  The grammar of graphics is an answer to a question: what is a statistical graphic?  My take on the grammar is that a graphic is a mapping from data to  aesthetic attributes (colour, shape, size) of geometric objects (points, lines, bars).  The plot may also contain statistical transformations of the data, and is drawn on a specific  coordinate system.  Facetting can be used to generate the same plot for different subsets of the dataset.  It is the combination of these independent components that make up a graphic.  
+
+The grammar, my interpretation of the grammar, and how it is used in ggplot is described in detail in chapter 3.  Mastery of the grammar will go hand in hand with mastery of ggplot.
+
+The components of the grammar are described in more detail below.
 
 \begin{itemize}
 	\item Data is the most important thing, and the thing that you bring to the table.
@@ -30,24 +28,25 @@ This book assumes some familiarity with R, to the level described in Dalgaard’
 It is also important to talk about what the grammar doesn't do:
 
 \begin{itemize}
-	\item It doesn't advise what graphics you should make to answer the questions you are interested in.  It describes what a meaningful plot is, but most meaningful plots are unrelated to your questions. While this book endeavours to promote a sensible process for producing plots of data, the focus of the book is on how to produce the plots you want, not knowing what plots to produce. For more advice on this topic, you may want to read \citep{robbins:2004,cleveland:1993,chambers:1983,tukey:1977}
+	\item It doesn't advise what graphics you should use to answer the questions you are interested in.  While this book endeavours to promote a sensible process for producing plots of data, the focus of the book is on how to produce the plots you want, not knowing what plots to produce. For more advice on this topic, you may want to consult these sources: \citet{robbins:2004,cleveland:1993,chambers:1983,tukey:1977}.
 
-	\item Ironically, it doesn't specify what a graphic should look like.  The finer points of display, for example, font size or background colour, are not specified by the grammar.  In practice to create a useful plotting system we will need to describe these in some way. Similarly, the grammar does not specify how to make an attractive graphic, and while the defaults in ggplot have been chosen with care, you may need to consult other references to create a beautiful plot \citep{tufte:1990,tufte:1997,tufte:2001,tufte:2006}.
+	\item Ironically, the grammar doesn't specify what a graphic should look like.  The finer points of display, for example, font size or background colour, are not specified by the grammar.  In practice, a useful plotting system will need to describe these, as ggplot doese. Similarly, the grammar does not specify how to make an attractive graphic, and while the defaults in ggplot have been chosen with care, you may need to consult other references to create an attractive plot: \citep{tufte:1990,tufte:1997,tufte:2001,tufte:2006}.
 
-	\item It does not describe interaction: the grammar of graphics describes only static graphics, and there is essentially no benefit to displaying on a computer screen as opposed to on a piece of paper.  ggplot can only create static graphics, so for dynamic and interactive graphics you will have to look elsewhere.  [Mondrian book] and [GGobi book] provide excellent introduction to two different interactive graphics packages: Mondrian and GGobi.
+	\item It does not describe interaction: the grammar of graphics describes only static graphics, and there is essentially no benefit to displaying on a computer screen as opposed to on a piece of paper.  ggplot can only create static graphics, so for dynamic and interactive graphics you will have to look elsewhere.  [Mondrian book] and [GGobi book] provide excellent introductions to two different interactive graphics packages: Mondrian and GGobi.
 
 \end{itemize}
+
 
 \section{How does ggplot fit in with other R graphics?}
 
 There are a number of other graphics systems available in R: base graphics, grid graphics and trellis/lattice graphics.  How does ggplot differ from them?
 
 \begin{itemize} 
-	\item Base graphics are based on work done by Alan Wilks \citep{wilks:1995a,wilks:1995}, in early 90's.  Base graphics has basically a pen on paper model: you can only draw on top, not modify or delete existing content or change the axes etc.  There is no (user accessible) representation of the graphics, apart from the appearance on the plot. Base graphics includes both tools for drawing primitives and entire plots. No other plotting system does this.  Base graphics functions are generally fast, but have limited scope. When you create a single scatterplot, or histogram, or a set of boxplots, you're probably using base graphics.
+	\item Base graphics were ``hacked'' together by Ross Ihaka based on experience implementing S graphics driver and partly looking at \cite{chambers:1983} \citetext{priv.\ comm.}.  Base graphics has basically a pen on paper model: you can only draw on top, not modify or delete existing content or change the axes etc.  There is no (user accessible) representation of the graphics, apart from the appearance on the plot. Base graphics includes both tools for drawing primitives and entire plots. No other plotting system does this.  Base graphics functions are generally fast, but have limited scope. When you create a single scatterplot, or histogram, or a set of boxplots, you're probably using base graphics.
 
-	\item Grid graphics emerged in 2001, growing out of Paul Murrell's PhD work.  Grid graphics provides a much richer system of graphical primitives, including a range of units, viewports and better editing capabilities. Grid grobs (graphical objects) can be represented independently of the plot and modified later. A system of viewports (each containing its own coordinate system) makes it easier to layout complex graphics. Grid provides drawing primitives, but no tools for producing statistical graphics.  
+	\item Paul Murrell started development of grid graphics in 2000, growing partly out of his PhD work, to build a solid foundation for ``something trellis-like'', although Deepayan Sarkar later took on development of that stage \citetext{priv.\ comm.}.  Grid graphics provides a much richer system of graphical primitives, including a range of units, viewports and better editing capabilities. Grid grobs (graphical objects) can be represented independently of the plot and modified later. A system of viewports (each containing its own coordinate system) makes it easier to layout complex graphics. Grid provides drawing primitives, but no tools for producing statistical graphics.  
 
-	\item The lattice package \citep{sarkar:2005}, started at around the same time as grid, and  uses grid graphics to implement the trellis graphics system of \citet{cleveland:1993,cleveland:1994}, and is a considerable improvement over base graphics.  You can easily produce conditioned plots, and some plotting details (eg.\ legends) are taken care of automatically.  However, lattice graphics lacks a formal model of graphics, which can make it hard to extend.
+	\item The lattice package \citep{sarkar:2005}, started soon after as grid, and uses grid graphics to implement the trellis graphics system of \citet{cleveland:1993,cleveland:1994}, and is a considerable improvement over base graphics.  You can easily produce conditioned plots, and some plotting details (eg.\ legends) are taken care of automatically.  However, lattice graphics lacks a formal model of graphics, which can make it hard to extend.
 
 	\item ggplot, started in 2005, is an attempt to take the good things about base and lattice graphics and improve on them by having a model which supports the production of any kind of statistical graphic, based on principles outlined above.  The solid underlying model of ggplot makes it easy to describe a wide range of graphics with a compact syntax, and independent components make extension easy.  Like lattice, ggplot uses grid to draw the graphics, which means you can exercise much low level control over the appearance of the plot
 
@@ -64,7 +63,7 @@ The book is structured to lead you from being a new user of ggplot to a develope
 \begin{itemize}
 	\item Chapter One describes how you can quickly get started using {\tt qplot} to make graphics, just like you can using {\tt plot}.  This chapter introduces several important ggplot concepts: grob functions, aesthetic mappings and facetting.
 	
-	\item While {\tt qplot} is a quick way to get started, it doesn't give you full control over all the  available options, so Chapter Two describes how to build up a plot piece by piece, exercising full control over the available options.  This chapter discusses the components of a plot, laying the ground for the following chapters which describe these components in detail, and teach you how to build your own.  You will also learn some techniques using the reshape package to get data into a convenient form for ggplot.
+	\item While {\tt qplot} is a quick way to get started, you are not using the full power of the grammar.  Chapter Two describes how the grammar of graphics and how the grammar of ggplot differs to the original.  The theory will be illustrated with examples showing how to build up a plot piece by piece, exercising full control over the available options.  You will learn about the different components of a plot, laying the ground for the following chapters which describe these components in detail and teach you how to build your own.  You will also learn some techniques using the reshape package to get data into a convenient form for ggplot.
 
 	\item The most crucial components of a plot are the geometric and statistic objects, and Chapters Three and Four describes what they do, how they work, and list the most commonly used.  Mastery of this chapter will give you the ability to pick and choose the most appropriate tool for your visual display needs.  The chapter concludes by showing you how to build your own geom and stat objects so that you can extend ggplot for your needs.
 
@@ -112,6 +111,6 @@ Now installed packages will have a version number associated with them, and you 
 
 \section{Acknowledgements}\label{sec:acknolwedgements}
 
-Many people have contributed to this book with high-level structural insights, and bug reports.  In particular, I would to thank: Lee Wilkinson, for discussions that cemented my understand of the grammar; Gabor Grothendienk for early helpful comments; Heike Hofmann and Di Cook for being great major professors; Charlotte Wickham; the students of stat480 and stat503 at ISU, for using it; Debby Swayne, for a huge amount of helpful feedback.
+Many people have contributed to this book with high-level structural insights, and bug reports.  In particular, I would to thank: Lee Wilkinson, for discussions that cemented my understand of the grammar; Gabor Grothendienk for early helpful comments; Heike Hofmann and Di Cook for being great major professors; Charlotte Wickham; the students of stat480 and stat503 at ISU, for using it; Debby Swayne, for a masses helpful feedback and advice.
 
 \input{footer.tex}
