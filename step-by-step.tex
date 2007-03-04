@@ -1,221 +1,217 @@
 \input{header.tex}
 
-\setchapterpreamble[u]{% 
-\dictum[Friedrich Nietzsche]{What is good? All that heightens the feeling of power in man, the will to power, power itself. What is bad? All that is born of weakness. What is happiness? The feeling that power is growing, that resistance is overcome.}} 
-
-\chapter{Building up a plot step-by-step}
+\chapter{Understanding the grammar}
 
 \section{Introduction}\label{sec:introduction}
 
-While building plots with {\tt qplot} is quick and easy, there are some things that you don't have much control over, such as the scales on the plot.  Also, {\tt qplot} is best used for creating plots with a single dataset, and it is not as easy to create functions that supplement a plot with addition data.  
+% Introduction to grammar
+% How my grammar differs from the grammar of graphics
+% What the syntax looks like
 
-This chapter introduces the general philosophy and function layout of {\tt ggplot}.  You will first learn what components make up a {\tt ggplot} plot.  Next I explain the general structure of the functions and arguments in R that you use to create and link together the components.  Finally, I describe the options that control the general layout and appearance of all plots and how to control them.
+You can choose to use just {\tt qplot} without any understanding of the underlying grammar, but you will be able to use only a small part of the power of ggplot.  By learning more about the grammar, and the components that make it up, you will be able to create a wider range of plots, as well as being able to combine multiple datasets, and write functions that operate on plots.  
 
-This chapter is fairly theoretical, so you won't find too many examples of drawing plots.  However, a good understanding of how everything fits together will help you in creating your own plots.   The next chapters, XXX and XXX, describe in detail the different components that {\tt ggplot} provides, and provide many exampples of {\tt ggplot} in use.  Use these, in conjunction with the R help pages, to figure out what you need for the plot you are trying to make.  
+This chapter describes of the grammar of graphics, and how the grammar of ggplot differs from the grammar of \citep{wilkinson:2006}.  I present two ways to think about the grammar: as an answer to a question, and as a pipeline of transformations.  You will also learn the R syntax used to create and combine the components to form an actual plot.  
+
+% You will first learn what components make up a {\tt ggplot} plot object.  Next I explain the general structure of the functions and arguments in R that you use to create and link together the components.  Finally, I describe the options that control the general layout and appearance of all plots and how to control them.
+
+This chapter is fairly theoretical, so you won't find too many examples of drawing plots.  However, a good understanding of how everything fits together will help you in creating your own plots.   The following chapters, 3-7, describe in detail the different components, provide many practical examples, and show you how to build you own components if the included ones aren't sufficient.  
+
+%Use these, in conjunction with the help pages, to figure out what you need for your plot  
 
 \section{What is a plot?}\label{sec:what_is_a_plot}
 
-What is a plot?  One way to think about it is as a mapping from data to visual properties of graphical objects.
+One way to think about the grammar of graphics is as a question: what is a plot?  The grammar answers this by describing a plot as a collection of independent components, each describing a particular part of the plot.
 
 \begin{itemize}
 	\item Data is obviously the most important part, and it is what you provide (all the other components are provided by {\tt ggplot}).  This is what you are try display visually to aid communication or analysis.
-	
-	\item Visual properties are things like position, size, colour---anything that you can percieve.
 
-	\item Graphical objects are the things that actually appear on the plot, like points or lines or bars.  
+	\item {\bf Geoms}, short for geometric objects, control the type of plot that you create.  For example, using a point geom will create a box and whisker plot, while using a line geom will create a line plot.
+	
+	\item {\bf Stats}, or statistical transformations, reduce or augment the data in a statistical manner.  For example, a useful stat is the smoother, which shows the mean of y, conditional on x.  Another common stat is the binner, which bins data in to bins.   Every geom has a default statistic, and every statistic a default geom.  For example, the bin statistic has defaults to using the bar geom to produce a histogram.
+
+	\item {\bf Scales} control the mapping from data attributes to aesthetic attributes.  They also provide an inverse mapping in the form of a guide, an axis or legend, which facilitates reading the final graphic.  Aesthetic attributes are things like position, size, colour---anything that you can perceive.  The function that maps data to aesthetic attributes is a scale. It takes values in data space (continuous or categorical) and maps them into an aesthetic space (eg. colour, size, shape).  A scale also provides guides to convert back from the aesthetic attribute to the original data.  Guides are either axes (for position) or legends (for everything else)
+	
+	\item {\bf Coords}, coordinate systems, map the position of objects on to the plane of the plot.
+	
+	\item There is also another thing that turns out to be sufficiently useful that we should include it in our general framework: facetting (also known as conditioned or trellis plots).  This allows us to easily create small multiples of different subsets of an entire dataset.  This is a powerful tool when investigating whether patterns hold across all conditions.
+	
 \end{itemize}
 
-There is also another thing that turns out to be sufficiently useful that we should include it in our general framework: facetting (also known as conditioned or trellis plots).  This allows us to easily create small multiples of different subsets of an entire dataset.  This is a powerful tool when investigating whether patterns hold across all conditions.
-
-The function that maps data to aesthetic attributes is a scale. It takes values in data space (continuous or categorical) and maps them into an aesthetic space (eg. colour, size, shape).  A scale also provides guides to convert back from the aesthetic attribute to the original data.  Guides are either axes (for position) or legends (for everything else)
-
-Basic graphical objects: points, lines, bars.
-Basic aesthetic attributes: colour, size, shape.
-
-Using these four components we can discribe almost any standard plot.  These components are inspired by The Grammar of Graphics.  The Grammar of Graphics provides a finer breakdown which can recreate any plot.  Future versions of {\tt ggplot} should provide progressively more powerful implementations.
-
-\section{Basic structure of functions and arugments}\label{sec:basic_structure_of_functions_and_arugments}
-
-There are three types of functions that you use to setup a plot:
+This breakdown is similar to The Grammar of Graphics, but three components are missing: the algebra, the transformation stage, and guides.  These were dropped for the following reasons:
 
 \begin{itemize}
-	\item Specify data, defaults and facetting: {\tt ggplot} (or {\tt qplot})
-	\item Add graphical objects.  All functions start with {\tt gg} and are singular, eg. {\tt ggpoint}, {\tt errorbar}.  Grob functions take the following arguments:
+	\item Variable transformations are already easy in R so are omitted.
 	
-		\begin{itemize}
-			\item {\tt plot}, the plot to add the grobs to 
-			\item {\tt aesthetics} (optional), a list describing which variables should be mapped to which aesthetics
-			\item {\tt data} (optional), a data set to get the data from
-		\end{itemize}
-		
-		Most grob functions take additional arguments that control the appearance of the plot.  
-		
-	\item Set up scales, all position scales with {\tt ps} all others start with {\tt sc}, eg. {\tt pscontinuous} for continuous position scales, or {\tt scfill} for fill colour scale.
+	\item The data reshapings of the algebra are instead performed by the reshape package \citep{reshape}.  This is part of my philosophy that data manipulation should be separated from display as much as possible.
+	
+	\item Guides are largely drawn automatically.  I have created geoms that correspond to some annotations as these are often data dependent in some way, and may need to be different in different facets of the plot.  Additionally, grid can be used to draw directly on the plot.
 \end{itemize}
 
-All of these functions modify a plot object.  A plot object consists of a set of defaults, a list of grob functions and a list of scales.  Any function that modifies the copy will always return a modified copy of the object, so if you want to keep it around, you will need to explicitly save it.  One nice thing about this is that composition of grob functions corresponds to composition of graphic objects on the plot.
+I have renamed the element component to geom (after consultation with Lee Wilkinson) to better describe what it is.  Additionally, my descriptions are less formal than those of The Grammar.  
+
+\section{The pipeline}\label{sec:the_pipeline}
+
+Another way of thinking about the grammar of graphics is as a pipeline which takes in raw data and outputs plots.  Each stage of the pipeline performs a transformation described by one of the components of the grammar.  For example, one of the first stages performs the statistical transformation described by the stat component.  
+
+The pipelines of ggplot and the GoG differ slightly.  In ggplot, every stage takes a data frame as input and returns a data frame as output, apart from the final stage, which outputs grid grobs (graphical objects).  The GoG has three intermediate data formats: a varset (the same as a data frame), a graph and a graphic.
+
+[Insert diagram of the pipelines here.]
+
+The pipeline is a little more complicated when multiple data sources and geoms are involved.  The complication arises because all data must share the same scales and coordinate system, but may use different mappings, geoms and statistics.  All pipelines must share the same coordinate system, so this is where the connection occurs.  For this reason, ggplot uses an intermediate object (currently) called a {\bf promise} which combines the geom, stat, data and mapping (plot defaults used if not otherwise specified).  The GoG does not describe this.
+
+[Note to Debby: this is really important.  The (data + mapping + stat + geom) is themost important component but I don't think I've described it enough]
+
+[Insert more complicated diagram here]
+
+\section{Syntax of the grammar}
+
+The biggest difference between The Grammar of Graphics and the grammar used in ggplot is how the grammar is written.  The Grammar of Graphics uses two specifications.  A concise format is used to caption figure, and a more detailed xml format stored on disk.  The concise format looks something like:
+
+\begin{verbatim}
+DATA: source("demographics")
+DATA: longitude, latitude = map(source("World"))
+TRANS: bd = max(birth - death, 0)
+COORD: project.mercator()
+ELEMENT: point(position(lon * lat), size(bf), color(color.red))
+ELEMENT: polygon(position(longitude * latitude))
+\end{verbatim}
+
+[Note to Debby: if you have the latest copy this is on page 13, figure 1.5.  I have added the first data specification as it is omitted in the book, but doesn't make much sense without it.  I have no clue how the multiple datasets (one demographic, one map) are dealt with in the Grammmar - Lee doesn't discuss this at all.]
+
+To make this work in R, we need to make a few changes.  Its equivalent in ggplot would be:
+
+\begin{verbatim}
+demographics <- transform(demographics, bd = max(birth - death, 0))
+ggplot(data=demographic, aes(x=lon, y=lat)) + 
+  geom_point(aes(size=bd), colour="red") +
+  geom_polygon(data=world) +
+  coord_map(projection="mercator")
+\end{verbatim}
+
+\noindent This example is sophisticated, and the parts that make it up are described below.
+
+\begin{itemize}
+	\item {\tt ggplot} specifies the data, default aesthetic mappings and facetting. (you can also {\tt qplot} which does this and more).  It creates a plot object which we then supplement with the other components of the plot.  {\tt aes} is short for aesthetic mapping and specifies which variables in the data should be mapped to which aesthetic attributes.  (Scales then specify {\em how} this should occur).
+	
+	\item $+$ is used to add components to this plot.  Each component is named {\tt component type\_component name}.  All components are always written in the singular eg. {\tt geom\_point}, {\tt geom\_polygon}.
+	
+	\item Geoms can override the default data and aesthetic mappings provided by the plot.  Each geom also has a default statistic which is used to transform the data prior to plotting.  For the geoms in the above example, the default statistic is the identity function.  
+		
+	\item In both the ggplot and GoG examples, scales are defined by default.  In ggplot you can override the defaults by adding a scale object, e.g. {\tt scale\_colour} or {\tt scale\_size}
+	
+	\item The coordinate system uses a slightly different format.  In general, most of the object specifications in ggplot are slightly different to those in GoG, in order to be more familiar to R users.
+\end{itemize}
 
 There is also a global plot object ({\tt .PLOT}) which records the last plot.  This can be useful if you forgot to save the last output.
 
-\subsection{Data, defaults and facetting}\label{sub:data_defaults_and_facetting}
+% \subsection{Data, defaults and facetting}\label{sub:data_defaults_and_facetting}
+% 
+% The plot object starts off very simple: it is just a set of defaults, with no visual display.  This is what the function {\tt ggplot} will set up.  
+% 
+% To start a plot, the bare minimum you need is a data frame:
+% 
+% \begin{alltt}
+% p <- ggplot(diamonds)
+% \end{alltt}
+% 
+% You can supply a facetting formula (as described in Chapter XXX) and margins, which describe how to form small multiples of the plot.
+% 
+% \begin{alltt}
+% p <- ggplot(diamonds, colour ~ cut, margins=TRUE)
+% \end{alltt}
+% 
+% You can also supply a list of default aesthetics mappings.  This should be of the form {\tt aes(aesthetic attribute = data attribute)}.   These will be used by all geoms that support them, and otherwise will be silently ignored.  Careful use of the defaults will save you some typing, but if you don't know what you need you can just leave them blank.  All of the defaults can be overridden when adding geoms later on.
+% 
+% \begin{alltt}
+% p <- ggplot(diamonds, aes(colour = colour, shape = cut))  
+% \end{alltt}
+% 
+% You can find out more about the different aesthetic mappings available for each geom in chapter XXX, and how to exercise control over the default scales in chapter XXX.
+% 
+% You can modify these settings after you have created the plot using {\tt setfacets} and {\tt setdefaults}.  You can modify the default data set using {\tt setdata}.  This makes it easy to set up a plot and change the data set that it is based on, or to add facetting after you have set up everything else.
+% 
+% \subsection{Graphical objects}\label{sub:graphical_objects}
+% 
+% Once you have set up the defaults, you will want to add graphical objects to the plot.  There is a separate function for each type of graphical object, but they all have a very similar structure.  All of the geom functions start with {\tt gg}.  Chapter XXX lists all of the geom functions, and explains in detail their function and options that they take.  There is also a list of all geoms in {\tt ?ggplot}, which will also contain any added since this book was printed.
+% 
+% If you want to use the defaults you set up when creating the plot object, , you just use the geom function like:
+% 
+% \begin{alltt}
+% p + geom_line()
+% \end{alltt}
+% 
+% This will create a new plot object with a lines geom added to its list of geoms.  By default, this object will be plotted, so that you see the effect of the geom function immediatly.  You can also add more aesthetics, or specify a different data set to use instead of the default.  
+% 
+% \begin{alltt}
+% p + geom_line(aes(colour=a, size=b), data=new.data.frame))
+% \end{alltt}
+% 
+% If there is a default aesthetic you want to unset, use {\tt NULL}:
+% 
+% \begin{alltt}
+% p + geom_line(p, aes(colour=NULL))
+% \end{alltt}
+% 
+% If the plot is facetted, and the new data set does not contain the facetting columns, then the data set will be duplicated for each value of the missing columns.  This has the effect of displaying the data in every facet.  This is explained in more detail, with examples, in chapter XXX, page X.
+% 
+% For every aesthetic the geom function understands, you can also supply that aesthetic as an option to the function.  Instead of mapping data to that aesthetic, this will change the default.  For example.
+% 
+% \begin{alltt}
+% p + geom_line(colour="red")  
+% \end{alltt}
+% 
+% \noindent will set the line colour to be red instead of black.  Other examples:
+% 
+% \begin{alltt}
+% p + geom_line(size=3)  
+% p + geom_line(size=3, colour="blue")  
+% \end{alltt}
+% 
+% These changes to the aesthetic attributes will not appear in the legend.  If you do want to   manually set the aesthetic attributes, you can use a scale specially design to do that, {\tt scmanual}.  This scale provides a number of options that you can use to customise the legend.  See page XXX for more details.
+% 
+% \subsection{Scales}\label{sub:scales}
+% 
+% By default, whenever you specify an aesthetic mapping (eg. {\tt colour=a}) a default scale is automatically added to the plot object (eg. {\tt scale_colour_gradient}).  However, if the default does not do what you want, you will have to manual add a scale to overwrite the existing default.  You do this with scale functions.  Scales are described in detail in chapter XXX.
+% 
+% Scales are not quite as regular as geom functions, because they have a greater range of appearances.  
+% 
+% Two types of scales: for continuous data, and for categorical data
+% 
+% \begin{tabular}{l|p{1in}l}
+%  & position & other\\
+% \hline
+% categorical & 
+% Testing one two threee
+% 
+% How does it work
+% r2c2 & r2c3\\
+% continuous & r3c2 & r3c3\\
+% \hline
+% \end{tabular}
+% 
+% All scales take (at least) the following arguments:
+% 
+% \begin{itemize}
+%   \item name
+% \end{itemize}
+% 
+% Most continuous scales also have:
+% 
+% \begin{itemize}
+%   \item range
+%   \item expand
+%   \item breaks
+%   \item transform
+% \end{itemize}
+% 
+% Most categorical scales also have:
+% 
+% \begin{itemize}
+%   \item range
+%   \item breaks
+%   \item labels
+% \end{itemize}
 
-The plot object starts off very simple: it is just a set of defaults, with no visual display.  This is what the function {\tt ggplot} will set up.  
-
-To start a plot, the bare minimum you need is a data frame:
-
-\begin{alltt}
-p <- ggplot(my.data.frame)
-\end{alltt}
-
-You can supply a facetting formula (as described in ) and margins, which describe how to form small multiples of the plot.
-
-\begin{alltt}
-p <- ggplot(my.data.frame, sex ~ location, margins=TRUE)
-\end{alltt}
-
-You can also supply a list of default mappings.  This should be of the form {\tt list(aesthetic attribute = data attribute)}.   These will be used by all grob functions that support them, and otherwise will be silently ignored.  Careful use of the defaults will save you some typing, but if you don't know what you need you can just leave it blank.  All of the defaults can be overridden when adding grobs later on.
-
-\begin{alltt}
-p <- ggplot(my.data.frame, aes=list(colour = sex, shape = location))  
-\end{alltt}
-
-You can find out more about the different aesthetic mappings available for each grob in chapter XXX, and how to exercise control over the default mappings in chapter XXX.
-
-You can modify these settings after you have created the plot using {\tt setfacets} and {\tt setdefaults}.  You can modify the default data set using {\tt setdata}.  This makes it easy to set up a plot and change the data set that it is based on, or to add facetting after you have set up everything else.
-
-{\tt ggplot} is a generic functio
-
-\subsection{Graphical objects}\label{sub:graphical_objects}
-
-Once you have set up the defaults, you will want to add graphical objects to the plot.  There is a separate function for each type of graphical object, but they all have a very similar structure.  All of the grob functions start with {\tt gg}.  Chapter XXX lists all of the grob functions, and explains in detail their function and options that they take.  There is also a list of all grobs in {\tt ?ggplot}, which will also contain any added since this book was printed.
-
-If you want to use the defaults you set up when creating the plot object, , you just use the grob function like:
-
-\begin{alltt}
-ggline(p)
-\end{alltt}
-
-This will create a new plot object with a lines grob added to its list of grobs.  By default, this object will be plotted, so that you see the effect of the grob function immediatly.  You can also add more aesthetics, or specify a different data set to use instead of the default.  
-
-\begin{alltt}
-ggline(p, aes=list(colour=a, size=b), data=new.data.frame)
-\end{alltt}
-
-If there is a default aesthetic you want to unset, use {\tt NULL}:
-
-\begin{alltt}
-ggline(p, aes=list(colour=NULL))
-\end{alltt}
-
-If the plot is facetted, and the new data set does not contain the facetting columns, then the data set will be duplicated for each value of the missing columns.  This has the effect of displaying the data in every facet.  This is explained in more detail, with examples in chapter XXX, page X.
-
-For every aesthetic the grob function understands, you can also supply that aesthetic as an option to the function.  Instead of mapping data to that aesthetic, this will change the default.  For example.
-
-\begin{alltt}
-ggline(p, colour="red")  
-\end{alltt}
-
-\noindent will set the line colour to be red instead of black.  Other examples:
-
-\begin{alltt}
-ggline(p, size=3)  
-ggline(p, size=3, colour="blue")  
-\end{alltt}
-
-These changes to the aesthetic attributes will not appear in the legend.  If you do want to   manually set the aesthetic attributes, you can use a scale specially design to do that, {\tt scmanual}.  This scale provides a number of options that you can use to customise the legend.  See page XXX for more details.
-
-\subsection{Scales}\label{sub:scales}
-
-By default, whenever you specify an aesthetic mapping (eg. {\tt colour=a}) a default scale is automatically added to the plot object (eg. {\tt sccolour}).  However, if the default does not do what you want, you will have to manual add a scale to overwrite the existing default.  You do this with scale functions.
-
-Scales are described in detail in chapter XXX.
-
-There are two basic types of scales: position scales, and everything.  Position scales are different because they draw axes and guides within the plot.  
-
-Scales are not quite as regular as grob functions, because they have a greater range of appearances.  
-
-Two types of scales: for continuous data, and for categorical data
-
-\begin{tabular}{l|p{1in}l}
- & position & other\\
-\hline
-categorical & 
-Testing one two threee
-
-How does it work
-r2c2 & r2c3\\
-continuous & r3c2 & r3c3\\
-\hline
-\end{tabular}
-
-All scales take (at least) the following arguments:
-
-\begin{itemize}
-  \item name
-\end{itemize}
-
-Most continuous scales also have:
-
-\begin{itemize}
-  \item range
-  \item expand
-  \item breaks
-  \item transform
-\end{itemize}
-
-Most categorical scales also have:
-
-\begin{itemize}
-  \item range
-  \item breaks
-  \item labels
-\end{itemize}
-\section{Options}\label{sec:options}
-
-There are two ways to set options:
-
-\begin{itemize}
-  \item globally (for all plots), using {\tt ggopt}
-  \item locally (for one plot), using \$. 
-\end{itemize}     
-                 
-\begin{tabular}{lp{1.5in}l}
-Option & Valid Values & Example \\
-\hline
-background.fill    & any colour
-& \\
-background.colour  & any colour
-& \\
-grid.colour        & any colour
-& \\
-grid.fill          & any colour
-& \\
-strip.gp           & any colour
-& \\
-strip.text.gp      & any colour
-& \\
-strip.text         & a function of two values, variable and value.  Should return a text string
-& \\
-legend.position    & left, right, top, bottom, none
-& \\
-aspect.ratio       & a number or NULL
-& \\
-\hline
-\end{tabular}
-
-\subsection{Themes}\label{sub:themes}
-
-It is also possible to create a theme which encapsulates multiple options.  One theme is included by default: {\tt }, which sets up a white background with black grid lines.  You can use a theme with {\tt ggtheme(theme)}, or for a single plot {\tt update(plot, theme)}.
-
-It is very easy to create your own theme.  Just make a list of all the options you want to set.
-
-\section{Summary}\label{sec:summary}
-
-\begin{itemize}
-  \item To create a new plot object with specified details, use {\tt p <- ggplot(data, facets=facetting formula, margins=margins to display, aesthetics= list of default aesthetics)}
-  \item To add grobs to a plot, use a grob function, e.g. {\tt ggpoint(p)}.  
-  \item To add a scale to a plot, use a scale function, e.g. {\tt scmanual(p)} or {\tt pscontinuous(p)}
-\end{itemize}
 
 
 \input{footer.tex}
