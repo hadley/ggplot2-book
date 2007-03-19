@@ -6,13 +6,10 @@
 % * exercises - see plot and then try and create on your own
 % * wall chart of different plot types
 % * more error bar and ribbon examples
-% * conclusion weak
-% * more info about bin widths
-% * expand on span, adjust etc
 % * table of options
 
 % decumar<<< 
-% library(ggplot2)
+% source("~/documents/ggplot/ggplot/load.r")
 % library(xtable)
 % doptions(width=8, height=4.8, lscale=0.5)
 % ggopt(axis.color = "black")
@@ -25,44 +22,45 @@
 
 \section{Introduction} 
 
-In this chapter, you will learn to make a wide variety of plots with your first ggplot function, {\tt qplot}, short for {\bf q}uick plot. qplot makes it easy to produce complex plots, normally requiring several lines of code in R, in one line. qplot can do this because it's based on the grammar of graphics, which allows users to create simple yet expressive descriptions of the plot.  In later chapters you will learn to fully use the expressive power of the grammar, here you'll get started reproducing relatively simple plots.
+In this chapter, you will learn to make a wide variety of plots with your first ggplot function, {\tt qplot}, short for {\bf q}uick plot. qplot makes it easy to produce complex plots, normally requiring several lines of code in R, in one line. qplot can do this because it's based on the grammar of graphics, which allows you to create a simple, yet expressive, description of the plot.  In later chapters you'll learn to use all of the expressive power of the grammar, but here we'll start simple so you can work your way up.
 
 {\tt qplot} has been designed be very similar to {\tt plot}, which should make it easy if you're already familiar with plotting in R.  Remember, during an R session you can get a summary of all the arguments to {\tt qplot} with R help, {\tt ?qplot}.
 
-This section with cover: 
+In this chapter you'll learn:
 
 \begin{itemize}
-	\item Basic use
-	\item Mapping variables to aesthetic attributes (colour, size, shape, etc)
-	\item Creating many different types of plots by specifying different geoms
-	\item Combining plots 
-	\item Facetting, or conditioned plots
-	\item Specifying some basic scale options
+	\item The basic use of {\tt qplot}---If you're already familiar with {\tt plot}, this will be particularly easy. Page \pageref{sec:basic_use}.
+	\item How to map variables to aesthetic attributes, like colour, size and shape. Page \pageref{sec:aesthetic_attributes}.
+	\item How to creating many different types of plots by specifying different geoms, and how to combine multiple types in a single plot. Page \pageref{sec:plot_geoms}.
+	\item The use of facetting, also known as trellising or conditioning, to break apart subsets of your data. Page \pageref{sec:facetting}.
+	\item How to tune the appearance of the plot by specifying some basic options. Page \pageref{sec:other_options}.
 \end{itemize}
 
 \section{Data sets}\label{sec:data_sets}
 
-This mainly uses one dataset so you can get familiar with the details of the plot rather than having to familiarise yourself with different datasets.  The {\tt diamonds} dataset consists of prices and quality information about 54,000 diamonds.  The dataset has not been well cleaned, so as well as demonstrating interesting relationships about diamonds, it also demonstrates some data quality problems.  We'll also use another dataset, {\tt dsmall}, which is a random sample of 1000 points.  We'll use this for plots which are more appropriate for smaller datasets.
+In this chapter we'll just use one data source, so you can get familiar with the plotting details rather than having to familiarise yourself with different datasets.  The {\tt diamonds} dataset consists of prices and quality information about 54,000 diamonds, and is included in the ggplot package.  The dataset has not been well cleaned, so as well as demonstrating interesting relationships about diamonds, it also demonstrates some data quality problems.  We'll also use another dataset, {\tt dsmall}, which is a random sample of 1000 diamonds.  We'll use this for plots which are more appropriate for smaller datasets.
 
-The first few rows of the data are shown in \ref{tab:diamonds}.  The diamonds dataset is included in the the ggplot package.
+The first few rows of the data are shown in \ref{tab:diamonds}.
 
 % decumar<<< 
-% xtable(head(diamonds), digits=c(0,1,0,0,0,1,1,0,0,2,2,2), align="l|rrrrrrrrrrr", label="tab:diamonds", caption="{\tt diamonds} dataset")
+% set.seed(1410)
+% dsmall <- diamonds[sample(nrow(diamonds), 1000),]
+% xtable(head(diamonds), digits=c(0,1,2,0,0,1,1,0,0,2,2,2), align="l|rrrrrrrrrrr", label="tab:diamonds", caption="{\tt diamonds} dataset")
 % |||
 % latex table generated in R 2.4.1 by xtable 1.3-2 package
-% Tue Mar  6 21:40:26 2007
+% Wed Mar 14 12:37:11 2007
 \begin{table}[ht]
 \begin{center}
 \begin{tabular}{l|rrrrrrrrrrr}
 \hline
  & shape & carat & cut & colour & clarity & depth & table & price & x & y & z \\
 \hline
-1 & Round & 0 & Ideal & E & SI2 & 61.5 & 55 & 326 & 3.95 & 3.98 & 2.43 \\
-2 & Round & 0 & Premium & E & SI1 & 59.8 & 61 & 326 & 3.89 & 3.84 & 2.31 \\
-3 & Round & 0 & Good & E & VS1 & 56.9 & 65 & 327 & 4.05 & 4.07 & 2.31 \\
-4 & Round & 0 & Premium & I & VS2 & 62.4 & 58 & 334 & 4.20 & 4.23 & 2.63 \\
-5 & Round & 0 & Good & J & SI2 & 63.3 & 58 & 335 & 4.34 & 4.35 & 2.75 \\
-6 & Round & 0 & Very Good & J & VVS2 & 62.8 & 57 & 336 & 3.94 & 3.96 & 2.48 \\
+1 & Round & 0.23 & Ideal & E & SI2 & 61.5 & 55 & 326 & 3.95 & 3.98 & 2.43 \\
+2 & Round & 0.21 & Premium & E & SI1 & 59.8 & 61 & 326 & 3.89 & 3.84 & 2.31 \\
+3 & Round & 0.23 & Good & E & VS1 & 56.9 & 65 & 327 & 4.05 & 4.07 & 2.31 \\
+4 & Round & 0.29 & Premium & I & VS2 & 62.4 & 58 & 334 & 4.20 & 4.23 & 2.63 \\
+5 & Round & 0.31 & Good & J & SI2 & 63.3 & 58 & 335 & 4.34 & 4.35 & 2.75 \\
+6 & Round & 0.24 & Very Good & J & VVS2 & 62.8 & 57 & 336 & 3.94 & 3.96 & 2.48 \\
 \hline
 \end{tabular}
 \caption{{	t diamonds} dataset}
@@ -73,23 +71,19 @@ The first few rows of the data are shown in \ref{tab:diamonds}.  The diamonds da
 
 \section{Basic use}\label{sec:basic_use}
 
-Just like {\tt plot}, the first two arguments to {\tt qplot} are {\tt x} and {\tt y}, giving the x- and y-coordinates for the objects on the plot. There is also an optional {\tt data} argument.  If this is specified, {\tt qplot} will look inside that data frame before looking for objects in your workspace.  It's generally a good idea to keep all the data for one plot in a data frame.
+Just like {\tt plot}, the first two arguments to {\tt qplot} are {\tt x} and {\tt y}, giving the x- and y-coordinates for the objects on the plot. There is also an optional {\tt data} argument.  If this is specified, {\tt qplot} will look inside that data frame before looking for objects in your workspace.  I recommend that you keep all the data for one plot in a data frame, instead of scatter across multiple vectors.
 
 Here is a simple example of using {\tt qplot}, investigating the relationship between price and carats (weight) of a diamond.  
 
 % decumar<<< 
 % interweave({
-% set.seed(1410)
-% dsmall <- diamonds[sample(nrow(diamonds), 1000),]
 % qplot(carat, price, data=diamonds)
 % })
 % |||
 \begin{alltt}
-> set.seed(1410)
-> dsmall <- diamonds[sample(nrow(diamonds), 1000), ]
 > qplot(carat, price, data = diamonds)
 \end{alltt}
-\includegraphics[scale=0.5]{./include/0baf29f25c89677169ec435f350aa565.pdf}
+\includegraphics[scale=0.5]{./include/a0b2f8578858c43b088f315516a5e1ea.pdf}
 \begin{alltt}
 
 \end{alltt}
@@ -117,11 +111,13 @@ You are not limited to specifying names of existing vectors: you can use functio
 \end{alltt}
 % >>>
 
-These plots illustrate some unusual features of this dataset.  There seems to be a narrow bands of prices for which there are no diamonds, and there are some diamonds with very unusual volumes for their weight.  We will investigate these relationships more as we continue.
+These plots illustrate some unusual features of this dataset.  There seems to be a narrow band of prices for which there are no diamonds, and there are some diamonds with very unusual volumes for their weight.  We will investigate these relationships more as we continue.
 
 \section{Aesthetic attributes}\label{sec:aesthetic_attributes}
 
-The first big difference with using {\tt qplot} compared to {\tt plot} when you want to assign colours, or sizes or shapes, to the points on your plot.  With {\tt plot}, it's your responsibility to change your data (eg. ``apples'', ``bananas'', ``pears'') into something that {\tt plot} knows how to use (eg. ``red'', ``yellow'', ``green'').  {\tt qplot} will do this for you automatically, and will automatically provide a legend to make it easier to map back from the plot to the original data values.  This makes it easy to include additional data on the plot.  In the next example, we augment the plot of carat and price with information about colour, clarity and cut of the diamonds.
+The first big difference with using {\tt qplot} compared to {\tt plot} comes when you want to assign colours---or sizes or shapes---to the points on your plot.  With {\tt plot}, it's your responsibility to change your data (eg. ``apples'', ``bananas'', ``pears'') into something that {\tt plot} knows how to use (eg. ``red'', ``yellow'', ``green'').  {\tt qplot} will do this for you automatically, and will automatically provide a legend to make it easier to look up the actual data values.  This makes it easy to include additional data on the plot.  
+
+In the next example, we augment the plot of carat and price with information about colour, clarity and cut of the diamonds.
 
 % decumar<<< 
 % interweave({
@@ -133,7 +129,7 @@ The first big difference with using {\tt qplot} compared to {\tt plot} when you 
 \begin{alltt}
 > qplot(carat, price, data = dsmall, colour = colour)
 \end{alltt}
-\includegraphics[scale=0.5]{./include/73588db0580f3ca4603f29174a0df502.pdf}
+\includegraphics[scale=0.5]{./include/41df70d494a47e26d24df8d71fbde455.pdf}
 \begin{alltt}
 
 > qplot(carat, price, data = dsmall, size = clarity)
@@ -149,35 +145,35 @@ The first big difference with using {\tt qplot} compared to {\tt plot} when you 
 \end{alltt}
 % >>>
 
-Colour, size and shape are all examples of aesthetic attributes.  An aesthetic attribute is some property that affects how the observations are displayed.  For every aesthetic attribute, there is some function, called a scale, which maps data values to valid values for that aesthetic.  It is this scale that controls how the points appear.  For example, in the above plots, the colour scale makes XXX.  We will learn how to configure this in Chapter XXX.
+Colour, size and shape are all examples of aesthetic attributes.  An aesthetic attribute is some property that affects how the observations are displayed.  For every aesthetic attribute, there is some function, called a scale, which maps data values to valid values for that aesthetic.  It is this scale that controls how the points appear.  For example, in the above plots, the colour scale maps J to purple and F to green.  We will learn how to configure this in Chapter X.
 
-Different types of aesthetic attributes work better with different types of variables.  For example, colour and shape work well with categorical variables, while size works better with continuous variables.  Size works poorly when you have a lot of data, because you can't distinguish the individual points.  You can always convert a continuous variable to a categorical one using the {\tt chop} function.  These issues are discussed more in XXX.
+Different types of aesthetic attributes work better with different types of variables.  For example, colour and shape work well with categorical variables, while size works better with continuous variables.  You can always convert a continuous variable to a categorical one using the {\tt chop} function. The amount of data also makes a difference:  size works poorly when you have a lot of data, because you can't distinguish the individual points.  These issues are discussed more in chapter X.
 
 \section{Plot geoms}\label{sec:plot_geoms}
 
-{\tt qplot} is not limited to just producing scatterplots.  In fact, it can produce many plots, by varying the {\bf geom} used. Geom, short for geometric object, describes the type of object that is used to display the data.  Some geoms have an associated statistical transformation, for example, a histogram is a binning statistic plus a bar geometric object.  These different components are described in the next chapter.  Here we'll introduce you to the most common and useful geoms, categorised by whether they are primarily useful for 1D or 2D data.
+{\tt qplot} is not limited to just producing scatterplots.  In fact, it can produce almost any type of plots, by varying the {\bf geom} used. Geom, short for geometric object, describes the type of object that is used to display the data.  Some geoms have an associated statistical transformation, for example, a histogram is a binning statistic plus a bar geom.  These different components are described in the next chapter.  Here we'll introduce you to the most common and useful geoms, categorised by whether they are useful for 1D or 2D data.
 
 The following geoms enable you to investigate 2D relationships:
 
 \begin{itemize}
-	\item {\tt geom="point"} draws points to produce a scatterplot (the default), described above.
+	\item {\tt geom="point"} draws points to produce a scatterplot (the default), as described above.
 	\item {\tt geom="smooth"} fits a smoother to the data and displays the smooth and its standard error.
-	\item {\tt geom="quantiles"} displays conditional quantiles.
-	\item {\tt geom="density2d"} adds contours of a 2d density estimate.  Useful when you have a lot of overplotting.
-	\item {\tt geom="path"} and {\tt geom="line"} draw lines between the data points, traditionally used to explore relationships between time and another variable, but lines may to be use to join observations connected in some other way.  A line plot is constrained to produce lines that travel from left to right, while paths can go in any direction.
-	\item {\tt geom="errorbar"} adds error bars to help indicate uncertainty associated with measurements.
+	\item {\tt geom="quantiles"} displays conditional density estimates.  You can think of this as a extension of boxplots to deal with the case of a continuous conditioning variable.
+	\item {\tt geom="density2d"} adds contours of a 2d density estimate.  This is very useful when you have a lot of overplotting.
+	\item {\tt geom="path"} and {\tt geom="line"} draw lines between the data points.  Traditionally these are used to explore relationships between time and another variable, but lines may to be use to join observations connected in some other way.  A line plot is constrained to produce lines that travel from left to right, while paths can go in any direction.
 	\item {\tt geom="boxplot"} produces a box and whisker plot to summarise the distribution of a set of points.
+  % \item {\tt geom="errorbar"} adds error bars to help indicate uncertainty associated with measurements.
 \end{itemize}
 
 These geoms are useful for exploring 1d distributions:
 
 \begin{itemize}
-	\item {\tt geom="histogram"} draws a histogram of the $x$ variable
-	\item {\tt geom="density"} creates a density plot for the $x$ variable
-	\item {\tt geom="bar"} makes a barchart.
+	\item {\tt geom="histogram"} draws a histogram of the $x$ variable (continuous or categorical)
+	\item {\tt geom="density"} creates a density plot for the $x$ variable (continuous only)
+  % \item {\tt geom="bar"} makes a barchart.
 \end{itemize}
 
-Each of these geoms are described in turn below.
+Other types of plots for dealing with categorical data (bar charts, mosiac plots, spineplots, spinograms) are dealt with in chapter X, using the special categorical plotting function {\tt catplot}.
 
 \subsection{Adding a smoother to a plot}\label{sub:smooth}
 
@@ -185,13 +181,13 @@ If you have a scatterplot with many data points, it can be hard to see exactly w
 
 % decumar<<< 
 % interweave({
-% qplot(mpg, wt, data=mtcars, geom=c("point", "smooth"))
+% qplot(carat, price, data=dsmall, geom=c("smooth", "point"))
 % })
 % |||
 \begin{alltt}
-> qplot(mpg, wt, data = mtcars, geom = c("point", "smooth"))
+> qplot(carat, price, data = dsmall, geom = c("smooth", "point"))
 \end{alltt}
-\includegraphics[scale=0.5]{./include/8bbe4ffff7984e9450e9102e77a55ff5.pdf}
+\includegraphics[scale=0.5]{./include/0f7457efc05a2c6bd3159c4b42fd2357.pdf}
 \begin{alltt}
 
 \end{alltt}
@@ -199,31 +195,30 @@ If you have a scatterplot with many data points, it can be hard to see exactly w
 
 Notice that we have combined multiple geoms by supplying a vector of geom names to {\tt qplot}.  The geoms will be overlaid in the order that you specified them.
 
-There are many different smoothers you can choose between using the {\tt method} argument:
+There are many different smoothers you can choose using the {\tt method} argument:
 
 \begin{itemize}
-	\item {\tt method="loess"} (the default) uses a smooth local regression.  More details about the algorithm used can be found in {\tt ?loess}.  You can modify the wiggliness of the line by varying the span between 0 (exceeding wiggly) and 1 (not so wiggly).  Loess does not work well for large datasets, so you'll need to use one of the other methods listed below.
+	\item {\tt method="loess"}, the default, uses a smooth local regression.  More details about the algorithm used can be found in {\tt ?loess}.  You can modify the wiggliness of the line by varying the span between 0, exceeding wiggly, and 1, not so wiggly.  Loess does not work well for large datasets (it's $O(n^2)$ in memory), so you'll need to use one of the other methods listed below.
 
   % decumar<<< 
   % interweave({
-  % qplot(carat, price, data=dsmall, geom=c("point", "smooth"))
-  % qplot(carat, price, data=dsmall, geom=c("point", "smooth"), span=0.2)
-  % qplot(carat, price, data=dsmall, geom=c("point", "smooth"), span=1)
+  % qplot(carat, price, data=dsmall, geom=c("smooth", "point"), span=0.1)
+  % qplot(carat, price, data=dsmall, geom=c("smooth", "point"), span=1)
   % })
   % |||
 \begin{alltt}
-> qplot(carat, price, data = dsmall, geom = c("point", "smooth"))
+> qplot(carat, price, data = dsmall, geom = c("smooth", "point"))
 \end{alltt}
 \includegraphics[scale=0.5]{./include/ca878a86ce2975319d3b3b8eb10528df-001.pdf}
 \begin{alltt}
 
-> qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
+> qplot(carat, price, data = dsmall, geom = c("smooth", "point"), 
 +     span = 0.2)
 \end{alltt}
 \includegraphics[scale=0.5]{./include/fe7e76f86d0ec17f065ad5714be0755c-001.pdf}
 \begin{alltt}
 
-> qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
+> qplot(carat, price, data = dsmall, geom = c("smooth", "point"), 
 +     span = 1)
 \end{alltt}
 \includegraphics[scale=0.5]{./include/9c78cff70f86039e7e45e1a27bca03ea-001.pdf}
@@ -232,24 +227,24 @@ There are many different smoothers you can choose between using the {\tt method}
 \end{alltt}
   % >>>
 
-	\item {\tt method="lm"} to fit a linear model.  The default will fit a straight line to your data, or you can specify {\tt formula = y $\sim$ poly(x, 2)} to specify a degree 2 polynomial, or better, load the {\tt splines} library and use a natural spline: {\tt formula = y $\sim$ ns(x, 2)}.  The second parameter is the degrees of freedom: a higher number will create a wigglier curve.
+	\item {\tt method="lm"} fits a linear model.  The default will fit a straight line to your data, or you can specify {\tt formula = y $\sim$ poly(x, 2)} to specify a degree 2 polynomial, or better, load the {\tt splines} library and use a natural spline: {\tt formula = y $\sim$ ns(x, 2)}. The second parameter is the degrees of freedom: a higher number will create a wigglier curve. You are free to specify any formula involving $x$ and $y$.  
 
   % decumar<<< 
   % interweave({
-  % qplot(carat, price, data=dsmall, geom=c("point", "smooth"), method="lm")
+  % qplot(carat, price, data=dsmall, geom=c("smooth", "point"), method="lm")
   % library(splines)
-  % qplot(carat, price, data=dsmall, geom=c("point", "smooth"), method="lm", formula=y ~ ns(x,3))
+  % qplot(carat, price, data=dsmall, geom=c("smooth", "point"), method="lm", formula=y ~ ns(x,3))
   % })
   % |||
 \begin{alltt}
-> qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
+> qplot(carat, price, data = dsmall, geom = c("smooth", "point"), 
 +     method = "lm")
 \end{alltt}
 \includegraphics[scale=0.5]{./include/f095dd08ae5adf75b12648e213abd5d4-001.pdf}
 \begin{alltt}
 
 > library(splines)
-> qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
+> qplot(carat, price, data = dsmall, geom = c("smooth", "point"), 
 +     method = "lm", formula = y ~ ns(x, 3))
 \end{alltt}
 \includegraphics[scale=0.5]{./include/bea4d8c27d1a350d8de884b5baad1721-001.pdf}
@@ -258,7 +253,7 @@ There are many different smoothers you can choose between using the {\tt method}
 \end{alltt}
   % >>>
 
-	\item {\tt method="rlm"} works the same as {\tt lm}, but uses a robust fitting algorithm so that outliers don't affect the fit as much.
+	\item {\tt method="rlm"} works the same as {\tt lm}, but uses a robust fitting algorithm so that outliers don't affect the fit as much.  It's part of the {\tt MASS} package, so remember to load that first.
 
 	\item You could also load the {\tt mgcv} library and use {\tt method="gam", formula = y $\sim$ s(x)} to fit a generalised additive model.  This is similar 
 to using a spline with {\tt lm}, but the degree of smoothness is estimated from the data.  For large data, you should use the formula {\tt y $\sim$ s(x, bs="cr")}
@@ -266,19 +261,19 @@ to using a spline with {\tt lm}, but the degree of smoothness is estimated from 
   % decumar<<< 
   % interweave({
   % library(mgcv)
-  % qplot(carat, price, data=dsmall, geom=c("point", "smooth"), method="gam", formula= y ~ s(x))
-  % qplot(carat, price, data=diamonds, geom=c("point", "smooth"), method="gam", formula= y ~ s(x, bs="cr"))
+  % qplot(carat, price, data=dsmall, geom=c("smooth", "point"), method="gam", formula= y ~ s(x))
+  % qplot(carat, price, data=diamonds, geom=c("smooth", "point"), method="gam", formula= y ~ s(x, bs="cr"))
   % })
   % |||
 \begin{alltt}
 > library(mgcv)
-> qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
+> qplot(carat, price, data = dsmall, geom = c("smooth", "point"), 
 +     method = "gam", formula = y ~ s(x))
 \end{alltt}
 \includegraphics[scale=0.5]{./include/4b400d0c94e210c6c409a45970064e2e-001.pdf}
 \begin{alltt}
 
-> qplot(carat, price, data = diamonds, geom = c("point", "smooth"), 
+> qplot(carat, price, data = diamonds, geom = c("smooth", "point"), 
 +     method = "gam", formula = y ~ s(x, bs = "cr"))
 \end{alltt}
 \includegraphics[scale=0.5]{./include/02e7a01a5e243d194a0e498101ca60af-001.pdf}
@@ -293,18 +288,88 @@ By default, the standard errors are shown with a grey band around the smoother. 
 
 \subsection{Quantiles}\label{sub:quantiles}
 
-A smoother displays a smoothed conditional mean.  It's often useful to see a smooth estimate of the spread of the data.  We can do this with quantile regression \citep{koenker:2005}.
+A smoother displays a smoothed conditional mean.  It's often useful to see a smooth estimate of other summaries of the distribution, for example the upper and lower quartiles to show the spread of the data.  We can do this with quantile regression \citep{koenker:2005}, which is basically a process to estimate smoothed conditional quantiles.  The types of smoothes we can use is much more limited compared to {\tt geom="smooth"}, but we can learn more about the conditional distribution.
 
-Range of smoothes much more limited, but can see many quantiles.  
+For this example, we're going to zoom into a small range of diamond sizes so we can look at the distribution more closely.
 
-% qplot(carat, price, data=subset(diamonds, carat < 2), geom=c("point"), xlim=c(0,2)) + 
-% stat_quantile(formula=y~ns(x,4))
-% 
-% qplot(carat, price, data=diamonds, geom=c("point"), xlim=c(0,2), log="xy") + stat_quantile(formula=y~ns(x,4))
+% decumar<<< 
+% interweave({
+% dlittle <- subset(diamonds, carat < 2)
+% qplot(carat, price, data=dlittle, geom=c("point", "quantile"))
+% })
+% |||
+\begin{alltt}
+> dlittle <- subset(diamonds, carat < 2)
+> qplot(carat, price, data = dlittle, geom = c("point", "quantile"))
+\end{alltt}
+\includegraphics[scale=0.5]{./include/ae17b9273c99e55321e8683205d62b0c.pdf}
+\begin{alltt}
 
-For this example, we used the subset option
+\end{alltt}
+% >>>
+
+By default, the relationship between x and y is assumed to be linear, but we can adjust this using the {\tt formula} argument, in the same way that we could for smoothers.  In this example we'll try using a natural spline, and then manually adding some change points where we can see an obvious jump on the graph.
+
+% decumar<<< 
+% interweave({
+% qplot(carat, price, data=dlittle, geom=c("point", "quantile"), formula=y~ns(x, 3))
+% qplot(carat, price, data=dlittle, geom=c("point", "quantile"), formula=y~ns(x, 3) + I(x > 1) + I(x > 1.5))
+% })
+% |||
+\begin{alltt}
+> qplot(carat, price, data = dlittle, geom = c("point", "quantile"), 
++     formula = y ~ ns(x, 3))
+\end{alltt}
+\includegraphics[scale=0.5]{./include/b0acd9c4cef437be9a115c7bd64c800f.pdf}
+\begin{alltt}
+
+> qplot(carat, price, data = dlittle, geom = c("point", "quantile"), 
++     formula = y ~ ns(x, 3) + I(x > 1) + I(x > 1.5))
+\end{alltt}
+\includegraphics[scale=0.5]{./include/c71062631151a631f90466ad9549d53c.pdf}
+\begin{alltt}
+
+\end{alltt}
+% >>>
+
+You can also adjust the quantiles displayed with the {\tt quantiles} argument:
+
+% decumar<<< 
+% interweave({
+% qplot(carat, price, data=dlittle, geom=c("point", "quantile"), formula=y~ns(x, 3) + I(x > 1) + I(x > 1.5), quantiles=seq(0.05,0.95, 0.05))
+% })
+% |||
+\begin{alltt}
+> qplot(carat, price, data = dlittle, geom = c("point", "quantile"), 
++     formula = y ~ ns(x, 3) + I(x > 1) + I(x > 1.5), quantiles = seq(0.05, 
++         0.95, 0.05))
+\end{alltt}
+\includegraphics[scale=0.5]{./include/7627d7f3e59239647eae201269af8b5e.pdf}
+\begin{alltt}
+
+\end{alltt}
+% >>>
 
 \subsection{2d density contours}
+
+When there is a lot of over-plotting on a plot, it is very hard to judge the relative density of points.  One way to get around this is to supplement the plot with contour lines from a 2d density estimate.  This is shown below.
+
+% decumar<<< 
+% interweave({
+% qplot(log(carat), log(price), data=diamonds, geom=c("point","density2d"))
+% })
+% |||
+\begin{alltt}
+> qplot(log(carat), log(price), data = diamonds, geom = c("point", 
++     "density2d"))
+\end{alltt}
+\includegraphics[scale=0.5]{./include/bbf036add45e8eb6ab68ad8b489d756b.pdf}
+\begin{alltt}
+
+\end{alltt}
+% >>>
+
+The density estimation is described in more detail in {\tt ?kde2d}.
 
 \subsection{Time series with line and path plots}\label{sub:line_plot}
 
@@ -343,7 +408,7 @@ Let's start with a time series plot of {\tt a}.
 \begin{alltt}
 > qplot(year, a, data = df, geom = "line")
 \end{alltt}
-\includegraphics[scale=0.5]{./include/f5ebf3350aa117a47ec143f696fe3f38.pdf}
+\includegraphics[scale=0.5]{./include/f25482f3f6f71e0cd77b54e6d866edc7.pdf}
 \begin{alltt}
 
 \end{alltt}
@@ -372,12 +437,12 @@ If we want to display the two variables on the same plot we need to reshape our 
 
 > qplot(year, value, data = dfm, geom = "line", colour = variable)
 \end{alltt}
-\includegraphics[scale=0.5]{./include/f36738c054cb10823ba35da0413e91e5.pdf}
+\includegraphics[scale=0.5]{./include/4d55e2ed67f1d49b4c1189850c3d3e27.pdf}
 \begin{alltt}
 
 > qplot(year, value, data = dfm, geom = "line", group = variable)
 \end{alltt}
-\includegraphics[scale=0.5]{./include/106c1ca1c0e7b255812040e261728ebf.pdf}
+\includegraphics[scale=0.5]{./include/cc996b1c24dd29ae2bdd928a85f32873.pdf}
 \begin{alltt}
 
 \end{alltt}
@@ -417,16 +482,17 @@ The examples above illustrate the two most common aesthetics for path and line p
 \begin{alltt}
 > qplot(year, value, data = dfm, geom = "line", linetype = variable)
 \end{alltt}
-\includegraphics[scale=0.5]{./include/a9001be7da0e1bc54ac18f73075a2289.pdf}
+\includegraphics[scale=0.5]{./include/54e7e4bcddc301975088a4d05183194d.pdf}
 \begin{alltt}
 
 \end{alltt}
 % >>>
 
-
 \subsection{Boxplots and jittered points}\label{sub:boxplot}
 
 If you have one categorical variable, and one or more continuous variables, you will probably be interested to know how the values of the continuous variables vary with the categorical.  Box plots and jittered points offer to ways to do this.  
+
+This example looks at how the price per carat varies with colour of the diamond.
 
 % decumar<<< 
 % interweave({
@@ -437,12 +503,12 @@ If you have one categorical variable, and one or more continuous variables, you 
 \begin{alltt}
 > qplot(colour, price/carat, data = diamonds, geom = "jitter")
 \end{alltt}
-\includegraphics[scale=0.5]{./include/53e2b75943b5c36769d2d128a1da17a1.pdf}
+\includegraphics[scale=0.5]{./include/99fc2fbfae45cb87ac4f8534717d44ba.pdf}
 \begin{alltt}
 
 > qplot(colour, price/carat, data = diamonds, geom = "boxplot")
 \end{alltt}
-\includegraphics[scale=0.5]{./include/684ed0dcc04e2b9a43fe2c8e09bb80ce.pdf}
+\includegraphics[scale=0.5]{./include/ed5c02bb2bc423302e8ebc1be44b968e.pdf}
 \begin{alltt}
 
 \end{alltt}
@@ -452,35 +518,35 @@ Both boxplots and jittered points will try to guess which orientation they shoul
 
 For jittered points, you have the same control over aesthetics as you do with a normal scatterplot: {\tt size}, {\tt colour}, {\tt shape}.  The options for boxplots are more limited (and it is hard to imagine when they would be useful), you can control only the outline colour ({\tt colour}) and the internal fill {\tt fill}.
 
-Another approach is to use histograms facetted by another variable.
+Another way to look at conditional distributions is to plot a separate histogram or density plot for each value of the categorical variable.
 
 \subsection{Histogram and density plots}\label{sub:density}
 
-Histogram and density plots show the distribution of a single variable.  They provide more information about the distribution of a single group than boxplots do, but it is harder to compare many groups (although we will look at one way to do so).
+Histogram and density plots show the distribution of a single variable.  They provide more information about the distribution of a single group than boxplots do, but it is harder to compare many groups (although we will look at one way to do so).  The next example shows the distribution of carats with a histogram and a density plot.
 
 % decumar<<< 
 % interweave({
-% qplot(price/carat, data=diamonds, geom="histogram")
-% qplot(price/carat, data=diamonds, geom="density")
+% qplot(carat, data=diamonds, geom="histogram")
+% qplot(carat, data=diamonds, geom="density")
 % })
 % |||
 \begin{alltt}
-> qplot(price/carat, data = diamonds, geom = "histogram")
+> qplot(carat, data = diamonds, geom = "histogram")
 \end{alltt}
-\includegraphics[scale=0.5]{./include/0972c0949e081a114ae30f84cdfade30.pdf}
+\includegraphics[scale=0.5]{./include/05e4cd5b180309b1fded55991b96a1c0.pdf}
 \begin{alltt}
 
-> qplot(price/carat, data = diamonds, geom = "density")
+> qplot(carat, data = diamonds, geom = "density")
 \end{alltt}
-\includegraphics[scale=0.5]{./include/903ccf31dfaad36c8c58d896bfc57b7d.pdf}
+\includegraphics[scale=0.5]{./include/f8a2597034b8baa4c40c3aeb43749387.pdf}
 \begin{alltt}
 
 \end{alltt}
 % >>>
 
-You can control the amount of smoothing using the {\tt binwidth} argument for the histogram, which specifies the bin size to use.  You can also specify the break points explicitly, using the {\tt breaks} argument.  For the density plot, you can use {\tt adjust} argument, which adjusts the bandwidth of the smoother (high values of {\tt adjust} produce smoother plots).  It is very important to experiment with the level of smoothing.  With a histogram you should try many bin widths before you decide on the one (or two, or three) which best describe the data.
+You can control the amount of smoothing using the {\tt binwidth} argument for the histogram, which specifies the bin size to use.  You can also specify the break points explicitly, using the {\tt breaks} argument.  For the density plot, you can use {\tt adjust} argument, which adjusts the bandwidth of the smoother (high values of {\tt adjust} produce smoother plots).  It is {\bf very important} to experiment with the level of smoothing.  With a histogram you should try many bin widths before you decide on the one (or two, or three) which best describe the data.
 
-Density plots are useful in that they are easier to overlay, but a generally less flexible than histograms, and it is more difficult to understand exactly what a density plot is showing.  (And we are {\bf not} trying to estimate a density - we're trying to see what's going on with our datasets)
+For this example, we need to use a rather small binwidth before we can see the full story.
 
 % decumar<<< 
 % interweave({
@@ -508,48 +574,47 @@ Density plots are useful in that they are easier to overlay, but a generally les
 \end{alltt}
 % >>>
 
-If you want to compare the distributions of different subgroups, all you need to do is add an aesthetic mapping that differentiates the different groups, as follows:
+Density plots are useful in that they are easier to overlay, but are generally less flexible than histograms, and it is more difficult to understand exactly what a density plot is showing.  (And we are {\bf not} trying to estimate a density: we're trying to see what's going on with our data)  If you want to compare the distributions of different subgroups, all you need to do is add an aesthetic mapping that differentiates the different groups, as follows:
 
 % decumar<<< 
 % interweave({
-% qplot(wt, data=mtcars, geom="density", colour=factor(cyl))
+% qplot(carat, data=diamonds, geom="density", colour=colour)
 % })
 % |||
 \begin{alltt}
-> qplot(wt, data = mtcars, geom = "density", colour = factor(cyl))
+> qplot(carat, data = diamonds, geom = "density", colour = colour)
 \end{alltt}
-\includegraphics[scale=0.5]{./include/3b34151a9cf9bb93fcf0176abdd7dc4b.pdf}
+\includegraphics[scale=0.5]{./include/f41fe8e74ba2f076043ed6ac6557137c.pdf}
 \begin{alltt}
 
 \end{alltt}
 % >>>
 
-\subsection{Displaying uncertainty with error bars and ribbons}\label{sub:error_bars}
-
-+ Use with statistics
-
-There are two ways to display standard errors with {\tt ggplot}.  For point standard errors, you can use the {\tt errorbar} geom.  For continuous or functional standard errors, you can use the {\tt ribbon} grob.  We've have already seen an example of this: the {\tt ribbon} grob is used inside {\tt smooth} to display the standard errors of the smooth.  Because there are so many different ways to calculate standard errors, the calculation is up to you.  {\tt ggplot} only provides facilities for displaying them once you have them.
-
-For both {\tt ribbon} and {\tt errobar} you can specify confidence internals in two ways:
-
-\begin{itemize}
-	\item using {\tt upper} and {\tt lower} which specify the upper and lower edges of the confidence band
-
-	\item using {\tt y}, {\tt plus} and {\tt minus} which specify the estimate and positive and negative displacements (if you only specify one of plus and minus, the other will default to the negative of the one that is supplied)
-\end{itemize}
-
-[Need an example here]
+% \subsection{Displaying uncertainty with error bars and ribbons}\label{sub:error_bars}
+% 
+% + Use with statistics
+% 
+% There are two ways to display standard errors with {\tt ggplot}.  For point standard errors, you can use the {\tt errorbar} geom.  For continuous or functional standard errors, you can use the {\tt ribbon} grob.  We've have already seen an example of this: the {\tt ribbon} grob is used inside {\tt smooth} to display the standard errors of the smooth.  Because there are so many different ways to calculate standard errors, the calculation is up to you.  {\tt ggplot} only provides facilities for displaying them once you have them.
+% 
+% For both {\tt ribbon} and {\tt errobar} you can specify confidence internals in two ways:
+% 
+% \begin{itemize}
+%   \item using {\tt upper} and {\tt lower} which specify the upper and lower edges of the confidence band
+% 
+%   \item using {\tt y}, {\tt plus} and {\tt minus} which specify the estimate and positive and negative displacements (if you only specify one of plus and minus, the other will default to the negative of the one that is supplied)
+% \end{itemize}
+% 
+% [Need an example here]
 
 \section{Plots for weighted data}\label{sec:weighted_data}
 
-When you have aggregated data where each row in the dataset represents multiple observations, you need some way to take into account the weighting variable.  For an example, we will use some data collected in Midwest states in the 2000 census.  The data consists mainly of percentages (eg. percent white, percent below poverty line, percentage with college degree) and some information for each county (area, total population, population density).
+When you have aggregated data where each row in the dataset represents multiple observations, you need some way to take into account the weighting variable.  Since there are no variables appropriate for weighting in the diamonds data, we will use some data collected o Midwest states in the 2000 census.  The data consists mainly of percentages (eg. percent white, percent below poverty line, percentage with college degree) and some information for each county (area, total population, population density).
 
 There are few different things we might want to weight by: 
 
 \begin{itemize}
 	\item nothing, to look at county numbers
 	\item total population, to work with absolute numbers
-	\item population density, to investigate relative densities
 	\item area, to investigate geographic effects
 \end{itemize}
 
@@ -557,31 +622,55 @@ There are few different things we might want to weight by:
 
 % decumar<<< 
 % interweave({
-% #midwest <- read.csv("~/desktop/midwest.csv")
-% #qplot(percwhite, percbelowpoverty, data=midwest)
-% #qplot(percwhite, percbelowpoverty, data=midwest, size=poptotal)
-% #qplot(percwhite, percbelowpoverty, data=midwest, size=area)
+% midwest <- read.csv("~/Documents/graphics/weighted/midwest.csv")
+% qplot(percwhite, percbelowpoverty, data=midwest)
+% qplot(percwhite, percbelowpoverty, data=midwest, size=poptotal)
+% qplot(percwhite, percbelowpoverty, data=midwest, size=area)
 % })
 % |||
 \begin{alltt}
-> NULL
-NULL
+> midwest <- read.csv("~/Documents/graphics/weighted/midwest.csv")
+> qplot(percwhite, percbelowpoverty, data = midwest)
+\end{alltt}
+\includegraphics[scale=0.5]{./include/6a0c285f17c95a742f434a76b4b71eee.pdf}
+\begin{alltt}
+
+> qplot(percwhite, percbelowpoverty, data = midwest, size = poptotal)
+\end{alltt}
+\includegraphics[scale=0.5]{./include/b25e09acce2ea6d58511dff6632ab676.pdf}
+\begin{alltt}
+
+> qplot(percwhite, percbelowpoverty, data = midwest, size = area)
+\end{alltt}
+\includegraphics[scale=0.5]{./include/82bbb93fde6a56ec95d14df55792828e.pdf}
+\begin{alltt}
+
 \end{alltt}
 % >>>
 
-For more complicated grobs which involve some statistical transformation, we specify weights with the {\tt weight} aesthetic.  These weights will be passed on to the statistical summary function.  Weights are supported for every case where it makes sense: smoothers ({\tt smooth}), quantile regressions ({\tt quantile}), box plots ({\tt boxplot}), hexagon plots ({\tt hexagon}), histograms ({\tt histogram}), and density plots ({\tt density}).  (Most of which we haven't mentioned yet - but you can read about them on pages X, Y, Z).  You can't see this weighting variable directly, and it doesn't produce a legend, but it will change the results of the statistical summary.
+For more complicated grobs which involve some statistical transformation, we specify weights with the {\tt weight} aesthetic.  These weights will be passed on to the statistical summary function.  Weights are supported for every case where it makes sense: smoothers, quantile regressions, box plots, histograms, and density plots.  You can't see this weighting variable directly, and it doesn't produce a legend, but it will change the results of the statistical summary.
 
 The following example shows how weighting by population density effects the relationship between percent white and percent below the poverty line.
 
 % decumar<<< 
 % interweave({
-% #qplot(percwhite, percbelowpoverty, data=midwest, geom=c("point","smooth"), method=lm)
-% #qplot(percwhite, percbelowpoverty, data=midwest, size=popdensity, weight=popdensity,geom=c("point","smooth"), method=lm)
+% qplot(percwhite, percbelowpoverty, data=midwest, geom=c("point","smooth"), method=lm)
+% qplot(percwhite, percbelowpoverty, data=midwest, size=popdensity, weight=popdensity,geom=c("point","smooth"), method=lm)
 % })
 % |||
 \begin{alltt}
-> NULL
-NULL
+> qplot(percwhite, percbelowpoverty, data = midwest, geom = c("point", 
++     "smooth"), method = lm)
+\end{alltt}
+\includegraphics[scale=0.5]{./include/49f20c33ca50ab7a72ef264f25c03cc8.pdf}
+\begin{alltt}
+
+> qplot(percwhite, percbelowpoverty, data = midwest, size = popdensity, 
++     weight = popdensity, geom = c("point", "smooth"), method = lm)
+\end{alltt}
+\includegraphics[scale=0.5]{./include/8b6880e4416bf2e15517aeba8d9e68a5.pdf}
+\begin{alltt}
+
 \end{alltt}
 % >>>
 
@@ -589,17 +678,24 @@ When we weight a histogram or density plot by total population, we change from l
 
 % decumar<<< 
 % interweave({
-% #qplot(percbelowpoverty, data=midwest, geom=c("histogram", "density"))
-% #qplot(percbelowpoverty, data=midwest, geom=c("histogram", "density"), weight=poptotal/sum(poptotal))
+% qplot(percbelowpoverty, data=midwest, geom="histogram", binwidth=1)
+% qplot(percbelowpoverty, data=midwest, geom="histogram", weight=poptotal, binwidth=1)
 % })
 % |||
 \begin{alltt}
-> NULL
-NULL
+> qplot(percbelowpoverty, data = midwest, geom = "histogram", binwidth = 1)
+\end{alltt}
+\includegraphics[scale=0.5]{./include/e2fb44e6a9bb749a58016d425b0d4771.pdf}
+\begin{alltt}
+
+> qplot(percbelowpoverty, data = midwest, geom = "histogram", weight = poptotal, 
++     binwidth = 1)
+\end{alltt}
+\includegraphics[scale=0.5]{./include/1be4c55d44ebb0fa4e4220210d8fb2e8.pdf}
+\begin{alltt}
+
 \end{alltt}
 % >>>
-
-Self weighted histogram.
 
 \section{Combining plots}\label{sec:combining_plots}
 
@@ -607,110 +703,67 @@ As we have seen, you can combine multiple plot geoms by supplying a vector of ge
 
 % decumar<<< 
 % interweave({
-% qplot(year, value, data=dfm, geom=c("line", "point"), colour=variable)
-% qplot(mpg, wt, data=mtcars, geom=c("point", "smooth"))
-% qplot(mpg, factor(cyl), data=mtcars, geom=c("jitter", "boxplot"))
-% qplot(mpg, factor(cyl), data=mtcars, geom=c("boxplot", "jitter"))
+% qplot(colour, price/carat, data=diamonds, geom=c("jitter", "boxplot"))
+% qplot(colour, price/carat, data=diamonds, geom=c("boxplot", "jitter"))
 % })
 % |||
 \begin{alltt}
-> qplot(year, value, data = dfm, geom = c("line", "point"), colour = variable)
+> qplot(colour, price/carat, data = diamonds, geom = c("jitter", 
++     "boxplot"))
 \end{alltt}
-\includegraphics[scale=0.5]{./include/9d7911a4f971b8417284c561d434a242.pdf}
+\includegraphics[scale=0.5]{./include/779abed7c8f0ef35986c764224b5ed43.pdf}
 \begin{alltt}
 
-> qplot(mpg, wt, data = mtcars, geom = c("point", "smooth"))
+> qplot(colour, price/carat, data = diamonds, geom = c("boxplot", 
++     "jitter"))
 \end{alltt}
-\includegraphics[scale=0.5]{./include/48864e8c6fc4988e2872350516edaf7b.pdf}
-\begin{alltt}
-
-> qplot(mpg, factor(cyl), data = mtcars, geom = c("jitter", "boxplot"))
-\end{alltt}
-\includegraphics[scale=0.5]{./include/f8147ba454f6bb4409078c32f4fb733a.pdf}
-\begin{alltt}
-
-> qplot(mpg, factor(cyl), data = mtcars, geom = c("boxplot", "jitter"))
-\end{alltt}
-\includegraphics[scale=0.5]{./include/3703ac5ae18a972b256eac856d916fcc.pdf}
+\includegraphics[scale=0.5]{./include/cc9b4971be39c993b7ab0fdf0053673b.pdf}
 \begin{alltt}
 
 \end{alltt}
 % >>>
 
-The limitation with this technique is that you are plotting exactly the same data, but just using a different geom.  You can also use the {\tt add} argument to add more elements to an existing plot.  This is useful when building up a plot from multiple data sources. Doing this is pretty easy: all you have to do is save the output of the {\tt qplot} function and pass it as the {\tt add} argument to the next {\tt qplot} call.
+The limitation of this technique is that you are plotting exactly the same data, just using a different geom.  You can also use the {\tt add} argument to add more elements to an existing plot.  This is useful when building up a plot from multiple data sources. Doing this is pretty easy: all you have to do is save the output of the {\tt qplot} function and pass it as the {\tt add} argument to the next {\tt qplot} call.
 
 In this example, we add a rug plot to a density plot of weight.
 
 % decumar<<< 
 % interweave({
-% (p <- qplot(wt, data=mtcars, geom="density", colour=factor(cyl)))
-% qplot(wt, 0, add=p)
-% qplot(wt, 0, add=p, geom="jitter")
+% (p <- qplot(carat, data=diamonds, geom="density", colour=cut))
+% qplot(carat, 0, add=p)
 % })
 % |||
 \begin{alltt}
-> (p <- qplot(wt, data = mtcars, geom = "density", colour = factor(cyl)))
+> (p <- qplot(carat, data = diamonds, geom = "density", colour = cut))
 \end{alltt}
-\includegraphics[scale=0.5]{./include/ba27c01a47edc4738f46b0af10244afe.pdf}
+\includegraphics[scale=0.5]{./include/72ca059ce59312f52481154d49bd72ef.pdf}
 \begin{alltt}
 
-> qplot(wt, 0, add = p)
+> qplot(carat, 0, add = p)
 \end{alltt}
-\includegraphics[scale=0.5]{./include/f66ce4d2280108c8d13e6ac5270310c1.pdf}
-\begin{alltt}
-
-> qplot(wt, 0, add = p, geom = "jitter")
-\end{alltt}
-\includegraphics[scale=0.5]{./include/a38d9d44f95db60739b944a9e7474074.pdf}
+\includegraphics[scale=0.5]{./include/2506211f0d34c3e20329b1c4d07f541c.pdf}
 \begin{alltt}
 
 \end{alltt}
 % >>>
 
-In this example, we supplement the scatterplot of mpg vs wt with results from a linear model which fits a quadratic for each number of cylinder. This is a nice demonstration of the perils of extending polynomials outside the bounds of the data.
-
-% decumar<<< 
-% interweave({
-% (p <- qplot(mpg, wt, data=mtcars, colour=factor(cyl)))
-% model <- lm(wt ~ poly(mpg,2) * cyl, data=mtcars)
-% grid <- expand.grid(mpg = 10:35, cyl=c(4,6,8))
-% grid$fitted <- predict(model, grid)
-% qplot(mpg, fitted, data=grid, colour=factor(cyl), geom="line", add=p)
-% })
-% |||
-\begin{alltt}
-> (p <- qplot(mpg, wt, data = mtcars, colour = factor(cyl)))
-\end{alltt}
-\includegraphics[scale=0.5]{./include/b530fd13979d56f57c6253ab36cfc77a.pdf}
-\begin{alltt}
-
-> model <- lm(wt ~ poly(mpg, 2) * cyl, data = mtcars)
-> grid <- expand.grid(mpg = 10:35, cyl = c(4, 6, 8))
-> grid$fitted <- predict(model, grid)
-> qplot(mpg, fitted, data = grid, colour = factor(cyl), geom = "line", 
-+     add = p)
-\end{alltt}
-\includegraphics[scale=0.5]{./include/d090358201fe030af4deec641f08947a.pdf}
-\begin{alltt}
-
-\end{alltt}
-% >>>
-
-Notice that the ranges of the axes automatically increase to make sure that all data points are displayed.
+[Need better example here]
 
 \section{Facetting}\label{sec:facetting}
 
-Facetting allows you to display small multiples of subsets of your data, as in this example where we have a scatterplot of mpg vs wt for each value of cyl:
+Facetting allows you to display small multiples of subsets of your data, as in this example where we have a histogram of price for each value of cut:
+
+[Argh! buggy plot]
 
 % decumar<<< 
 % interweave({
-% qplot(mpg, wt, data=mtcars, facets=. ~ cyl)
+% qplot(price, data=diamonds, facets= cut~ ., geom="histogram")
 % })
 % |||
 \begin{alltt}
-> qplot(mpg, wt, data = mtcars, facets = . ~ cyl)
+> qplot(price, data = diamonds, facets = cut ~ ., geom = "histogram")
 \end{alltt}
-\includegraphics[scale=0.5]{./include/67bf1684a5877a9c6b84d75d26224c45.pdf}
+\includegraphics[scale=0.5]{./include/d2daec387538b53f971274852a177588.pdf}
 \begin{alltt}
 
 \end{alltt}
@@ -720,13 +773,13 @@ Each small multiple is called a facet, and contains the same plot for a differen
 
 % decumar<<< 
 % interweave({
-% qplot(mpg, wt, data=mtcars, facets=vs ~ cyl)
+% qplot(price, data=diamonds, facets= cut~ colour, geom="histogram")
 % })
 % |||
 \begin{alltt}
-> qplot(mpg, wt, data = mtcars, facets = vs ~ cyl)
+> qplot(price, data = diamonds, facets = cut ~ colour, geom = "histogram")
 \end{alltt}
-\includegraphics[scale=0.5]{./include/74a602b934ab966ce22b654fa1a33ae8.pdf}
+\includegraphics[scale=0.5]{./include/b7d1c6d04df6cce12e2699cffae9e841.pdf}
 \begin{alltt}
 
 \end{alltt}
@@ -744,13 +797,13 @@ This example shows how the margins appear.  In the first plot, there are no marg
 
 % decumar<<< 
 % interweave({
-% qplot(mpg, wt, facets=vs ~ am, data=mtcars, margins=TRUE)
+% qplot(price, data=diamonds, facets= cut~ ., geom="histogram")
 % })
 % |||
 \begin{alltt}
-> qplot(mpg, wt, facets = vs ~ am, data = mtcars, margins = TRUE)
+> qplot(price, data = diamonds, facets = cut ~ ., geom = "histogram")
 \end{alltt}
-\includegraphics[scale=0.5]{./include/36b316d9a752c19b1c78b9de27acd101.pdf}
+\includegraphics[scale=0.5]{./include/6b76e6b780db1f5d0b9cff7116b0b298.pdf}
 \begin{alltt}
 
 \end{alltt}
@@ -773,31 +826,15 @@ The following examples show the options in action.
 
 % decumar<<< 
 % interweave({
-% qplot(wt, mpg, data=mtcars, xlab="miles per gallon", ylab="weight",  main="Fuel effeciency")
-% qplot(wt, mpg, data=mtcars, xlab=expression(miles/gallon), ylab="weight",  main="Small cars", ylim=c(10,20))
-% qplot(wt, mpg, data=mtcars, main="Small cars", ylim=c(10,20), log="xy")
+% qplot(carats, price, data=diamonds, xlab="Price ($)", ylab="Weight (carats)",  main="Price-weight relationship")
+% qplot(carat, price/carat, data=diamonds, ylab=expression(price/carat), ylab="Price ($)",  main="Small diamonds", xlim=c(0,1))
+% qplot(carat, price, data=diamonds, log="xy")
 % })
 % |||
 \begin{alltt}
-> qplot(wt, mpg, data = mtcars, xlab = "miles per gallon", ylab = "weight", 
-+     main = "Fuel effeciency")
 \end{alltt}
-\includegraphics[scale=0.5]{./include/b7f00191162bdab537c3263d679a261f.pdf}
-\begin{alltt}
+Error in qplot(carat, price/carat, data = diamonds, ylab = expression(price/carat), : formal argument "ylab" matched by multiple actual arguments \\ 
 
-> qplot(wt, mpg, data = mtcars, xlab = expression(miles/gallon), 
-+     ylab = "weight", main = "Small cars", ylim = c(10, 20))
-\end{alltt}
-\includegraphics[scale=0.5]{./include/457a8cb320dcc057ea85c42c9491c57d.pdf}
-\begin{alltt}
-
-> qplot(wt, mpg, data = mtcars, main = "Small cars", ylim = c(10, 
-+     20), log = "xy")
-\end{alltt}
-\includegraphics[scale=0.5]{./include/36343c6b8b3947ae66cb9b6f95900b34.pdf}
-\begin{alltt}
-
-\end{alltt}
 % >>>
 
 \input{footer.tex}
