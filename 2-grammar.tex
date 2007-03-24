@@ -62,17 +62,17 @@ This plot has one layer, three scales and a cartesian coordinate system.  To mak
 \begin{alltt}
 ggplot()
 + layer(
-    data=diamonds, mapping=aes(x=carat, y=price, size=clarity),
+    data = diamonds, mapping = aes(x = carat, y = price, size = clarity),
     geom = "point", stat = "identity")
   )
 \end{alltt}
 
-This makes the single layer obvious, it uses a point geom and the identity transformation, but where is the definition of the scales and the coordinate system?  By default ggplot will automatically add sensible scales and the default coordinate system, but we can be more explicit and add them ourselves:
+This makes the single layer obvious, it uses a point geom and the identity transformation, but where are the definitions of the scales and the coordinate system?  By default, ggplot automatically adds sensible scales and the default coordinate system, however, we can be more explicit and add them ourselves:
 
 \begin{alltt}
 ggplot() 
 + layer(
-    data=diamonds, mapping=aes(x=carat, y=price, size=clarity),
+    data = diamonds, mapping = aes(x = carat, y = price, size = clarity),
     geom = "point", stat = "identity")
   )
 + scale_size()
@@ -83,7 +83,7 @@ ggplot()
 
 Compared to the initial qplot example, this is extremely verbose, but perfectly explicit.  We  can clearly see the single layer, the three scales (x position, y position and size) and the coordinate system.  
 
-The next example includes multiple layers, and demonstrates the effect of modifying the scale parameters.  This is another example from chapter two: a scatterplot of price vs carat, with logged axis within a linear smooth layered on top.  The qplot code is shown below.
+The next example includes multiple layers, and demonstrates the effect of modifying the scale parameters.  This is another example from chapter two: a scatterplot of price vs carat, with logged axes and a linear smooth layered on top.  The qplot code is shown below.
 
 % decumar<<< 
 % interweave({
@@ -105,11 +105,11 @@ Here we have two layers, two scales and the same cartesian coordinate system:
 \begin{alltt}
 ggplot() 
 + layer(
-   data=diamonds, mapping=aes(x=carat, y=price),
+   data = diamonds, mapping = aes(x = carat, y = price),
    geom = "point", stat = "identity")
   )
 + layer(
-   data=diamonds, mapping=aes(x=carat, y=price),
+   data = diamonds, mapping = aes(x = carat, y = price),
    geom = "smooth", stat = "smooth", method = lm)
   )
 + scale_y_log10()
@@ -120,7 +120,7 @@ ggplot()
 There is some duplication in this example, which we can reduce by using plot defaults.
 
 \begin{alltt}
-ggplot(data=diamonds, mapping=aes(x=carat, y=price)) 
+ggplot(data = diamonds, mapping = aes(x = carat, y = price)) 
 + layer(geom = "point", stat = "identity"))
 + layer(geom = "smooth", stat = "smooth", method = lm))
 + scale_y_log10()
@@ -140,33 +140,30 @@ The breakdown into components is very similar Wilkinson's grammar, but there are
 	\item In ggplot, guides (axes and legends) are largely drawn automatically.  For example, in Wilkinson's grammar you explicitly specify that you want a legend, or how the axes should be annotated, but this is determined by the scale in ggplot.  Annotative guides can be created with geoms if data dependent, or grid can be used to draw directly onto the plot.
 \end{itemize}
 
-Finally, I have renamed the element component to geom (after consultation with Lee Wilkinson) to better describe what it is.  
+Finally, I have renamed the element component to geom (after consultation with Lee Wilkinson) to make the name less generic.  
 
-\section{The pipeline}\label{sec:the_pipeline}
+% \section{The pipeline}\label{sec:the_pipeline}
+% 
+% Another way of thinking about the grammar of graphics is as a pipeline which takes in raw data and outputs plots.  Each stage of the pipeline performs a transformation described by one of the components of the grammar.  For example, one of the first stages performs the statistical transformation described by the stat component.  
+% 
+% [Insert diagram of the pipelines here.]
+% 
+% You will notice there are two passes of the 
+% 
+% 
+% \subsection{Differences from Wilkinson's grammar}
+% 
+% The pipelines of ggplot and the GoG differ slightly.  In ggplot, every stage takes a data frame as input and returns a data frame as output, apart from the final stage, which outputs grid grobs (graphical objects).  The GoG has three intermediate data formats: a varset (the same as a data frame), a graph and a graphic.
+% 
+% [Insert diagram of the pipelines here.]
+% 
+% The pipeline is a little more complicated when multiple data sources and geoms are involved.  The complication arises because all data must share the same scales and coordinate system, but may use different mappings, geoms and statistics.  All pipelines must share the same coordinate system, so this is where the connection occurs.  For this reason, ggplot has the layer, as discussed above, which combines the geom, stat, data and mapping.
+% 
+% [Insert more complicated diagram here]
 
-Another way of thinking about the grammar of graphics is as a pipeline which takes in raw data and outputs plots.  Each stage of the pipeline performs a transformation described by one of the components of the grammar.  For example, one of the first stages performs the statistical transformation described by the stat component.  
+\section{Converting between grammar syntaxes}
 
-[Insert diagram of the pipelines here.]
-
-You will notice there are two passes of the 
-
-
-\subsection{Differences from Wilkinson's grammar}
-
-The pipelines of ggplot and the GoG differ slightly.  In ggplot, every stage takes a data frame as input and returns a data frame as output, apart from the final stage, which outputs grid grobs (graphical objects).  The GoG has three intermediate data formats: a varset (the same as a data frame), a graph and a graphic.
-
-[Insert diagram of the pipelines here.]
-
-The pipeline is a little more complicated when multiple data sources and geoms are involved.  The complication arises because all data must share the same scales and coordinate system, but may use different mappings, geoms and statistics.  All pipelines must share the same coordinate system, so this is where the connection occurs.  For this reason, ggplot has the layer, as discussed above, which combines the geom, stat, data and mapping.
-
-[Insert more complicated diagram here]
-
-\section{Syntax of the grammar}
-
-The biggest difference between The Grammar of Graphics and the grammar used in ggplot is how the grammar is written.  The Grammar of Graphics uses two specifications.  A concise format is used to caption figure, and a more detailed xml format stored on disk.  The concise format looks something like:
-
-\subsection{Differences from Wilkinson's grammar}
-
+The biggest difference between Lee's grammar and mine is how the grammar is written; the syntax of the grammars are quite different.  The Grammar of Graphics uses two specifications.  A concise format is used to caption figures, and a more detailed xml format stored on disk.  The following example of the concise format is adapted from \citet[][Figure 1.5, page 13]{wilkinson:2006}.
 
 \begin{verbatim}
 DATA: source("demographics")
@@ -177,34 +174,39 @@ ELEMENT: point(position(lon * lat), size(bf), color(color.red))
 ELEMENT: polygon(position(longitude * latitude))
 \end{verbatim}
 
-[Note to Debby: if you have the latest copy this is on page 13, figure 1.5.  I have added the first data specification as it is omitted in the book, but doesn't make much sense without it.  I have no clue how the multiple datasets (one demographic, one map) are dealt with in the Grammmar - Lee doesn't discuss this at all.]
+This is relatively simple to adapt to the syntax of ggplot:
 
-To make this work in R, we need to make a few changes.  Its equivalent in ggplot would be:
+\begin{itemize}
+	
+	\item {\tt ggplot()} is used to specify the default data and default aesthetic mappings.  {\tt aes} is short for aesthetic mapping and specifies which variables in the data should be mapped to which aesthetic attributes.
+	
+	\item Data is provided as standard R data.frames existing in the global environment; it does not need to be explicitly loaded.  We also use a slightly different world data set, with columns lat and long.  This lets us use the same aesthetic mappings for both datasets. Layers can override the default data and aesthetic mappings provided by the plot. 
+	
+	\item We replace {\sf TRANS} with an explicit transformation by R code.
+
+	\item {\sf ELEMENT}s are replaced with layers, which explicitly specify where the data comes from.  Each geom has a default statistic which is used to transform the data prior to plotting.  For the geoms in this example, the default statistic is the identity function.  Fixed aesthetics (the colour red in this example) are supplied as additional arguments to the layer, rather than as special constants.
+
+	\item The {\sf SCALE} component has been omitted from this example (so that the defaults are used)In both the ggplot and GoG examples, scales are defined by default.  In ggplot you can override the defaults by adding a scale object, e.g. {\tt scale\_colour} or {\tt scale\_size}
+
+	\item {\sf COORD} uses a slightly different format.  In general, most of the components specifications in ggplot are slightly different to those in GoG, in order to be more familiar to R users.
+
+	\item Each component is added together with $+$ to create the final plot
+
+\end{itemize}
+
+This gives us:
 
 \begin{verbatim}
 demographics <- transform(demographics, bd = max(birth - death, 0))
-ggplot(data=demographic, aes(x=lon, y=lat)) + 
-  geom_point(aes(size=bd), colour="red") +
-  geom_polygon(data=world) +
-  coord_map(projection="mercator")
+
+ggplot(data = demographic, mapping = aes(x = lon, y = lat)) 
++ layer(geom = "point", mapping = aes(size = bd), colour="red") +
++ layer(geom = "polygon", data = world) +
++ coord_map(projection = "mercator")
 \end{verbatim}
 
-\noindent This example is sophisticated, and the parts that make it up are described below.
-
-\begin{itemize}
-	\item {\tt ggplot} specifies the data, default aesthetic mappings and facetting. (you can also {\tt qplot} which does this and more).  It creates a plot object which we then supplement with the other components of the plot.  {\tt aes} is short for aesthetic mapping and specifies which variables in the data should be mapped to which aesthetic attributes.  (Scales then specify {\em how} this should occur).
-	
-	\item $+$ is used to add components to this plot.  Each component is named {\tt component type\_component name}.  All components are always written in the singular eg. {\tt geom\_point}, {\tt geom\_polygon}.
-	
-	\item Geoms can override the default data and aesthetic mappings provided by the plot.  Each geom also has a default statistic which is used to transform the data prior to plotting.  For the geoms in the above example, the default statistic is the identity function.  
-		
-	\item In both the ggplot and GoG examples, scales are defined by default.  In ggplot you can override the defaults by adding a scale object, e.g. {\tt scale\_colour} or {\tt scale\_size}
-	
-	\item The coordinate system uses a slightly different format.  In general, most of the object specifications in ggplot are slightly different to those in GoG, in order to be more familiar to R users.
-\end{itemize}
-
-There is also a global plot object ({\tt .PLOT}) which records the last plot.  This can be useful if you forgot to save the last output.
-
+% There is also a global plot object ({\tt .PLOT}) which records the last plot.  This can be useful if you forgot to save the last output.
+% 
 % \subsection{Data, defaults and facetting}\label{sub:data_defaults_and_facetting}
 % 
 % The plot object starts off very simple: it is just a set of defaults, with no visual display.  This is what the function {\tt ggplot} will set up.  

@@ -3,7 +3,7 @@
 \setchapterpreamble[u]{% 
 \dictum[Friedrich Nietzsche]{He who fights with monsters might take care lest he thereby become a monster. And if you gaze for long into an abyss, the abyss gazes also into you.}} 
 
-\chapter{Using grid to modify ggplot graphics}
+\chapter{Customising display with grid}
 
 The options provided by {\tt ggplot} to customise your plot can only go so far.  This chapter describes how to use the power of grid graphics to delve into the dark depths of {\tt ggplot} and modify to your hearts content.  
 
@@ -61,15 +61,6 @@ It is also possible to create a theme which encapsulates multiple options.  One 
 
 It is very easy to create your own theme.  Just make a list of all the options you want to set.
 
-\section{Summary}\label{sec:summary}
-
-\begin{itemize}
-  \item To create a new plot object with specified details, use {\tt p <- ggplot(data, facets=facetting formula, margins=margins to display, aesthetics= list of default aesthetics)}
-  \item To add geoms to a plot, use a geom function, e.g. {\tt ggpoint(p)}.  
-  \item To add a scale to a plot, use a scale function, e.g. {\tt scmanual(p)} or {\tt pscontinuous(p)}
-\end{itemize}
-
-
 \section{Structure of a plot}\label{sec:structure_of_a_plot}
 
 To annotate or edit the plot, you first need to figure out what you want to change, and what it is called.  If you are annotating plots, you will want the appropriate viewport.  If you are editing plots, you will want the appropriate grob.  This section gives a general overview of the structure of a plot, and describes useful commands for figuring out the structure of your particular plot.
@@ -98,7 +89,9 @@ Examples:
 
 Useful tools for this are the grid commands {\tt current.vpTree(all=TRUE)} and {\tt current.grobTree(all=TRUE)} which list the available viewports and grobs, respectively.  
 
-\section{Controlling output}\label{sec:controlling_output}
+\subsection{gTrees}\label{sub:gtrees}
+
+\section{Customising layout}\label{sec:controlling_output}
 
 By default, showing a {\tt ggplot} object at the R command prompt will display to the screen.  To exercise more control, you can call {\tt print} explicitly.  This section describes some of the things you can do.  For more details see {\tt ?print.ggplot} and {\tt ?ggplot\_print}.
 
@@ -130,8 +123,6 @@ upViewport()
 print(p, vp="small")
 \end{alltt}
 
-\subsection{Using {\tt grid.layout}}\label{sub:using_grid_layout}
-
 Obviously, this is very useful if you want to layout plots in a complicated grid.  In this case, setup your grid using {\tt grid.layout} and then draw to it.
 
 \begin{alltt}
@@ -149,6 +140,17 @@ print(p, viewport=vplayout(1, 2:3))
 print(p, viewport=vplayout(1:3, 3))
 \end{alltt}
 
+
+ibrary(ggplot)
+library(grid)
+
+grid.newpage()
+pushViewport(viewport(layout=grid.layout(1, 2)))
+
+print(qplot(wt, mpg, data=mtcars), vp=viewport(layout.pos.col=1, layout.pos.row=1))
+print(qplot(vs, mpg, data=mtcars), vp=viewport(layout.pos.col=2, layout.pos.row=1))
+
+
 This is useful for arranging plots in a wider range of ways than what you can do with facetting.   You should be careful to ensure that scales are consistent over the different plots.  There is no easy way to do this, except to keep track of the maximum and minimum yourself, and then manually set the scales of the plot.
 
 \begin{alltt}
@@ -157,7 +159,7 @@ This is useful for arranging plots in a wider range of ways than what you can do
 
 As the above example shows, you will probably want to use {\tt print(p, pretty=false)} and manually add grobs and viewports to draw the labels yourself.
  
-\section{Modifying stuff}\label{sec:modifying_stuff}
+\section{Modifying existing grobs}\label{sec:modifying_stuff}
 
 Before you try to manually edit the grobs, check to make sure that there isn't an option that already controls the appearance.  See section XXX, page X, for more details.  Most of the difficulty in modifying stuff on the plot is figuring out the name of the grid you want to modify.  Grobs that are likely to want to edit include:
 
@@ -224,19 +226,6 @@ example here
 \end{alltt}
 
 Remember you can use {\tt current.vpTree(all=TRUE)} to remind you of what viewports are available to draw in.
-
-\section{Layouts}\label{sec:layouts} % (fold)
-
-ibrary(ggplot)
-library(grid)
-
-grid.newpage()
-pushViewport(viewport(layout=grid.layout(1, 2)))
-
-print(qplot(wt, mpg, data=mtcars), vp=viewport(layout.pos.col=1, layout.pos.row=1))
-print(qplot(vs, mpg, data=mtcars), vp=viewport(layout.pos.col=2, layout.pos.row=1))
-
-
 
 % section layouts (end)
 
