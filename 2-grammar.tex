@@ -50,9 +50,7 @@ To clarify the role of each of these elements, here are a couple of simple examp
 % |||
 \begin{alltt}
 > qplot(carat, price, data = dsmall, size = clarity)
-\end{alltt}
-\includegraphics[scale=0.5]{./include/4f0f11e64c79873530a23d1a916939b9.pdf}
-\begin{alltt}
+\includegraphics[scale=0.5]{./include/a93a648e1fc6260da923c5e970b76a87}
 
 \end{alltt}
 % >>>
@@ -60,8 +58,8 @@ To clarify the role of each of these elements, here are a couple of simple examp
 This plot has one layer, three scales and a cartesian coordinate system.  To make these parts more clear, we can instead create the plot using these commands:
 
 \begin{alltt}
-ggplot()
-+ layer(
+ggplot() + 
+layer(
     data = diamonds, mapping = aes(x = carat, y = price, size = clarity),
     geom = "point", stat = "identity")
   )
@@ -70,15 +68,15 @@ ggplot()
 This makes the single layer obvious, it uses a point geom and the identity transformation, but where are the definitions of the scales and the coordinate system?  By default, ggplot automatically adds sensible scales and the default coordinate system, however, we can be more explicit and add them ourselves:
 
 \begin{alltt}
-ggplot() 
-+ layer(
+ggplot() + 
+layer(
     data = diamonds, mapping = aes(x = carat, y = price, size = clarity),
     geom = "point", stat = "identity")
-  )
-+ scale_size()
-+ scale_y_continuous()
-+ scale_x_continuous()
-+ coord_cartesian()
+) + 
+scale_size() + 
+scale_y_continuous() + 
+scale_x_continuous() + 
+coord_cartesian()
 \end{alltt}
 
 Compared to the initial qplot example, this is extremely verbose, but perfectly explicit.  We  can clearly see the single layer, the three scales (x position, y position and size) and the coordinate system.  
@@ -93,9 +91,7 @@ The next example includes multiple layers, and demonstrates the effect of modify
 \begin{alltt}
 > qplot(carat, price, data = dsmall, geom = c("smooth", "point"), 
 +     method = "lm", log = "xy")
-\end{alltt}
-\includegraphics[scale=0.5]{./include/a76576c992c8bffa9017c49d53a0611a.pdf}
-\begin{alltt}
+\includegraphics[scale=0.5]{./include/9dbf752d1450a53b3313b99f21c5f22c}
 
 \end{alltt}
 % >>>
@@ -103,29 +99,29 @@ The next example includes multiple layers, and demonstrates the effect of modify
 Here we have two layers, two scales and the same cartesian coordinate system:
 
 \begin{alltt}
-ggplot() 
-+ layer(
+ggplot() + 
+layer(
    data = diamonds, mapping = aes(x = carat, y = price),
    geom = "point", stat = "identity")
-  )
-+ layer(
+) + 
+layer(
    data = diamonds, mapping = aes(x = carat, y = price),
    geom = "smooth", stat = "smooth", method = lm)
-  )
-+ scale_y_log10()
-+ scale_x_log10()
-+ coord_cartesian()
+) + 
+scale_y_log10() + 
+scale_x_log10() + 
+coord_cartesian()
 \end{alltt}
 
 There is some duplication in this example, which we can reduce by using plot defaults.
 
 \begin{alltt}
-ggplot(data = diamonds, mapping = aes(x = carat, y = price)) 
-+ layer(geom = "point", stat = "identity"))
-+ layer(geom = "smooth", stat = "smooth", method = lm))
-+ scale_y_log10()
-+ scale_x_log10()
-+ coord_cartesian()
+ggplot(data = diamonds, mapping = aes(x = carat, y = price)) + 
+layer(geom = "point", stat = "identity")) + 
+layer(geom = "smooth", stat = "smooth", method = lm)) + 
+scale_y_log10() + 
+scale_x_log10() + 
+coord_cartesian()
 \end{alltt}
 
 \subsection{Differences from Wilkinson's grammar}
@@ -199,121 +195,12 @@ This gives us:
 \begin{verbatim}
 demographics <- transform(demographics, bd = max(birth - death, 0))
 
-ggplot(data = demographic, mapping = aes(x = lon, y = lat)) 
-+ layer(geom = "point", mapping = aes(size = bd), colour="red") +
-+ layer(geom = "polygon", data = world) +
-+ coord_map(projection = "mercator")
+ggplot(data = demographic, mapping = aes(x = lon, y = lat)) + 
+layer(geom = "point", mapping = aes(size = bd), colour="red") +
+layer(geom = "polygon", data = world) +
+coord_map(projection = "mercator")
 \end{verbatim}
 
-% There is also a global plot object ({\tt .PLOT}) which records the last plot.  This can be useful if you forgot to save the last output.
-% 
-% \subsection{Data, defaults and facetting}\label{sub:data_defaults_and_facetting}
-% 
-% The plot object starts off very simple: it is just a set of defaults, with no visual display.  This is what the function {\tt ggplot} will set up.  
-% 
-% To start a plot, the bare minimum you need is a data frame:
-% 
-% \begin{alltt}
-% p <- ggplot(diamonds)
-% \end{alltt}
-% 
-% You can supply a facetting formula (as described in Chapter XXX) and margins, which describe how to form small multiples of the plot.
-% 
-% \begin{alltt}
-% p <- ggplot(diamonds, colour ~ cut, margins=TRUE)
-% \end{alltt}
-% 
-% You can also supply a list of default aesthetics mappings.  This should be of the form {\tt aes(aesthetic attribute = data attribute)}.   These will be used by all geoms that support them, and otherwise will be silently ignored.  Careful use of the defaults will save you some typing, but if you don't know what you need you can just leave them blank.  All of the defaults can be overridden when adding geoms later on.
-% 
-% \begin{alltt}
-% p <- ggplot(diamonds, aes(colour = colour, shape = cut))  
-% \end{alltt}
-% 
-% You can find out more about the different aesthetic mappings available for each geom in chapter XXX, and how to exercise control over the default scales in chapter XXX.
-% 
-% You can modify these settings after you have created the plot using {\tt setfacets} and {\tt setdefaults}.  You can modify the default data set using {\tt setdata}.  This makes it easy to set up a plot and change the data set that it is based on, or to add facetting after you have set up everything else.
-% 
-% \subsection{Graphical objects}\label{sub:graphical_objects}
-% 
-% Once you have set up the defaults, you will want to add graphical objects to the plot.  There is a separate function for each type of graphical object, but they all have a very similar structure.  All of the geom functions start with {\tt gg}.  Chapter XXX lists all of the geom functions, and explains in detail their function and options that they take.  There is also a list of all geoms in {\tt ?ggplot}, which will also contain any added since this book was printed.
-% 
-% If you want to use the defaults you set up when creating the plot object, , you just use the geom function like:
-% 
-% \begin{alltt}
-% p + geom_line()
-% \end{alltt}
-% 
-% This will create a new plot object with a lines geom added to its list of geoms.  By default, this object will be plotted, so that you see the effect of the geom function immediatly.  You can also add more aesthetics, or specify a different data set to use instead of the default.  
-% 
-% \begin{alltt}
-% p + geom_line(aes(colour=a, size=b), data=new.data.frame))
-% \end{alltt}
-% 
-% If there is a default aesthetic you want to unset, use {\tt NULL}:
-% 
-% \begin{alltt}
-% p + geom_line(p, aes(colour=NULL))
-% \end{alltt}
-% 
-% If the plot is facetted, and the new data set does not contain the facetting columns, then the data set will be duplicated for each value of the missing columns.  This has the effect of displaying the data in every facet.  This is explained in more detail, with examples, in chapter XXX, page X.
-% 
-% For every aesthetic the geom function understands, you can also supply that aesthetic as an option to the function.  Instead of mapping data to that aesthetic, this will change the default.  For example.
-% 
-% \begin{alltt}
-% p + geom_line(colour="red")  
-% \end{alltt}
-% 
-% \noindent will set the line colour to be red instead of black.  Other examples:
-% 
-% \begin{alltt}
-% p + geom_line(size=3)  
-% p + geom_line(size=3, colour="blue")  
-% \end{alltt}
-% 
-% These changes to the aesthetic attributes will not appear in the legend.  If you do want to   manually set the aesthetic attributes, you can use a scale specially design to do that, {\tt scmanual}.  This scale provides a number of options that you can use to customise the legend.  See page XXX for more details.
-% 
-% \subsection{Scales}\label{sub:scales}
-% 
-% By default, whenever you specify an aesthetic mapping (eg. {\tt colour=a}) a default scale is automatically added to the plot object (eg. {\tt scale_colour_gradient}).  However, if the default does not do what you want, you will have to manual add a scale to overwrite the existing default.  You do this with scale functions.  Scales are described in detail in chapter XXX.
-% 
-% Scales are not quite as regular as geom functions, because they have a greater range of appearances.  
-% 
-% Two types of scales: for continuous data, and for categorical data
-% 
-% \begin{tabular}{l|p{1in}l}
-%  & position & other\\
-% \hline
-% categorical & 
-% Testing one two threee
-% 
-% How does it work
-% r2c2 & r2c3\\
-% continuous & r3c2 & r3c3\\
-% \hline
-% \end{tabular}
-% 
-% All scales take (at least) the following arguments:
-% 
-% \begin{itemize}
-%   \item name
-% \end{itemize}
-% 
-% Most continuous scales also have:
-% 
-% \begin{itemize}
-%   \item range
-%   \item expand
-%   \item breaks
-%   \item transform
-% \end{itemize}
-% 
-% Most categorical scales also have:
-% 
-% \begin{itemize}
-%   \item range
-%   \item breaks
-%   \item labels
-% \end{itemize}
 
 
 
