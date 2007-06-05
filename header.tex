@@ -7,7 +7,7 @@
 \usepackage[pdftex]{graphicx}
 \DeclareGraphicsExtensions{.png,.pdf}
 \usepackage{hyperref}
-\usepackage{minitoc}
+\usepackage{colortbl}
 \usepackage{pdfsync}
 \usepackage{alltt}
 \usepackage{url}
@@ -35,7 +35,52 @@
 \newcommand{\secref}[1]{\ref{#1} (\pageref{#1})}
 
 
+%% begin - to go to preamble
+\edef\BarAtCode{\the\catcode`\@}
+\catcode`\@=11\relax
+\newlength{\bar@leftskip}
+\newlength{\bar@barwidth}
+\newlength{\bar@sepwidth}
+\newlength{\bar@textwidth}
+
+\newcommand{\bardefault}{%
+  \setlength{\bar@leftskip}{0pt}%
+  \setlength{\bar@barwidth}{8pt}%
+  \setlength{\bar@sepwidth}{8pt}%
+}
+
+\newcommand{\bar@settextwidth}{%
+  \setlength{\bar@textwidth}{\textwidth}%
+  \addtolength{\bar@textwidth}{-\bar@leftskip}%
+  \addtolength{\bar@textwidth}{-\bar@sepwidth}%
+  \addtolength{\bar@textwidth}{-\bar@barwidth}%
+  \addtolength{\bar@textwidth}{-\leftmargin}%
+  \addtolength{\bar@textwidth}{-4pt}%
+}
+
+\bardefault\bar@settextwidth
+\newenvironment{sidebar}[1][\obeylines]{\par\bigskip\noindent%
+  \setlength{\tabcolsep}{0pt}
+  \begin{tabular}{l>{\columncolor[gray]{.75}}rcl}%
+    \hspace*{\bar@leftskip}&%
+    \hspace*{\bar@barwidth}&%
+    \hspace*{\bar@sepwidth}&%
+    \begin{minipage}[b]{\bar@textwidth}%
+      #1}{\end{minipage}\end{tabular}\par\medskip}
+
+\newcommand{\barleftskip}[1]{\setlength{\bar@leftskip}{#1}\bar@settextwidth}
+\newcommand{\barbarwidth}[1]{\setlength{\bar@barwidth}{#1}\bar@settextwidth}
+\newcommand{\barsepwidth}[1]{\setlength{\bar@sepwidth}{#1}\bar@settextwidth}
+
+\catcode`\@=\BarAtCode\relax
+%% end
+
+
+
 \raggedbottom
 
 \begin{document}
 \fi
+
+
+
