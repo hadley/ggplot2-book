@@ -1,26 +1,26 @@
 \input{header.tex}
 
-\setchapterpreamble[u]{% 
-\dictum[Friedrich Nietzsche]{He who fights with monsters might take care lest he thereby become a monster. And if you gaze for long into an abyss, the abyss gazes also into you.}} 
+% \setchapterpreamble[u]{% 
+% \dictum[Friedrich Nietzsche]{He who fights with monsters might take care lest he thereby become a monster. And if you gaze for long into an abyss, the abyss gazes also into you.}} 
 
-\chapter{Customising display with grid}
+\chapter{Customising the display of ggplot graphics.}
 
-The options provided by {\tt ggplot} to customise your plot can only go so far.  This chapter describes how to use the power of grid graphics to delve into the dark depths of {\tt ggplot} and modify to your hearts content.  
+This chapter describes two ways to modify the appearance of ggplot graphics.  The options provided by {\tt ggopt} allow you to easily modify the most commonly tweaked parts of ggplot graphics.  These options can only go so far, and so the second section of this chapter describes how to use the power of grid graphics to delve into the dark depths of {\tt ggplot} and modify a plot to your heart's content.  
 
 Please remember that I've done my best to provide perceptually sensible defaults, and you should think carefully about what you are doing before you make any big changes.  Some particular good references are:
 
 \begin{itemize}
-	\item Cleveland's books and article in JASA
-	\item Cynthia Brewer for area colours
-	\item Tufte for aesthetics
-	\item Bertin for maps
-	\item Wilkinson in general
+	\item \citet{wilkinson:2006}, in general.
+	\item \citet{cleveland:1993,cleveland:1987,cleveland:1994}.
+	\item \citet{tufte:2006,tufte:1990,tufte:1997,tufte:2001}, for generally how to make beautiful graphics.
+	\item \citet{bertin:1983,bertin:1967}, especially for maps.
+	\item \citet{brewer:1994,brewer:1994a}, for the choice of colours, particularly for area plots.
+	\item \citet{carr:1999,carr:1994,carr:2002}, for the use of colour in general.
 \end{itemize}
 
-This chapter can not hope to provide a comprehensive introduction to grid, but should hopefully provide enough exam	ples that even if you have never used grid before you should be able to customise ggplot to meet your needs.  I highly recommend the book ``R Graphics'', by Paul Murrell, as a companion to this chapter, or if you are interested in learning more about grid.   
+This chapter can not hope to provide a comprehensive introduction to grid, but should hopefully provide enough examples that even if you have never used grid before you should be able to customise ggplot to meet your needs.  I highly recommend the book ``R Graphics'' \citep{murrell:2005} as a companion to this chapter, or if you are interested in learning more about grid.   
 
-Rather confusingly, the ``grobs'' in this chapter are a bit different to grobs in previous chapters.  They refer to the low level grid grobs, which create the things that you actually see on screen.  A further difference is that ggplot grobs are only used for data related things, while grid grobs create absolutely everything on the plot, including titles and axes.
-
+The ``grobs'' (graphical objects) used in this chapter are a bit different to the geoms (geometric objects) used in previous chapters.  A grob is the object that is actually drawn to on the screen, while a geom is a more abstract object which describes the type of object used to draw a plot.  An example may make this more clear. In a line plot, the geom describes that the data should be visualised with a line, and the grobs draw the line itself, as well as the other lines that appear in the grid and axes.
 
 \section{Options}\label{sec:options}
 
@@ -42,7 +42,7 @@ grid.colour        & any colour
 & \\
 grid.fill          & any colour
 & \\
-strip.gp           & any colour
+strip.gp           & any colour 
 & \\
 strip.text.gp      & any colour
 & \\
@@ -57,19 +57,20 @@ aspect.ratio       & a number or NULL
 
 \subsection{Themes}\label{sub:themes}
 
-It is also possible to create a theme which encapsulates multiple options.  One theme is included by default: {\tt }, which sets up a white background with black grid lines.  You can use a theme with {\tt ggtheme(theme)}, or for a single plot {\tt update(plot, theme)}.
+It is also possible to create a theme which encapsulates multiple options.  One theme is included by default: {\tt theme\_bw}, which sets up a white background with black grid lines.  You can use a theme with {\tt ggtheme(theme)}, or for a single plot {\tt update(plot, theme)}.
 
-It is very easy to create your own theme.  Just make a list of all the options you want to set.
 
+
+A theme is a very simple structure, just a list of multiple options, so it should be easy to create your own.
+
+\newpage
 \section{Structure of a plot}\label{sec:structure_of_a_plot}
 
-To annotate or edit the plot, you first need to figure out what you want to change, and what it is called.  If you are annotating plots, you will want the appropriate viewport.  If you are editing plots, you will want the appropriate grob.  This section gives a general overview of the structure of a plot, and describes useful commands for figuring out the structure of your particular plot.
-
-All the grobs and viewports in {\tt ggplot} should have a sensible name.  If they don't have a name, or the name doesn't make sense, this is a bug, and should be reported.  Generally, grobs that perform the same purpose, but live in different parts of the graph, still have the same name so that you can edit all of them simultaneously.  
+To annotate or edit the plot, you first need to figure out what you want to change, and what it is called.  If you are annotating plots, you will need to know the name of the appropriate viewport.  If you are editing plots, you will need to know the name of the appropriate grob.  This section gives a general overview of the structure of a plot, and describes useful commands for figuring out the structure of your particular plot.
 
 \subsection{Viewports}\label{sub:viewports}
 
-The structure of viewports will vary slightly from plot to plot, depending on how axes are shared across facets.  The {\tt layout} viewport contains the meat of the plot: strip labels, axes and facetting panels.  Viewports have prefixes in the following list, then their x and y-coordinates separated by a ``\_''.
+The structure of viewports will vary slightly from plot to plot, depending on the type of facetting [currently, there is only one type of facetting, but this will change in future].  The {\tt layout} viewport contains the meat of the plot: strip labels, axes and facetting panels.  A viewport name is made up of  a prefix (listed below), and x and y position (counting from bottom left) separated by ``\_''.
 
 \begin{itemize}
   \item {\tt labels\_h}: horizontal strip labels
@@ -87,11 +88,34 @@ Examples:
   \item {\tt labels\_v\_3\_1}: the third vertical axis
 \end{itemize}
 
-Useful tools for this are the grid commands {\tt current.vpTree(all=TRUE)} and {\tt current.grobTree(all=TRUE)} which list the available viewports and grobs, respectively.  
+You can see all the viewports on the current plot with this command: {\tt current.vpTree(all=TRUE)}.  Unfortunately there is a bug in grid which prevents all the viewports being displayed, but hopefully this will be resolved soon.  You can get around this by printing only the bare necessities of the plot:
 
-\subsection{gTrees}\label{sub:gtrees}
+\begin{alltt}
+p <- qplot(wt, mpg, data=mtcars, colour=cyl)
+print(p, pretty = FALSE)
+current.vpTree(all=TRUE)
+\end{alltt}
 
-\section{Customising layout}\label{sec:controlling_output}
+\subsection{Grobs}
+\label{sub:grobs}
+
+Grob names have three components: the name of the grob, the class of the grob, and a unique numeric suffix.  The three components are joined together with ``.'' to give a name like {\tt title.text.435} or {\tt ticks.segments.15}.
+
+
+\newpage
+\section{Modifying the plot}
+
+The main three ways to modify the plot are:
+
+\begin{itemize}
+  \item customise the layout
+  \item modifying existing grobs
+  \item add new grobs
+\end{itemize}
+
+\noindent and these are described below.
+
+\subsection{Customising layout}\label{sec:controlling_output}
 
 By default, showing a {\tt ggplot} object at the R command prompt will display to the screen.  To exercise more control, you can call {\tt print} explicitly.  This section describes some of the things you can do.  For more details see {\tt ?print.ggplot} and {\tt ?ggplot\_print}.
 
@@ -100,25 +124,23 @@ If you just want the plot (no labels, titles or legends) you can use {\tt pretty
 \begin{alltt}
 p <- qplot(wt, mpg, data=mtcars, colour=cyl)
 print(p, pretty = FALSE)
-current.vpTree(all=TRUE)
 \end{alltt}
 
-If you want to write a plot function that customises how the plot is put together (ie. the arrangement of panels and guides) you need to provide different functions for {\tt viewports}, {\tt panels} and {\tt guides}.  If you are interested in doing this, I suggest you email me and talk over exactly what you want to do.
-
-By default, {\tt ggplot} always clears the screen and draw to the entire device.  You can do this in two ways.  Firstly, you can setup a viewport and push it on to the display, then draw the plot with {\tt newpage=FALSE}:
+By default, {\tt ggplot} always clears the screen and draws to the entire device.  You customise this in two ways.  Firstly, you can setup a viewport and push it on to the display, then draw the plot with {\tt newpage=FALSE}:
 
 \begin{alltt}
 p <- qplot(wt, mpg, data=mtcars, colour=cyl)
 grid.newpage()
-pushViewport(viewport(height=0.5, width=0.5, x=0.2, y=0.2))
-print(p, newpage=FALSE)
+pushViewport(viewport(height=0.4, width=0.4, x=0.4, y=0.8))
+print(p, newpage=FALSE, pretty=FALSE)
 upViewport()
 \end{alltt}
 
 Alternatively, you can set up your own set of viewports, and then specify which one the plot should be drawn to.
 
 \begin{alltt}
-pushViewport(viewport(height=0.2, width=0.2, x=0.5, y=0.5, name="small", angle=90))
+grid.newpage()
+pushViewport(viewport(height=0.5, width=0.5, x=0.5, y=0.5, name="small", angle=40))
 upViewport()
 print(p, vp="small")
 \end{alltt}
@@ -127,68 +149,83 @@ Obviously, this is very useful if you want to layout plots in a complicated grid
 
 \begin{alltt}
 p <- qplot(wt, mpg, data=mtcars, colour=cyl)
-lay <- grid.layout(3,3)
-vplayout <- function(x, y) 
-  viewport(layout.pos.row=x, layout.pos.col=y)
-grid.newpage()
-pushViewport(viewport(layout=lay))
-#pushViewport(vplayout(1,2:3)); print(p, newpage=FALSE); upViewport()
 
-print(p, viewport=vplayout(1,1))
-print(p, viewport=vplayout(2:3,2:3))
-print(p, viewport=vplayout(1, 2:3))
-print(p, viewport=vplayout(1:3, 3))
+vplayout <- function(x, y) viewport(layout.pos.row=x, layout.pos.col=y)
+grid.newpage()
+pushViewport(viewport(layout=grid.layout(3,3)))
+
+print(p, vp=vplayout(1,1))
+print(p, vp=vplayout(2:3,2:3))
+print(p, vp=vplayout(1, 2:3))
+print(p, vp=vplayout(2:3, 1))
 \end{alltt}
 
-
-ibrary(ggplot)
-library(grid)
-
-grid.newpage()
-pushViewport(viewport(layout=grid.layout(1, 2)))
-
-print(qplot(wt, mpg, data=mtcars), vp=viewport(layout.pos.col=1, layout.pos.row=1))
-print(qplot(vs, mpg, data=mtcars), vp=viewport(layout.pos.col=2, layout.pos.row=1))
-
-
-This is useful for arranging plots in a wider range of ways than what you can do with facetting.   You should be careful to ensure that scales are consistent over the different plots.  There is no easy way to do this, except to keep track of the maximum and minimum yourself, and then manually set the scales of the plot.
+This is useful for arranging plots in a wider range of ways than what you can do with facetting.   You should be careful to ensure that scales are consistent over the different plots.  There is currently no easy way to do this, except to keep track of the maximum and minimum yourself, and then manually set the scales of the plot.
 
 \begin{alltt}
-	example of that here
+Example to come
 \end{alltt}
 
 As the above example shows, you will probably want to use {\tt print(p, pretty=false)} and manually add grobs and viewports to draw the labels yourself.
  
-\section{Modifying existing grobs}\label{sec:modifying_stuff}
+\subsection{Modifying existing grobs}\label{sec:modifying_stuff}
 
 Before you try to manually edit the grobs, check to make sure that there isn't an option that already controls the appearance.  See section XXX, page X, for more details.  Most of the difficulty in modifying stuff on the plot is figuring out the name of the grid you want to modify.  Grobs that are likely to want to edit include:
 
 \begin{itemize}
-	\item Strips
-	\item Labels
-	\item Axes
-	\item Background
+	\item Strips: {\tt strip-background} for the background fill, {\tt strip-text} for the label, and {\tt strip} for the grob that contains the background and text
+
+	\item Axis labels and title: {\tt xlabel}, {\tt ylabel}, {\tt title}
+	
+	\item Axes: labels all called {\tt axis-labels} and ticks called {\tt axis-ticks}.  For x-axes will be contained inside a grob called {\tt xaxis1, xaxis2, etc} and similarly for the y axis.  If you want to select a particular set of labels or ticks you will need to construct a path to that grob using {\tt gPath}, eg. {\tt gPath("xaxis1", "axis-labels")}
+
+	\item Background and grid lines: {\tt grill-background}, {\tt minor-vertical}, {\tt major-vertical}, {\tt minor-horizontal}, {\tt grill-horizontal}, {\tt grill-border}.  Similar to the axes there are multiple copies of these for each panel, so you might need a gPath like {\tt gPath("guide-inside_1_1", "major-vertical")}.
 \end{itemize}
 
-To get a complete list of all grobs in the plot, remember to use {\tt current.grobTree(all=TRUE)}.  
+To get a complete list of all grobs in the plot, you can use {\tt current.grobTree(all=TRUE)}.  [But not in the current version, sorry!]
 
 Once you have the name of the grob you want to edit, use  {\tt grid.edit} to change the graphical parameters of the model.  Remember, that grid graphic parameters (gpar) have the same argument names as base R (eg. cex, pch, col) not {\tt ggplot} (eg. size, shape, colour).  You can find a complete list of graphical parameters in {\tt ?gpar}.
 
-When you are modifying grobs that appear in multiple places, make sure to set {\tt global=TRUE} so that every grob is modified, not just the first one with that name.
+When you are modifying grobs that appear in multiple places, make sure to set {\tt global=TRUE} so that every grob is modified, not just the first one with that name.  For most cases you will also need {\tt grep=TRUE}.
 
 In this example, we edit the font of the strip labels.
 
 \begin{alltt}
-example here
+qplot(mpg, wt, data=mtcars, facets = . ~ cyl)
+grid.edit("strip-text", gp=gpar(fontsize=8, fontface="italic"), grep=TRUE, global=TRUE)
 \end{alltt}
 
-You can also use {\tt grid.remove} to completely remove a grob.
+Or to modify the axis labels:
 
 \begin{alltt}
-example here
+qplot(mpg, wt, data=mtcars, facets = . ~ cyl)
+grid.edit("axis-labels", gp=gpar(fontface="bold"), grep=TRUE, global=TRUE)
 \end{alltt}
 
-\section{Adding annotations}\label{sec:adding_annotation}
+or to modify just one labels:
+
+\begin{alltt}
+qplot(mpg, wt, data=mtcars, facets = . ~ cyl)
+grid.edit(gPath("yaxis2", "axis-labels"), gp=gpar(fontface="bold"))
+grid.edit(gPath("yaxis.", "axis-labels"), gp=gpar(col="red"), grep=TRUE, global=TRUE)
+\end{alltt}
+
+\subsection{Removing grobs}\label{ssub:removing_grobs}
+
+You can use {\tt grid.remove} to completely remove a grob.
+
+\begin{alltt}
+qplot(mpg, wt, data=mtcars, facets = . ~ cyl)
+grid.remove("strip-background", grep=TRUE, global=TRUE)
+grid.remove("grill-background", grep=TRUE, global=TRUE)
+grid.remove("major", grep=TRUE, global=TRUE)
+grid.remove("axis", grep=TRUE, global=TRUE)
+
+qplot(mpg, wt, data=mtcars, facets = . ~ cyl)
+grid.remove("vertical", grep=TRUE, global=TRUE)
+\end{alltt}
+
+\subsection{Adding annotations}\label{sec:adding_annotation}
 
 To add annotations to a plot you have to specify the viewport when you add extra grobs.  For example:
 
@@ -207,24 +244,24 @@ grid.lines(x=unit(c(0,1), "npc"), y=unit(23, "native"), vp="layout::panel_1_1")
 grid.lines(x=unit(c(0,1), "npc"), y=unit(23, "native"), vp="layout::axis_v_1_1")
 \end{alltt}
 
-Draw a line across the whole plot is a bit trickier: you need find a viewport with the correct coordinate system, convert the measurement to a global coordinates and then draw using those coordinates.
-
-\begin{alltt}
-print(p, pretty=FALSE)
-\end{alltt}
-
-Alternatively, if you only want to draw lines, not place other grobs, you can use {\tt move.to} and {\tt line.to}.  See their help pages for more detail.
-
-\begin{alltt}
-example here
-\end{alltt}
-
-One other thing you may want to do when adding annotations is make the viewport bigger.  For example, if you are adding big labels on to the x-axis, there might not be enough space on the plot to display them.  
-
-\begin{alltt}
-example here
-\end{alltt}
-
+% Draw a line across the whole plot is a bit trickier: you need find a viewport with the correct coordinate system, convert the measurement to a global coordinates and then draw using those coordinates.
+% 
+% \begin{alltt}
+% print(p, pretty=FALSE)
+% \end{alltt}
+% 
+% Alternatively, if you only want to draw lines, not place other grobs, you can use {\tt move.to} and {\tt line.to}.  See their help pages for more detail.
+% 
+% \begin{alltt}
+% example here
+% \end{alltt}
+% 
+% One other thing you may want to do when adding annotations is make the viewport bigger.  For example, if you are adding big labels on to the x-axis, there might not be enough space on the plot to display them.  
+% 
+% \begin{alltt}
+% example here
+% \end{alltt}
+% 
 Remember you can use {\tt current.vpTree(all=TRUE)} to remind you of what viewports are available to draw in.
 
 % section layouts (end)
