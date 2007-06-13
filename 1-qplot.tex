@@ -267,7 +267,7 @@ By default, the standard errors are shown with a grey band around the smoother. 
 
 \subsection{Quantiles}\label{sub:quantiles}
 
-A smoother displays a smoothed conditional mean.  It's often useful to see a smooth estimate of other summaries of the distribution, for example the upper and lower quartiles to show the spread of the data.  We can do this with quantile regression \citep{koenker:2005}, which is basically a process to estimate smoothed conditional quantiles.  The types of smoothes we can use is much more limited compared to {\tt geom="smooth"}, but we can learn more about the conditional distribution.
+A smoother displays a smoothed conditional mean.  It's often useful to see a smooth estimate of other summaries of the distribution, for example the upper and lower quartiles to show the spread of the data.  We can do this with quantile regression \citep{koenker:2005}, which is basically a process to estimate smoothed conditional quantiles.  The types of smoothers we can use is much more limited compared to {\tt geom="smooth"}, but we can learn more about the conditional distribution.
 
 For this example, we're going to zoom into a small range of diamond sizes so we can look at the distribution more closely.
 
@@ -549,7 +549,7 @@ Density plots are useful in that they are easier to overlay, but are generally l
 
 \section{Plots for weighted data}\label{sec:weighted_data}
 
-When you have aggregated data where each row in the dataset represents multiple observations, you need some way to take into account the weighting variable.  Since there are no variables appropriate for weighting in the diamonds data, we will use some data collected o Midwest states in the 2000 census.  The data consists mainly of percentages (eg. percent white, percent below poverty line, percentage with college degree) and some information for each county (area, total population, population density).
+When you have aggregated data where each row in the dataset represents multiple observations, you need some way to take into account the weighting variable.  Since there are no variables appropriate for weighting in the diamonds data, we will use some data collected on Midwest states in the 2000 US census.  The data consists mainly of percentages (eg. percent white, percent below poverty line, percentage with college degree) and some information for each county (area, total population, population density).
 
 There are few different things we might want to weight by: 
 
@@ -624,53 +624,9 @@ When we weight a histogram or density plot by total population, we change from l
 \end{alltt}
 % >>>
 
-\section{Combining plots}\label{sec:combining_plots}
-
-As we have seen, you can combine multiple plot geoms by supplying a vector of geom names to {\tt qplot}.  The geoms will be overlaid in the order that you specified them:
-
-% decumar<<< 
-% interweave({
-% qplot(colour, price/carat, data=diamonds, geom=c("jitter", "boxplot"))
-% qplot(colour, price/carat, data=diamonds, geom=c("boxplot", "jitter"))
-% })
-% |||
-\begin{alltt}
-> qplot(colour, price/carat, data = diamonds, geom = c("jitter", 
-+     "boxplot"))
-\includegraphics[scale=0.5]{./include/98898d4bc8ab512a5114ce0db50e25ec}
-
-> qplot(colour, price/carat, data = diamonds, geom = c("boxplot", 
-+     "jitter"))
-\includegraphics[scale=0.5]{./include/428c37c57ed4c02738686a682bcbeb86}
-
-\end{alltt}
-% >>>
-
-The limitation of this technique is that you are plotting exactly the same data, just using a different geom.  You can also use the {\tt add} argument to add more elements to an existing plot.  This is useful when building up a plot from multiple data sources. Doing this is pretty easy: all you have to do is save the output of the {\tt qplot} function and pass it as the {\tt add} argument to the next {\tt qplot} call.
-
-In this example, we add a rug plot to a density plot of weight.
-
-% decumar<<< 
-% interweave({
-% (p <- qplot(carat, data=diamonds, geom="density", colour=cut))
-% qplot(carat, 0, add=p)
-% })
-% |||
-\begin{alltt}
-> (p <- qplot(carat, data = diamonds, geom = "density", colour = cut))
-\includegraphics[scale=0.5]{./include/c20ddd582e45393ae8bb2b1ddc231e93}
-
-> qplot(carat, 0, add = p)
-\includegraphics[scale=0.5]{./include/b62210a1ebe18561bdafb0b1a3ecae0c}
-
-\end{alltt}
-% >>>
-
-[Need better example here]
-
 \section{Facetting}\label{sec:facetting}
 
-Facetting allows you to display small multiples of subsets of your data, as in this example where we have a histogram of price for each value of cut:
+Facetting, also known as trellising or conditioning, allows you to display small multiples of subsets of your data.  This example displays a histogram of price for each value of cut:
 
 % decumar<<< 
 % interweave({
