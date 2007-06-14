@@ -10,7 +10,7 @@ In ggplot, the appearance and the structure of the plot are quite separate.  Thi
 
 The are two ways to do this: common options are exposed by the {\tt ggopt} function, or you can use the grid package to modify the graphical output of ggplot.  The few options provided by {\tt ggopt} allow you to easily modify the most commonly tweaked parts of ggplot graphics, but for more control you can use the power of grid to delve into the dark depths of {\tt ggplot} and tweak to your heart's content.
 
-What is grid?  It's the graphics engine that powers ggplot.  It is responsible for drawing the graphic object on to the screen or other output device.  It provides a system of viewports, which define regions on the plot and the coordinate systems inside.
+What is grid?  It's the graphics engine that powers ggplot.  It is responsible for drawing the graphic object onto the screen or other output device.  It provides a system of viewports, which define regions on the plot and the coordinate systems inside.
 
 Please remember that ggplot has been carefully designed to provide perceptually well-founded defaults, and you should think carefully about what you are doing before you make any big changes.  Some particularly good references to consult are:
 
@@ -24,7 +24,7 @@ Please remember that ggplot has been carefully designed to provide perceptually 
 
 This chapter can not hope to provide a comprehensive introduction to grid, but should hopefully provide enough examples to get you going.   I highly recommend the book ``R Graphics'' \citep{murrell:2005}, by the author of grid,  as a companion to this chapter.   
 
-The grobs (graphical objects) used in this chapter are a bit different to the geoms (geometric objects) used in previous chapters.  A grob is the object that is actually drawn to on the screen, while a geom is a more abstract object which describes the type of object used to draw a plot.  An example may make this more clear. In a line plot, the geom describes that the data should be visualised with a line, and the grobs draw the line itself, as well as the other lines that appear in the grid and axes.
+The grobs (graphical objects) used in this chapter are a bit different to the geoms (geometric objects) used in previous chapters.  A grob is the object that is actually drawn onto the screen, while a geom is a more abstract object which describes the type of object used to draw a plot.  An example may make this more clear. In a line plot, the geom describes that the data should be visualised with a line, and the grobs draw the line itself, as well as the other lines that appear in the grid and axes.
 
 \section{Options}\label{sec:options}
 
@@ -34,7 +34,7 @@ There are two ways to set options:
 \begin{itemize}
   \item Globally (for all plots), using {\tt ggopt}.  For example {\tt ggopt(grid.fill = "white")}.   Global options are applied when a plot is rendered, not when it is created.  This lets you experiment with plot structure and appearance independently.
 
-  \item Locally (for one plot), using \$ or {\tt update}.  For example, {\tt p\$grid.fill <- "white"}, or tt {update(p, grid.fill = "whilte")}.  The first modifies the object in place, while the second creates a modified copy. Local options override the more general global options.
+  \item Locally (for one plot), using \$ or {\tt update}.  For example, {\tt p\$grid.fill <- "white"}, or {\tt update(p, grid.fill = "white")}.  The first modifies the object in place, while the second creates a modified copy. Local options override the more general global options.
 \end{itemize}     
 
 
@@ -114,7 +114,7 @@ The following example demonstrates some of the possibilities.
 
 \subsection{Themes}\label{sub:themes}
 
-It is also possible to create a theme which encapsulates multiple options.  A theme is a very simple structure, just a list of multiple options, so it's  easy to create your own.  One theme is included by default: {\tt theme\_bw}, which sets up a white background with black grid lines.  You can use a theme with {\tt ggtheme(theme)}, or for a single plot {\tt update(plot, theme)}.
+Like lattice, it is also possible to create a theme which encapsulates multiple options.  A theme is a very simple structure, just a list of multiple options, so it's  easy to create your own.  One theme is included by default: {\tt theme\_bw}, which sets up a white background with black grid lines.  You can use a theme with {\tt ggtheme(theme)}, or for a single plot {\tt update(plot, theme)}.
 
 % decumar<<< 
 % interweave({
@@ -189,7 +189,11 @@ The most important components are:
 
 \subsection{Modifying grobs}
 
-Most of the difficulty in modifying stuff on the plot is figuring out the name of the grid you want to modify, and once you have that you can use  {\tt grid.gedit} to change the graphical parameters of the grob.  Remember, that grid graphic parameters (gpar) have the same argument names as base R (eg. cex, pch, col) not {\tt ggplot} (eg. size, shape, colour).  You can find a list of common graphical parameters in Table ref{tbl:gpar}.
+Most of the difficulty in modifying stuff on the plot is figuring out the name of the grob you want to modify, and once you have that you can use {\tt grid.gedit}.  {\tt grid.gedit} does two things: it finds the grobs you want to modify, and then changes their appearance.  
+
+You describe which grobs to modify with a gPath.  A gPath can either be a string specifying a single grob name, or a sequence of grob names with the {\tt gPath} function.  Using a string will find all grobs with that name regardless of their position in the hierarchy.  For example, {\tt "label"} will find all grobs called label, regardless of where they are.  To be more specific, using {\tt gPath("parent", "child")} will only find grobs named ``child'' with a parent called ``parent''.  For example, {\tt gPath("xaxis", "label")} will locate only labels on the x-axis.
+
+Modifying a grob requires some knowledge of the different parameters of the grob.  This is where the second part of the grob name is useful, as it will tell you whether you are modifying a line, or a rect or a text grob.  You can get more information by looking at the documentation for that grob, eg. {\tt ?grid.rect, ?grid.text, ?grid.lines}   All grobs share a common set of graphical parameters described in Table \ref{tbl:gpar}.  Note that grid graphic parameters (gpar) have the difference argument names to the usual ggplot names (cex instead of size, pch instead of shape, col instead of colour)
 
 In this example, we edit the font of all labels.
 
@@ -230,7 +234,7 @@ grid.gedit(gPath("yaxis", "labels"), gp=gpar(col="red"))
 
 \subsection{Adding annotations}\label{sec:adding_annotation}
 
-Many annotation can be done with {\tt geom\_text}, {\tt geom\_abline}, {\tt geom\_vline} and {\tt geom\_hline}, so try those first.  If you need more flexible annotations you can add annotations with grid.  When you add annotations to a plot you need to specify where they will appear, that is, you need to know the name of the viewport which defines the region that you are interested in.
+Many annotations can be done with {\tt geom\_text}, {\tt geom\_abline}, {\tt geom\_vline} and {\tt geom\_hline}, so try those first.  If you need more flexibility you can add annotations with grid.  When you add annotations to a plot you need to specify where they will appear.  In grid this is described by a system of viewports.  Different viewports describe different regions of output on the plot, for example, the axes, the plotting region and the facetting strips.
 
 The structure of viewports will vary slightly from plot to plot, depending on the type of facetting.  For a plot produced with {\tt facet\_grid}, the default, the viewports are described below.  For other types of facetting, the details will vary slightly, and are described in the documentation for that facetting system.  
 
@@ -297,7 +301,7 @@ p <- qplot(wt, mpg, data=mtcars, colour=cyl)
 print(p, pretty = FALSE)
 \end{alltt}
 
-By default, {\tt ggplot} always clears the screen and draws to the entire device.  You customise this in two ways.  Firstly, you can setup a viewport and push it on to the display, then draw the plot with {\tt newpage=FALSE}:
+By default, {\tt ggplot} always clears the screen and draws to the entire device.  You customise this in two ways. One way is to setup a viewport and push it on to the display, then draw the plot with {\tt newpage=FALSE}. {\tt pushViewport} adds the viewport to the list of viewports on the display.   Afterwards, {\tt upViewport} returns you to the viewport for the entire page, preparing you for the next set of output.
 
 \begin{alltt}
 p <- qplot(wt, mpg, data=mtcars, colour=cyl)
@@ -307,7 +311,7 @@ print(p, newpage=FALSE, pretty=FALSE)
 upViewport()
 \end{alltt}
 
-Alternatively, you can set up your own set of viewports, and then specify which one the plot should be drawn to.
+Alternatively, you can set up your own set of viewports, and then specify which one the plot should be drawn to.  Here we use {\tt upViewport} before displaying the plot so we are in the top level viewport before we start plotting.
 
 \begin{alltt}
 grid.newpage()
@@ -316,7 +320,7 @@ upViewport()
 print(p, vp="small")
 \end{alltt}
 
-Obviously, this is very useful if you want to layout plots in a complicated grid.  In this case, setup your grid using {\tt grid.layout} and then draw to it.
+Obviously, this is very useful if you want to layout plots in a complicated grid.  In this case, {\tt grid.layout} is very useful, as it allows you to set up a grid of viewports with arbitrary heights and widths.  You still need to create each viewport, but instead of explicitly specifying the position and size, you can specify the row and column of the layout.
 
 \begin{alltt}
 p <- qplot(wt, mpg, data=mtcars, colour=cyl)
