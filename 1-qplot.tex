@@ -344,34 +344,14 @@ The density estimation is described in more detail in {\tt ?kde2d}.
 
 Line and path plots are typically used for time series data.  Line plots always join the points from left to right, while path plots join them in the order that they appear in the data set (a line plot is just a path plot of the data sorted by x value).  Line plots usually have time on the x-axis, showing how a single variable has changed over time.  Path plots show how two variables have simultaneously changed over time, with time encoded in the way that the points are joined together.
 
-Because there isn't a time variable in the diamonds data, we will create an example data frame to illustrate these types of plots.  This has a very simple sinusoidal pattern in two variables.
+Because there isn't a time variable in the diamonds data, we will use another dataset, {\tt economics}, which contains some economic data on the US measured over the last 40 years.
+
+Let's start with a plot of unemployment over time, first as percent of people unemployed, and second as the median number of weeks unemployed:
 
 % decumar<<< 
 % interweave({
-% df <- data.frame(year = 1:20, a = sin(1:20 * pi / 5) + rnorm(20, 0, 0.15), b=cos(1:20 * pi / 5)  + rnorm(20, 0, 0.15))
-% head(df)
-% })
-% |||
-\begin{alltt}
-> df <- data.frame(year = 1:20, a = sin(1:20 * pi/5) + rnorm(20, 
-+     0, 0.15), b = cos(1:20 * pi/5) + rnorm(20, 0, 0.15))
-> head(df)
-  year           a          b
-1    1  0.70290625  0.6552839
-2    2  0.87791696  0.1256403
-3    3  0.92555697 -0.2606255
-4    4  0.54479073 -0.9252863
-5    5 -0.03462586 -1.0217611
-6    6 -0.79865539 -1.0162740
-
-\end{alltt}
-% >>>
-
-Let's start with a time series plot of {\tt a}.
-
-% decumar<<< 
-% interweave({
-% qplot(year, a, data=df, geom="line")
+% qplot(date, unemploy/pop, data=economics, geom="line")
+% qplot(date, uempmed, data=economics, geom="line")
 % })
 % |||
 \begin{alltt}
@@ -381,44 +361,16 @@ Let's start with a time series plot of {\tt a}.
 \end{alltt}
 % >>>
 
-If we want to display the two variables on the same plot we need to reshape our dataset so that we have a new column which represents the variable the observation was taken on.  The {\tt melt} function from the {\tt reshape} package will do this for us.  Reshaping data is described more in XXX.  Notice that specifying {\tt colour} draws two series.  If we just want to separate series, we can use the {\tt group} aesthetic.
+These plots show the behaviour of percent unemployed, and length of unemployment individually, but it is not so easy to see the joint pattern.  Each time point occupies a point on the 2d grid of length and number, and if we joint up each point to its neighbours we get a 2d trajectory.
+
+This can be illustrated with a path plot.  Below we plot number of unemployed vs length of unemployment and then join the individual observations with a path to show the pattern over time.  To make it more obvious in which direction time flows, we can use the {\tt size} aesthetic, as in the second plot.  We can see that number of unemployed and length of unemployment seems highly correlated, although in recent years the length of unemployment has been increasing relative to the total number of unemployed.
 
 % decumar<<< 
 % interweave({
-% dfm <- melt(df, id="year")
-% head(dfm)
-% qplot(year, value, data=dfm, geom="line", colour=variable)
-% qplot(year, value, data=dfm, geom="line", group=variable)
-% })
-% |||
-\begin{alltt}
-> dfm <- melt(df, id = "year")
-> head(dfm)
-  year variable       value
-1    1        a  0.70290625
-2    2        a  0.87791696
-3    3        a  0.92555697
-4    4        a  0.54479073
-5    5        a -0.03462586
-6    6        a -0.79865539
-
-> qplot(year, value, data = dfm, geom = "line", colour = variable)
-\includegraphics[scale=0.5]{./include/6086feb1e17d39bf138c7bde09284653}
-
-> qplot(year, value, data = dfm, geom = "line", group = variable)
-\includegraphics[scale=0.5]{./include/b8499cb996243d089802dd71767c33ef}
-
-\end{alltt}
-% >>>
-
-These plots show the behaviour of {\tt a} and {\tt b} individually, but it is not so easy to see the joint pattern.  Each time point occupies a point on the 2d grid of {\tt a} and {\tt b}, and if we joint up each point to its neighbours we get a 2d trajectory.
-
-This can be illustrated with a path plot.  Below we plot {\tt a} vs {\tt b} and then join the individual observations with a path to show the pattern over time.  To make it more obvious in which direction time flows, we can use the {\tt size} aesthetic, as in the second plot.   This allows us to see that it follows a cyclical pattern over time.
-
-% decumar<<< 
-% interweave({
-% qplot(a, b, data=df, geom="path")
-% qplot(a, b, data=df, geom="path", size=year)
+% year <- function(x) as.POSIXlt(x)$year + 1900
+% qplot(unemploy/pop, uempmed, data=economics, geom="path")
+% year <- function(x) as.POSIXlt(x)$year + 1900
+% qplot(unemploy/pop, uempmed, data=economics, geom="path", size=year(date))
 % })
 % |||
 \begin{alltt}
@@ -427,20 +379,6 @@ This can be illustrated with a path plot.  Below we plot {\tt a} vs {\tt b} and 
 
 > qplot(a, b, data = df, geom = "path", size = year)
 \includegraphics[scale=0.5]{./include/25fb40d5a89c687172341f7787628eb2}
-
-\end{alltt}
-% >>>
-
-The examples above illustrate the two most common aesthetics for path and line plots: {\tt colour}, and {\tt size}.  The final aesthetic attribute that line and path plots use is {\tt linetype}, which species the dashing pattern of the line: solid, dashed, dotted etc.
-
-% decumar<<< 
-% interweave({
-% qplot(year, value, data=dfm, geom="line", linetype=variable)
-% })
-% |||
-\begin{alltt}
-> qplot(year, value, data = dfm, geom = "line", linetype = variable)
-\includegraphics[scale=0.5]{./include/21304628b3ab18fefe728def55ce4163}
 
 \end{alltt}
 % >>>
