@@ -1,0 +1,149 @@
+\input{header.tex}
+
+\chapter{Toolbox}
+
+\section{Introduction}\label{sec:introduction}
+
+Graphical objects, or geoms for short, are a key feature of {\tt geom_plot}.  Geoms create visual objects on the plot that allow you to see you data.  By choosing various types of geoms, you can recreate common plots.  For example, the {\tt geom_point} geom will make a scatterplot, and the {\tt geom_line} geom will create a line plot.  The advantage of the geom based system is that you can easily combine different geoms to create almost any plot that you can think of.  This section describes geom functions in detail, including what geoms are currently available in {\tt geom_plot} and how you can go about creating your own.
+
+
+\section{Details}\label{sec:details}
+
+All geom functions start with {\tt geom} and are singular, eg. \geomref{geom_point}, \geomref{geom_errorbar}.  They all have the following basic form:
+
+\begin{alltt}
+geom_XXX <- function(plot, aesthetics, data, ...) {}
+\end{alltt}
+
+\noindent and they take three types of input:
+
+\begin{itemize}
+	\item Plot and data settings: {\tt plot}, the plot to add the geoms to. If not specified, this will use the ``current'' plot, i.e. the plot which was last modified. Note that this can differ from the plot currently displayed on screen.  {\tt data} (optional), a data set to get the data from
+	\item Aesthetic mappings: {\tt aesthetics} (optional), a list describing which variables should be mapped to which aesthetics.  If not specified, these will be drawn from the defaults in the plot object
+	\item Other parameters which differ from geom to geom.  These parameters control various settings of the geom, for example, bin width in the histogram, or bandwidth for a loess smoother.  Any aesthetic can also be used as a parameter, in which case it will be applied to all points.
+\end{itemize}
+
+Geom functions add geoms to a plot object, as you can see in the following example.
+
+\begin{alltt}
+p <- geom_plot(data=mtcars, aes=list(x=mpg, y=wt))
+str(p$geoms) 
+str(geom_point(p)$geoms)
+str(p$geoms)
+p <- geom_point(p)
+str(p$geoms)
+\end{alltt}
+
+\section{Categories}\label{sec:categories}
+
+This section indexes geoms based on the tasks for which you might use them: 
+
+\begin{itemize}
+	\item Basic plot types
+	\item For displaying distributions
+	\item Dealing with overplotting
+	\item ``3d'' plots
+	\item Revealing uncertainty
+	\item Annotating a plot
+	\item Grouping
+\end{itemize}
+
+
+\subsection{Basics}\label{sub:basics}
+
+These geoms are the basic geoms used to build up almost all of the other geoms.  These are useful for creating basic graphics, and when building your own geom function (see section \ref{sec:writing_your_own}).
+
+\begin{itemize}
+  \item \geomref{geom_point}: points
+  \item \geomref{geom_line}, \geomref{geom_path}: paths and lines.  Lines are paths that have their x-axis values ordered in increasing value.
+  \item \geomref{geom_polygon}: polygons
+  \item \geomref{geom_bar}: bars
+  \item \geomref{geom_text}: text
+  \item \geomref{geom_tile}: tiles, rectangles which form a regular tessellation of the plane
+\end{itemize}
+
+\subsection{Displaying distributions}\label{sec:distributions}
+
+There are quite a few geoms associated with displaying distributions:
+
+\begin{itemize}
+	\item \geomref{geom_boxplot}: box and whisker plot, for a continuous variable possibly conditioned by a categorical variable
+	\item \geomref{geom_jitter}: a crude way of investigating densities
+	\item \geomref{geom_quantile}: quantiles, for a continuous variable conditional on another continuous variable.
+	\item \geomref{geom_density}: 
+	\item \geomref{geom_histogram}: 
+	\item \geomref{geom_2ddensity}: for displaying the density of points on the plot surface.
+\end{itemize}
+
+(Ask Heike about this)
+
+We have a number of plots available to investigate distributions, depending on the number of variables, and whether we are interested in the conditional or joint distribution.
+
+Single variable
++ cont: histogram, density plot, boxplot
++ cat:  barchart
+
+Two variables: conditional
++ cat  | cat:  mosaic plot
++ cat  | cont: ?
++ cont | cont: quantiles
++ cat  | cont: boxplot
+
+Two variables: joint
++ cat  * cat:  fluctuation diagram
++ cat  * cont: boxplots?
++ cont * cont: bagplot, geom_2ddensity
+
+Jittered points can be used for any joint distribution (or conditional if one or both variables are categorical)
+
+\subsection{Dealing with overplotting}\label{sec:overplotting}
+
+The simplest way to deal with overplotting is to bin the plot into small squares and count the number of points that lies in each square, much like a 2D histogram.  This count can then be visualised as the third variable on a plot.  However, breaking the plot into many small squares produces distracting visual artefacts.  Carr (reference) sugeom_ests using hexagons instead, and this is implemented with \geomref{geom_hexagon}, using the capabilities of the {\tt hexbin package}.
+
+A continuous analogue of this is to compute a 2D density function and then visualise this as coloured tiles or contour lines.  This can be done with \geomref{geom_2ddensity}.
+
+Another approach to dealing with overplotting is to add supplemental information to help guide the eye to the true shape of or pattern within the data:
+
+\begin{itemize}
+	\item \geomref{geom_smooth} add a smooth line showing the mean.
+	\item \geomref{geom_quantile} add a smooth line showing any quantile you are interested in.
+\end{itemize}
+
+\subsection{``3d'' plots}\label{sub:_3d_plots}
+
+{\tt geom_plot} currently does not support true 3D plots.  However, it does offer two tools for producing pseudo-3d plots, the imageplot and the contour plot.
+
+\begin{itemize}
+	\item \geomref{geom_tile}: map z variable to fill colour
+	\item \geomref{geom_contour}: useful for smoother surfaces
+	\item \geomref{geom_point}: can map abs(z) variable to size and sign(z) to colour
+\end{itemize}
+
+These are often better than ``true'' 3d for static plots anyway, because many perceptual cues necessary for accurate depth perception (eg. occlusion, parallax) are not present in static plots.  You can also manually project data points in a higher dimensional space by multiplying by a projection matrix.  However, correctly representing occlusion or generating correct perspective effects will require considerably more effort.  You may want to look at RGL (\url{http://www.rgl.com}) and rggobi (\url{http://www.ggobi.org/ggobi}) for other solutions.
+
+\subsection{Revealing uncertainty}\label{sub:displaying_uncertainty}
+
+If you have information about the uncertainty present in your data, possibly from a model or distributional assumptions, it is often useful to visualise.  There are two geoms that allow you to do this depending on whether you have point or functional confidence intervals:
+
+\begin{itemize}
+	\item \geomref{geom_errorbar}: for pointwise confidence intervals
+	\item \geomref{geom_ribbon}: ribbons of variable width, useful for displaying confidence intervals around functions
+\end{itemize}
+
+\subsection{Annotating a plot}\label{sub:annotating_a_plot}
+
+Any of the basic geoms can be used to annotate a plot with additional output, for example, adding text with \geomref{geom_text}, or a point illustrating the mean with \geomref{geom_point}.  Additionally, there are several geoms whose use is almost entirely for annotation.  These are:
+
+\begin{itemize}
+	\item \geomref{geom_vline}, \geomref{geom_hline}: add vertical or horizontal lines to a plot
+	\item \geomref{geom_abline}: add lines with arbitrary slope and intercept to a plot
+\end{itemize}
+
+See also \secref{sec:adding_annotation} for ways to add more general types of annotation using grid graphics.
+
+\subsection{Grouping}\label{sub:grouping}
+
+There is one special geom function that does not do any drawing of its own, but makes it possible to split up other geoms to display separate subsets within a plot.  This is .  This is equivalent to the {\tt lattice} {\tt group} argument, except that it works with all types of geoms.  
+
+
+\input{footer.tex}

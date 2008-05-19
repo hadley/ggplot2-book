@@ -125,19 +125,6 @@ scale_x_log10() +
 coord_cartesian()
 \end{alltt}
 
-\subsection{Differences from Wilkinson's grammar}
-
-The breakdown into components is very similar Wilkinson's grammar, but there are some important differences.  In Wilkinson's grammar, there is no notion of a layer, and there are few examples where multiple datasets are plotted on the same figure.  There are also three components that are missing in my grammar: the algebra, the transformations, and the guides.  These are not included in ggplot because they can performed using other functionality in R:
-
-\begin{itemize}
-	\item The algebra describes how to reshape data for display.  In R, this can be done instead with the reshape package \citep{reshape}.  This is part of my philosophy that data manipulation should be separate from display.
-
-	\item The explicit transformation stage was dropped because variable transformations are already so easy in R: they do not need to be part of the grammar.
-	
-	\item In ggplot, guides (axes and legends) are largely drawn automatically.  For example, in Wilkinson's grammar you explicitly specify that you want a legend, or how the axes should be annotated, but this is determined by the scale in ggplot.  Annotative guides can be created with geoms if data dependent, or grid can be used to draw directly onto the plot.
-\end{itemize}
-
-Finally, I have renamed the element component to geom (after consultation with Lee Wilkinson) to make the name less generic.  
 
 % \section{The pipeline}\label{sec:the_pipeline}
 % 
@@ -158,50 +145,45 @@ Finally, I have renamed the element component to geom (after consultation with L
 % 
 % [Insert more complicated diagram here]
 
-\section{Converting between grammar syntaxes}
 
-The biggest difference between Lee's grammar and mine is how the grammar is written; the syntax of the grammars are quite different.  The Grammar of Graphics uses two specifications.  A concise format is used to caption figures, and a more detailed xml format stored on disk.  The following example of the concise format is adapted from \citet[][Figure 1.5, page 13]{wilkinson:2006}.
+\subsection{Graphical objects}\label{sub:graphical_objects}
 
-\begin{verbatim}
-DATA: source("demographics")
-DATA: longitude, latitude = map(source("World"))
-TRANS: bd = max(birth - death, 0)
-COORD: project.mercator()
-ELEMENT: point(position(lon * lat), size(bf), color(color.red))
-ELEMENT: polygon(position(longitude * latitude))
-\end{verbatim}
+Once you have set up the defaults, you will want to add graphical objects to the plot.  There is a separate function for each type of graphical object, but they all have a very similar structure.  All of the geom functions start with {\tt geom_}.  Chapter XXX lists all of the geom functions, and explains in detail their function and options that they take.  There is also a list of all geoms in {\tt ?geom_plot}, which will also contain any added since this book was printed.
 
-This is relatively simple to adapt to the syntax of ggplot:
+If you want to use the defaults you set up when creating the plot object, , you just use the geom function like:
 
-\begin{itemize}
-	
-	\item {\tt ggplot()} is used to specify the default data and default aesthetic mappings.  {\tt aes} is short for aesthetic mapping and specifies which variables in the data should be mapped to which aesthetic attributes.
-	
-	\item Data is provided as standard R data.frames existing in the global environment; it does not need to be explicitly loaded.  We also use a slightly different world data set, with columns lat and long.  This lets us use the same aesthetic mappings for both datasets. Layers can override the default data and aesthetic mappings provided by the plot. 
-	
-	\item We replace {\sf TRANS} with an explicit transformation by R code.
+\begin{alltt}
+p + geom_line()
+\end{alltt}
 
-	\item {\sf ELEMENT}s are replaced with layers, which explicitly specify where the data comes from.  Each geom has a default statistic which is used to transform the data prior to plotting.  For the geoms in this example, the default statistic is the identity function.  Fixed aesthetics (the colour red in this example) are supplied as additional arguments to the layer, rather than as special constants.
+This will create a new plot object with a lines geom added to its list of geoms.  By default, this object will be plotted, so that you see the effect of the geom function immediatly.  You can also add more aesthetics, or specify a different data set to use instead of the default.  
 
-	\item The {\sf SCALE} component has been omitted from this example (so that the defaults are used)In both the ggplot and GoG examples, scales are defined by default.  In ggplot you can override the defaults by adding a scale object, e.g. {\tt scale\_colour} or {\tt scale\_size}
+\begin{alltt}
+p + geom_line(aes(colour=a, size=b), data=new.data.frame))
+\end{alltt}
 
-	\item {\sf COORD} uses a slightly different format.  In general, most of the components specifications in ggplot are slightly different to those in GoG, in order to be more familiar to R users.
+If there is a default aesthetic you want to unset, use {\tt NULL}:
 
-	\item Each component is added together with $+$ to create the final plot
+\begin{alltt}
+p + geom_line(p, aes(colour=NULL))
+\end{alltt}
 
-\end{itemize}
+If the plot is facetted, and the new data set does not contain the facetting columns, then the data set will be duplicated for each value of the missing columns.  This has the effect of displaying the data in every facet.  This is explained in more detail, with examples, in chapter XXX, page X.
 
-This gives us:
+For every aesthetic the geom function understands, you can also supply that aesthetic as an option to the function.  Instead of mapping data to that aesthetic, this will change the default.  For example.
 
-\begin{verbatim}
-demographics <- transform(demographics, bd = max(birth - death, 0))
+\begin{alltt}
+p + geom_line(colour="red")  
+\end{alltt}
 
-ggplot(data = demographic, mapping = aes(x = lon, y = lat)) + 
-layer(geom = "point", mapping = aes(size = bd), colour="red") +
-layer(geom = "polygon", data = world) +
-coord_map(projection = "mercator")
-\end{verbatim}
+\noindent will set the line colour to be red instead of black.  Other examples:
 
+\begin{alltt}
+p + geom_line(size=3)  
+p + geom_line(size=3, colour="blue")  
+\end{alltt}
+
+These changes to the aesthetic attributes will not appear in the legend.  If you do want to   manually set the aesthetic attributes, you can use a scale specially design to do that, {\tt scmanual}.  This scale provides a number of options that you can use to customise the legend.  See page XXX for more details.
 
 
 

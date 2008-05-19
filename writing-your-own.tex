@@ -1,0 +1,70 @@
+\input{header.tex}
+\section{Writing your own}\label{sec:writing_your_own}
+
+If a geom function (or a combination of geoms) does not meet your needs, it may be necessary to create your own geom function.  
+
+As you use \texttt{geom_plot} more, you may discover some of the limitations of the included geom functions and want to write your own.  (Although I'm very open to sugeom_estions and if you develop a useful geom function I will be happy to include in the main package).  This document will discuss in detail how geom functions work and what you need to do to build your own.  As an example I will work through the process of creating a geom function that produces a 1d density plot with jittered rug plot, not unlike that created by \texttt{densityplot} in \texttt{lattice}.
+
+\texttt{geom_plot} uses grid graphics, so to be able to create new geom functions you will need some familiarity with basic grid functions.  This isn't too hard to acquire, and I sugeom_est you look at the code for the basic geom functions (eg. \texttt{geom\_points}, \texttt{geom\_rect}) for some simple examples.
+
+There are three functions you will need to write when creating a new geom function:
+
+\begin{itemize}
+	\item A convenient function for adding your geom function to a plot.  This is what the users uses to add the geom to the plot.  This provides a convenient place to modify other plot settings (eg. scales) that your geom might need.  See \texttt{geom_histogram} and \texttt{geom_point} for examples.
+	\item The geom function.  This converts a list of aesthetics, plus some optional parameters to a gList of geoms.  This function is prefixed with \texttt{geom\_}.  
+	\item The preprocessor function (optional).  If your geom function creates new aesthetics (like the densityplot will, by creating a new y position aesthetic) you will need this preprocessing stage so that the new aesthetics are available for the scale functions.  This function is prefixed with \texttt{pre\_}
+\end{itemize}
+
+\subsection{Example}\label{sub:example}
+
+In this example, we're going to develop a geom function to display a 1d density with jittered geom plot.  We first need to decide what aesthetics and what optional parameters this function will take.  We want to give the user some flexibility over the how the density is computed, and the appearance of the density plot.  So let's use the following option parameters:
+
+\begin{itemize}
+	\item adjust: adjustment to default bandwidth
+	\item kernel: type of kernel to use
+	\item colour: the colour of the density line
+\end{itemize}
+
+There is only one aesthetic we need: $x$.  From this we will compute the density and create a y aesthetic.  We do this in the \texttt{pre\_density} function.  Remember that this function returns a data frame that will be used by scales, and then by \texttt{geom\_density}
+
+\begin{verbatim}
+pre_density <- function(data, adjust=1, kernel="gaussian", ...) {
+   dens <- density(data$x, adjust=adjust, kernel=kernel)
+   dens$'.type' <- "density"
+
+   rug <- data.frame(x = jitter(data$x), y=-0.5, .type="rug")
+   rbind(as.data.frame(dens[c("x","y",".type")]), rug)
+}
+\end{verbatim}
+
+We can only return one data frame, so we need to package up the data for both the density and rug somehow.  I've chosen to do this by adding an extra column to the data frame called \texttt{.type} (so named to avoid conflict with user variables) that we will use to determine where the data should go.
+
+The next task is to write geom function to draw the density (with lines) and the jittered rug plot (if necessary).
+
+\begin{verbatim}
+geom_density <- function(aesthetics, colour="black", ...) {
+   aesthetics <- data.frame(aesthetics)
+   dens <- subset(aesthetics, .type == "density")
+   rug <- subset(aesthetics, .type == "rug")
+
+   dens$colour <- colour
+
+   gTree(children = gList(
+      geom_line(dens),
+      geom_rect(rug, colour="black")
+   ))
+
+}
+\end{verbatim}
+
+Finally, we write a convenience function to make it easy to for users.  This function also changes the y label to density, and sets up an appropriate scale.
+
+\begin{verbatim}
+geom_density <- function(plot = .PLOT, aesthetics=list(), ..., data=plot$data) {
+   plot$ylabel <- "Density"
+   plot <- pscontinuous(plot, "y", range=c(0,NA), expand=c(0.05,0))
+   geom__add("density", plot, aesthetics, ..., data=data)
+}  
+\end{verbatim}
+
+\input{footer.tex}
