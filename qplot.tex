@@ -144,6 +144,8 @@ Different types of aesthetic attributes work better with different types of vari
 
 {\tt qplot} is not limited to just producing scatterplots.  In fact, it can produce almost any type of plots, by varying the {\bf geom} used. Geom, short for geometric object, describes the type of object that is used to display the data.  Some geoms have an associated statistical transformation, for example, a histogram is a binning statistic plus a bar geom.  These different components are described in the next chapter.  Here we'll introduce you to the most common and useful geoms, categorised by whether they are useful for 1D or 2D data.
 
+Other tools described in Chapter~\ref{cha:toolbox}.
+
 The following geoms enable you to investigate 2D relationships:
 
 \begin{itemize}
@@ -153,7 +155,6 @@ The following geoms enable you to investigate 2D relationships:
 	\item {\tt geom="density2d"} adds contours of a 2d density estimate.  This is very useful when you have a lot of overplotting.
 	\item {\tt geom="path"} and {\tt geom="line"} draw lines between the data points.  Traditionally these are used to explore relationships between time and another variable, but lines may to be use to join observations connected in some other way.  A line plot is constrained to produce lines that travel from left to right, while paths can go in any direction.
 	\item {\tt geom="boxplot"} produces a box and whisker plot to summarise the distribution of a set of points.
-  % \item {\tt geom="errorbar"} adds error bars to help indicate uncertainty associated with measurements.
 \end{itemize}
 
 These geoms are useful for exploring 1d distributions:
@@ -165,6 +166,8 @@ These geoms are useful for exploring 1d distributions:
 \end{itemize}
 
 % Other types of plots for dealing with categorical data (bar charts, mosaic plots, spineplots, spinograms) are dealt with in chapter X, using the special categorical plotting function {\tt catplot}.
+
+
 
 \subsection{Adding a smoother to a plot}\label{sub:smooth}
 
@@ -416,9 +419,9 @@ This example looks at how the price per carat varies with colour of the diamond.
 
 % Both boxplots and jittered points will try to guess which orientation they should lie, and while most of the time they will get it right, sometimes you will need to say exactly what you want.  For the boxplot, use {\tt orientation="horizontal"} or {\tt orientation="vertical"}, and for the jittered points, use {\tt xjitter} and {\tt yjitter} to specify the amount of jittering to use. 
 % 
-For jittered points, you have the same control over aesthetics as you do with a normal scatterplot: {\tt size}, {\tt colour}, {\tt shape}.  The options for boxplots are more limited (and it is hard to imagine when they would be useful), you can control only the outline colour ({\tt colour}) and the internal fill {\tt fill}.
+For jittered points, you have the same control over aesthetics as you do with a normal scatterplot: {\tt size}, {\tt colour}, {\tt shape}.  For boxplots you can control only the outline colour ({\tt colour}), the internal fill ({\tt fill}) and the size of the lines ({\tt size}).
 
-Another way to look at conditional distributions is to plot a separate histogram or density plot for each value of the categorical variable.
+Another way to look at conditional distributions is to use faceting to plot a separate histogram or density plot for each value of the categorical variable.
 
 \subsection{Histogram and density plots}\label{sub:density}
 
@@ -442,7 +445,7 @@ Histogram and density plots show the distribution of a single variable.  They pr
 
 You can control the amount of smoothing using the {\tt binwidth} argument for the histogram, which specifies the bin size to use.  You can also specify the break points explicitly, using the {\tt breaks} argument.  For the density plot, you can use {\tt adjust} argument, which adjusts the bandwidth of the smoother (high values of {\tt adjust} produce smoother plots).  It is {\bf very important} to experiment with the level of smoothing.  With a histogram you should try many bin widths before you decide on the one (or two, or three) which best describe the data.
 
-For this example, we need to use a rather small binwidth before we can see the full story.
+For this example, we need to use a rather small bin width before we can see the full story.
 
 % decumar<<< 
 % interweave({
@@ -464,7 +467,7 @@ For this example, we need to use a rather small binwidth before we can see the f
 \end{alltt}
 % >>>
 
-Density plots are useful in that they are easier to overlay, but are generally less flexible than histograms, and it is more difficult to understand exactly what a density plot is showing.  (And we are {\bf not} trying to estimate a density: we're trying to see what's going on with our data)  If you want to compare the distributions of different subgroups, all you need to do is add an aesthetic mapping that differentiates the different groups, as follows:
+Density plots are useful in that they are easier to overlay, but are generally less flexible than histograms, and it is more difficult to understand exactly what a density plot is showing.  (And the density plot makes some assumptions that may not be true for our data: unbounded, continuous and smooth)  If you want to compare the distributions of different subgroups, all you need to do is add an aesthetic mapping that differentiates the different groups, as follows:
 
 % decumar<<< 
 % interweave({
@@ -478,98 +481,6 @@ Density plots are useful in that they are easier to overlay, but are generally l
 \end{alltt}
 % >>>
 
-% \subsection{Displaying uncertainty with error bars and ribbons}\label{sub:error_bars}
-% 
-% + Use with statistics
-% 
-% There are two ways to display standard errors with {\tt ggplot}.  For point standard errors, you can use the {\tt errorbar} geom.  For continuous or functional standard errors, you can use the {\tt ribbon} grob.  We've have already seen an example of this: the {\tt ribbon} grob is used inside {\tt smooth} to display the standard errors of the smooth.  Because there are so many different ways to calculate standard errors, the calculation is up to you.  {\tt ggplot} only provides facilities for displaying them once you have them.
-% 
-% For both {\tt ribbon} and {\tt errobar} you can specify confidence internals in two ways:
-% 
-% \begin{itemize}
-%   \item using {\tt upper} and {\tt lower} which specify the upper and lower edges of the confidence band
-% 
-%   \item using {\tt y}, {\tt plus} and {\tt minus} which specify the estimate and positive and negative displacements (if you only specify one of plus and minus, the other will default to the negative of the one that is supplied)
-% \end{itemize}
-% 
-% [Need an example here]
-
-\section{Plots for weighted data}\label{sec:weighted_data}
-
-When you have aggregated data where each row in the dataset represents multiple observations, you need some way to take into account the weighting variable.  Since there are no variables appropriate for weighting in the diamonds data, we will use some data collected on Midwest states in the 2000 US census.  The data consists mainly of percentages (eg. percent white, percent below poverty line, percentage with college degree) and some information for each county (area, total population, population density).
-
-There are few different things we might want to weight by: 
-
-\begin{itemize}
-	\item nothing, to look at county numbers
-	\item total population, to work with absolute numbers
-	\item area, to investigate geographic effects
-\end{itemize}
-
-\noindent The choice of a weighting variable profoundly effects what we are looking at in the plot and the conclusions that we will draw.  There are two aesthetic attributes that can be used to adjust for weights.  Firstly, for simple geoms like lines and points, you can make the size of the grob proportional to the number of points, using the {\tt size} aesthetic, as follows:
-
-% decumar<<< 
-% interweave({
-% midwest <- read.csv("~/Documents/graphics/weighted/midwest.csv")
-% qplot(percwhite, percbelowpoverty, data=midwest)
-% qplot(percwhite, percbelowpoverty, data=midwest, size=poptotal)
-% qplot(percwhite, percbelowpoverty, data=midwest, size=area)
-% })
-% |||
-\begin{alltt}
-> midwest <- read.csv("~/Documents/graphics/weighted/midwest.csv")
-> qplot(percwhite, percbelowpoverty, data = midwest)
-\includegraphics[scale=0.5]{4b8c600efdc1f31f77c7c3368cac11d2}
-
-> qplot(percwhite, percbelowpoverty, data = midwest, size = poptotal)
-\includegraphics[scale=0.5]{f3976daae1f4a7ef912ea259ca3dd8f5}
-
-> qplot(percwhite, percbelowpoverty, data = midwest, size = area)
-\includegraphics[scale=0.5]{440b95f469e5b96a08e077d4a177e603}
-
-\end{alltt}
-% >>>
-
-For more complicated grobs which involve some statistical transformation, we specify weights with the {\tt weight} aesthetic.  These weights will be passed on to the statistical summary function.  Weights are supported for every case where it makes sense: smoothers, quantile regressions, box plots, histograms, and density plots.  You can't see this weighting variable directly, and it doesn't produce a legend, but it will change the results of the statistical summary.
-
-The following example shows how weighting by population density effects the relationship between percent white and percent below the poverty line.
-
-% decumar<<< 
-% interweave({
-% qplot(percwhite, percbelowpoverty, data=midwest, geom=c("point","smooth"), method=lm)
-% qplot(percwhite, percbelowpoverty, data=midwest, size=popdensity, weight=popdensity,geom=c("point","smooth"), method=lm)
-% })
-% |||
-\begin{alltt}
-> qplot(percwhite, percbelowpoverty, data = midwest, geom = c("point", 
-+     "smooth"), method = lm)
-\includegraphics[scale=0.5]{54d5b5a95badb06ff2339bfd51826af0}
-
-> qplot(percwhite, percbelowpoverty, data = midwest, size = popdensity, 
-+     weight = popdensity, geom = c("point", "smooth"), method = lm)
-\includegraphics[scale=0.5]{3353081c3ffa3fd62b69fb2c0aef9142}
-
-\end{alltt}
-% >>>
-
-When we weight a histogram or density plot by total population, we change from looking at the distribution of the number of counties, to the distribution of the number of people.  This example shows the difference this makes for a histogram and density plot of the percentage below the poverty line.
-
-% decumar<<< 
-% interweave({
-% qplot(percbelowpoverty, data=midwest, geom="histogram", binwidth=1)
-% qplot(percbelowpoverty, data=midwest, geom="histogram", weight=poptotal, binwidth=1)
-% })
-% |||
-\begin{alltt}
-> qplot(percbelowpoverty, data = midwest, geom = "histogram", binwidth = 1)
-\includegraphics[scale=0.5]{d8cef4ee59175bda59eaa2647a64b930}
-
-> qplot(percbelowpoverty, data = midwest, geom = "histogram", weight = poptotal, 
-+     binwidth = 1)
-\includegraphics[scale=0.5]{affb33e87c76bc94bd3ea9eb2df0190c}
-
-\end{alltt}
-% >>>
 
 \section{Facetting}\label{sec:facetting}
 

@@ -11,7 +11,32 @@
 
 \chapter{Adding extra layers}
 
+\section{Details}\label{sec:details}
 
+All geom functions start with {\tt geom} and are singular, eg. {\tt geom\_point}, {\tt geom\_errorbar}.  They all have the following basic form:
+
+\begin{alltt}
+geom_XXX <- function(plot, aesthetics, data, ...) {}
+\end{alltt}
+
+\noindent and they take three types of input:
+
+\begin{itemize}
+	\item Plot and data settings: {\tt plot}, the plot to add the geoms to. If not specified, this will use the ``current'' plot, i.e. the plot which was last modified. Note that this can differ from the plot currently displayed on screen.  {\tt data} (optional), a data set to get the data from
+	\item Aesthetic mappings: {\tt aesthetics} (optional), a list describing which variables should be mapped to which aesthetics.  If not specified, these will be drawn from the defaults in the plot object
+	\item Other parameters which differ from geom to geom.  These parameters control various settings of the geom, for example, bin width in the histogram, or bandwidth for a loess smoother.  Any aesthetic can also be used as a parameter, in which case it will be applied to all points.
+\end{itemize}
+
+Geom functions add geoms to a plot object, as you can see in the following example.
+
+\begin{alltt}
+p <- geom_plot(data=mtcars, aes=list(x=mpg, y=wt))
+str(p$geoms) 
+str(geom_point(p)$geoms)
+str(p$geoms)
+p <- geom_point(p)
+str(p$geoms)
+\end{alltt}
 
 \section{Limitations of qplot}
 \label{sec:qplot-limitations}
