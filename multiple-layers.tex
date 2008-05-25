@@ -9,121 +9,9 @@
 % dsmall <- diamonds[sample(nrow(diamonds), 1000),]
 % >>>
 
-\chapter{Understanding the grammar}
+\chapter{Adding extra layers}
 
-\section{Introduction}\label{sec:introduction}
 
-You can choose to use just {\tt qplot}, without any understanding of the underlying grammar, but you will not be able to use the full power of ggplot.  By learning more about the grammar, and the components that make it up, you will be able to create a wider range of plots, as well as being able to combine multiple sources of data, and write functions that operate on plots.
-
-This chapter describes of the grammar of graphics, and how the grammar of ggplot differs from the grammar of \citep{wilkinson:2006}.  In this chapter I will refer to the grammar of ggplot as my grammar, and The Grammar of Graphics as Wilkinson's grammar, and for the remainder of the book it may be assumed that whenever I refer to the grammar, I refer to my grammar.
-
-In this chapter I will present two ways to think about the grammar: as an answer to a question, and as a pipeline of transformations.  You will also learn the R syntax used to create and combine the components to form an actual plot. This chapter is fairly theoretical, so you won't find too many examples of drawing plots.  However, a good understanding of how everything fits together will help you in creating your own plots.   The following chapters, 3-7, describe the different components in depth and provide many practical examples.  
-
-\section{What is a plot?}\label{sec:what_is_a_plot}
-
-One way to think about the grammar of graphics is as a question: what is a plot?  The grammar answers this by describing a plot as a collection of independent components, each describing an independent part of the plot.  There are three basic things we need for a plot: one or more layers, scales to map variables from data space to visual space, and a coordinate system.  These are described below.
-
-\begin{itemize}
-  \item One or more layers.  A layer is composed of data and a description of which data variables should be mapped to which aesthetic properties, a geometric object, and a statistical transformation:
-  
-  \begin{itemize}
-  	\item Data is obviously the most important part, and it is what you provide.  This is what you are displaying visually to aid communication or analysis.  You also need to describe how variables in the dataset are mapped to visual properties.  For example, in Figure 2.X we mapped diamond price to y position, carat to y position and colour to colour.
-  	
-  	\item {\bf Geoms}, short for geometric objects, control the type of plot that you create.  For example, using a point geom will create a scatterplot, while using a line geom will create a line plot.
-
-  	\item {\bf Stats}, or statistical transformations, reduce or augment the data in a statistical manner.  For example, a useful stat is the smoother, which shows the mean of y, conditional on x.  Another common stat is the binner, which bins data in to bins.   Every geom has a default statistic, and every statistic a default geom.  For example, the bin statistic has defaults to using the bar geom to produce a histogram.
-  \end{itemize}
-
-  \item A scale for all the aesthetic properties.  {\bf Scales} control the mapping from data attributes to aesthetic attributes.  They also provide an inverse mapping in the form of a guide, an axis or legend, which facilitates reading the final graphic.  Aesthetic attributes are things like position, size, colour---anything that you can perceive.  The function that maps data to aesthetic attributes is a scale. It takes values in data space (continuous or categorical) and maps them into an aesthetic space (eg. colour, size, shape).  A scale also provides guides to convert back from the aesthetic attribute to the original data.  Guides are either axes (for position) or legends (for everything else)
-
-  \item A coordinate system.  A {\bf coord}, or coordinate systems, maps the position of objects on to the plane of the plot.  Typically we will use the cartesian coordinate system, but sometimes others are useful.
-\end{itemize}
-
-There is also another thing that turns out to be sufficiently useful that we should include it in our general framework: facetting (also known as conditioned or trellis plots). This allows us to easily create small multiples of different subsets of an entire dataset. This is a powerful tool when investigating whether patterns hold across all conditions.
-
-To clarify the role of each of these elements, here are a couple of simple examples, taken from Chapter 2.  First, we'll start with a bubble chart of price by carat, with size proportional to the clarity of the diamond.
-
-% decumar<<< 
-% interweave({
-% qplot(carat, price, data=dsmall, size=clarity)
-% })
-% |||
-\begin{alltt}
-> qplot(carat, price, data = dsmall, size = clarity)
-\includegraphics[scale=0.5]{a93a648e1fc6260da923c5e970b76a87}
-
-\end{alltt}
-% >>>
-
-This plot has one layer, three scales and a cartesian coordinate system.  To make these parts more clear, we can instead create the plot using these commands:
-
-\begin{alltt}
-ggplot() + 
-layer(
-  data = diamonds, aes(x = carat, y = price, size = clarity),
-  geom = "point", stat = "identity"
-)
-\end{alltt}
-
-This makes the single layer obvious, it uses a point geom and the identity transformation, but where are the definitions of the scales and the coordinate system?  By default, ggplot automatically adds sensible scales and the default coordinate system, however, we can be more explicit and add them ourselves:
-
-\begin{alltt}
-ggplot() + 
-layer(
-  data = diamonds, mapping = aes(x = carat, y = price, colour = clarity),
-  geom = "point", stat = "identity"
-) + 
-scale_size() + 
-scale_y_continuous() + 
-scale_x_continuous() + 
-coord_cartesian()
-\end{alltt}
-
-Compared to the initial qplot example, this is extremely verbose, but perfectly explicit.  We  can clearly see the single layer, the three scales (x position, y position and size) and the coordinate system.  
-
-The next example includes multiple layers, and demonstrates the effect of modifying the scale parameters.  This is another example from chapter two: a scatterplot of price vs carat, with logged axes and a linear smooth layered on top.  The qplot code is shown below.
-
-% decumar<<< 
-% interweave({
-% qplot(carat, price, data=dsmall, geom=c("smooth", "point"), method="lm", log="xy")
-% })
-% |||
-\begin{alltt}
-> qplot(carat, price, data = dsmall, geom = c("smooth", "point"), 
-+     method = "lm", log = "xy")
-\includegraphics[scale=0.5]{9dbf752d1450a53b3313b99f21c5f22c}
-
-\end{alltt}
-% >>>
-
-Here we have two layers, two scales and the same Cartesian coordinate system:
-
-\begin{alltt}
-ggplot() + 
-layer(
-  data = diamonds, mapping = aes(x = carat, y = price),
-  geom = "point", stat = "identity"
-) + 
-layer(
-  data = diamonds, mapping = aes(x = carat, y = price),
-  geom = "smooth", stat = "smooth", method = "lm"
-  
-) + 
-scale_y_log10() + 
-scale_x_log10() + 
-coord_cartesian()
-\end{alltt}
-
-There is some duplication in this example, which we can reduce by using plot defaults.
-
-\begin{alltt}
-ggplot(data = diamonds, mapping = aes(x = carat, y = price)) + 
-layer(geom = "point", stat = "identity") + 
-layer(geom = "smooth", stat = "smooth", method = "lm") + 
-scale_y_log10() + 
-scale_x_log10() + 
-coord_cartesian()
-\end{alltt}
 
 \section{Limitations of qplot}
 \label{sec:qplot-limitations}
@@ -179,7 +67,6 @@ ggplot(data, aes(x, y)) + opts(title = "title", aspect.ratio = 1)
 Section~\ref{sec:plot_options} lists all possible plot options and their effects.
 
 
-% section translating_between_qplot_and_ggplot (end)
 
 % \section{The pipeline}\label{sec:the_pipeline}
 % 
@@ -201,7 +88,7 @@ Section~\ref{sec:plot_options} lists all possible plot options and their effects
 % [Insert more complicated diagram here]
 
 
-\subsection{Setting vs. mapping}
+\section{Setting vs. mapping}
 \label{ref:setting-mapping}
 
 If you want to use the defaults you set up when creating the plot object, you just use the geom function like:
@@ -245,6 +132,17 @@ There are also a couple of aesthetic attributes that can't be perceived directly
 By default, the group aesthetic is set to the combination (interaction) of all discrete variables used in the plot.  Generally, this will create the correct separation of the data, but sometimes you will need to override it.  For example, if you want lines connecting observations with a discrete x scale you will need to manual specify the group aesthetic.  This section illustrates a few possible applications when this is useful.
 
 The {\tt interaction()} function is particularly useful if there isn't a preexisting variable that separates the groups you are interested in, but a combination of variables does.  
+
+\section{Geoms}
+\label{sec:geoms}
+
+\section{Stat}
+\label{sec:stat}
+
+\section{Position adjustments}
+\label{sec:position}
+
+
 
 
 \input{_footer.tex}

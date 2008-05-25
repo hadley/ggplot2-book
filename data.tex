@@ -2,37 +2,9 @@
 
 \chapter{Data wrangling}
 
-% \subsection{Data, defaults and facetting}\label{sub:data_defaults_and_facetting}
-% 
-% The plot object starts off very simple: it is just a set of defaults, with no visual display.  This is what the function {\tt ggplot} will set up.  
-% 
-% To start a plot, the bare minimum you need is a data frame:
-% 
-% \begin{alltt}
-% p <- ggplot(diamonds)
-% \end{alltt}
-% 
-% You can supply a facetting formula (as described in Chapter XXX) and margins, which describe how to form small multiples of the plot.
-% 
-% \begin{alltt}
-% p <- ggplot(diamonds, colour ~ cut, margins=TRUE)
-% \end{alltt}
-% 
-% You can also supply a list of default aesthetics mappings.  This should be of the form {\tt aes(aesthetic attribute = data attribute)}.   These will be used by all geoms that support them, and otherwise will be silently ignored.  Careful use of the defaults will save you some typing, but if you don't know what you need you can just leave them blank.  All of the defaults can be overridden when adding geoms later on.
-% 
-% \begin{alltt}
-% p <- ggplot(diamonds, aes(colour = colour, shape = cut))  
-% \end{alltt}
-% 
-% You can find out more about the different aesthetic mappings available for each geom in chapter XXX, and how to exercise control over the default scales in chapter XXX.
-% 
-% You can modify these settings after you have created the plot using {\tt setfacets} and {\tt setdefaults}.  You can modify the default data set using {\tt setdata}.  This makes it easy to set up a plot and change the data set that it is based on, or to add facetting after you have set up everything else.
-% 
-
-
 \section{Introduction}\label{sec:introduction}
 
-To get the most out of ggplot, you need to be able to get your data into the form that {\tt ggplot} wants.  This chapter discusses what the best format is, and some ways to get your data into that form.  It includes an introduction to the {\tt reshape} package, which is a very useful companion to {\tt ggplot}.  I also discuss facetting and its uses in more detail, as well as providing many examples so that you can get more of an idea how it works.
+To get the most out of ggplot, you need to be able to get your data into the form that {\tt ggplot} wants.  This chapter discusses what the best format is, and some ways to get your data into that form.  It includes an introduction to the {\tt reshape} and {\tt plyr} packages, which is a very useful companion to {\tt ggplot}.  I also discuss facetting and its uses in more detail, as well as providing many examples so that you can get more of an idea how it works.
 
 Unlike other graphics packages in R, {\tt ggplot} provides very few ways to get your data in.  For example, lattice functions can take an optional data frame or use vectors direct from the environment.  {\tt ggplot} only works with data in the form of a data frame (although qplot provides a convenient way of creating a data frame from vectors that exist in your data space).  This means that you have to explicitly arrange your data in the format that ggplot uses.  This makes it a little bit more verbose, but you can be more sure about exactly what is going on with your data.  It also allows a cleaner separation of concerns so that the graphics package deals only with plotting data, not wrangling it into different forms as well.
 
@@ -74,63 +46,5 @@ dfm$b <- ifelse(dfm$variable %in% c("a","c"), 1, 2)
 qplot(time, value, data=dfm, a ~ b, type="line")
 \end{alltt}
 
-\section{Facetting}\label{sec:facetting}
-
-Facetting is discussed previous in XXX and XXX.  Here I will go into more detail, and provide more examples.  When specifying a facetting formula, you specify a grid of row and column variables.  Variables appearing on a row or column together, is like nesting, only combinations that appear in the data will appear in the plot.  If variables that are specified on rows and columns are crossed: all combinations will be shown, including those that didn't appear in the original data set.  
-
-You can set up facetting when you create the plot, {\tt ggplot(df, a ~ b)}, or later using \texttt{setfacets(p, formula = . ~ . , margins = FALSE)}.
-
-You can also specify margins to display, by giving the names of the variables you want margins for.  
-
-% decumar<<< 
-% interweave({
-% str(smiths)
-% })
-% |||
-%>>>
-
-Currently, {\tt ggplot} doesn't make any distinction between structural and non-structural missings in the facets - you can't tell whether a combination did not appear in the original dataset, or if it had no data.  Dealing with this properly may require some extensions to R's missing value system.  
-
-\subsection{Continuous variables}\label{sub:continuous_variables}
-
-To use continuous variables as facetting variables, you will first need to convert them to categorical.  Also, as the facetting formula currently does not support calculated variables, so you will need to save them in the data frame first.
-
-{\tt ggplot} provides a convenient function for converting a continuous variable to a categorical variable: {\tt chop}.  Chop takes the following arguments:
-
-\begin{itemize}
-	\item {\tt x}: vector of numbers to chop up into categorical variable
-	\item {\tt n}: number of bins to cut the variable into
-	\item {\tt method}: method to use, equal ranges, equal numbers in each range or pretty ranges
-\end{itemize}
-
-The following examples shows the use of chop to explore the earthquakes data set.
-
-% decumar<<< 
-% ggopt(aspect.ratio = 1)
-% interweave({
-% quakes$depthc <- chop(quakes$depth)
-% qplot(long, lat, . ~ depthc, data=quakes)
-% quakes$magc <- chop(quakes$mag, n=6, method="pretty")
-% qplot(long, lat, . ~ magc, data=quakes)
-% })
-% |||
-% >>>
-
-Breaking by quantiles, so that each facet has approximately the same number of points, is usually the best choice as it is easier to compare the facets because you know the same number of points are in each, even in the presences of overplotting.
-
-\subsection{Missing facetting columns}\label{sub:missing_facetting_columsn}
-
-If you facet on the original data set and add grobs with a new dataset, {\tt ggplot} follows some simple heuristics to try and do what you want.  
-
-If the new dataset contains all of the facetting columns then each facet will have a specialised grob. If the new dataset contains none of the facetting columns, then each facet will use the same grob.  For anything in between, i.e. the new dataset contains some of the existing facetting columns, then the grobs will be duplicated over the facetting columns that are not present.  This sounds complicated, but most of the time it should do what you want.  If you need precise control, just make sure that every new dataset contains all the facetting columns used in the original dataset.
-
-% decumar<<< 
-% interweave({
-% auckland <- data.frame(lat=-20 , lat=-25, long=175, label="Auck" )
-% p <- ggpoint(ggplot(quakes, formula=. ~ depth, aes=list(x=lat, y=long)))
-% ggtext(p, data=auckland, aes=list(label=label))
-% })
-% |||
-% >>>  
 
 \input{_footer.tex}
