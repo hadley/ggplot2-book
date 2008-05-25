@@ -1,4 +1,4 @@
-\input{header.tex}
+\input{_header.tex}
 
 % decumar<<< 
 % source("~/documents/ggplot/ggplot/load.r")
@@ -96,7 +96,7 @@ The next example includes multiple layers, and demonstrates the effect of modify
 \end{alltt}
 % >>>
 
-Here we have two layers, two scales and the same cartesian coordinate system:
+Here we have two layers, two scales and the same Cartesian coordinate system:
 
 \begin{alltt}
 ggplot() + 
@@ -125,6 +125,61 @@ scale_x_log10() +
 coord_cartesian()
 \end{alltt}
 
+\section{Limitations of qplot}
+\label{sec:qplot-limitations}
+
+\begin{itemize}
+  \item Can't use different aesthetic mappings on different layers.  
+  \item Can't use different parameters on different layers
+  \item Can't change coordinate systems.  Can only have linear or log transformed axes, not any other function.
+  \item Can't change scales.
+\end{itemize}
+
+Remember, you can always start with a plot created by {\tt qplot()} and then add on the layers and scales etc as you if you had started with {\tt ggplot()}.  If you do this, {\tt geom\_blank} can be useful for {\tt qplot()} because it's a geom that doesn't draw anything.
+
+\section{Translating between qplot and ggplot}
+\label{sec:translating}
+
+
+\begin{alltt}
+qplot(x, y, data, shape=shape, colour = colour)
+ggplot(data, aes(x, y, shape=shape, colour = colour)) + geom_point()
+\end{alltt}
+
+\begin{alltt}
+qplot(x, y, data, shape=shape, colour = I("red"))
+ggplot(data, aes(x, y, shape=shape)) + geom_point(colour="red")
+\end{alltt}
+
+The differences between setting and mapping are described in more detail in Section~\ref{sec:setting-mapping}.
+
+\begin{alltt}
+qplot(x, y, data, geom=c("line", "smooth"))
+ggplot(data, aes(x, y)) + geom_line() + geom_smooth()
+\end{alltt}
+
+\begin{alltt}
+qplot(x, y, data, geom=c("line", "smooth"), method="lm")
+ggplot(data, aes(x, y)) + geom_line() + geom_smooth(method="lm")
+\end{alltt}
+
+
+\begin{alltt}
+qplot(x, y, data, log="xy")
+ggplot(data, aes(x, y)) + scale_x_log10() + scale_y_log10()
+\end{alltt}
+
+Section~\ref{sec:transformers} describes more possible transformations of the x and y scales.
+
+\begin{alltt}
+qplot(x, y, data, main="title", asp = 1)
+ggplot(data, aes(x, y)) + opts(title = "title", aspect.ratio = 1)
+\end{alltt}
+
+Section~\ref{sec:plot_options} lists all possible plot options and their effects.
+
+
+% section translating_between_qplot_and_ggplot (end)
 
 % \section{The pipeline}\label{sec:the_pipeline}
 % 
@@ -146,17 +201,16 @@ coord_cartesian()
 % [Insert more complicated diagram here]
 
 
-\subsection{Graphical objects}\label{sub:graphical_objects}
+\subsection{Setting vs. mapping}
+\label{ref:setting-mapping}
 
-Once you have set up the defaults, you will want to add graphical objects to the plot.  There is a separate function for each type of graphical object, but they all have a very similar structure.  All of the geom functions start with {\tt geom_}.  Chapter XXX lists all of the geom functions, and explains in detail their function and options that they take.  There is also a list of all geoms in {\tt ?geom_plot}, which will also contain any added since this book was printed.
-
-If you want to use the defaults you set up when creating the plot object, , you just use the geom function like:
+If you want to use the defaults you set up when creating the plot object, you just use the geom function like:
 
 \begin{alltt}
 p + geom_line()
 \end{alltt}
 
-This will create a new plot object with a lines geom added to its list of geoms.  By default, this object will be plotted, so that you see the effect of the geom function immediatly.  You can also add more aesthetics, or specify a different data set to use instead of the default.  
+This will create a new plot object with an addition layer that joins points with lines.  (To see how to control what sets of observations form a line, see Section~\ref{sec:grouping}) lines geom added to its list of geoms.   You can also add more aesthetics, or specify a different data set to use instead of the default.  
 
 \begin{alltt}
 p + geom_line(aes(colour=a, size=b), data=new.data.frame))
@@ -183,13 +237,14 @@ p + geom_line(size=3)
 p + geom_line(size=3, colour="blue")  
 \end{alltt}
 
-These changes to the aesthetic attributes will not appear in the legend.  If you do want to   manually set the aesthetic attributes, you can use a scale specially design to do that, {\tt scmanual}.  This scale provides a number of options that you can use to customise the legend.  See page XXX for more details.
-
 \section{Mastering grouping}
+\label{sec:grouping}
+
+There are also a couple of aesthetic attributes that can't be perceived directly.  The most important of these is the {\tt group} aesthetic, which divides the the data set into discrete components.   This is used in line and path plots to separate the data for different lines, and in the groups grob to divide the different groups. 
+
+By default, the group aesthetic is set to the combination (interaction) of all discrete variables used in the plot.  Generally, this will create the correct separation of the data, but sometimes you will need to override it.  For example, if you want lines connecting observations with a discrete x scale you will need to manual specify the group aesthetic.  This section illustrates a few possible applications when this is useful.
+
+The {\tt interaction()} function is particularly useful if there isn't a preexisting variable that separates the groups you are interested in, but a combination of variables does.  
 
 
-There are also a couple of aesthetic attributes that can't be perceived directly.  The most important of these is the {\tt id} aesthetic, which divides the the data set into discrete components.   This is used in line and path plots to separate the data for different lines, and in the groups grob to divide the different groups. 
-
-
-
-\input{footer.tex}
+\input{_footer.tex}
