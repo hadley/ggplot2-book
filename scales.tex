@@ -3,46 +3,93 @@
 
 \section{Introduction}
 
-Scales control the mapping between data space and aesthetic space.  They convert data values into aesthetic attributes that can be a perceived: colour, shape, size, etc.  Each type of aesthetic attribute has a default scale, and may have other scales that provide different types of mappings.  For example, the default colour scale uses equally space hues, but other scales allow you to generate a gradient between two or three different colours.  This section describes the basic operation of a scale, the details of all the different scales and instructions on how to make your own.
+Scales control the mapping between data and aesthetics.  They convert abstract data values into concrete aesthetics that can be perceived, such position, colour, shape, size, and line type.  Each aesthetic has a default scale for continuous and discrete data types (described in Section~\ref{sec:vartypes}).  To override these defaults you must add your own scale.  
 
-By default, whenever you specify an aesthetic mapping (eg. {\tt colour=a}) a default scale is automatically added to the plot object based on the variable type (eg. \verb|scale_colour_discrete|).  However, if you want more control over the scale, then you'll need to add a scale manually.  Details for individual scales are provided by the documentation.  This chapter gives an overview of how legends work, and discusses broad issues that apply to many legends.
+This chapter:
 
 \begin{itemize}
-	\item colour and fill: brewer, gradient, gradient2
-	\item linetype
-	\item shape
-	\item size
-	\item x, y, and z: 
+  \item How scales work
+  \item How to use scales
+  \item List of all scales, and how to find out more about them
+  \item Transformations
+  \item Two special scales
+  \item How to customise axes and legends
 \end{itemize}
 
-Scales are added by default whenever you use {\tt qplot} or {\tt ggplot}.  If you want to modify them, you need to manually add a scale to the plot.  This will automatically override any defaults.
+This section describes the basic operation of a scale, the details of all the different scales and instructions on how to make your own.
 
 \section{How scales work}
 
+As the job of the scale is to map between data (the domain) and aesthetic spaces (the range), it needs to know exactly what the domain of the data is. For continuous variables, the domain is a range (a numeric vector of length 2, indicating a interval on the real line), and for discrete variables it is a character vector of values.  
+
+The process by a scale learns the domain is called training, and takes place in three steps:
+
 \begin{itemize}
-	\item  Scale transformation occurs before statistical transformation so that statistics are computed on the scale-transformed data.  This ensures that a plot of $log(x)$ vs $log(y)$ on linear scales looks the same as $x$ vs $y$ on log scales.  See Section~\ref{sec:trans} for more details. Transformation is only necessary for non-linear scales, because all statistics are location-scale invariant.
+	\item  {\bf Transform}. Scale transformation occurs before statistical transformation so that statistics are computed on the scale-transformed data.  This ensures that a plot of $log(x)$ vs $log(y)$ on linear scales looks the same as $x$ vs $y$ on log scales.  See Section~\ref{sec:trans} for more details. Transformation is only necessary for non-linear scales, because statistics are defined to be location-scale invariant.
 
-	\item After the statistics are computed, each scale is trained on every faceted dataset (a plot can contain multiple datasets, e.g.\ raw data and predictions from a model).  The training operation combines the ranges of the individual datasets to get the range of the complete data.  If scales were applied locally, comparisons would only be meaningful within a facet.
+	\item {\bf Train}. After the statistics are computed, each scale is trained on every faceted dataset (a plot can contain multiple datasets, e.g.\ raw data and predictions from a model).  The training operation combines the ranges of the individual datasets to get the range of the complete data.  If scales were applied locally, comparisons would only be meaningful within a facet.
 
-	\item Finally the scales map the data values into aesthetic values. Given that we end up with an essentially identical structure you might wonder why we don't simply split up the final result.  There are several reasons for this.  It makes writing statistical transformation functions easier, as they only need to operate on a single facet of data, and some need to operate on a single subset, for example, calculating a percentage.  Also, in practice we may have a more complicated training scheme for the position scales so that different columns or rows can have different $x$ and $y$ scales.  
+	\item {\bf Map}. Finally the scales map the data values into aesthetic values. Given that we end up with an essentially identical structure you might wonder why we don't simply split up the final result.  There are several reasons for this.  It makes writing statistical transformation functions easier, as they only need to operate on a single facet of data, and some need to operate on a single subset, for example, calculating a percentage.  Also, in practice we may have a more complicated training scheme for the position scales so that different columns or rows can have different $x$ and $y$ scales.  
 	
 \end{itemize}
 
-\section{Usage}
+If the domain is manually set using the {\tt limits} argument to the scale (described below) then this processed is skipped.
 
-Scales have a common naming scheme.  
+\section{Using scales}
+
+\subsection{Default scales}
+\label{sub:default_scales}
+
+The following example shows the difference between the default discrete and continuous scales for colour, as well as how to override the default scale.
+
+\begin{alltt}
+  qplot(mpg, wt, data=mtcars, colour=cyl)
+  qplot(mpg, wt, data=mtcars, colour=factor(cyl))
+  qplot(mpg, wt, data=mtcars, colour=factor(cyl)) + scale_colour_brewer(pal="Set1")
+\end{alltt}
+
+The default colour scale for discrete values uses equally spaced hues, the default scale for continuous values uses a gradient of colours between blue and yellow, and the Brewer colour scale uses colours selected to work well in a variety of situations (see \url{http://colorbrewer.org} for more detail).
 
 If you want to use the default scale, but change some options the scale name is {\tt continuous} or {\tt discrete} according to the type of variable.  Having to specify the type of variable (continuous or discrete) seems like extra work: why can't ggplot2 figure that out by itself?  Well, it can't because you can create the scales independently of (and before) the plot.  Allows you to create scales independently of the plot.  Chapter~\ref{chp:strategy} shows some examples of these.
 
+
+\subsection{Scale names}
+\label{sub:scale_names}
+
+Scales have a common naming scheme, made up of three pieces separated by ``{\tt \_}'':
+
 \begin{itemize}
-  \item {\bf name}:  the label which will appear on the axis or legend. You can supply text strings (using ``$\backslash$n'' for line breaks) or mathematical expressions (as described in \verb|?plotmath|):
+  \item {\tt scale}
+  \item {\tt aesthetic name}
+  \item {\tt scale name}
+\end{itemize}
+
+Table~\ref{tbl:scale_list} lists all built-in scales.  Remember to create the name you will use within R, you need to combine together the three parts described above.  For example, to use the Brewer colour scale for fill, you would add on {\tt scale\_fill\_brewer}.  
+
+\begin{table}
+  \begin{center}
+  \begin{tabular}{c}
+    
+  \end{tabular}
+  \end{center}
+  \caption{List of all scales, arranged by the aesthetic that they apply to}
+  \label{tbl:scale_list}
+\end{table}
+
+\subsection{Common arguments}
+\label{sub:scale_arguments}
+
+As well as having a common naming scheme, all scales share a set of common arguments.  These arguments 
+
+\begin{itemize}
+  \item {\bf name}:  the label which will appear on the axis or legend. You can supply text strings (using ``$\backslash$n'' for line breaks) or mathematical expressions (as described by \verb|?plotmath|):
   
   \begin{figure}[htbp]
     \centering
       \includegraphics[width=0.32\textwidth]{scales-name-1}
       \includegraphics[width=0.32\textwidth]{scales-name-2}
       \includegraphics[width=0.32\textwidth]{scales-name-3}
-    \caption{caption}
+    \caption{Legends with names given by (from left to right): {\tt "Tip rate"}, {\tt "The amount of the tip$\backslash$ndivided by the total bill"} and {\tt expression(frac(tip, total\_bill)} }
     \label{fig:label}
   \end{figure}
   
@@ -56,13 +103,42 @@ If you want to use the default scale, but change some options the scale name is 
   % |||
   % >>>
 
-  \item {\bf limits}: if not set, will be computed from the data.  Continuous scales take a numeric vector of length two.  Discrete scales take a character vector.  {\tt xlim} and {\tt ylim} shortcuts.  Limits should always be specified in the original data space.  If limits are set, no training of the data will be performed.  Particularly useful for zooming (limits smaller than range of data), and ensuring that limits are consistent across multiple plots (limits larger than range of some subsets of data)
+  \item {\bf limits}: fixes the domain of the data.  if not set, will be computed from the data.    Continuous scales take a numeric vector of length two.  Discrete scales take a character vector.  {\tt xlim} and {\tt ylim} shortcuts.  If limits are set, no training of the data will be performed.  Particularly useful for zooming (limits smaller than range of data), and ensuring that limits are consistent across multiple plots (limits larger than range of some subsets of data).  
+  
+  Any value not in the domain of the scale is ignored.
 
-  \item {\bf breaks} and {\bf labels}: control what appears where tick marks appear on the axis or what values appear on the legend.  If labels is specified, breaks must be specified too.  Together, these arguments give you control over 
+  \item {\bf breaks} and {\bf labels}: control where tick marks appear on the axis or what values appear on the legend.  If {\tt labels} is specified, you must also specify {\tt breaks}, so that the two can be matched up correctly.  Breaks differs from limits in that it affects what appears on the guide, not what appears on the plot.  This is illustrated by the following example:
   
-  \item {\bf expand}: controls the amount of extra space added to the limits.  This is a numeric vector of length two: the first number is the multiplicative and the second is additive.  Default for continuous scale is {\tt c(0, 0.05)} and for discrete {\tt c(0.5, 0)}.  Set to {\tt c(0, 0)} to have no extra space.  This is added on top of any specified limits.
+  \begin{alltt}
+    p <- qplot(cyl, wt, data = mtcars)
+    p
+    p + scale_x_continuous(limits = c(4, 6))
+    p + scale_x_continuous(breaks = c(4, 6))
+  \end{alltt}
   
+  Alternatively, both breaks and labels can be a function with a single  argument, range, that returns a numeric vector (for breaks) or a character vector (for labels) with desired break positions and labels.
 \end{itemize}
+
+There are many other arguments to individual scales.  Generally, the documentation for the scale is the best place to look for details.
+
+
+\section{Special scales}
+\label{sec:scale_special}
+
+There are two special types of scales that work for all aesthetics.  They are the manual and identity scale.  
+
+The identity scale is used when your data is already in a form that the plotting functions in R understand: size in mm, colour as \verb|"#RRGGBB"| etc. Because there are no labels associated with such data, the identity scale will not draw a legend unless you also provide labels and breaks, as described above. 
+
+\begin{figure}[htbp]
+  \centering
+    \includegraphics[width=0.5\textwidth]{scale-identity}
+  \caption{A plot of R colours in Luv space.  Points are coloured according to their colour, with .  A legend is unnecessary, because the colour of the points represents itself.}
+  \label{fig:scale-identity}
+\end{figure}
+
+The manual scale is useful for creating your own discrete scales.  It has one important argument, \verb|values| in which you specify the values that the scale should produce.  If this vector is named, it will match the values of the output to the values of the input, otherwise it will match in order of the levels of the discrete variable.  If you use \verb|scale_manual| be careful to ensure that they are perceptually well founded.
+
+% scale_product
 
 \section{Transformers}
 \label{sec:trans}
@@ -98,23 +174,7 @@ You can also perform the transformation by hand.  For example instead of adding 
 
 Scale transformation occurs before the statistic is calculated.  Transformers are also used in \verb|coord_trans|, where the transformation occurs after the statistic has been calculated, and affect the shape of the grob.  \verb|coord_trans| is described in more detail in Section XXX.
 
-\section{Special scales}
-\label{sec:scale_special}
-
-There are two special types of scales that work for all aesthetics.  They are the manual and identity scale.  
-
-The identity scale is used when your data is already in a form that the plotting functions in R understand: size in mm, colour as \verb|"#RRGGBB"| etc. Because there are no labels associated with such data, the identity scale will not draw a legend unless you also provide labels and breaks, as described above. 
-
-\begin{figure}[htbp]
-  \centering
-    \includegraphics[width=0.5\textwidth]{scale-identity}
-  \caption{A plot of R colours in Luv space.  Points are coloured according to their colour, with }
-  \label{fig:scale-identity}
-\end{figure}
-
-The manual scale is useful for creating your own discrete scales.  It has one important argument, \verb|values| in which you specify the values that the scale should produce.  If this vector is named, it will match the values of the output to the values of the input, otherwise it will match in order of the levels of the discrete variable.  If you use \verb|scale_manual| be careful to ensure that they are perceptually well founded.
-
-% scale_product
+Section XXX describes how to write your own transformers.
 
 \section{Legends and axes}
 \label{sec:legends_and_axes}
@@ -138,11 +198,13 @@ In ggplot2, legends and axes are produced automatically based on the scales.  Th
   
   \item Position of legends.  Plot level option setting 
   
+  \item {\bf expand}: controls the amount of extra space added to the limits.  This is a numeric vector of length two: the first number is the multiplicative and the second is additive.  Default for continuous scale is {\tt c(0, 0.05)} and for discrete {\tt c(0.5, 0)}.  Set to {\tt c(0, 0)} to have no extra space.  This is added on top of any specified limits.
+  
 \end{itemize}
 
 \subsection{Legend merging}
 
-ggplot2 tries to minimise the number of legends that are displayed.  It does this by combining legends for the same variable.  Figure~\ref{fig:legend-merge} shows an example of this.  In order for legends to be merge, they must have the same title.  For this reason, if you change the title of one of the merged legends you'll need to change it for all of them.
+ggplot2 tries to minimise the number of legends that are displayed.  It does this by combining legends for the same variable.  Figure~\ref{fig:legend-merge} shows an example of this.  In order for legends to be merged, they must have the same title.  For this reason, if you change the title of one of the merged legends you'll need to change it for all of them.
 
 \begin{figure}[htbp]
   \centering
