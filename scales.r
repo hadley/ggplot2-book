@@ -25,13 +25,33 @@ aes_type <- function(scale) {
 names <- invert(compact(lapply(Scales$find_all(), aes_type)))
 scales <- lapply(names, function(x) lapply(x, get))
 
-one <- scales[[1]]
+tabulate <- function(x) {
+  align <- ifelse(laply(x, is.numeric), "right", "left")
+  tbl <- do.call("cbind", mlply(cbind(as.list(x), align), format))
+  paste(paste(apply(tbl, 1, paste, collapse = " & "), collapse = "\\\\\n"), "\\\\\n", sep="")
+}
 
-row_end <- "\\\\\\n"
+type_table <- function(type) tabulate(ldply(scales[[type]], function(s) c(s$objname, s$desc)))
 
-tbl <- format(ldply(one, function(s) c(s$objname, s$desc)), justify="left")
-aaply(tbl, 1, paste, collapse = " & ")
+labels <- c(
+  "colour" = "Colour and fill",
+  "linetype" = "Line type", 
+  "position" = "Position (x, y, z)",
+  "shape" = "Shape",
+  "size" = "Size"
+)
+type_header <- function(type) {
+  paste(
+    "\\midrule\n",
+    "\\multicolumn{2}{c}{", labels[type], "} \\\\\n",
+    "\\midrule\n",
+    sep = ""
+  )
+}
 
+l(plyr)
+scale_desc <- laply(names(scales), function(s) paste(type_header(s), type_table(s), sep =""))
+cat(scale_desc, file ="scale-desc.tex")
 
 # Labels ---------------------------------------------------------------------
 

@@ -10,7 +10,6 @@ This chapter:
 \begin{itemize}
   \item How scales work
   \item How to use scales
-  \item List of all scales, and how to find out more about them
   \item Transformations
   \item Two special scales
   \item How to customise axes and legends
@@ -22,18 +21,22 @@ This section describes the basic operation of a scale, the details of all the di
 
 As the job of the scale is to map between data (the domain) and aesthetic spaces (the range), it needs to know exactly what the domain of the data is. For continuous variables, the domain is a range (a numeric vector of length 2, indicating a interval on the real line), and for discrete variables it is a character vector of values.  
 
+The each scale also has range.  For discrete scales, this is just a vector of aesthetic values corresponding to the input values.  For continuous scales, this will typically be a 1d path.  For example, the continuous colour scales have a range which is a path through colour space.
+
 The process by a scale learns the domain is called training, and takes place in three steps:
 
 \begin{itemize}
 	\item  {\bf Transform}. Scale transformation occurs before statistical transformation so that statistics are computed on the scale-transformed data.  This ensures that a plot of $log(x)$ vs $log(y)$ on linear scales looks the same as $x$ vs $y$ on log scales.  See Section~\ref{sec:trans} for more details. Transformation is only necessary for non-linear scales, because statistics are defined to be location-scale invariant.
 
 	\item {\bf Train}. After the statistics are computed, each scale is trained on every faceted dataset (a plot can contain multiple datasets, e.g.\ raw data and predictions from a model).  The training operation combines the ranges of the individual datasets to get the range of the complete data.  If scales were applied locally, comparisons would only be meaningful within a facet.
+	
+	Training can be overridden by manually setting the domain of the scale with the {\tt limits} argument.  Any values outside of the domain will be dropped.
 
-	\item {\bf Map}. Finally the scales map the data values into aesthetic values. Given that we end up with an essentially identical structure you might wonder why we don't simply split up the final result.  There are several reasons for this.  It makes writing statistical transformation functions easier, as they only need to operate on a single facet of data, and some need to operate on a single subset, for example, calculating a percentage.  Also, in practice we may have a more complicated training scheme for the position scales so that different columns or rows can have different $x$ and $y$ scales.  
+	\item {\bf Map}. Finally the scales map the data values into aesthetic values.  Nothing needs to be done for some scales: for example, for continuous position scales, all the difficult work has already been done by the transformation step.
+	
+	Given that we end up with an essentially identical structure you might wonder why we don't simply split up the final result.  There are several reasons for this.  It makes writing statistical transformation functions easier, as they only need to operate on a single facet of data, and some need to operate on a single subset, for example, calculating a percentage.  Also, in practice we may have a more complicated training scheme for the position scales so that different columns or rows can have different $x$ and $y$ scales.  
 	
 \end{itemize}
-
-If the domain is manually set using the {\tt limits} argument to the scale (described below) then this processed is skipped.
 
 \section{Using scales}
 
@@ -66,15 +69,7 @@ Scales have a common naming scheme, made up of three pieces separated by ``{\tt 
 
 Table~\ref{tbl:scale_list} lists all built-in scales.  Remember to create the name you will use within R, you need to combine together the three parts described above.  For example, to use the Brewer colour scale for fill, you would add on {\tt scale\_fill\_brewer}.  
 
-\begin{table}
-  \begin{center}
-  \begin{tabular}{c}
-    
-  \end{tabular}
-  \end{center}
-  \caption{List of all scales, arranged by the aesthetic that they apply to}
-  \label{tbl:scale_list}
-\end{table}
+\input{scale-desc}
 
 \subsection{Common arguments}
 \label{sub:scale_arguments}
@@ -189,12 +184,14 @@ In ggplot2, legends and axes are produced automatically based on the scales.  Th
 
 \subsection{Customising appearance}
 
+While ggplot2 will generally do a pretty good job at figuring out what the legend should look like, sometimes you will need to do some tweaking to get the legends looking exactly the way that you want.  Described below are some of the useful scale arguments and theme parameters that affect the appearance of legends.  
+
 \begin{itemize}
   \item The {\tt breaks} and {\tt labels} arguments, described above, are particularly important because they control what tick marks appear on the axis and what keys appear on the legend.  If the breaks chosen by default are not appropriate (or you want to use more informative labels) setting these arguments will adjust the appearance of the legend keys and axis tick marks.  
   
-  \item The theme settings {\tt axis.text}, {\tt axis.box}, ... control the visual appearance of the legend.  For more details on how to manipulate these settings, see the Section~.
+  \item The theme settings {\tt axis.text}, {\tt axis.box}, ... control the visual appearance of the legend.  For more details on how to manipulate these settings, see Section~\ref{sec:theming}.
 
-  \item The internal grid lines are controlled by the breaks and minor breaks arguments.  By default minor grid lines are space evenly in the original data space - this gives the common behaviour of log-log plots where major grid lines are multiplicative and minor grid lines are additive.
+  \item The internal grid lines are controlled by the breaks and minor breaks arguments.  By default minor grid lines are spaced evenly in the original data space - this gives the common behaviour of log-log plots where major grid lines are multiplicative and minor grid lines are additive.  You can override the minor grid lines with the {\tt minor\_breaks} argument.
   
   \item Position of legends.  Plot level option setting 
   
