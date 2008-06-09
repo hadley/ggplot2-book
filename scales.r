@@ -25,11 +25,6 @@ aes_type <- function(scale) {
 names <- invert(compact(lapply(Scales$find_all(), aes_type)))
 scales <- lapply(names, function(x) lapply(x, get))
 
-tabulate <- function(x) {
-  align <- ifelse(laply(x, is.numeric), "right", "left")
-  tbl <- do.call("cbind", mlply(cbind(as.list(x), align), format))
-  paste(paste(apply(tbl, 1, paste, collapse = " & "), collapse = "\\\\\n"), "\\\\\n", sep="")
-}
 
 type_table <- function(type) tabulate(ldply(scales[[type]], function(s) c(s$objname, s$desc)))
 
@@ -62,6 +57,16 @@ p + scale_colour_gradient("The amount of the tip\ndivided by the total bill")
 ggsave(file = "scales-name-2.pdf", width=4, height=4)
 p + scale_colour_gradient(expression(frac(tip, total)))
 ggsave(file = "scales-name-3.pdf", width=4, height=4)
+
+# Breaks vs limits -----------------------------------------------------------
+
+p <- qplot(cyl, wt, data = mtcars)
+p
+ggsave(file = "_include/scales-unlimited.pdf", width=4, height=4)
+p + scale_x_continuous(limits = c(5.5, 6.5))
+ggsave(file = "_include/scales-limits.pdf", width=4, height=4)
+p + scale_x_continuous(breaks = c(5.5, 6.5))
+ggsave(file = "_include/scales-breaks.pdf", width=4, height=4)
 
 
 # Transformers ---------------------------------------------------------------
