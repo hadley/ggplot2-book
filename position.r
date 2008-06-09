@@ -1,9 +1,22 @@
-source("latex.r")
 library(ggplot2)
 
-l(plyr)
-tabulate(ldply(Coord$find_all(), function(c) c(c$objname, c$desc)))
+source("latex.r")
+describe(Coord)
+describe(Position)
 
+# Position adjustment --------------------------------------------------------
+
+dplot <- ggplot(diamonds, aes(clarity, fill = cut))
+dplot + geom_bar(position = "identity")
+ggsave(file = "_include/position-identity.pdf", width = 6, height = 3)
+dplot + geom_bar(position = "stack")
+ggsave(file = "_include/position-stack.pdf", width = 6, height = 3)
+dplot + geom_bar(position = "fill")
+ggsave(file = "_include/position-fill.pdf", width = 6, height = 3)
+dplot + geom_bar(position = "dodge")
+ggsave(file = "_include/position-dodge.pdf", width = 6, height = 3)
+qplot(clarity, data = diamonds, geom="line", colour = cut, stat="bin", group=cut)
+ggsave(file = "_include/position-identity2.pdf", width = 6, height = 3)
 
 
 # Grouping vs faceting -------------------------------------------------------
