@@ -3,75 +3,49 @@
 
 \section{Introduction}
 
-Scales control the mapping between data and aesthetics.  They convert abstract data values into concrete aesthetics that can be perceived, such position, colour, shape, size, and line type.  Each aesthetic has a default scale for continuous and discrete data types (described in Section~\ref{sec:vartypes}).  To override these defaults you must add your own scale.  
-
-This chapter:
+Scales control the mapping between data and aesthetics.  They convert abstract data values into concrete aesthetics that you can perceive and that R can understand, such position, colour, shape, size, and line type.  You don't have to learn about scales, because \ggplot will automatically add default scales when needed, but understanding how scales work and how you can control them gives you much more control over your plots. This chapter covers:
 
 \begin{itemize}
-  \item How scales work
-  \item How to use scales
-  \item Transformations
-  \item Two special scales
-  \item How to customise axes and legends
+  \item How scales work (\S \ref{sec:how-scales-work}).
+  \item Using scales: their names, arguments and roles.
+  \item More details about individual scales.
+  \item Controlling the appearance of axes and legends.
 \end{itemize}
 
 This section describes the basic operation of a scale, the details of all the different scales and instructions on how to make your own.
 
 \section{How scales work}
+\label{sec:how-scales-work}
 
-As the job of the scale is to map between data (the domain) and aesthetic spaces (the range), it needs to know exactly what the domain of the data is. For continuous variables, the domain is a range (a numeric vector of length 2, indicating a interval on the real line), and for discrete variables it is a character vector of values.  
+A scale is a function from a region in data space (the domain) to a region in aesthetic space (the range).  While the range of the scale is specified during construction, the domain must be learning from the data. For continuous variables, the this is an interval on the real line (stored as a numeric vector of length 2), and for discrete variables it is set of values (stored as a character vector).  For example, in the mammals sleep dataset, the domain of the continuous variable \var{bodywt} variable is $[0.005, 6654]$, and the domain of the discrete variable \var{vore} is \{carni, herbi, omni\}.
 
-The each scale also has range.  For discrete scales, this is just a vector of aesthetic values corresponding to the input values.  For continuous scales, this will typically be a 1d path.  For example, the continuous colour scales have a range which is a path through colour space.
+The each scale also has range.  For discrete scales, this is just a vector of aesthetic values corresponding to the input values.  For continuous scales, this will be a 1d path some more complicated space.  For example, the continuous colour scales have a range which is a path through colour space.
 
-The process by a scale learns the domain is called training, and takes place in three steps:
+The process by a scale learns the domain is called training, and takes place in three steps when the plot is drawn: transformation, domain calculation and mapping.  
 
 \begin{itemize}
-	\item  {\bf Transform}. Scale transformation occurs before statistical transformation so that statistics are computed on the scale-transformed data.  This ensures that a plot of $log(x)$ vs $log(y)$ on linear scales looks the same as $x$ vs $y$ on log scales.  See Section~\ref{sec:trans} for more details. Transformation is only necessary for non-linear scales, because statistics are defined to be location-scale invariant.
+	\item  For continuous data, it is often useful to display a transformation of the data, like a logarithm or square root.  The {\bf transform} step performs this transformation, before any statistical summaries are calculated.  This ensures that a plot of $log(x)$ vs $log(y)$ on linear scales looks the same as $x$ vs $y$ on log scales.  Transformations are described in more depth in Section~\ref{sec:trans}. 
 
-	\item {\bf Train}. After the statistics are computed, each scale is trained on every faceted dataset (a plot can contain multiple datasets, e.g.\ raw data and predictions from a model).  The training operation combines the ranges of the individual datasets to get the range of the complete data.  If scales were applied locally, comparisons would only be meaningful within a facet.
+	\item After the statistics are computed, the {\bf domain} is calculated for the data in each layer.  The individual domains are then combined to get a global domain, across all layers and facets.  
 	
-	Training can be overridden by manually setting the domain of the scale with the {\tt limits} argument.  Any values outside of the domain will be dropped.
+	Training can be overridden by manually setting the domain of the scale with the {\tt limits} argument, as described in Section~\ref{sec:scale-usage}.  Any data values outside of the domain of the scale, will be set to \code{NA}.
 
-	\item {\bf Map}. Finally the scales map the data values into aesthetic values.  Nothing needs to be done for some scales: for example, for continuous position scales, all the difficult work has already been done by the transformation step.
-	
-	Given that we end up with an essentially identical structure you might wonder why we don't simply split up the final result.  There are several reasons for this.  It makes writing statistical transformation functions easier, as they only need to operate on a single facet of data, and some need to operate on a single subset, for example, calculating a percentage.  Also, in practice we may have a more complicated training scheme for the position scales so that different columns or rows can have different $x$ and $y$ scales.  
+	\item Now that both global domain and range are known, the scaling function can be applied to {\bf map} data values to aesthetic values.  Nothing needs to be done for some scales: for example, for continuous position scales, all the difficult work has already been done by the transformation step.
 	
 \end{itemize}
 
 \section{Using scales}
+\label{sec:scale-usage}
 
-\subsection{Default scales}
-\label{sub:default_scales}
+Table~\ref{tbl:scale_list} lists all the built-in scales.  To add a scale to your plot, you create a scale object and then add it (using \code{+}) to your plot. Scale constructors have a common naming scheme.  They all start with \code{scale_}, followed by the name of the aesthetic, followed by by the name of the scale. For example, to use the Brewer colour scale for fill, you would add {\tt scale\_fill\_brewer()} on to your plot.  
 
-The following example shows the difference between the default discrete and continuous scales for colour, as well as how to override the default scale.
-
-\begin{alltt}
-  qplot(mpg, wt, data=mtcars, colour=cyl)
-  qplot(mpg, wt, data=mtcars, colour=factor(cyl))
-  qplot(mpg, wt, data=mtcars, colour=factor(cyl)) + scale_colour_brewer(pal="Set1")
-\end{alltt}
-
-The default colour scale for discrete values uses equally spaced hues, the default scale for continuous values uses a gradient of colours between blue and yellow, and the Brewer colour scale uses colours selected to work well in a variety of situations (see \url{http://colorbrewer.org} for more detail).
-
-If you want to use the default scale, but change some options the scale name is {\tt continuous} or {\tt discrete} according to the type of variable.  Having to specify the type of variable (continuous or discrete) seems like extra work: why can't ggplot2 figure that out by itself?  Well, it can't because you can create the scales independently of (and before) the plot.  Allows you to create scales independently of the plot.  Chapter~\ref{chp:strategy} shows some examples of these.
-
-\subsection{Scale names}
-\label{sub:scale_names}
-
-Scales have a common naming scheme, made up of three pieces separated by ``{\tt \_}'':
-
-\begin{itemize}
-  \item {\tt scale}
-  \item {\tt aesthetic name}
-  \item {\tt scale name}
-\end{itemize}
-
-Table~\ref{tbl:scale_list} lists all built-in scales.  Remember to create the name you will use within R, you need to combine together the three parts described above.  For example, to use the Brewer colour scale for fill, you would add on {\tt scale\_fill\_brewer}.  
+% TABLE
+%  CAPTION: List of all scales, arranged by the aesthetic that they apply to
+%  LABEL: tbl:scale_list
+%
+% source("scales-list.r")
 
 \input{scale-desc}
-
-\subsection{Common arguments}
-\label{sub:scale_arguments}
 
 As well as having a common naming scheme, all scales share a set of common arguments.  These arguments control the basic operation of the scale and are described below.
 
@@ -84,7 +58,7 @@ As well as having a common naming scheme, all scales share a set of common argum
       \includegraphics[width=0.33\textwidth]{scales-name-2}%
       \includegraphics[width=0.33\textwidth]{scales-name-3}
     \caption{Legends with names given by (from left to right): {\tt "Tip rate"}, {\tt "The amount of the tip$\backslash$ndivided by the total bill"} and {\tt expression(frac(tip, total\_bill)} }
-    \label{fig:label}
+    \label{fig:legend-names}
   \end{figure}
   
   % decumar<<< 
@@ -97,7 +71,11 @@ As well as having a common naming scheme, all scales share a set of common argum
   % |||
   % >>>
 
-  \item {\bf limits}: fixes the domain of the data.  if not set, will be computed from the data.    Continuous scales take a numeric vector of length two.  Discrete scales take a character vector.  {\tt xlim} and {\tt ylim} shortcuts.  If limits are set, no training of the data will be performed.  Particularly useful for zooming (limits smaller than range of data), and ensuring that limits are consistent across multiple plots (limits larger than range of some subsets of data).  
+  \item {\bf limits}: fixes the domain of the scale.   Continuous scales take a numeric vector of length two; discrete scales a character vector. If limits are set, no training of the data will be performed.  
+  
+  There are shortcut functions for setting the limits of continuous x and y scales: \f{xlim} and \f{ylim}.  Each has two arguments, specifying the new domain, and create a scale object.  
+  
+  Particularly useful for zooming (limits smaller than range of data), and ensuring that limits are consistent across multiple plots (limits larger than range of some subsets of data).  
   
   Any value not in the domain of the scale is not displayed (i.e.\ for an observation to be displayed it must be in the domain of every scale on the plot)
 
@@ -117,7 +95,58 @@ As well as having a common naming scheme, all scales share a set of common argum
 
 There are many other arguments to individual scales, described by the documentation for the individual scales.  You can use the either the R (e.g.\ {\tt ?scale\_brewer}), or the online documentation (\url{http://had.co.nz/ggplot2}).  The online documentation includes output.
 
-\section{Special scales}
+\subsection{Default scales}
+\label{sub:default_scales}
+
+Every aesthetic has a default scale that is added to the plot whenever you use that aesthetic in a layer.  These are listed in Table~\ref{tbl:default-scales}.
+
+\begin{table}
+  \begin{center}
+  \begin{tabular}{lll}
+    \toprule
+    Aesthetic & Discrete & Continuous \\
+    \midrule
+    Colour and fill & hue & gradient \\
+    Position & discrete & continuous \\
+    Shape & shape & --- \\
+    Line type & linetype & --- \\
+    Size & ---  & size \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \caption{Default scales, by aesthetic and variable type.  The default scale varies depending on whether the variable is continuous or discrete.  Shape and line type do not not have a default continuous scale; size does not have a default discrete scale.}
+  \label{tbl:default-scales}
+\end{table}
+
+The following example shows the difference between the default discrete and continuous scales for colour, as well as how to override the default scale.
+
+% FIGURE
+%  COL: 3
+%  LABEL: scale-defaults
+%  CAPTION: 
+% 
+% p <- qplot(sleep_total, sleep_cycle, data=msleep, colour=vore)
+% p 
+% p + scale_colour_discrete("What does\nit eat?", 
+%    breaks = rev(c("herbi", "carni", "omni", NA)), 
+%    labels = rev(c("plants", "meat", "both", "don't know")))
+% p + scale_colour_brewer(pal="Set1")
+
+The default colour scale for discrete values uses equally spaced hues, the default scale for continuous values uses a gradient of colours between blue and yellow, and the Brewer colour scale uses colours selected to work well in a variety of situations (see \url{http://colorbrewer.org} for more detail).
+
+As well as referring to scales explicitly by name, as in Section~\ref{sec:scale-usage}, you can also refer to the default scales with  scale name {\tt discrete} or {\tt continuous}.  For example, the default discrete colour scale is \code{scale_colour_discrete}.  You can change the default scales with \code{set_default_scale(aesthetic, variable_type, scale_name, ...)}.  Extra arguments are passed to the scale constructure.  For example, if you wanted to set up default black and white colours scales you could do:
+
+% LISTING
+% 
+% set_default_scale("colour", "discrete", "grey")
+% set_default_scale("colour", "continous", "gradient", 
+%  low = "white", high = "black"
+% )
+
+% Having to specify the type of variable (continuous or discrete) seems like extra work: why can't ggplot2 figure that out by itself?  Well, it can't because you can create the scales independently of (and before) the plot.  Allows you to create scales independently of the plot.  
+
+
+\section{More details}
 \label{sec:scale_special}
 
 There are two special types of scales that work for all aesthetics.  They are the manual and identity scale.  
@@ -187,7 +216,7 @@ In ggplot2, legends and axes are produced automatically based on the scales.  Th
 \begin{figure}[htbp]
   \centering
   \caption{Figure containing axis and legends, with pieces labelled.  }
-  \label{fig:label}
+  \label{fig:labelled-guides}
 \end{figure}
 
 Because all information about what is on the plot is stored in the plot object, ggplot2 can normally do a very good job of anticipating what legend you want.  
