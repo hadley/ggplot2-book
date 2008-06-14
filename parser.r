@@ -1,6 +1,7 @@
 # Requires highlight command line script
 l(plyr)
 l(eval.with.details)
+library(gsubfn)
 
 # lines <- readLines(file("scales.tex"), warn=FALSE)
 
@@ -34,6 +35,7 @@ is.block <-  function(x)  {
 is.end <-  function(x)  {
   laply(x, function(x) re(x[1], "^\\s*% END"))
 }
+trim <- function(x) gsub("^\\s+|\\s+$", "", x)
 
 grp <- c(0,cumsum(diff(is.comment(lines)) != 0))
 groups <- unname(split(lines, grp))
@@ -48,9 +50,34 @@ strip_comment <- function(x) {
     indent = indent
   )
 }
-block <- strip_comment(block)
 
-blank <- which(block == "")[1]
-type <- block[1]
-params <- paste(block[seq(2, blank - 1)], collapse=" ")
-code <- paste(block[seq(blank + 1, length(block))], collapse="\n")
+parse_block <- function(block) {
+  block <- strip_comment(block)
+
+  blank <- which(block == "")[1]
+  type <- block[1]
+  params <- trim(paste(block[seq(2, blank - 1)], collapse=" "))
+  code <- paste(block[seq(blank + 1, length(block))], collapse="\n")
+  
+  list(
+    type = type,
+    params = parse_params(params),
+    code = code
+  )
+}
+
+parse_params <- function(params) {
+  loc <- gregexpr("[A-Z]+: ", params)[[1]]
+
+  breaks <- sort(c(0, loc, loc + attr(loc, "match.length"), nchar(params) + 1))
+  pieces <- substr(rep(params, length(breaks)), breaks[-length(breaks)], breaks[-1] - 1)
+  pieces <- trim(pieces[pieces != ""])
+
+  even <- seq_along(pieces)
+  even <- even[even %% 2 == 0]
+  labels <- gsub(":$", "", pieces[even - 1])
+  values <- pieces[even]
+  names(values) <- labels
+
+  lapply(values, type.convert, as.is=TRUE)
+}
