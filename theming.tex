@@ -3,4 +3,109 @@
 \chapter{Theming}
 
 
+\section{Options}\label{sec:options}
+
+ggplot provides convenient access to a select set of commonly used options, described in Table \ref{tbl:options}.  These options are described in more depth, with many examples, in the online documentation {\tt ?ggopt}.
+There are two ways to set options:
+
+\begin{itemize}
+  \item Globally (for all plots), using {\tt ggopt}.  For example {\tt ggopt(grid.fill = "white")}.   Global options are applied when a plot is rendered, not when it is created.  This lets you experiment with plot structure and appearance independently.
+
+  \item Locally (for one plot), using \$ or {\tt update}.  For example, {\tt p\$grid.fill <- "white"}, or {\tt update(p, grid.fill = "white")}.  The first modifies the object in place, while the second creates a modified copy. Local options override the more general global options.
+\end{itemize}     
+
+
+\begin{table}
+\begin{tabular}{lll}
+Option & Valid values & Details \\
+\hline
+background.fill    & any colour & Background fill colour behind entire plot\\
+background.colour  & any colour & \\
+grid.colour        & any colour & Colour of grid lines within panel \\
+grid.fill          & any colour & Panel background colour \\
+strip.gp           & gpar object & Graphical parameters used for strip. Colour and fill of most interest \\
+strip.text.gp      & any colour & Graphical parameters used for strip text. \\
+strip.text         & a function & Function should accept two arguments, variable and value and return a character vector of length one. Function which determines how strip labels are formatted \\
+legend.position    & left, right, top, bottom, none, c(x, y) & Position of legend.  Can use numeric vector of length 2 to set position of centre of length, units are npc relative to whole plot viewport. \\
+aspect.ratio       & a number or NULL & Aspect ratio of plot. \\
+\hline
+\end{tabular}
+  \caption{ggplot options}
+  \label{tbl:options}
+\end{table}
+
+\begin{table}
+  \begin{center}
+  \begin{tabular}{ll}
+  Option & Description \\
+  \hline
+  fill, col & Background and foreground colours.  You can supply a named colour (see {\tt ?colors}) or a hex string of the form \#RRGGBBAA or \#RRGGBB. \\
+  lty & Line type: solid, dotted, dashed etc. \\
+  lwd & Width of line, in points. \\
+  fontfamily, fontface & Refer to R-news article \\
+  fontsize & Font size, in points.  
+    
+  \end{tabular}
+  \end{center}
+  \caption{gpar specifications.  See {\tt ?gpar} for more details}
+  \label{tbl:gpar}
+\end{table}
+
+The following example demonstrates some of the possibilities.
+
+% decumar<<< 
+% dsmall <- diamonds[sample(1:nrow(diamonds), 1000), ]
+% doptions(height=3, width=4)
+% interweave({
+% # Always a good idea to save existing options before making
+% # radical changes
+% old <- ggopt(grid.colour="grey50", grid.fill="white")
+% qplot(carat, price, data=dsmall)
+% (p <- qplot(cut, clarity, data=dsmall, geom="jitter"))
+% # Only changes the current plot
+% p$grid.colour <- "darkgreen"
+% p
+% # Restore old settings:
+% ggtheme(old)
+% p
+% })
+% |||
+\begin{alltt}
+> old <- ggopt(grid.colour = "grey50", grid.fill = "white")
+> qplot(carat, price, data = dsmall)
+\includegraphics[scale=1]{7f8d370a14179d509879f35839b54ea9}
+
+> (p <- qplot(cut, clarity, data = dsmall, geom = "jitter"))
+\includegraphics[scale=1]{5830a37fc4252db571b25f373c8f141f}
+
+> p$grid.colour <- "darkgreen"
+> p
+\includegraphics[scale=1]{656e171fb34b88b28f6789aa9ad535e6}
+
+> ggtheme(old)
+> p
+\includegraphics[scale=1]{656e171fb34b88b28f6789aa9ad535e6}
+
+\end{alltt}
+% >>>
+
+\subsection{Themes}\label{sub:themes}
+
+Like lattice, it is also possible to create a theme which encapsulates multiple options.  A theme is a very simple structure, just a list of multiple options, so it's  easy to create your own.  One theme is included by default: {\tt theme\_bw}, which sets up a white background with black grid lines.  You can use a theme with {\tt ggtheme(theme)}, or for a single plot {\tt update(plot, theme)}.
+
+% decumar<<< 
+% interweave({
+% ggtheme(theme_bw)
+% qplot(carat, price, data=dsmall)
+% })
+% |||
+\begin{alltt}
+> ggtheme(theme_bw)
+> qplot(carat, price, data = dsmall)
+\includegraphics[scale=1]{7f8d370a14179d509879f35839b54ea9}
+
+\end{alltt}
+% >>>
+
+
 \input{_footer.tex}
