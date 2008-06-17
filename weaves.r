@@ -48,6 +48,9 @@ weave_figure$stop <- function(caption, label, ...) {
   )), "\n\\end{figure}\n")
 }
 
+weave_all <- weave_graphics
+weave_all$out <- function(x, ...) escape_tex(x)
+weave_all$src <- function(x, ...) escape_tex(line_prompt(x))
 
 # Include graphics in a latex file
 # Given a list of files, this function prints the latex code necessary (ie. includegraphics) to include in the file.

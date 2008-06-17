@@ -10,7 +10,7 @@ block_types <- toupper(c(
   "output",   # Include output 
   "raw",      # Include output (unescaped) 
   "listing",  # Pretty print code
-  "weave"     # Output and listing interwoven
+  "interweave"     # Output and listing interwoven
 ))
 
 re <- function(string, regexp) {

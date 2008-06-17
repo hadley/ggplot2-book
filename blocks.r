@@ -46,15 +46,15 @@ listing <- function(code, ...) {
 }
 
 raw <- function(code, ...) {
-  code
-}
-
-output <- function(code, ...) {
-  highlight_tex(code)
 }
 
 set_defaults <- function(code, ...) {
   .defaults <<- list(...)
+}
+
+interweave <- function(code, ...) {
+  woven <- weave(code, parent.frame())  
+  paste(weave_out(woven, weave_all, ...), collapse="\n")
 }
 
 graphic <- function(code, ...) {
