@@ -8,7 +8,7 @@ comma <- function(x) paste(escape_tex(x), collapse= ", ")
 
 ap <- function(x) paste(comma(aesthetics(x)), comma(params(x)), sep = " + ")
 
-cat(tabulate(ldply(Geom$find_all(), function(c) c(escape_tex(c$objname), escape_tex(c$desc), ap(c))))  )
+cat(tabulate(ldply(Geom$find_all(), function(c) c(escape_tex(c$objname), escape_tex(c$desc))))  )
 
-cat(tabulate(ldply(Stat$find_all(), function(c) c(escape_tex(c$objname), escape_tex(c$desc), comma(params(c)), comma(aesthetics(c)), comma(output(c))))))
+cat(tabulate(ldply(Stat$find_all(), function(c) c(escape_tex(c$objname), escape_tex(c$desc)))))
 
