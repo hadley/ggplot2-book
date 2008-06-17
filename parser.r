@@ -1,9 +1,7 @@
 # Requires highlight command line script
 l(plyr)
 
-lines <- readLines("test.tex", warn=FALSE)
-
-blocks <- toupper(c(
+block_types <- toupper(c(
   "defaults", # Set up default parameters for the remainder of the file
   "figure",   # Insert a floating figure containing graphics
   "graphic",  # Insert a graphic into the document
@@ -25,7 +23,7 @@ is.block <-  function(x)  {
   )
 }
 is.block <-  function(x)  {
-  regexp <- ps("^\\s*%\\s+(", ps(blocks, collapse="|"), ")")
+  regexp <- ps("^\\s*%\\s+(", ps(block_types, collapse="|"), ")")
   laply(x, function(x) re(x[1], regexp))
 }
 is.end <-  function(x)  {
@@ -33,12 +31,10 @@ is.end <-  function(x)  {
 }
 trim <- function(x) gsub("^\\s+|\\s+$", "", x)
 indent <- function(x, n = 2) {
-  spaces <- ps(rep(" ", by = n))
+  spaces <- ps(rep(" ", length = n))
   ps(spaces, gsub("\n", ps("\n", spaces), x))
 }
 
-grp <- c(0,cumsum(diff(is.comment(lines)) != 0))
-groups <- unname(split(lines, grp))
 
 
 strip_comment <- function(x) {
@@ -50,8 +46,8 @@ strip_comment <- function(x) {
   )
 }
 
-parse_block <- function(block) {
-  block <- strip_comment(block)
+parse_block <- function(input) {
+  block <- strip_comment(input)
 
   blank <- which(block == "")[1]
   type <- trim(block[1])
@@ -61,7 +57,9 @@ parse_block <- function(block) {
   structure(list(
     type = tolower(type),
     params = parse_params(params),
-    code = code
+    code = code,
+    input = input,
+    indent = attr(block, "indent")
   ), class = "block")
 }
 
@@ -82,10 +80,26 @@ parse_params <- function(params) {
   lapply(values, type.convert, as.is=TRUE)
 }
 
-blocks <- lapply(groups[is.block(groups)], parse_block)
 
 print.block <- function(x, ...) {
   cat("Block (", x$type, ")\n", sep ="")
   if (length(x$params) > 0) cat("  ", clist(x$params), "\n", sep = "")
   cat("\n", indent(x$code), "\n\n", sep="")
+}
+
+
+process_file <- function(path) {
+  lines <- readLines(path, warn=FALSE)
+  grp <- c(0,cumsum(diff(is.comment(lines)) != 0))
+  groups <- unname(split(lines, grp))
+
+  blks <- which(is.block(groups))
+  ends <- which(is.end(groups))
+
+  blk_with_end <- blks[(blks + 2) %in% ends]
+  groups <- groups[-c(blk_with_end + 1, blk_with_end + 2)]
+
+  blocks <- lapply(groups[is.block(groups)], parse_block)
+
+  ps(ps(laply(groups, group_output), collapse="\n"), "\n")
 }

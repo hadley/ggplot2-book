@@ -53,7 +53,7 @@ weave_figure$stop <- function(caption, label, ...) {
 # @arguments latex width option
 # @keyword documentation 
 image_tex <- function(path, width=NULL, height=NULL, ...) {
-  options <- list(width = width, height = height)
+  options <- compact(list(width = width, height = height))
   options_str <- paste(names(options), options, sep="=", collapse=", ")
 	options_str <- paste("[", options_str, "]", sep="")
 	

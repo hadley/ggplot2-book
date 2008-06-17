@@ -1,28 +1,44 @@
+l(eval.with.details)
 source("weaves.r")
 source("parser.r")
-l(eval.with.details)
 
 library(digest)
 
 .defaults <- list(
   outdir = "_include",
-  include = FALSE,
+  inline = FALSE,
   cache = FALSE
 )
 
 
-blockcall <- function(block) {
+group_output <- function(group) {
+  if (is.block(group)[1]) {
+    block_output(parse_block(group))
+  } else {
+    ps(group, collapse="\n")
+  }
+}
+
+block_call <- function(block) {
   params <- c(list(code = block$code), block$params)
   params <- reshape::defaults(params, .defaults)
   
   res <- do.call(block$type, params)
-  if (!params$include) return(res)
+  if (params$inline) return(indent(res, block$indent))
   
   outdir <- params$outdir
   if (!file.exists(outdir)) dir.create(outdir, recursive = TRUE)
   path <- file.path(outdir, ps(digest(res), ".tex"))
   cat(res, file = path)
-  ps("\\include{", path, "}")
+  indent(ps("\\include{", path, "}"), block$indent)
+}
+
+block_output <- function(block) {
+  input <- ps(block$input, collapse = "\n")
+  output <- block_call(block)
+  end <- indent("\n% END", block$indent)
+  
+  ps(input, "\n", output, end, "\n")
 }
 
 listing <- function(code, ...) {
@@ -34,7 +50,7 @@ raw <- function(code, ...) {
 }
 
 output <- function(code, ...) {
-  escape_tex(code)
+  highlight_tex(code)
 }
 
 set_defaults <- function(code, ...) {
