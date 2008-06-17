@@ -103,3 +103,8 @@ process_file <- function(path) {
 
   ps(ps(laply(groups, group_output), collapse="\n"), "\n")
 }
+
+overwrite_file <- function(path) {
+  output <- process_file(path)
+  cat(output, file = path)
+}

@@ -16,7 +16,7 @@ save_plot_tex <- function(
     ggsave(x, filename = path, width = gg_width, height = gg_height)      
   }
   
-  indent(image_tex(path, width=tex_width, height=tex_height))
+  ps(indent(image_tex(path, width=tex_width, height=tex_height)), "%")
 }
 
 weave_nul <- list(
@@ -28,15 +28,24 @@ weave_nul <- list(
 weave_graphics <- weave_nul
 weave_graphics$value <- save_plot_tex
 
+# \begin{figure}[htbp]
+#   \centering
+#     \includegraphics[scale=1]{file}
+#   \caption{caption}
+#   \label{fig:label}
+# \end{figure}
 weave_figure <- weave_graphics
 weave_figure$start <- function(position = "htbp", ...) {
-  ps("\\figure[", position, "]{")
+  ps(
+    "\\begin{figure}[", position, "]\n",
+    "\\centering\n"
+  )
 }
 weave_figure$stop <- function(caption, label, ...) {
   ps("\n", indent(ps(
     "\\label{fig:", label, "}\n",
     "\\caption{", caption, "}"
-  )), "\n}\n")
+  )), "\n\\end{figure}\n")
 }
 
 

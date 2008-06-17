@@ -30,7 +30,7 @@ block_call <- function(block) {
   if (!file.exists(outdir)) dir.create(outdir, recursive = TRUE)
   path <- file.path(outdir, ps(digest(res), ".tex"))
   cat(res, file = path)
-  indent(ps("\\include{", path, "}"), block$indent)
+  indent(ps("\\input{", path, "}"), block$indent)
 }
 
 block_output <- function(block) {
@@ -38,7 +38,7 @@ block_output <- function(block) {
   output <- block_call(block)
   end <- indent("\n% END", block$indent)
   
-  ps(input, "\n", output, end, "\n")
+  ps(input, "\n", output, end)
 }
 
 listing <- function(code, ...) {
