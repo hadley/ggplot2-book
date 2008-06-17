@@ -5,6 +5,19 @@
 
 \section{Introduction}\label{sec:introduction}
 
+A typical graphic has three layers:
+
+\begin{itemize}
+  \item The {\bf data}.  This layer appears on every graphic and 
+
+  \item A statistical {\bf summary}.  For the purposes of communication and inference, any conclusions we make about the data will typically be summarised and supported by a quantitative model.  Displaying the predictions from this model in the context of the data is useful to both summarise the data, and to detect potential problems with the model.  This is normally the top layer.
+
+  \item {\bf Context}.  The context for the data shouldn't interfere with the perception of the data, so it should normally be on the bottom layer and formatted so that it is minimally perceptible.  That is, if you concentrate on it, you can see it with ease, but it doesn't jump out at you when you are casually browsing the plot.
+  
+  For spatial data, the context will often be a map.  For temporal data, it might be significant events outside the data.  Context can also include labelling unusual points.
+\end{itemize}
+
+
 This chapter describes how to use the various 
 
 The examples in this section use a mixture of {\tt ggplot()} and {\tt qplot()} calls, reflecting real life.  If you need a reminder on how to translate between the two, see Section~\ref{sec:qplot-ggplot}.
@@ -94,6 +107,11 @@ Another approach to dealing with overplotting is to add supplemental information
 
 These are often better than ``true'' 3d for static plots anyway, because many perceptual cues necessary for accurate depth perception (eg. occlusion, parallax) are not present in static plots.  You can also manually project data points in a higher dimensional space by multiplying by a projection matrix.  However, correctly representing occlusion or generating correct perspective effects will require considerably more effort.  You may want to look at RGL (\url{http://www.rgl.com}) and rggobi (\url{http://www.ggobi.org/ggobi}) for other solutions.
 
+\section{Statistical summaries}
+\label{sec:statistical_summaries}
+
+\code{stat_smooth}, \code{stat_quantile}.  \code{stat_summary}
+
 \section{Revealing uncertainty}\label{sub:displaying_uncertainty}
 
 General class of geoms for displaying not points, but intervals.  
@@ -104,6 +122,7 @@ If you have information about the uncertainty present in your data, possibly fro
 	\item {\tt geom\_errorbar}: for pointwise confidence intervals
 	\item \code{geom_linerange}, \code{geom_pointrange}, \code{geom_crossbar}
 	\item {\tt geom\_ribbon}: ribbons of variable width, useful for displaying confidence intervals around functions, \code{geom_smooth}
+	\item \code{geom_point} with size aesthetic.  Mapping size to uncertainty may be ok, but will make most uncertain points have the most visual impact
 \end{itemize}
 
 \begin{table}
@@ -126,7 +145,28 @@ There are two ways to display standard errors with {\tt ggplot}.  For point stan
 
 For both {\tt ribbon} and {\tt errorbar} you can specify confidence internals using {\tt min} and {\tt max} which specify the upper and lower edges of the confidence band.
 
+Assume y conditioned on x.  Have additional position parameters, min and max, which determine the 
+
+\code{coord_flip}
+
 Calculating with {\tt stat\_sum}, {\tt stat\_smooth} etc.
+
+\section{Lines}
+\label{sec:lines}
+
+\begin{itemize}
+  \item \code{geom_line}
+  \item \code{geom_path}
+  \item \code{geom_segment}
+  \item \code{geom_step}
+\end{itemize}
+
+\begin{itemize}
+  \item \code{geom_smooth}
+  \item \code{stat_sum}
+\end{itemize}
+
+% section lines (end)
 
 \section{Annotating a plot}\label{sub:annotating_a_plot}
 
@@ -140,6 +180,8 @@ Any of the basic geoms can be used to annotate a plot with additional output, fo
 See also Section~\ref{sec:adding_annotation} for ways to add more general types of annotation using grid graphics.
 
 \section{Weighted data}\label{sec:weighted_data}
+
+% The {\tt weight} aesthetic is also useful when you have weighted data.  All ggplot2 statistics know how to correctly deal with (WHAT TYPE OF WEIGHTS?) weights, which makes plotting your weighted data easy.  For a more comprehensive description of plotting weights, see ``Weight and see''.
 
 When you have aggregated data where each row in the dataset represents multiple observations, you need some way to take into account the weighting variable.  Since there are no variables appropriate for weighting in the diamonds data, we will use some data collected on Midwest states in the 2000 US census.  The data consists mainly of percentages (eg. percent white, percent below poverty line, percentage with college degree) and some information for each county (area, total population, population density).
 
