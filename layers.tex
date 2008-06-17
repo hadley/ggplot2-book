@@ -9,11 +9,25 @@
 % dsmall <- diamonds[sample(nrow(diamonds), 1000),]
 % >>>
 
-\chapter{Adding extra layers}
+\chapter{Build a plot layer by layer}
 
 \section{Introduction}
 
+As alternative (or supplement) to \f{qplot}, you can manually build up a plot layer by layer.  A layer encapsulates all of the information needed to draw most normal plots:  the data, mapping from the data to aesthetic attributes that can be perceived, a way of representing the data, and an optional statistical transformation.  A first the statistical transformation may not seem like it belongs here - but many common plots incorporate some kind of statistical summary, for example, the histogram or adding a smoothed line to a plot.  
+
+This chapter will describe:
+
+\begin{itemize}
+  \item What a layer is, how to create one using the full or shortcut syntaxes \S\ref{sec:layers}.
+
+  \item More details about the data, \S\ref{sec:data}
+\end{itemize}
+
 To create 
+
+Adding layers on to a plot requires that you have already created a plot object.  This could be created by \f{qplot} as described in Chapter~\ref{cha:qplot}, or by \f{ggplot} as described in Chapter~\ref{cha:mastery}.  The difference between the two is that the former is already a complete plot, you are just adding extras to it, while with \f{ggplot} you need to add layers before it can be rendered.  In practice, use whatever works for you - personally, I use whatever requires the least amount of typing.
+
+Plots created in either manner are identical.  To see this look at the \f{qplot} code - it creates a plot with \f{ggplot}, then adds layers.  If you want to see in more detail how qplot syntax can be converted to ggplot, Appendix\ref{cha:translating} gives more details.
 
 A typical graphic has three layers:
 
@@ -29,29 +43,10 @@ A typical graphic has three layers:
 
 This section describes the main components of each layer (data, aesthetic mappings, geoms and statistics), lists the different geoms and stats available in ggplot2 and ...
 
-\section{Creating a plot}
-\label{sec:ggplot}
 
-First need a plot object.  Have seen one way to create this with qplot.  Most of the time, qplot saves you time because it makes educated guesses about what you actually want.  However, sometimes those guesses aren't correct.  But does more than just create a plot object - it also adds the layers etc, so you don't have total control over it. This means that {\tt qplot()} has some limitations:
 
-\begin{itemize}
-  \item Can't use different aesthetic mappings on different layers.  
-  \item Can't use different parameters on different layers
-  \item Can't change coordinate systems.  
-  \item Can't change scales.  Can only have linear or log transformed axes, not any other function.
-\end{itemize}
-
-An alternative way, which most of the examples in this chapter will use, is to call the {\tt ggplot()} function, which makes no guesses at all - it does exactly what you tell it to.  The {\tt ggplot()} function has two optional arguments: {\bf data} and {\bf mapping}.  Data is self-explanatory: it is the data set that you want to visualise.  Mapping describes the mapping between the variables and the aesthetics of the plot.  It works the same way an in {\tt qplot()} but you need to wrap the pairs in a {\tt aes} call.  These arguments are just defaults, and can be omitted.  Described in more detail in the next section, on layers.
-
-The result of this function is the same as the result of qplot: a ggplot object.  However, the plot created by ggplot can't be rendered:
-
-\begin{alltt}
-  ggplot(mtcars, aes(wt, mpg))
-\end{alltt}
-
-So far it doesn't actually have anything to draw.  You need to add some layers.
-
-\section{Layers}\label{sec:layers}
+\section{Layers}
+\label{sec:layers}
 
 % What is a layer?
 
@@ -106,8 +101,6 @@ summary(p)
 \end{alltt}
 
 Note that the order of data and mapping is switched between {\tt ggplot()} and the layer functions.  This is for good reason - you almost always specify data for the plot, and almost always specify aesthetics (but not data) for the layers.  To keep your code readable, I suggest always explicitly naming other arguments.
-
-Remember, you can always start with a plot created by {\tt qplot()} and then add on the layers and scales etc as you if you had started with {\tt ggplot()}.  If you do this, {\tt geom\_blank} can be useful for {\tt qplot()} because it's a geom that doesn't draw anything.  For data analysis, use whatever works for you - personally, I use whatever requires the least amount of typing.
 
 \section{Data}
 \label{sec:data}
@@ -235,133 +228,6 @@ Examples.
 
 The {\tt weight} aesthetic is also useful when you have weighted data.  All ggplot2 statistics know how to correctly deal with (WHAT TYPE OF WEIGHTS?) weights, which makes plotting your weighted data easy.  For a more comprehensive description of plotting weights, see ``Weight and see''.
 
-\section{Translating between qplot and ggplot}
-\label{sec:qplot-ggplot}
-
-
-To clarify the role of each of these elements, here are a couple of simple examples, taken from Chapter 2.  First, we'll start with a bubble chart of price by carat, with size proportional to the clarity of the diamond.
-
-% decumar<<< 
-% interweave({
-% qplot(carat, price, data=dsmall, size=clarity)
-% })
-% |||
-\begin{alltt}
-> qplot(carat, price, data = dsmall, size = clarity)
-\includegraphics[scale=0.5]{a93a648e1fc6260da923c5e970b76a87}
-
-\end{alltt}
-% >>>
-
-This plot has one layer, three scales and a cartesian coordinate system.  To make these parts more clear, we can instead create the plot using these commands:
-
-\begin{alltt}
-ggplot() + 
-layer(
-  data = diamonds, aes(x = carat, y = price, size = clarity),
-  geom = "point", stat = "identity"
-)
-\end{alltt}
-
-This makes the single layer obvious, it uses a point geom and the identity transformation, but where are the definitions of the scales and the coordinate system?  By default, ggplot automatically adds sensible scales and the default coordinate system, however, we can be more explicit and add them ourselves:
-
-\begin{alltt}
-ggplot() + 
-layer(
-  data = diamonds, mapping = aes(x = carat, y = price, colour = clarity),
-  geom = "point", stat = "identity"
-) + 
-scale_size() + 
-scale_y_continuous() + 
-scale_x_continuous() + 
-coord_cartesian()
-\end{alltt}
-
-Compared to the initial qplot example, this is extremely verbose, but perfectly explicit.  We  can clearly see the single layer, the three scales (x position, y position and size) and the coordinate system.  
-
-The next example includes multiple layers, and demonstrates the effect of modifying the scale parameters.  This is another example from chapter two: a scatterplot of price vs carat, with logged axes and a linear smooth layered on top.  The qplot code is shown below.
-
-% decumar<<< 
-% interweave({
-% qplot(carat, price, data=dsmall, geom=c("smooth", "point"), method="lm", log="xy")
-% })
-% |||
-\begin{alltt}
-> qplot(carat, price, data = dsmall, geom = c("smooth", "point"), 
-+     method = "lm", log = "xy")
-\includegraphics[scale=0.5]{9dbf752d1450a53b3313b99f21c5f22c}
-
-\end{alltt}
-% >>>
-
-Here we have two layers, two scales and the same Cartesian coordinate system:
-
-\begin{alltt}
-ggplot() + 
-layer(
-  data = diamonds, mapping = aes(x = carat, y = price),
-  geom = "point", stat = "identity"
-) + 
-layer(
-  data = diamonds, mapping = aes(x = carat, y = price),
-  geom = "smooth", stat = "smooth", method = "lm"
-  
-) + 
-scale_y_log10() + 
-scale_x_log10() + 
-coord_cartesian()
-\end{alltt}
-
-There is some duplication in this example, which we can reduce by using plot defaults.
-
-\begin{alltt}
-ggplot(data = diamonds, mapping = aes(x = carat, y = price)) + 
-layer(geom = "point", stat = "identity") + 
-layer(geom = "smooth", stat = "smooth", method = "lm") + 
-scale_y_log10() + 
-scale_x_log10() + 
-coord_cartesian()
-\end{alltt}
-
-The following chapters describe each piece in more detail, and provide suggestions as to how to use them in a data analysis.
-
-
-\begin{alltt}
-qplot(x, y, data, shape=shape, colour = colour)
-ggplot(data, aes(x, y, shape=shape, colour = colour)) + geom_point()
-\end{alltt}
-
-\begin{alltt}
-qplot(x, y, data, shape=shape, colour = I("red"))
-ggplot(data, aes(x, y, shape=shape)) + geom_point(colour="red")
-\end{alltt}
-
-The differences between setting and mapping are described in more detail in Section~\ref{sec:setting-mapping}.
-
-\begin{alltt}
-qplot(x, y, data, geom=c("line", "smooth"))
-ggplot(data, aes(x, y)) + geom_line() + geom_smooth()
-\end{alltt}
-
-\begin{alltt}
-qplot(x, y, data, geom=c("line", "smooth"), method="lm")
-ggplot(data, aes(x, y)) + geom_line() + geom_smooth(method="lm")
-\end{alltt}
-
-
-\begin{alltt}
-qplot(x, y, data, log="xy")
-ggplot(data, aes(x, y)) + scale_x_log10() + scale_y_log10()
-\end{alltt}
-
-Section~\ref{sec:transformers} describes more possible transformations of the x and y scales.
-
-\begin{alltt}
-qplot(x, y, data, main="title", asp = 1)
-ggplot(data, aes(x, y)) + opts(title = "title", aspect.ratio = 1)
-\end{alltt}
-
-Section~\ref{sec:plot_options} lists all possible plot options and their effects.
 
 
 \section{Geoms}
