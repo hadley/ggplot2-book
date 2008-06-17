@@ -1,8 +1,13 @@
+source("weaves.r")
+source("parser.r")
+l(eval.with.details)
+
 library(digest)
 
 .defaults <- list(
   outdir = "_include",
-  include = TRUE
+  include = FALSE,
+  cache = FALSE
 )
 
 
@@ -32,6 +37,15 @@ output <- function(code, ...) {
   escape_tex(code)
 }
 
-defaults <- function(code, ...) {
+set_defaults <- function(code, ...) {
   .defaults <<- list(...)
+}
+
+graphic <- function(code, ...) {
+  woven <- weave(code, parent.frame())  
+  paste(weave_out(woven, weave_graphics, ...), collapse="\n")
+}
+figure <- function(code, ...) {
+  woven <- weave(code, parent.frame())  
+  paste(weave_out(woven, weave_figure, ...), collapse="\n")
 }

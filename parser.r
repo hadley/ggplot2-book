@@ -1,8 +1,7 @@
 # Requires highlight command line script
 l(plyr)
-l(eval.with.details)
 
-# lines <- readLines(file("scales.tex"), warn=FALSE)
+lines <- readLines("test.tex", warn=FALSE)
 
 blocks <- toupper(c(
   "defaults", # Set up default parameters for the remainder of the file
@@ -67,7 +66,7 @@ parse_block <- function(block) {
 }
 
 parse_params <- function(params) {
-  loc <- gregexpr("[A-Z]+: ", params)[[1]]
+  loc <- gregexpr("[A-Z-]+: ", params)[[1]]
 
   breaks <- sort(c(0, loc, loc + attr(loc, "match.length"), nchar(params) + 1))
   pieces <- substr(rep(params, length(breaks)), breaks[-length(breaks)], breaks[-1] - 1)
@@ -76,6 +75,7 @@ parse_params <- function(params) {
   even <- seq_along(pieces)
   even <- even[even %% 2 == 0]
   labels <- gsub(":$", "", pieces[even - 1])
+  labels <- gsub("-", "_", labels)
   values <- pieces[even]
   names(values) <- tolower(labels)
 
@@ -83,8 +83,6 @@ parse_params <- function(params) {
 }
 
 blocks <- lapply(groups[is.block(groups)], parse_block)
-
-lst <- blocks[[4]]
 
 print.block <- function(x, ...) {
   cat("Block (", x$type, ")\n", sep ="")
