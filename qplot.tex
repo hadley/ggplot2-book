@@ -7,34 +7,34 @@
 % * more error bar and ribbon examples
 % * table of options
 
-% decumar<<< 
-% source("~/documents/ggplot/ggplot/load.r")
-% library(xtable)
-% doptions(width=8, height=4.8, lscale=0.5)
-% ggopt(axis.color = "black")
-% >>>
+% SET_DEFAULTS
+%   GG_WIDTH: 8  GG_HEIGHT: 4.8
+%   LATEX_WIDTH: 0.5\textwidth
+%
+% l(ggplot)
+% set.seed(1410)
+% dsmall <- diamonds[sample(nrow(diamonds), 1000),]
 
-%\setchapterpreamble[u]{% 
-%\dictum[Friedrich Nietzsche]{He who fights with monsters might take care lest he thereby become a monster. And if you gaze for long into an abyss, the abyss gazes also into you.}} 
+
 
 \chapter{Getting started with ggplot: {\tt qplot}}
 \label{cha:qplot}
 
 \section{Introduction} 
 
-In this chapter, you will learn to make a wide variety of plots with your first ggplot function, {\tt qplot}, short for {\bf q}uick plot. qplot makes it easy to produce complex plots, normally requiring several lines of code in R, in one line. qplot can do this because it's based on the grammar of graphics, which allows you to create a simple, yet expressive, description of the plot.  In later chapters you'll learn to use all of the expressive power of the grammar, but here we'll start simple so you can work your way up.
+In this chapter, you will learn to make a wide variety of plots with your first ggplot function, {\tt qplot}, short for {\bf q}uick plot. qplot makes it easy to produce complex plots, often requiring several lines of code using other plotting systems, in one line. qplot can do this because it's based on the grammar of graphics, which allows you to create a simple, yet expressive, description of the plot.  In later chapters you'll learn to use all of the expressive power of the grammar, but here we'll start simple so you can work your way up.  You will also start to learn some of the ggplot terminology that will be used throughout the book.
 
 {\tt qplot} has been designed be very similar to {\tt plot}, which should make it easy if you're already familiar with plotting in R.  Remember, during an R session you can get a summary of all the arguments to {\tt qplot} with R help, {\tt ?qplot}.
 
 In this chapter you'll learn:
 
 \begin{itemize}
-	\item The basic use of {\tt qplot}---If you're already familiar with {\tt plot}, this will be particularly easy. Page \pageref{sec:basic_use}.
-	\item How to map variables to aesthetic attributes, like colour, size and shape. Page \pageref{sec:aesthetic_attributes}.
-	\item How to create many different types of plots by specifying different geoms, and how to combine multiple types in a single plot. Page \pageref{sec:plot_geoms}.
-	\item The use of faceting, also known as trellising or conditioning, to break apart subsets of your data. Page \pageref{sec:faceting}.
-	\item How to tune the appearance of the plot by specifying some basic options. Page \pageref{sec:other_options}.
-	\item A few important differences between {\tt plot} and {\tt plot}.  Page \pageref{sec:plot_diffs}
+	\item The basic use of {\tt qplot}---If you're already familiar with {\tt plot}, this will be particularly easy, \secref{sec:basic_use}.
+	\item How to map variables to aesthetic attributes, like colour, size and shape, \secref{sec:aesthetic_attributes}.
+	\item How to create many different types of plots by specifying different geoms, and how to combine multiple types in a single plot. Page \secref{sec:plot_geoms}.
+	\item The use of faceting, also known as trellising or conditioning, to break apart subsets of your data, \secref{sec:faceting}.
+	\item How to tune the appearance of the plot by specifying some basic options, \secref{sec:other_options}.
+	\item A few important differences between {\tt plot} and {\tt plot}, \secref{sec:plot_diffs}
 \end{itemize}
 
 \section{Data sets}\label{sec:data_sets}
@@ -44,8 +44,6 @@ In this chapter we'll just use one data source, so you can get familiar with the
 The first few rows of the data are shown in \ref{tab:diamonds}.
 
 % decumar<<< 
-% set.seed(1410)
-% dsmall <- diamonds[sample(nrow(diamonds), 1000),]
 % xtable(head(diamonds), digits=c(0,1,2,0,1,1,1,0,2,2,2), align="l|rrrrrrrrrr", label="tab:diamonds", caption="{\\tt diamonds} dataset")
 % |||
 % latex table generated in R 2.5.1 by xtable 1.5-1 package
@@ -175,17 +173,9 @@ These geoms are useful for exploring 1d distributions:
 
 If you have a scatterplot with many data points, it can be hard to see exactly what trend is shown by the data.  In this case you may want to add a smoothed line to the plot.  This is easily done using the {\tt smooth} geom:
 
-% decumar<<< 
-% interweave({
+% WEAVE
+% 
 % qplot(carat, price, data=dsmall, geom=c("smooth", "point"))
-% })
-% |||
-\begin{alltt}
-> qplot(carat, price, data = dsmall, geom = c("smooth", "point"))
-\includegraphics[scale=0.5]{d2a845e76d14b06b6370b0061bdc6ae1}
-
-\end{alltt}
-% >>>
 
 Notice that we have combined multiple geoms by supplying a vector of geom names to {\tt qplot}.  The geoms will be overlaid in the order that you specified them.
 
@@ -194,21 +184,13 @@ There are many different smoothers you can choose using the {\tt method} argumen
 \begin{itemize}
 	\item {\tt method="loess"}, the default, uses a smooth local regression.  More details about the algorithm used can be found in {\tt ?loess}.  You can modify the wiggliness of the line by varying the span between 0, exceeding wiggly, and 1, not so wiggly.  Loess does not work well for large datasets (it's $O(n^2)$ in memory), so you'll need to use one of the other methods listed below.
 
-  % decumar<<< 
-  % interweave({
+  % FIGURE
+  %  LABEL: diamond-smooth
+  %  CAPTION: The effect of the span parameter.  (Left) \code{span = 0.1}, 
+  %  and (right) \code{span = 1}
+  % 
   % qplot(carat, price, data=dsmall, geom=c("smooth", "point"), span=0.1)
   % qplot(carat, price, data=dsmall, geom=c("smooth", "point"), span=1)
-  % })
-  % |||
-\begin{alltt}
-> qplot(carat, price, data = dsmall, geom = c("smooth", "point"))
-\end{alltt}
-\begin{alltt}
-
-> qplot(carat, price, data = dsmall, geom = c("smooth", "point"), 
-+     span = 0.2)
-\end{alltt}
-\begin{alltt}
 
 > qplot(carat, price, data = dsmall, geom = c("smooth", "point"), 
 +     span = 1)
