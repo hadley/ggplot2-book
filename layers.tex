@@ -26,7 +26,7 @@ To build up a plot layer by layer, we first need a plot object.  One way to crea
 An alternative way to create a plot object is to call \f{ggplot}, which has two optional arguments: the default {\bf data} and aesthetic {\bf mapping} for the plot.  Data needs little explanation: it's the data frame that you want to visualise.  You are already familiar with aesthetic mappings from \f{qplot}, and the syntax here is quite similar, however you need to wrap the pairs of aesthetic attribute and variable names in an \f{aes} call, as in the following example.
 
 \begin{alltt}
-  ggplot(mtcars, aes(x = wt, y = mpg, colour = cyl))
+ggplot(mtcars, aes(x = wt, y = mpg, colour = cyl))
 \end{alltt}
 
 These arguments are defaults for the plot, and can be omitted if you specify data and aesthetics when adding each layer.  
@@ -46,7 +46,7 @@ A layer encapsulates all of the information needed to draw most normal plots:  t
 There are two ways to create layers.  The first way (long-hand) is to use the layer function:
 
 \begin{alltt}
-  layer(geom, geom_params, stat, stat_params, data, mapping, position)
+layer(geom, geom_params, stat, stat_params, data, mapping, position)
 \end{alltt}
 
 \noindent Here you specify the geom to use, its parameters; the stat, its parameters; data and aesthetic mapping (just like for \f{ggplot}) and a position adjustment (described in Section~\ref{sec:position}).  So, if you want to create layer for a scatterplot, you'd do something like:
@@ -57,21 +57,21 @@ layer(geom = "point", stat = "identity", position = "identity")
 
 \noindent Or for a customised histogram with a grey background and an bin width of 2:
 
-\begin{alltt}
-layer(
-  geom = "smooth", 
-  geom_params = list(fill = "grey50"),
-  stat = "smooth",
-  stat_params = list(binwidth = 2)
-)
-\end{alltt}
+% LISTING
+% 
+% layer(
+%   geom = "smooth", 
+%   geom_params = list(fill = "grey50"),
+%   stat = "smooth",
+%   stat_params = list(binwidth = 2)
+% )
 
 \noindent  This specification is precise, but verbose.  However, most of the time, you will use a shortcut.  The shortcut is possible because associated with every geom is a default statistic and position, and with every statistic is a default geom.  This means that you only need to specify one of stat or geom to get a completely specified layer.  The two examples above would become:
 
-\begin{alltt}
-geom_point()
-geom_histogram(binwidth = 2, fill = "grey50")
-\end{alltt}
+% LISTING
+% 
+% geom_point()
+% geom_histogram(binwidth = 2, fill = "grey50")
 
 All the shortcut functions start with {\tt geom\_} or {\tt stat\_} and are singular, eg. {\tt geom\_point}, {\tt stat\_bin}.  They all have the same  basic form:
 
@@ -104,19 +104,12 @@ After creating the layer, you'll typically combine it with a plot using  \code{+
 
 \noindent The summary function can be helpful for inspecting the structure of a plot without plotting it:
 
-% WEAVE
+% INTERWEAVE
 %
 % p <- ggplot(data=mtcars, aes(mpg, wt))
 % summary(p)
 % p <- p + geom_point(p)
 % summary(p)
-
-\begin{alltt}
-p <- ggplot(mtcars, aes(mpg, wt))
-summary(p)
-summary(p + geom_point())
-summary(p + geom_point(aes(colour = factor(cyl))))
-\end{alltt}
 
 Notice that the order of data and mapping is switched between {\tt ggplot()} and the layer functions.  This is for good reason - you almost always specify data for the plot, and almost always specify aesthetics (but not data) for the layers.  To keep your code readable, I suggest always explicitly naming other arguments, rather than relying on positional matching.
 
@@ -129,12 +122,12 @@ The restrictions on the data used in \ggplot are simple: it must be a data frame
 
 Another thing to remember is that the data is stored in the plot object, as a copy, not a reference.  If you want to update (or change) the data later on, you can add on a new dataset with \code{\%+\%}:
 
-\begin{alltt}
-p <- ggplot(mtcars, aes(mpg, wt, colour = cyl)) + geom_point()
-p
-mtcars$cyl <- factor(mtcars$cyl)
-p %+% mtcars
-\end{alltt}
+% WEAVE
+% 
+% p <- ggplot(mtcars, aes(mpg, wt, colour = cyl)) + geom_point()
+% p
+% mtcars$cyl <- factor(mtcars$cyl)
+% p %+% mtcars
 
 \noindent This can be useful if you need to produce the same plot for different datasets.
 
