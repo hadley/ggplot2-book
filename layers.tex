@@ -1,61 +1,58 @@
 \input{_header.tex}
 
+% SET_DEFAULTS
+%   GG-WIDTH: 4  GG-HEIGHT: 4
+%   TEX-WIDTH: 0.5\textwidth
+%   INLINE: FALSE
+%   CACHE: TRUE
+% 
+
+% END
+
 \chapter{Build a plot layer by layer}
 \label{cha:layers}
 
 \section{Introduction}
 
-As described in the previous chapter, layers can contain different data sets and use different aesthetic mappings.  When creating a plot with \f{qplot}, you can't access these differences - all layers use the same default dataset and aesthetic mappings.  This means that you can't create certain more complex plots with {\f qplot}.  This chapter outlines an alternative method: building up the plot layer by layer.  
+As described in the previous chapter, layers can use different data sets and aesthetic mappings.  When creating a plot with \f{qplot}, you can't access these differences - all layers use the same default dataset and aesthetic mappings.  This means that you can't create certain more complex plots with \f{qplot}.  This chapter outlines an alternative method: building up the plot layer by layer.  
 
-Section~\ref{sec:ggplot} will show you how to create a plot object, containing just the default data and aesthetics that you specify.  To build something that you can actually see, you will need to add layers to the plot, as described by Section~\ref{sec:layers}.  Sections~\ref{sec:data} and \ref{sec:aes} describe the data and aesthetic mappings in more detail, including more information about how layer settings override the plot defaults, the difference between setting values and mapping aesthetics, and the important group aesthetic.  Sections~\ref{sec:geom} and \ref{sec:stat} list all of the geoms and stats available in \ggplot and finally Section~\ref{sec:pull-together} describes how unusual combinations of geoms and stats create new types of plots.
+Section~\ref{sec:ggplot} will show you how to create a plot object, containing just the default data and aesthetics that you specify.  To build something that you can actually see, you will need to add layers to the plot, as described by Section~\ref{sec:layers}.  Sections~\ref{sec:data} and \ref{sec:aes} describe the data and aesthetic mappings in more detail, including more information about how layer settings override the plot defaults, the difference between setting values and mapping aesthetics, and the important group aesthetic.  Sections~\ref{sec:geom} and \ref{sec:stat} list the geoms and stats available in \ggplot.   Section~\ref{sec:pull-together} concludes by introducing you to some plotting techniques that take advantage of what you have learned in this chapter.
 
-This chapter is mainly a technical description of how layers, geoms and statistics work - how you call and customise them.  The next chapter, the ggplot ``toolbox'', describes how you can use different geoms to achieve various data analytic displays.  I'd recommend flicking between these two chapters in practice so you can learn both how layers work, and how you can use them to achieve your goals.
+This chapter is mainly a technical description of how layers, geoms and statistics work - how you call and customise them.  The next chapter, the \ggplot ``toolbox'', describes how you can use different geoms and stats to do data analysis.  In practice, I'd recommend flicking between these two chapters so you can learn both how layers work, and how you can use them to achieve your goals.
 
 \section{Creating a plot}
 \label{sec:ggplot}
 
-To build up a plot layer by layer, we first need a plot object.  One way to create a plot object, is with \f{qplot}.  Most of the time, qplot saves you time because it makes educated guesses about what you actually want.  However, using \f{qplot} you do not gain access to the full power of \ggplot because the capabilities to customise layers are much reduced.
+To build up a plot layer by layer, we first need a plot object.  We have already learned one way to create a plot object, with \f{qplot}.  Most of the time, qplot saves you time because it makes educated guesses about what you actually want.  However, you can not fully customise layers, limiting the range of plots that you can create.  Another way to create a plot object is to call \f{ggplot}, which has two optional arguments: the default {\bf data} and aesthetic {\bf mapping} for the plot.  Data needs little explanation: it's the data frame that you want to visualise.  You are already familiar with aesthetic mappings from \f{qplot}, and the syntax here is quite similar, although you need to wrap the pairs of aesthetic attribute and variable name in an \f{aes}:
 
-% \begin{itemize}
-%   \item Can't use different aesthetic mappings on different layers.  
-%   \item Can't use different parameters on different layers
-%   \item Can't change coordinate systems.  
-%   \item Can't change scales.  Can only have linear or log transformed axes, not any other function.
-% \end{itemize}
-
-An alternative way to create a plot object is to call \f{ggplot}, which has two optional arguments: the default {\bf data} and aesthetic {\bf mapping} for the plot.  Data needs little explanation: it's the data frame that you want to visualise.  You are already familiar with aesthetic mappings from \f{qplot}, and the syntax here is quite similar, however you need to wrap the pairs of aesthetic attribute and variable names in an \f{aes} call, as in the following example.
-
-\begin{alltt}
-ggplot(mtcars, aes(x = wt, y = mpg, colour = cyl))
-\end{alltt}
-
-These arguments are defaults for the plot, and can be omitted if you specify data and aesthetics when adding each layer.  
-
-The result of calling \f{ggplot} is the same as the result of qplot: a ggplot object.  However, the plot created by ggplot can't be rendered: it doesn't actually have anything to draw.  You need to add some layers.
-
-Plots created in either manner are identical.  To see this look at the \f{qplot} code - it creates a plot with \f{ggplot}, then adds layers.  If you want to see in more detail how qplot syntax can be converted to ggplot, Appendix~\ref{cha:translating} gives more details. In practice, use whatever works for you - personally, I use whatever requires the least amount of typing.
-
-% The difference between plots created by \f{qplot} and \f{ggplot} is that the former is already a complete plot, you are just adding extras to it, while with \f{ggplot} you need to add layers before it can be rendered.  
+% LISTING
 % 
+% ggplot(mtcars, aes(x = wt, y = mpg, colour = cyl))
+\input{_include/95610ac07e2c3dc8f4174924b1accbf4.tex}
+% END
+
+These arguments set up defaults for the plot, and can be omitted if you specify data and aesthetics when adding each layer, as described shortly.   The result of calling \f{ggplot} is the same as the result of \f{qplot}: a ggplot object.  However, the plot created by ggplot can't be rendered yet: there isn't anything to draw.  You need to add some layers.  This is the main difference between \f{qplot} and \f{ggplot}: \f{qplot} initialises the plot with default \emph{and} adds layers.  
 
 \section{Layers}
 \label{sec:layers}
 
-A layer encapsulates all of the information needed to draw most normal plots:  the data, mapping from the data to aesthetic attributes that can be perceived, a way of representing the data, and an optional statistical transformation.  A first the statistical transformation may not seem like it belongs here - but many common plots incorporate some kind of statistical summary, for example, the histogram or adding a smoothed line to a plot.  
+A layer encapsulates all of the information needed to draw most plots:  the data, a set of aesthetic mappings, a way of visual representing the data (the geom), an optional statistical transformation (the stat), and a position adjustment.  Position adjustments are described in detail in Chapter~\ref{cha:position}; in brief, they move around objects on the plot to avoid overplotting.  There are two ways to create layers.  The first way is to use the layer function:
 
-There are two ways to create layers.  The first way (long-hand) is to use the layer function:
-
-\begin{alltt}
-layer(geom, geom_params, stat, stat_params, data, mapping, position)
-\end{alltt}
+% LISTING
+% 
+% layer(geom, geom_params, stat, stat_params, data, mapping, position)
+\input{_include/96dbc1af8d31b91d69bba7717e65c4c5.tex}
+% END
 
 \noindent Here you specify the geom to use, its parameters; the stat, its parameters; data and aesthetic mapping (just like for \f{ggplot}) and a position adjustment (described in Section~\ref{sec:position}).  So, if you want to create layer for a scatterplot, you'd do something like:
 
-\begin{alltt}
-layer(geom = "point", stat = "identity", position = "identity")  
-\end{alltt}
+% LISTING
+% 
+% layer(geom = "point", stat = "identity", position = "identity")  
+\input{_include/7fbdecf9d60a89c8e1d65cea679364e3.tex}
+% END
 
-\noindent Or for a customised histogram with a grey background and an bin width of 2:
+\noindent Omitting the data and mapping tells the layer to use the plot default.  A more complicated layer calls for a histogram with a grey background and an bin width of 2:
 
 % LISTING
 % 
@@ -65,27 +62,33 @@ layer(geom = "point", stat = "identity", position = "identity")
 %   stat = "smooth",
 %   stat_params = list(binwidth = 2)
 % )
+\input{_include/ac6fc8efec4aa770704443e5f90940d0.tex}
+% END
 
-\noindent  This specification is precise, but verbose.  However, most of the time, you will use a shortcut.  The shortcut is possible because associated with every geom is a default statistic and position, and with every statistic is a default geom.  This means that you only need to specify one of stat or geom to get a completely specified layer.  The two examples above would become:
+\noindent  This specification is precise, but verbose.  We can make it shorter by relying on the fact that every geom is associated with a default statistic and position, and with every statistic a default geom.  This means that you only need to specify one of \code{stat} or \code{geom} to get a completely specified layer.  The two examples above would become:
 
 % LISTING
 % 
 % geom_point()
 % geom_histogram(binwidth = 2, fill = "grey50")
+\input{_include/c2d6deb696a3dfc1ea30ea9f72acc181.tex}
+% END
 
-All the shortcut functions start with {\tt geom\_} or {\tt stat\_} and are singular, eg. {\tt geom\_point}, {\tt stat\_bin}.  They all have the same  basic form:
+\noindent Where the parameters are passed on to the geom or stat as appropriate.  All the shortcut functions start with {\tt geom\_} or {\tt stat\_} and are singular, eg. {\tt geom\_point}, {\tt stat\_bin}.  They all have the same  basic form:
 
-\begin{alltt}
-geom_XXX(mapping, data, ..., geom, position)
-stat_XXX(mapping, data, ..., stat, position)
-\end{alltt}
+% LISTING
+% 
+% geom_XXX(mapping, data, ..., geom, position)
+% stat_XXX(mapping, data, ..., stat, position)
+\input{_include/721310811b324a4322cf025af4c1d8e8.tex}
+% END
 
-\noindent and they have common parameters, which describe the components of the layer:
+\noindent Their common parameters describe the components of the layer:
 
 \begin{itemize}
-	\item Aesthetic {\bf mapping} (optional), specified by the {\tt aes()} function, and combined with the plot defaults as described in Section~\ref{sec:aes}.
+	\item A set of aesthetic {\bf mapping}s (optional), specified by the {\tt aes()} function, and combined with the plot defaults as described in Section~\ref{sec:aes}.
 
-	\item The {\bf data} to use (optional).  You can use this to override the default plot data set.  Otherwise, it omitted  (as you will do most of the time), it will use the default plot data.
+	\item The {\bf data} (optional).  You can use this to override the default plot data set.  Otherwise, it omitted  (as you will do most of the time), the layer will use the default plot data.
 	
 	\item Other parameters which differ from geom to geom, and stat to stat.  These parameters control various settings of the geom and statistic, for example, bin width in the histogram, or bandwidth for a loess smoother.  Any aesthetic that the geom recognises can also be specified as a parameter to the plot.  See Section~\ref{sub:setting-mapping}.
 	
@@ -99,35 +102,41 @@ After creating the layer, you'll typically combine it with a plot using  \code{+
 % 
 % qplot(mtcars, aes(mpg, wt)) + geom_point()
 % qplot(mtcars, aes(mpg, wt, colour = factor(cyl))) + geom_smooth()
-\input{_include/8eb2b797db8fe15c5b5c9a09887e3843.tex}
+\input{_include/04f14b0830ab649c4d86cbc25d0f7873.tex}
 % END
 
-\noindent The summary function can be helpful for inspecting the structure of a plot without plotting it:
+\noindent Although you might instead store it as a variable and use it multiple times later on.  
+
+The summary function can be helpful for inspecting the structure of a plot without plotting it:
 
 % INTERWEAVE
 %
 % p <- ggplot(data=mtcars, aes(mpg, wt))
 % summary(p)
-% p <- p + geom_point(p)
+% p <- p + geom_point()
 % summary(p)
+\input{_include/97457577a2b4d03eb5bc5323d4186f45.tex}
+% END
 
-Notice that the order of data and mapping is switched between {\tt ggplot()} and the layer functions.  This is for good reason - you almost always specify data for the plot, and almost always specify aesthetics (but not data) for the layers.  To keep your code readable, I suggest always explicitly naming other arguments, rather than relying on positional matching.
+Note that the order of \code{data} and \code{mapping} arguments is switched between {\tt ggplot()} and the layer functions.  This is for a good reason: you almost always specify data for the plot, and almost always specify aesthetics (but not data) for the layers.  To keep your code readable, I suggest always explicitly naming other arguments, rather than relying on positional matching.  This is the style that I follow in the book.
 
 The following sections describe the data and aesthetic mappings in more detail, then go on to describe in what geoms and statistics are available and how they work.
 
 \section{Data}
 \label{sec:data}
 
-The restrictions on the data used in \ggplot are simple: it must be a data frame.  You only need to have a default data if you are using faceting.  This is because faceting is a global operation (i.e. works on all layers) and it needs to have some base dataset to add in any missing columns.  See Section~\ref{sub:missing_faceting_columns} for more details.  Otherwise, a default dataset will usually save you some typing, but is not mandatory.
+The restriction on the data is simple: it must be a data frame.  You must have a default data if you are using faceting, but otherwise it is optional.  This is because faceting is a global operation (i.e. works on all layers) and it needs to have some base dataset to add in any missing columns.  See Section~\ref{sub:missing_faceting_columns} for more details.  If the dataset is omitted, every layer must supply its own data.
 
-Another thing to remember is that the data is stored in the plot object, as a copy, not a reference.  If you want to update (or change) the data later on, you can add on a new dataset with \code{\%+\%}:
+Another thing to remember is that the data is stored in the plot object as a copy, not a reference.  If you want to update (or change) the data later on, you can add on a new dataset with \code{\%+\%}:
 
-% WEAVE
+% LISTING
 % 
 % p <- ggplot(mtcars, aes(mpg, wt, colour = cyl)) + geom_point()
 % p
 % mtcars$cyl <- factor(mtcars$cyl)
 % p %+% mtcars
+\input{_include/2a36d9c61486f245a9276c8f647deff0.tex}
+% END
 
 \noindent This can be useful if you need to produce the same plot for different datasets.
 
@@ -136,33 +145,54 @@ Another thing to remember is that the data is stored in the plot object, as a co
 
 To describe the way that variables in the data are mapped to things that we can perceive on the plot (the ``aesthetics''), we use the {\tt aes} function.  The {\tt aes} function takes a list of aesthetic-variable pairs as follows:
 
-\begin{alltt}
-aes(x = weight, y = height, colour = age)
-\end{alltt}
+% LISTING
+% 
+% aes(x = weight, y = height, colour = age)
+\input{_include/eb4989dafa003f510f392a47c1965fad.tex}
+% END
 
 Here we are mapping x-position to weight, y-position to height and colour to age.  Alternatively, the first two arguments can be left without names, in which case they are assumed to be for the x and y variables.  (This matches the way that \f{qplot} is normally used.)
 
-\begin{alltt}
-aes(weight, height, colour = age)
-\end{alltt}
+% LISTING
+% 
+% aes(weight, height, colour = age)
+\input{_include/07c1baa7ae460b23eac9c318c27c52ea.tex}
+% END
 
 Things inside \f{aes} can be functions, but all variables must be contained inside the plot (or layer) data.  This is important because ggplot2 objects are entirely self-contained.  You can save one to disk and later plot it without needing anything else from that session.
 
-Mappings are stored in two places: in the plot defaults and in individual layers.  The plot defaults can be set when the plot is created, or added on afterwards
+\subsection{Plots and layers}
+\label{sub:plots_and_layers}
 
-\begin{alltt}
-p <- ggplot()
-summary(p)
-summary(p + aes(wt, hp))
-\end{alltt}
+Mappings are stored in two places: in the plot defaults and in individual layers.  The plot defaults can be set when the plot is created, or added on afterwards, with addition.
+
+% INTERWEAVE
+% 
+% p <- ggplot()
+% summary(p)
+% summary(p + aes(wt, hp))
+\input{_include/3b40dd4be601fd761990321914a6fe69.tex}
+% END
 
 When you add a layer to a plot, you can just use the default mapping: 
 
-\begin{alltt}
-p + geom_line()
-\end{alltt}
+% INTERWEAVE
+% 
+% p <- ggplot(mtcars, aes(x = mpg, y = wt))
+% p + geom_point()
+\input{_include/205919390817330033336984cfdc4cbe.tex}
+% END
 
-\noindent.  If you want to override the defaults, Table~\ref{tbl:aes-override} summarises the rules.
+Or you can override the defaults:
+
+% INTERWEAVE
+% 
+% p + geom_point(aes(colour = factor(cyl)))
+% p + geom_point(aes(y = disp))
+\input{_include/bd073ea28d91a78a63017d5902051db4.tex}
+% END
+
+\noindent The rules are summarised in Table~\ref{tbl:aes-override}.  Note that you are overriding the aesthetics only in that layer and unless you specify otherwise the axis and legend names will come from the default assignments. 
 
 \begin{table}
   \begin{center}
@@ -184,55 +214,96 @@ p + geom_line()
 \subsection{Setting vs. mapping}
 \label{sub:setting-mapping}
 
-For every aesthetic the geom function understands, you can also set that aesthetic as an parameter to the function.  Aesthetics can vary for each observation being plotted, while parameters are the same.  Instead of mapping data to that aesthetic, this will change the default.  For example:
+For every aesthetic the geom function understands, you can also set that aesthetic as an parameter to the function.  Aesthetics can vary for each observation being plotted, while parameters can not.  For example:
 
-\begin{alltt}
-p <- ggplot()
-p + geom_point(colour="red")  
-\end{alltt}
+% LISTING
+% 
+% p <- ggplot()
+% p + geom_point(colour="darkblue")  
+\input{_include/04edc955ceda9562289e6cb0ba8ca099.tex}
+% END
 
-\noindent will set the line colour to be red instead of black.  This is quite different to:
+\noindent will set the line colour to be dark blue instead of black.  This is quite different to:
 
-\begin{alltt}
-p + geom_point(aes(colour="red"))
-\end{alltt}
+% LISTING
+% 
+% p + geom_point(aes(colour="darkblue"))
+\input{_include/7039aa7d66af82abd606f93467febfce.tex}
+% END
 
-\noindent which effectively creates a new column with the value ``red'' repeated according to R's vector recycling rules and then uses the default colour scale to map that value to a colour. Chapter~\ref{cha:specifications} describes how values should be specified for the various aesthetics.  
+\noindent which effectively creates a new column with the value ``red'' repeated according to R's vector recycling rules and then uses the default colour scale to map that value to a colour. Chapter~\ref{cha:specifications} describes how values should be specified for the various aesthetics.  With qplot, you can do the same thing by putting the value inside of \f{I}, e.g.\ \code{colour = I("darkblue")}.  The difference between setting and mapping is illustrated in Figure~\ref{fig:qplot-setting}.  
 
-With qplot, you can do the same thing by putting the value in {\tt I()}:
-
-\begin{alltt}
-  qplot(mpg, wt, data=mtcars, colour = "red")
-  qplot(mpg, wt, data=mtcars, colour = I("red"))
-\end{alltt}
-
+% FIGURE
+%   LABEL: qplot-setting
+%   CAPTION: The difference between \leftc setting colour to \code{"darkblue"}
+%   and \rightc mapping colour to \code{"darkblue"}.  When \code{"darkblue"}
+%   is mapped to colour, it is treated as a regular value and scaled with
+%   the default colour scale.  This results in pinkish points and a legend.
+% 
+% qplot(mpg, wt, data=mtcars, colour = I("darkblue"))
+% qplot(mpg, wt, data=mtcars, colour = "darkblue")
+\input{_include/51fa62f0b7449e411e3a5821080f1e62.tex}
+% END
 
 \subsection{Grouping}
 \label{sub:grouping}
 
-The {\tt group} aesthetic which divides the the data set into discrete components.   This is used by the line geom to determine which observations to connect; by the boxplot geom, to determine which points to summarise in one box; by the smooth geom to determine which group of points should be included in the smooth.
+The {\tt group} aesthetic divides the the data set into discrete components.   This is used by the line geom to determine which observations to connect; by the boxplot geom to determine which points to summarise in one box; and by the smooth geom to determine which group of points should be included in the smooth. By default, the group aesthetic is set to the combination (interaction) of all discrete variables used in the plot.  Generally, this will create the correct separation of the data, but sometimes you will need to override it.  There are three common cases where this occurs:
 
-By default, the group aesthetic is set to the combination (interaction) of all discrete variables used in the plot.  Generally, this will create the correct separation of the data, but sometimes you will need to override it.  For example, if you want lines connecting observations with a discrete x scale you will need to manual specify the group aesthetic.  
+\begin{itemize}
+  \item You want to separate your data into groups, but not distinguish them with different aesthetics.  This is common for longitudinal studies with many subjects.  When looking at the data in aggregate you want to be able to distinguish individual subjects, but you don't need to be able to identify them.
+  
+  \item You want add summaries to different levels of the data. Here, different layers might have different grouping aesthetics, so that some display the full data, while others display summaries of larger groups.
 
+  \item You have a discrete x scale, but want lines to connect horizontally across groups.  This sort of plot includes interaction plots, profile plots and parallel coordinate plots.  
+  
+\end{itemize}
 
-% WEAVE
+To illustrate these ideas, we will look at a simple longitudinal data set, \code{Oxboys} from the \pkg{nlme} package.  This records the heights (\var{height}) and ages (\var{age}) of 26 boys (\var{Subject}) measured at nine different occasions (\var{Occasion}). Figure~\ref{fig:group-lines} shows a time series plot for each boy.  This requires us to identify the observations that should be connected with {\tt aes(group = Subject)}.  Figure~\ref{fig:group-smoothes} adds a smooth line to this plot.  If we use the same grouping as the line geom, we will get a smooth for each boy.  This is probably not what we want, so we override the group aesthetic for this layer to get a single line: {\tt aes(group = 1)}.  Figure~\ref{fig:group-boxplots} explores the distribution of heights at each occasion of measurement.  The default grouping works here because occasion is a discrete variable.  If we overlay individual trajectories we again need to override the default grouping for that layer with {\tt aes(group = Subject)}.
+
+% FIGURE
+%   LABEL: group-lines
+%   CAPTION: \leftc Correctly specifying {\tt group = Subject} produces
+%   one line per subject.  \rightc This pattern is characteristic of an 
+%   incorrect grouping aesthetic.
 % 
+% data(Oxboys, package="nlme")
+% qplot(age, height, data=Oxboys, group = Subject, geom="line")
+% qplot(age, height, data=Oxboys, geom="line")
+\input{_include/61602c93ff8d54668993f74122b41371.tex}
+% END
+
+% FIGURE
+%   LABEL: group-smoothes
+%   CAPTION: Adding smoothes to the Oxboys data.  \leftc Using the 
+%   same grouping as the lines results in a line of best fit for 
+%   each boy.  \rightc Using {\tt aes(group = 1)} in the smooth layer
+%   fits a single line of best fit across all boys.
 % 
-Examples.
-
-
+% qplot(age, height, data=Oxboys, group = Subject, geom="line") + geom_smooth(method="lm")
+% qplot(age, height, data=Oxboys, group = Subject, geom="line") + geom_smooth(aes(group = 1), method="lm")
+\input{_include/63cb867d7bec2eade05bf46a8764428a.tex}
+% END
+ 
+% FIGURE
+%   LABEL: group-boxplots
+%   CAPTION: \leftc If boxplots are used to look at the distribution of
+%   heights at each occasion (a discrete variable), the default grouping 
+%   works correctly.  \rightc If trajectories of individual boys are overlayed
+%   with {\tt geom\_line()} then {\tt aes(group = Subject)} must be set 
+%   for that layer.
+% 
+% qplot(Occasion, height, data=Oxboys, geom="boxplot")
+% qplot(Occasion, height, data=Oxboys, geom="boxplot", colour=I("#3366FF"), size= I(1)) + geom_line(aes(group = Subject))
+\input{_include/265200327ac26232df564cbda187e2fe.tex}
+% END
 
 The {\tt interaction()} function is particularly useful if there isn't a pre-existing variable that separates the groups you are interested in, but a combination of variables does.  
 
 \section{Geoms}
 \label{sec:geom}
 
-
-Geoms, or geometric elements, perform the actual rendering of the plot.
-
-Geoms are also responsible for drawing legends, as explained in in Section~\ref{sec:legends_and_axes}.
-
-Table~\ref{tbl:geoms} lists all of the geoms available in ggplot.  It also describes which aesthetics they understand, what parameters they take, if any.  The chief difference between aesthetics and parameters is that aesthetics can vary across observations, while parameters are fixed.  For individual geoms, more documentation is available in the documentation.  This section describes some of the broader categories of geoms: intervals in Section~\ref{sec:geom_interval}, lines in Section~\ref{sec:geom_abhvline}, aliased in Section~\ref{sec:geom_aliased}.
+Geoms, or geometric elements, perform the actual rendering of the plot. Geoms are also responsible for drawing legends, as explained in Section~\ref{sec:legends_and_axes}.  Table~\ref{tbl:geoms} lists all of the geoms available in ggplot.  
 
 \begin{table}
   \begin{center}
@@ -281,13 +352,7 @@ Table~\ref{tbl:geoms} lists all of the geoms available in ggplot.  It also descr
 \section{Stat}
 \label{sec:stat}
 
-What do statistical transformations do?
-
-What statistical transformations are available?
-
-Naming convention.
-
-Each stat generate a number of output variables that can be used in aesthetic mappings.  These can be used with {\tt ..} around them.  That identifies that the variable is not present in the original dataset, but is computed by the stat.
+Statistical transformations, stats, summarise the data in some way.  All available stats are listed in Table~\ref{tbl:stats}. 
 
 \begin{table}
   \begin{center}
@@ -317,16 +382,52 @@ Each stat generate a number of output variables that can be used in aesthetic ma
   \label{tbl:stats}
 \end{table}
 
+Each stat generate a number of output variables that can be used in aesthetic mappings.  For example, \code{stat_bin}, the statistic used to make histogram produces the following variables:
+
+\begin{itemize}
+  \item \var{count}, the number of observations in that bin
+  \item \var{density}, the density of observations in that bin (percent of total /  bar width)
+  \item \var{x}, the centre of the bin
+\end{itemize}
+
+These generated variables can be used instead of the variables present in the original data set.  For example, by the default histogram geom assigns the height of the bars to the number of observations (\var{count}), but if you'd prefer a more traditional histogram you can use the density instead (\var{density}).  To distinguish between generated and variables, generate variables names must be surround with {\tt ..} when used.  The following example shows a density histogram of \var{carat} from the diamonds dataset.
+
+% INTERWEAVE
+%   GG-WIDTH: 8
+%   TEX-WIDTH: \textwidth
+% 
+% qplot(carat, ..density.., data = diamonds, geom="histogram", binwidth = .1)
+\input{_include/8aa7c9246fa38fc8b310718ac85ee2da.tex}
+% END
 
 \section{Pulling it all together}
 \label{sec:pull-together}
 
-\subsection{Creating new plot types}
+
+
+By creatively combining different layers, you can create intricate and useful graphics.  The following examples demonstrate some of the ways to use the capabilities of layers that you have learned about in this chapter.  These are just to get you started - you are only limited by your imagination!
+
+\subsection{Combining geoms and stats}
 \label{sub:new_plot_types}
 
-By connecting geoms with different statistics, you can easily create new types of graphics.  
+By connecting geoms with different statistics, you can easily create new types of graphics.  Figure~\ref{fig:hist-variations} shows three variations on a histogram.  They all use the same statistical transformation underlying a histogram, but use different geoms and aesthetics to display the results: the area geom, the point geom and the tile geom.  
 
-Some of the geoms aren't really geoms in their own right, but are another geom with a few differences in the defaults.  These are called ``aliased'' geoms and created to represent common plot types that are a combination of ...  For example, the histogram, is just a combination of the bar geom, and the bin stat, but because it is used so commonly we want to give it is own name. Many of these geoms are used in a different manner to the base geom, and so the examples may be quite different, another reason for creating a separate geom.
+% FIGURE
+%   LABEL: hist-variations
+%   TEX-WIDTH: 0.33\textwidth
+%   CAPTION: Three variations on the histogram. \leftc A frequency polygon,
+%   \middlec a scatterplot with both size and height mapped to frequency, 
+%   \rightc an heatmap representing frequency with colour.
+% 
+% d <- ggplot(diamonds, aes(carat)) + xlim(0, 3)
+% d + stat_bin(binwidth = 0.1, geom = "area")
+% d + stat_bin(aes(size = ..density..), binwidth = 0.1, geom = "point")  + scale_area()
+% d + stat_bin(aes(y=1, fill = ..count..), binwidth = 0.1, 
+%  geom = "tile") + scale_y_continuous("")
+\input{_include/87809b04d35190ca222a40bbcb4040c6.tex}
+% END
+
+In fact, a number of geoms are created this way.  They are aren't really geoms in their own right, but are created from another geom by changing a few differences.  Table~\ref{tbl:aliased-geoms} lists these ``aliased'' geoms that have been created so that you can easily refer to common plot types that are combination other geoms and stats.  Many of these geoms are used in a different manner to the base geom, and so the examples may be quite different, another reason for creating a separate geom.  
 
 \begin{table}
   \begin{center}
@@ -344,15 +445,68 @@ Some of the geoms aren't really geoms in their own right, but are another geom w
   \end{tabular}
   \end{center}
   \caption{Geoms that modify the defaults of another geom.}
-  \label{label}
+  \label{tbl:aliased-geoms}
 \end{table}
 
-Violin plot example.
+\subsection{Varying aesthetics and data}
+\label{sub:different_aesthetics}
 
-\subsection{Different data on different layers}
-\label{sub:different_data_on_different_layers}
+One of the more powerful capabilities of \ggplot is the ability to plot different data sets on different layers.  This may seem strange: why would you want to plot different data on the same plot?  In practice, you often have related data sets that should be shown together.  A very common example is supplementing the data with predictions from a model.  While the smooth geom can add a wide range of different smoothes to your plot, it is no substitute for a external quantitative model that summarises your understanding of the data.
 
-Example overlaying raw data and model predictions.
+Let's look again at the \code{oxboys} dataset which we displayed in Section~\ref{sub:grouping}.  There we showed linear fits to individual boys, and to the whole group.  Neither model is particularly appropriate: the group model ignores the within subject correlation, and the individual model doesn't use information about the typical growth pattern to more accurate predict individuals.  In practice we might use a linear mixed effects model to do better.  This section explores how we can combine the output from this more sophisticated model with the original data to gain more insight into both the data and the model.
+
+First we'll load the \pkg{nlme} package, and fit a model with varying intercepts and slopes.  (Exploring the fit of individual models shows that this is a reasonable first pass).  We'll also create a plot that we'll use as a template.  When rendered this will produce the first plot in Figure~\ref{fig:qplot-setting}, but we're not going to use in its default state.
+
+% INTERWEAVE
+% 
+% library(nlme)
+% model <- lme(height ~ age, data = Oxboys, random = ~ 1 + age | Subject)
+% oplot <- qplot(age, height, data=Oxboys, group = Subject, geom="line")
+\input{_include/b0535fe22fae9720461cd7c3c3962c06.tex}
+% END
+
+Next we'll compare the predicted trajectories to the actual trajectories.  We do this by building up a grid that contains all combinations of ages and subjects that we're interested in.  This is probably overkill for this simple linear case (we were only really need two values of age to draw the predicted straight line), but is important for more complex models.  Next we add the predictions from the model back into this dataset, as a variable called \var{height}.  
+
+% INTERWEAVE
+% 
+% age_grid <- seq(-1, 1, length = 10)
+% subjects <- unique(Oxboys$Subject)
+% 
+% preds <- expand.grid(age = age_grid, Subject = subjects)
+% preds$height <- predict(model, preds)
+\input{_include/a031713a61cfb27bad192c7267f63db4.tex}
+% END
+
+Once we have the predictions we can then displays them with the original data.  Because we have used the same variable names as the original \code{Oxboys} dataset, we don't need to specify any aesthetics, we can just override the default dataset.  We also set two aesthetic parameters to make it a bit easier to compare the predictions to the actual values.
+
+% INTERWEAVE
+% 
+% oplot + geom_line(data = preds, colour = "#3366FF", size= 0.4)
+\input{_include/561a24430eb7bdf981849b70acb42153.tex}
+% END
+
+It looks like the model does a good job of capturing the high-level structure of the data, but it's hard to see the details (these plots of longitudinal data are often called spaghetti plots for good reason).  Another way to compare the model to the data is to look at residuals, so we'll add the predictions from the model back on to the original data (\var{fitted}), and then calculate residuals (\var{resid}).  The plot is a little more complicated: we update the plot dataset, then change the default y aesthetic to \var{resid}, and then add a smooth line for all observations.
+
+% INTERWEAVE
+% 
+% Oxboys$fitted <- predict(model)
+% Oxboys$resid <- with(Oxboys, fitted - height)
+% 
+% oplot %+% Oxboys + aes(y = resid) + geom_smooth(aes(group=1))
+\input{_include/84016c0f5f2a11964945e6ba5445834c.tex}
+% END
+
+This shows a clear deficiency in our model, so we refit it with a quadratic term, recalculate predictions and residuals, and replot.  There now much less evidence of model inadequacy.
+
+% INTERWEAVE
+% 
+% model2 <- update(model, height ~ age + I(age ^ 2))
+% Oxboys$fitted2 <- predict(model2)
+% Oxboys$resid2 <- with(Oxboys, fitted2 - height)
+% 
+% oplot %+% Oxboys + aes(y = resid2) + geom_smooth(aes(group=1))
+\input{_include/4e69b52380ca7967c3452cc3090b802c.tex}
+% END
 
 
 \input{_footer.tex}
