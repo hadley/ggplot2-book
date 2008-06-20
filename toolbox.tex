@@ -1,5 +1,14 @@
 \input{_header.tex}
 
+% SET_DEFAULTS
+%   GG-WIDTH: 4  GG-HEIGHT: 4
+%   TEX-WIDTH: 0.5\textwidth
+%   INLINE: FALSE
+%   CACHE: TRUE
+% 
+
+% END
+
 \chapter{Toolbox}
 \label{cha:toolbox}
 
@@ -195,67 +204,35 @@ There are few different things we might want to weight by:
 
 \noindent The choice of a weighting variable profoundly effects what we are looking at in the plot and the conclusions that we will draw.  There are two aesthetic attributes that can be used to adjust for weights.  Firstly, for simple geoms like lines and points, you can make the size of the grob proportional to the number of points, using the {\tt size} aesthetic, as follows:
 
-% decumar<<< 
-% interweave({
-% midwest <- read.csv("~/Documents/graphics/weighted/midwest.csv")
+% INTERWEAVE
+%
+% midwest <- read.csv("~/Documents/weight-and-see/midwest.csv")
 % qplot(percwhite, percbelowpoverty, data=midwest)
 % qplot(percwhite, percbelowpoverty, data=midwest, size=poptotal)
 % qplot(percwhite, percbelowpoverty, data=midwest, size=area)
-% })
-% |||
-\begin{alltt}
-> midwest <- read.csv("~/Documents/graphics/weighted/midwest.csv")
-> qplot(percwhite, percbelowpoverty, data = midwest)
-\includegraphics[scale=0.5]{4b8c600efdc1f31f77c7c3368cac11d2}
-
-> qplot(percwhite, percbelowpoverty, data = midwest, size = poptotal)
-\includegraphics[scale=0.5]{f3976daae1f4a7ef912ea259ca3dd8f5}
-
-> qplot(percwhite, percbelowpoverty, data = midwest, size = area)
-\includegraphics[scale=0.5]{440b95f469e5b96a08e077d4a177e603}
-
-\end{alltt}
-% >>>
+\input{_include/3d3d233154de77fb101cd0e80983980b.tex}
+% END
 
 For more complicated grobs which involve some statistical transformation, we specify weights with the {\tt weight} aesthetic.  These weights will be passed on to the statistical summary function.  Weights are supported for every case where it makes sense: smoothers, quantile regressions, box plots, histograms, and density plots.  You can't see this weighting variable directly, and it doesn't produce a legend, but it will change the results of the statistical summary.
 
 The following example shows how weighting by population density effects the relationship between percent white and percent below the poverty line.
 
-% decumar<<< 
-% interweave({
-% qplot(percwhite, percbelowpoverty, data=midwest, geom=c("point","smooth"), method=lm)
-% qplot(percwhite, percbelowpoverty, data=midwest, size=popdensity, weight=popdensity,geom=c("point","smooth"), method=lm)
-% })
-% |||
-\begin{alltt}
-> qplot(percwhite, percbelowpoverty, data = midwest, geom = c("point", 
-+     "smooth"), method = lm)
-\includegraphics[scale=0.5]{54d5b5a95badb06ff2339bfd51826af0}
-
-> qplot(percwhite, percbelowpoverty, data = midwest, size = popdensity, 
-+     weight = popdensity, geom = c("point", "smooth"), method = lm)
-\includegraphics[scale=0.5]{3353081c3ffa3fd62b69fb2c0aef9142}
-
-\end{alltt}
-% >>>
+% INTERWEAVE
+%
+% lm_smooth <- geom_smooth(method = lm, size = 1)
+% qplot(percwhite, percbelowpoverty, data = midwest) + lm_smooth 
+% qplot(percwhite, percbelowpoverty, data = midwest, 
+%   size = popdensity, weight = popdensity) + lm_smooth
+\input{_include/b8ecd05c33982f48ab5b2f946f495a62.tex}
+% END
 
 When we weight a histogram or density plot by total population, we change from looking at the distribution of the number of counties, to the distribution of the number of people.  This example shows the difference this makes for a histogram and density plot of the percentage below the poverty line.
 
-% decumar<<< 
-% interweave({
+% INTERWEAVE
+%
 % qplot(percbelowpoverty, data=midwest, geom="histogram", binwidth=1)
 % qplot(percbelowpoverty, data=midwest, geom="histogram", weight=poptotal, binwidth=1)
-% })
-% |||
-\begin{alltt}
-> qplot(percbelowpoverty, data = midwest, geom = "histogram", binwidth = 1)
-\includegraphics[scale=0.5]{d8cef4ee59175bda59eaa2647a64b930}
-
-> qplot(percbelowpoverty, data = midwest, geom = "histogram", weight = poptotal, 
-+     binwidth = 1)
-\includegraphics[scale=0.5]{affb33e87c76bc94bd3ea9eb2df0190c}
-
-\end{alltt}
-% >>>
+\input{_include/b561477fc43fab8611097a0834b79744.tex}
+% END
 
 \input{_footer.tex}
