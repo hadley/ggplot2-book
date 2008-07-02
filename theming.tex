@@ -1,112 +1,121 @@
 \input{_header.tex}
 
-\chapter{Theming}
+\chapter{Polishing your plot for publication}
 \label{cha:theming}
 
-
-\section{Settings}\label{sec:options}
-
-ggplot provides convenient access to a select set of commonly used options, described in Table \ref{tbl:options}.  These options are described in more depth, with many examples, in the online documentation {\tt ?ggopt}.
-There are two ways to set options:
+Themes allow you to customise the appearance of non-data elements of the plot.  Like many other areas of \ggplot, there are multiple levels of control:
 
 \begin{itemize}
-  \item Globally (for all plots), using {\tt ggopt}.  For example {\tt ggopt(grid.fill = "white")}.   Global options are applied when a plot is rendered, not when it is created.  This lets you experiment with plot structure and appearance independently.
+  \item Select (and adjust the parameters of) one of the built in themes.  This affects every visual element of the plot in a visually consistent manner.  \secref{sec:built_in}.
 
-  \item Locally (for one plot), using \$ or {\tt update}.  For example, {\tt p\$grid.fill <- "white"}, or {\tt update(p, grid.fill = "white")}.  The first modifies the object in place, while the second creates a modified copy. Local options override the more general global options.
-\end{itemize}     
+  \item Adjust the parameters of individual elements of a theme. The theme system comes with a number of built in element rendering functions with a limited set of parameters.  By adjusting these parameters you can control things like text size and colour, background and grid line colours and text orientation. \secref{}
 
+  \item Write a custom element function using grid.  This allows you to absolutely customise the appearance of every element - you are not restricted to a built in set of drawing options.  
 
-\begin{table}
-\begin{tabular}{lll}
-Option & Valid values & Details \\
-\hline
-background.fill    & any colour & Background fill colour behind entire plot\\
-background.colour  & any colour & \\
-grid.colour        & any colour & Colour of grid lines within panel \\
-grid.fill          & any colour & Panel background colour \\
-strip.gp           & gpar object & Graphical parameters used for strip. Colour and fill of most interest \\
-strip.text.gp      & any colour & Graphical parameters used for strip text. \\
-strip.text         & a function & Function should accept two arguments, variable and value and return a character vector of length one. Function which determines how strip labels are formatted \\
-legend.position    & left, right, top, bottom, none, c(x, y) & Position of legend.  Can use numeric vector of length 2 to set position of centre of length, units are npc relative to whole plot viewport. \\
-aspect.ratio       & a number or NULL & Aspect ratio of plot. \\
-\hline
-\end{tabular}
-  \caption{ggplot options}
-  \label{tbl:options}
-\end{table}
+  \item Use grid to alter a single item on the plot
+\end{itemize}
+
+\noindent Theme settings can be applied on two levels:
+
+\begin{itemize}
+  \item Globally, using \f{theme}.  Global options are applied when a plot is rendered, not when it is created.  This lets you experiment with plot structure and appearance independently.
+
+  \item For individual plots, using \f{opts}.  Local options override global options.  To apply the same set of options to multiple plots, you can assign the result of \f{opts} to a variable, and then add that variable to each plot.
+\end{itemize}
+
+\section{Built in themes}
+\label{sec:built_in}
+
+There are two built in themes.  The default has a grey background, and the other theme has a white background.
+
+Both these themes share a common set of parameters that allow you to perform the most common set of adjustments, including setting global text properties (like font family and size) and adjusting colours.  
+
+\begin{itemize}
+  \item Font size.  Title is 120\%, tick labels are 80\%.
+  \item Colour
+\end{itemize}
+
+% EXAMPLES
+% 
+% Change font size
+% Use black and white theme
+% Use custom colours (blues)
+
+\section{Theme elements}
+\label{sec:theme_elements}
+
+Each theme elements renders a single element of the non-data components of plot.  Table~\ref{tbl:elements} lists all of the customisable elements in a plot.
 
 \begin{table}
   \begin{center}
-  \begin{tabular}{ll}
-  Option & Description \\
-  \hline
-  fill, col & Background and foreground colours.  You can supply a named colour (see {\tt ?colors}) or a hex string of the form \#RRGGBBAA or \#RRGGBB. \\
-  lty & Line type: solid, dotted, dashed etc. \\
-  lwd & Width of line, in points. \\
-  fontfamily, fontface & Refer to R-news article \\
-  fontsize & Font size, in points.  
-    
+  \begin{tabular}{lll}\\
+    \toprule
+    Theme element              & Type   & Description  \\
+    \midrule                             
+    \texttt{axis.line}         & line   & Line along axis  \\
+    \texttt{axis.text.x}       & text   & x axis label  \\
+    \texttt{axis.text.y}       & text   & y axis label  \\
+    \texttt{axis.ticks}        & line   & axis tick marks  \\
+    \texttt{axis.title.x}      & text   & x axis tick labels  \\
+    \texttt{axis.title.y}      & text   & y axis tick labels  \\[0.5em]
+    \texttt{legend.background} & rect   & background of legend  \\
+    \texttt{legend.key}        & rect   & background underneath legend keys \\
+    \texttt{legend.text}       & text   & legend labels  \\
+    \texttt{legend.title}      & text   & legend name  \\[0.5em]
+    \texttt{panel.background}  & rect   &   \\
+    \texttt{panel.border}      & rect   &   \\
+    \texttt{panel.grid.major}  & line   &   \\
+    \texttt{panel.grid.minor}  & line   &   \\[0.5em]
+    \texttt{plot.box}          & rect   &   \\
+    \texttt{plot.title}        & text   &   \\[0.5em]
+    \texttt{strip.background}  & rect   &   \\
+    \texttt{strip.label}       &        &   \\
+    \texttt{strip.title.x}     & text   &   \\
+    \texttt{strip.title.y}     & text   &   \\
+    \bottomrule
+  
   \end{tabular}
   \end{center}
-  \caption{gpar specifications.  See {\tt ?gpar} for more details}
-  \label{tbl:gpar}
+  \caption{Theme elements}
+  \label{tbl:elements}
 \end{table}
 
-The following example demonstrates some of the possibilities.
+The element type describes what sort of output that element uses, and roughly matches the grid grobs of the same name.  The following sections describes the built in element functions that you can use, or if those don't offer enough customisation, how to write your own.
 
-% decumar<<< 
-% dsmall <- diamonds[sample(1:nrow(diamonds), 1000), ]
-% doptions(height=3, width=4)
-% interweave({
-% # Always a good idea to save existing options before making
-% # radical changes
-% old <- ggopt(grid.colour="grey50", grid.fill="white")
-% qplot(carat, price, data=dsmall)
-% (p <- qplot(cut, clarity, data=dsmall, geom="jitter"))
-% # Only changes the current plot
-% p$grid.colour <- "darkgreen"
-% p
-% # Restore old settings:
-% ggtheme(old)
-% p
-% })
-% |||
-\begin{alltt}
-> old <- ggopt(grid.colour = "grey50", grid.fill = "white")
-> qplot(carat, price, data = dsmall)
-\includegraphics[scale=1]{7f8d370a14179d509879f35839b54ea9}
+\subsection{Built-in element functions}
 
-> (p <- qplot(cut, clarity, data = dsmall, geom = "jitter"))
-\includegraphics[scale=1]{5830a37fc4252db571b25f373c8f141f}
+\begin{itemize}
+  \item \code{theme_text}
+  \item \code{theme_line}
+  \item \code{theme_rect}
+\end{itemize}
 
-> p$grid.colour <- "darkgreen"
-> p
-\includegraphics[scale=1]{656e171fb34b88b28f6789aa9ad535e6}
+% EXAMPLES
+% 
+% Change angle of axis labels
+% 
 
-> ggtheme(old)
-> p
-\includegraphics[scale=1]{656e171fb34b88b28f6789aa9ad535e6}
+\subsection{Custom element functions}
 
-\end{alltt}
-% >>>
+To see how to write custom element functions, it's good to start by seeing how the built in element functions work:
 
-\section{Themes}\label{sub:themes}
+% INTERWEAVE
+% 
+% str(args(theme_text()))
+% str(args(theme_rect()))
+% str(args(theme_line()))
 
-Like lattice, it is also possible to create a theme which encapsulates multiple options.  A theme is a very simple structure, just a list of multiple options, so it's  easy to create your own.  One theme is included by default: {\tt theme\_bw}, which sets up a white background with black grid lines.  You can use a theme with {\tt ggtheme(theme)}, or for a single plot {\tt update(plot, theme)}.
+You'll notice that these are very similar to the arguments to \f{textGrob}, \f{rectGrob} and \f{polylineGrob} and these are exactly the functions that they are based on.  All that the element function do is set up some defaults.  
 
-% decumar<<< 
-% interweave({
-% ggtheme(theme_bw)
-% qplot(carat, price, data=dsmall)
-% })
-% |||
-\begin{alltt}
-> ggtheme(theme_bw)
-> qplot(carat, price, data = dsmall)
-\includegraphics[scale=1]{7f8d370a14179d509879f35839b54ea9}
+If you want to write your own, you need to copy this basic idea: take position arguments, and return a grid grob.  For example, let's say we'd like to give the strips a 3d appearance.  We can do this by drawing a rectangle, and then drawing highlights on the top-right and low-lights (shadows) on the bottom-left.
 
-\end{alltt}
-% >>>
+
+
+
+
+
+\section{Customising scales and geoms}
+
 
 
 \input{_footer.tex}
