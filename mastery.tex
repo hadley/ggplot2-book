@@ -7,7 +7,6 @@
 % Introduction to the data structure
 % Roadmap for next few chapters
 
-% msleep <- read.csv("~/Documents/data/08-msleep/msleep.csv")
 
 \section{Introduction}\label{sec:introduction}
 
@@ -17,114 +16,41 @@ This chapter describes the theoretical basis of ggplot2: the layered grammar of 
 
 You may want to skip this chapter in a first reading of the book, and then come back to it when you want a deeper understanding of how all the pieces fit together.
 
-\section{Building a plot}
+This chapter begins by describing in detail a simple plot is drawn.  We'll start with a simple scatterplot, and then grow progressively more complicated, by transforming the axes and adding a smooth line.
+
+\section{Building a scatterplot}
 \label{sec:building_a_plot}
 
-Consider the mammal's sleep dataset illustrated in Table~\ref{tbl:sleep}.
+When creating a plot we start with data.  Consider the mammal's sleep dataset illustrated in Table~\ref{tbl:sleep}.  This is included in \ggplot and is called \code{msleep}.  The data records the brain and body weights, sleep times, and a few other variables for 83 mammals.   You can find out more about the data by typing \code{?msleep} within R. 
 
-% 
+% msleep <- read.csv("~/Documents/data/08-msleep/msleep.csv")
+% animals <- sort(c("African elephant", "Pilot whale", "Human", "Horse", "Domestic cat"))
+% msel <- subset(msleep, name %in% animals)
 
-\begin{alltt}
-  qplot(bodywt, brainwt, data=msleep)
-  qplot(bodywt, brainwt, data=msleep, log="xy")
-  qplot(bodywt, brainwt, data=msleep, log="xy", facets = . ~ sleepyhead)
-\end{alltt}
 
-Pick out 5 animals to use throughout in tables.
+% source("latex.r")
+% tabulate(msel[, c("name", "order", "brainwt", "bodywt", "awake", "sleep_rem")])
 
-\section{What is a plot?}
-\label{sec:what_is_a_plot}
-
-One way to think about the grammar of graphics is as a question: what is a plot?  The grammar answers this by describing a plot as a collection of independent components, each describing an independent part of the plot.  There are three basic things we need for a plot: one or more layers, scales to map variables from data space to visual space, and a coordinate system.  These are described below.
-
-\begin{itemize}
-  \item One or more layers.  A layer is composed of data and a description of which data variables should be mapped to which aesthetic properties, a geometric object, and a statistical transformation:
-  
-  \begin{itemize}
-  	\item Data is obviously the most important part, and it is what you provide.  This is what you are displaying visually to aid communication or analysis.  You also need to describe how variables in the dataset are mapped to visual properties.  For example, in Figure 2.X we mapped diamond price to y position, carat to y position and colour to colour.  Because the data and aesthetic mapping set is usually the same in most layers, these can also be set as defaults at the plot level.
-  	
-  	\item {\bf Geoms}, short for geometric objects, control the type of plot that you create.  For example, using a point geom will create a scatterplot, while using a line geom will create a line plot.
-
-  	\item {\bf Stats}, or statistical transformations, reduce or augment the data in a statistical manner.  For example, a useful stat is the smoother, which shows the mean of y, conditional on x.  Another common stat is the binner, which bins data in to bins.   Every geom has a default statistic, and every statistic a default geom.  For example, the bin statistic has defaults to using the bar geom to produce a histogram.
-
-  	\item {\bf Position adjustment}
-  \end{itemize}
-
-  \item A scale for all the aesthetic properties.  {\bf Scales} control the mapping from data attributes to aesthetic attributes.  They also provide an inverse mapping in the form of a guide, an axis or legend, which facilitates reading the final graphic.  Aesthetic attributes are things like position, size, colour---anything that you can perceive.  The function that maps data to aesthetic attributes is a scale. It takes values in data space (continuous or categorical) and maps them into an aesthetic space (eg. colour, size, shape).  A scale also provides guides to convert back from the aesthetic attribute to the original data.  Guides are either axes (for position) or legends (for everything else)
-
-  \item A coordinate system.  A {\bf coord}, or coordinate systems, maps the position of objects on to the plane of the plot.  Typically we will use the cartesian coordinate system, but sometimes others are useful.
-\end{itemize}
-
-There is also another thing that turns out to be sufficiently useful that we should include it in our general framework: faceting (also known as conditioned or trellis plots). This allows us to easily create small multiples of different subsets of an entire dataset. This is a powerful tool when investigating whether patterns hold across all conditions.
-
-\usepackage{fullpage}
-\usepackage[utf8]{inputenc}
-\usepackage[pdftex]{graphicx}
-\DeclareGraphicsExtensions{.png,.pdf}
-\graphicspath{{2007-jcgs/}}
-\usepackage{hyperref}
-\usepackage{pdfsync}
-\usepackage{alltt}
-\usepackage{url}
-\usepackage[round,sectionbib]{natbib}
-\usepackage{setspace} 
-\doublespacing
-
-\title{A layered grammar of graphics}
-\author{Hadley Wickham}
-\begin{document}
-\maketitle
-
-\begin{abstract}
-  A grammar of graphics is a tool which enables us to concisely describe the components of a graphic.  A grammar of graphics allows us to move beyond named graphics and gain insight into the deep structure that underlies statistical graphics. This paper builds on \citet{wilkinson:2006}, describing extensions and refinements developed while building an open source implementation of the grammar of graphics for R, ggplot2.  
-  
-  The topics in this paper include an introduction to the grammar by working through the process of creating a plot, and discussing the components that we need.  The grammar is then presented formally and compared to Wilkinson's grammar, highlighting the hierarchy of defaults, and the implications of embedding a graphical grammar into a programming language.  The power of the grammar is illustrated with a selection of examples that explore different components, and their interactions, in more detail.  The paper concludes by discussing some perceptual issues, and thinking about how we can build on the grammar to learn how to create graphical ``poems''.
-\end{abstract}
-
-\section{Introduction}\label{sec:introduction}
-
-What is a graphic? How can we succinctly describe a graphic? And how can we create the graphic that we have described?  These are important questions for the field of statistical graphics.
-
-One way to answer these questions is to develop a grammar, ``the fundamental principles or rules of an art or science'' \citep{grammar}.   A good grammar will allow us to gain insight into the composition of complicated graphics, and reveal unexpected connections between seemingly different graphics \citep{cox:1978}.  A grammar provides a strong foundation for understanding a diverse range of graphics.  A grammar may also help guide us on what a well-formed or correct graphic looks like, but there will still be many grammatically correct but nonsensical graphics.  This is easy to see by analogy to the English language: good grammar is just the first step in creating a good sentence. 
-
-The seminal work in graphical grammars is ``The Grammar of Graphics'' by \citet{wilkinson:2005}, which proposes a grammar which can be used to describe and construct a wide range of graphics.  This paper proposes an alternative parameterisation of the grammar, based around the idea of building up a graphic from multiple layers of data.  The grammar differs from Wilkinson's in its arrangement of the components, the development of a hierarchy of defaults, and in that it is embedded inside another programming language.  These three sections form the core of the paper, and compare and contrast the layered grammar to Wilkinson's grammar.  These sections are followed by some implications of the grammar, a discussion of perceptual issues otherwise not mentioned by the grammar, and finally some ideas for building higher level tools to support data analysis.
-
-The ideas presented in this paper have been implemented in the open-source R package, ggplot2, available from {\sc cran}. More details about the grammar and implementation, including a comprehensive set of examples, can be found on the package website \url{http://had.co.nz/ggplot2}.  Ggplot2 is the analogue of {\sc gpl}, the implementation of Wilkinson's grammar in {\sc spss}.
-% 
-% Like the Grammar of Graphics, some issues are tied to the grammar, and some are tied to the implementation of the grammar (and some are somewhere in between).  
-% 
-% The Grammar of Graphics = book
-% Wilkinson's grammar = the grammar described in the book + conversations with Wilkson
-% {\sc gpl} = implementation of Wilkinson's grammar
-%
-% From a practical perspective, current open-source systems for creating graphics are sorely lacking.  The R environment for statistical computing provides the richest set of graphical tools, split into two libraries: base graphics \citep{R} and lattice \citep{lattice}.  Base graphics has a primitive pen on paper model, and while lattice is a step up, it has fundamental limitations.  Compared to base graphics, lattice takes care of many of the minor technical details that require manual tweaking in base graphics, in particular providing matching legends and  maintaining common scales across multiple plots.  However, attempting to extend lattice raises fundamental questions: why are there separate functions for scatterplot and dotplots when they seem so similar?  Why can you only log transform scales and not use other functions?  What makes adding error bars to a plot so complicated?  Extending lattice also reveals another problem.  Once a lattice plot object is created, it is very difficult to modify it in a maintainable way: the components of the lattice model of graphics \citep{becker:1996} are designed for a very specific type of display, and do not generalise well to the set of all graphics we may wish to produce.
-% 
-% Wilkinson's grammar offers a potential solution for some of these problems.  It presents a way to concisely and formally describe a graphic. Instead of coming up with a new name for your graphic, and giving a lengthy, textual description, you can instead describe the exact components which define your graphic.  The grammar provides seven components (algebra, transformation, geometric element, statistical transformation, scale, coordinate system and guide) and proposes that all statistical graphics can be described using these components.  However, there was one big problem with this grammar: no free implementation of the grammar was available.  There was no way to actually try out the ideas in grammar of graphics, or to test the claims made in the book.  
-% 
-% These considerations led me to create ggplot, an implementation of the grammar of graphics in the R statistical programming environment \citep{R}.  Initially, ggplot started as a straight forward implementation of the ideas in the book, but it soon become clear that there are areas in which the book is weak, and so ggplot is not just a mechanical encoding of Wilkinson's grammar in R code.  Developing ggplot has lead me to challenge, prune and extend this grammar and I have also incorporated research on cognitive perception to create beautiful, effective plots, and investigated strategies for creating good (useful and appropriate) graphics.
-% 
-% In this paper I will describe the layered grammar in more detail, including how it differs from Wilkinson's.  To begin, I will work through the process of creating a plot, and discuss some of the components that we need.  Next, I present the grammar more formally, with several concrete examples, and then I continue to formally describe the syntax of the grammar.  The power of the grammar is illustrated with a selection of examples that explore different components, and their interactions, in more detail.  Finally, I conclude by discussing two topics that Wilkinson's grammar does not:  guidelines for plot rendering, and strategies for supporting the construction of appropriate graphics.  
-
-\section{How to build a plot}\label{sec:how_to_build_a_plot}
-
-When creating a plot we start with data.  We will use the trivial dataset shown in Table \ref{tbl:simple} as an example.  It has four variables, $A$, $B$, $C$, and $D$, and four observations.
-
-\begin{table}[ht]
-	\begin{center}
-	\begin{tabular}{r|r|r|r}
-		$A$ & $B$ & $C$ & $D$\\
-		\hline
-		2 & 3 & 4 & a\\
-		1 & 2 & 1 & a \\
-		4 & 5 & 15 & b\\
-		9 & 10 & 80 & b
-	\end{tabular}
-	\end{center}
-	\caption{Simple dataset.}
-	\label{tbl:simple}
+\begin{table}
+  \begin{center}
+  \begin{tabular}{llrrp{2cm}p{2cm}}
+    \toprule
+    Animal & Order & Brain weight & Body weight & Awake (hours) & Rem sleep (hours) \\
+    \midrule
+    Domestic cat     & Carnivora      & 0.0256 &    3.3 & 11.50 & 3.2\\
+    Horse            & Perissodactyla & 0.6550 &  521.0 & 21.10 & 0.6\\
+    Human            & Primates       & 1.3200 &   62.0 & 16.00 & 1.9\\
+    African elephant & Proboscidea    & 5.7120 & 6654.0 & 20.70 & ---\\
+    Pilot whale      & Cetacea        &    --- &  800.0 & 21.35 & 0.1\\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \caption{Five mammals from the \code{msleep} data set.  Missing values are illustrated with a ---.  }
+  \label{label}
 \end{table}
 
-Let's draw a scatterplot of $A$ vs. $C$.  What exactly is a scatterplot?  One way to describe it is that we're going to draw a point for each observation, and we will position the point horizontally according to the value of $A$, and vertically according to $C$.  For this example, we will also map categorical variable $D$ to the colour of the points.  The first step in making this plot is to create a new dataset which reflects the mapping of $x$-position to $A$, $y$-position to $C$ and colour to $D$.  $x$-position, $y$-position and colour are examples of aesthetics, things that we can perceive on the graphic. We will also remove all other variables that do not appear in the plot.  This is shown in Table \ref{tbl:mapping}.
+
+Let's draw a scatterplot of \var{brainwt} vs. \var{bodywt}.  What exactly is a scatterplot?  One way to describe it is has a point for each observation, positioned horizontally according to the value of \var{brainwt}, and vertically according to \var{bodywt}.  The first step in making this plot is to create a new dataset which reflects the mapping of $x$-position to \var{brainwt}, and $y$-position to \var{bodywt} and colour to \var{diet}.  $x$-position, $y$-position and colour are all aesthetics, things that can be perceived on the graphic. We will also remove all other variables that do not appear in the plot.  This is shown in Table \ref{tbl:mapping}.
 
 \begin{table}[ht]
 	\begin{center}
@@ -137,19 +63,20 @@ Let's draw a scatterplot of $A$ vs. $C$.  What exactly is a scatterplot?  One wa
 		9 & 80 & b
 	\end{tabular}
 	\end{center}
-	\caption{Simple dataset with variables named according to the aesthetic that they use.}
+	\caption{Sample rows from \code{msleep} with variables named according to the aesthetic that they use.}
 	\label{tbl:mapping}
 \end{table}
 
-We can create many different types of plots using this same basic specification.  For example, if we were to draw lines instead of points we would get a line plot.  If we used bars, we'd get a bar plot.  Bars, lines and points are all examples of geometric objects.  
+We can create many different types of plots using this data.  For example, if we were to draw lines instead of points we would get a line plot.  If we used bars, we'd get a bar plot.  Bars, lines and points are all examples of geometric objects.  
 
-% The term geometric object, or geom, is used to differentiate these abstract objects from their eventual output as graphical objects.  For example, the line {\em graphical} object is used to draw both the lines from the line geometric object, as well as the lines that make up the axes and tick marks.  This distinction is discussed further in Section~\ref{sub:geometric-objects}.
+These values currently have no meaning to the computer.  We need to convert them from being in data units (e.g.\ kg) to physical units (e.g.\ pixels), that the computer knows how to display.  (The way that these physical units can been specified in R is described in Appendix~\ref{chp:specification}). Converting position is easy for this example which has linear scales and a Cartesian coordinate system - we just need a linear mapping from the range of the data to $[0, 1]$.  (We can use $[0, 1]$ instead of exact pixels because the drawing system that \ggplot uses, \code{grid}, will take care of that for us.)
 
-The next thing we need to do is to convert these numbers measured in data units to numbers measured in physical units, things that the computer can display.  To do that we need to know two things: that we're going to use linear scales, and a Cartesian coordinate system.  We can then convert the data units to aesthetic units, which have meaning to the underlying drawing system.  For example, to convert from a continuous data value to a horizontal pixel coordinate, we need a function like the following:
+\[ \frac{x - \min(x)}{\mbox{range}(x)}  \] 
 
-\[ \mbox{floor} (\frac{x - \min(x)}{\mbox{range}(x)} * {screen\ width})  \] 
+It is the coordinate system that performs this mapping, and for other coordinate systems the mapping is more complex (and may depend on both x and y variables), but in all cases is mapped to range $[0, 1]$.
 
-\noindent In this example, we will scale the $x$-position to $[0, 200]$ and the $y$-position to $[0, 300]$.  The procedure is similar for other aesthetics, such as colour: here we map ``a'' to red, and ``b'' to blue.  The results of these scalings are shown in Table \ref{tbl:scaled}.  These transformations are the responsibility of {\em scales}, described in detail in Section~\ref{sec:scales}.
+The process for mapping the colour is a little more complicated, and here the scale does all of the work.  A scale needs to know the range and the domain of the data.  The default scale in \ggplot maps colour to evenly space hues on a colour wheel.
+
 
 \begin{table}[ht]
 	\begin{center}
@@ -172,14 +99,12 @@ Finally, we need to render this data to create the graphical objects that are di
 
 \begin{figure}[htbp]
 	\centering
-		\includegraphics[height=2in]{2-plot-simple-exploded}
 	\caption{Graphics objects produced by (from left to right): geometric objects, scales and coordinate system, plot annotations.}
 	\label{fig:simple-exploded}
 \end{figure}
 
 \begin{figure}[htbp]
 	\centering
-		\includegraphics[height=2in]{2-plot-simple}
 	\caption{The final graphic, produced by combining the pieces in Figure~\ref{fig:simple-exploded}.}
 	\label{fig:simple}
 \end{figure}
@@ -190,7 +115,6 @@ Now that you are acquainted with drawing a simple plot, we will create a more co
 
 \begin{figure}[htbp]
 	\centering
-		\includegraphics[height=2in]{2-plot-complex}
 	\caption{A more complicated plot, which is faceted by variable $D$.  Here the faceting uses the same variable that is mapped to colour so that there is some redundancy in our visual representation.  This allows us to easily see how the data has been broken into panels.}
 	\label{fig:complex}
 \end{figure}
@@ -289,14 +213,6 @@ To be precise, the layered grammar defines the components of a plot as:
   \item The facet specification.
 \end{itemize}
 
-These high-level components are quite similar to those of Wilkinson's grammar, as shown in Figure~\ref{fig:comparison}.  In both grammars, the components are independent, meaning that we can generally change a single component in isolation.  There are more differences within the individual components, which are described in the details which follow.  
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=2in]{comparison}
-  \caption{Mapping between components of Wilkinson's grammar (left) and the layered grammar (right)}
-  \label{fig:comparison}
-\end{figure}
 
 The layer component is particularly important as it determines the physical representation of the data, with the combination of stat and geom defining many familiar named graphics: the scatterplot, histogram, contourplot, and so.  In practice, many plots have (at least) three layers: the data, context for the data, and a statistical summary of the data.  For example, to visualise a  spatial point process, we might display the points themselves, a map giving some context to the locations of points, and contours of a 2d density estimate.
 
@@ -319,16 +235,6 @@ Layers are responsible for creating the objects that we perceive on the plot.  A
 
 Usually all the layers on a plot have something in common, which is typically that they are different views of the same data, e.g.\ a scatterplot with overlaid smoother.  
 
-A layer is the equivalent of Wilkinson's {\sc element}.  However, the parameterisation is rather different.  In Wilkinson's grammar, all the parts of an element are intertwined, while in the layered grammar they are separate, as shown by Figure~\ref{fig:element-vs-layer}. This makes it possible to omit parts from the specification and rely on defaults: if the stat is omitted, the geom will supply a default; if the geom is omitted, the stat will supply a default; if the mapping is omitted, the plot default will be used.  These defaults are discussed further in Section~\ref{sec:defaults}.  In Wilkinson's grammar, the dataset is implied by the variable names, while in the layered grammar it can be specified separately.
-
-\begin{figure}[htbp]
-  \verb|line(position(smooth.linear(x * y)), colour(z))|
-
-  \verb|layer(aes(x = x, y = y, colour = z), geom="line", stat="smooth")|
-  
-  \caption{Difference between {\sc gpl} (top) and {\tt ggplot2} (bottom) parameterisations.}
-  \label{fig:element-vs-layer}
-\end{figure}
 
 \subsubsection{Data and mapping}\label{sub:data_and_mapping} 
 
@@ -342,7 +248,7 @@ A statistical transformation, or {\bf stat}, transforms the data, typically by s
 
 A stat takes a dataset as input and returns a dataset as output, and so a stat can add new variables to the original dataset.  It is possible to map aesthetics to these new variables.  For example, one way to describe a histogram is as a binning of a continuous variable, plotted with bars whose height is proportional to the number of points in each bin, as described in Section \ref{sub:histogram}.  Another useful example is mapping the size of the lines in a contour plot to the height of the contour.
 
-The actual statistical method used by a stat is conditional on the coordinate system.  For example, a smoother in polar coordinates should use circular regression, and in 3d should return a 2d surface rather than a 1d curve.  However, many statistical operations have not been derived for non-Cartesian coordinates and we so we generally fall back to Cartesian coordinates for calculation, which, while not strictly correct, will normally be a fairly close approximation.  This issue is not discussed in the Wilkinson's Grammar.
+The actual statistical method used by a stat is conditional on the coordinate system.  For example, a smoother in polar coordinates should use circular regression, and in 3d should return a 2d surface rather than a 1d curve.  However, many statistical operations have not been derived for non-Cartesian coordinates and we so we generally fall back to Cartesian coordinates for calculation, which, while not strictly correct, will normally be a fairly close approximation.  
 
 \begin{table}
 	\begin{center}
@@ -381,7 +287,6 @@ Geometric objects are an abstract component and can be rendered in different way
 
 \begin{figure}[htbp]
 	\centering
-		\includegraphics[height=0.75in]{2-interval}
 	\caption{Four representations of an interval geom.  From left to right: as a bar, as a line, as a error bar, and (for continuous x) as a ribbon.}
 	\label{fig:interval}
 \end{figure}
@@ -394,7 +299,7 @@ Each geom can only display certain aesthetics.  For example, a point geom has po
 
 \subsubsection{Position adjustment}
 
-Sometimes we need to tweak the position of the geometric elements on the plot, when otherwise they would obscure each other.  This is most common in bar plots, where we stack or dodge (place side-by-side) the bar to avoid overlaps.  In scatterplots with few unique x and y values, we sometimes randomly jitter \citep{chambers:1983} the points to reduce overplotting.  Wilkinson calls these collision modifiers.
+Sometimes we need to tweak the position of the geometric elements on the plot, when otherwise they would obscure each other.  This is most common in bar plots, where we stack or dodge (place side-by-side) the bar to avoid overlaps.  In scatterplots with few unique x and y values, we sometimes randomly jitter \citep{chambers:1983} the points to reduce overplotting.  
 
 \subsection{Scales}\label{sec:scales}
 
@@ -402,10 +307,6 @@ A {\bf scale} controls the mapping from data to aesthetic attributes, and so we 
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[height=1.5in]{2-scale-size}
-	\includegraphics[height=1.5in]{2-scale-colour}
-	\includegraphics[height=1.5in]{2-scale-shape}
-	\includegraphics[height=1.5in]{2-scale-colour2}
 	\caption{Examples of four scales from ggplot2.  From left to right: continuous variable mapped to size and colour, discrete variable mapped to shape and colour.  The ordering of scales seems upside-down, but this matches the labelling of the $y$-axis: small values occur at the bottom.}
 	\label{fig:scales}
 \end{figure}
@@ -431,8 +332,6 @@ The inverse function is used to draw a guide so that you can read values from th
 
 Scales typically map from a single variable to a single aesthetic, but there are exceptions.  For example, we can map one variable to hue and another to saturation, to create a single aesthetic, colour.  We can also create redundant mappings, mapping the same variable to multiple aesthetics.  This is particularly useful when producing a graphic that works in both colour and black and white. 
 
-The scale of the layered grammar is equivalent to the {\sc scale} and {\sc guide} of Wilkinson's grammar. There are two types of guides: scale guides and annotation guides.  In the layered grammar, the guides (axes and legends) are largely drawn automatically based on options supplied to the relative scales.   Annotation guides are not necessary as they can be created with creative use geoms if data dependent, or the underlying drawing system can be accessed directly.  Scales are also computed somewhat differently as it is possible to map a variable produced by a statistic to an aesthetic.  This requires two passes of scaling, before and after the statistical transformation.
-
 \subsection{Coordinate system}\label{sec:coordinate_systems}
 
 A coordinate system, {\bf coord} for short, maps the position of objects onto the plane of the plot.  Position is often specified by two coordinates $(x, y)$, but could be any number of coordinates.  The Cartesian coordinate system is the most common coordinate system for two dimensions, while polar coordinates and various map projections are used less frequently.  For higher dimensions, we have parallel coordinates (a projective geometry), mosaic plots (a hierarchical coordinate system) and linear projections onto the plane.
@@ -455,9 +354,6 @@ Coordinate systems control how the axes and grid lines are drawn.  Figure~\ref{f
 
 \begin{figure}[htbp]
 	\centering
-		\includegraphics[height=1.5in]{2-coord-cartesian}
-		\includegraphics[height=1.5in]{2-coord-log}
-		\includegraphics[height=1.5in]{2-coord-polar}
 	\caption{Examples of axes and grid lines for three coordinate systems: Cartesian, semi-log and polar. The polar coordinate system illustrates the difficulties associated with non-Cartesian coordinates: it is hard to draw the axes correctly!}
 	\label{fig:coord}
 \end{figure}
@@ -466,20 +362,6 @@ Coordinate systems control how the axes and grid lines are drawn.  Figure~\ref{f
 
 There is also another thing that turns out to be sufficiently useful that we should include it in our general framework: faceting (also known as conditioned or trellis plots). This makes it easy to create small multiples of different subsets of an entire dataset. This is a powerful tool when investigating whether patterns hold across all conditions.  The faceting specification describes which variables should be used to split up the data, and how they should be arranged in a grid.
 
-In Wilkinson's grammar, faceting is an aspect of the coordinate system, with a somewhat complicated parameterisation: the faceting variable is specified within the {\sc element} and a separate {\sc coord} specifies that the coordinate system should be faceted by this variable.  This is simplified in the layered grammar as the faceting is independent of the layer and within-facet coordinate system. This is less flexible, as the layout of the facets always occurs in a Cartesian coordinate system, but in practice is not limiting.  Figure~\ref{fig:facet-vs-coord} illustrates the specification.
-
-\begin{figure}[htbp]
-  \verb|COORD: rect(dim(3), dim(1,2))|
-  
-  \verb|ELEMENT: point(position(x * y * z))|
-  
-  \verb||
-  
-  \verb|geom_point(aes(x, y)) + facet_grid(. ~ z)|
-  
-  \caption{Difference between {\sc gpl} (top) and ggplot2 (bottom) parameterisations. Note that $z$ is included in the position specification for the {\sc gpl} element.}
-  \label{fig:facet-vs-coord}
-\end{figure}
 
 
 \section{Data structures}
@@ -498,3 +380,28 @@ One thing to note is that all ggplot2 objects (with the exception of the main pl
 Data stored inside the plot - if you change the data outside of the plot, and then redraw a saved plot, it will not be updated.  Consequence of R copying semantics.
 
 \input{_footer.tex}
+
+% \section{What is a plot?}
+% \label{sec:what_is_a_plot}
+% 
+% One way to think about the grammar of graphics is as a question: what is a plot?  The grammar answers this by describing a plot as a collection of independent components, each describing an independent part of the plot.  There are three basic things we need for a plot: one or more layers, scales to map variables from data space to visual space, and a coordinate system.  These are described below.
+% 
+% \begin{itemize}
+%   \item One or more layers.  A layer is composed of data and a description of which data variables should be mapped to which aesthetic properties, a geometric object, and a statistical transformation:
+%   
+%   \begin{itemize}
+%     \item Data is obviously the most important part, and it is what you provide.  This is what you are displaying visually to aid communication or analysis.  You also need to describe how variables in the dataset are mapped to visual properties.  For example, in Figure 2.X we mapped diamond price to y position, carat to y position and colour to colour.  Because the data and aesthetic mapping set is usually the same in most layers, these can also be set as defaults at the plot level.
+%     
+%     \item {\bf Geoms}, short for geometric objects, control the type of plot that you create.  For example, using a point geom will create a scatterplot, while using a line geom will create a line plot.
+% 
+%     \item {\bf Stats}, or statistical transformations, reduce or augment the data in a statistical manner.  For example, a useful stat is the smoother, which shows the mean of y, conditional on x.  Another common stat is the binner, which bins data in to bins.   Every geom has a default statistic, and every statistic a default geom.  For example, the bin statistic has defaults to using the bar geom to produce a histogram.
+% 
+%     \item {\bf Position adjustment}
+%   \end{itemize}
+% 
+%   \item A scale for all the aesthetic properties.  {\bf Scales} control the mapping from data attributes to aesthetic attributes.  They also provide an inverse mapping in the form of a guide, an axis or legend, which facilitates reading the final graphic.  Aesthetic attributes are things like position, size, colour---anything that you can perceive.  The function that maps data to aesthetic attributes is a scale. It takes values in data space (continuous or categorical) and maps them into an aesthetic space (eg. colour, size, shape).  A scale also provides guides to convert back from the aesthetic attribute to the original data.  Guides are either axes (for position) or legends (for everything else)
+% 
+%   \item A coordinate system.  A {\bf coord}, or coordinate systems, maps the position of objects on to the plane of the plot.  Typically we will use the cartesian coordinate system, but sometimes others are useful.
+% \end{itemize}
+% 
+% There is also another thing that turns out to be sufficiently useful that we should include it in our general framework: faceting (also known as conditioned or trellis plots). This allows us to easily create small multiples of different subsets of an entire dataset. This is a powerful tool when investigating whether patterns hold across all conditions.

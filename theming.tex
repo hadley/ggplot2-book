@@ -3,77 +3,97 @@
 \chapter{Polishing your plots for publication}
 \label{cha:theming}
 
+This chapter will teach you how to use the theming structure to control many aspects of how \ggplot plots are drawn.  Together with the next chapter, manipulating plot rendering with \code{grid}, you will learn how to control every aspect of the rendering to get exactly the appearance that you want.
 
-In ggplot, the appearance and the structure of the plot are quite separate.  This is different to base and lattice graphics in that you do not specify the appearance of the plot while you are creating it (defining its structure).  In base and lattice graphics, most functions take a very large number arguments that specify the finer points of appearance, which can make the functions complicated and hard to understand.  Instead, in ggplot you create the plot in one step, and then {\em after} it has been created you can edit every detail of the rendering, using \pkg{grid}.
+In \ggplot, the appearance and the structure of the plot are quite separate.  This is different to base and lattice graphics in that you do not specify the appearance of the plot while you are creating it (defining its structure).  In base and lattice graphics, most functions take a very large number arguments that specify the finer points of appearance, which can make the functions complicated and hard to understand.  \ggplot takes a different approach: you create the plot in one step, and then {\em after} it has been created you can edit every detail of the rendering, using the theming system.
 
-Themes allow you to customise the appearance of non-data elements of the plot.  Like many other areas of \ggplot, there are multiple levels of control:
+Themes affect the guides of the plot:
 
 \begin{itemize}
-  \item Select (and adjust the parameters of) one of the built in themes.  This affects every visual element of the plot in a visually consistent manner.  \secref{sec:built_in}.
+  \item Legends
+  \item Axes
+  \item Facet strips
+  \item Plot title, background and axis titles
+\end{itemize}
 
-  \item Each theme is made up of multiple elements The theme system comes with a number of built in element rendering functions with a limited set of parameters.  By adjusting these parameters you can control things like text size and colour, background and grid line colours and text orientation. Alternatively, you can write a custom element function using grid.  This allows you to absolutely customise the appearance of every element - you are not restricted to a built in set of drawing options.  \secref{sec:theme_elements}
+Themes allow you to customise the appearance of non-data elements, the guides, of the plot. Chapter XXX shows how to control the appearance of geoms, and Chapter XXX how to use scales  how data values are mapped to aesthetics.
+
+Like many other areas of \ggplot, there are multiple levels of control:
+
+\begin{itemize}
+  \item Use one of the two built in themes.  This affects every visual element of the plot in a visually consistent manner.  \secref{sec:built_in}.
+
+  \item Each theme is made up of multiple elements The theme system comes with a number of built in element rendering functions with a limited set of parameters.  By adjusting these parameters you can control things like text size and colour, background and grid line colours and text orientation. 
+  
+  \item Alternatively, you can write a custom element function using grid.  This allows you to absolutely customise the appearance of every element - you are not restricted to a built in set of drawing options.  \secref{sec:theme_elements}
 
   \item Use grid to alter a single item on the plot
 \end{itemize}
 
 \noindent Theme settings can be applied on two levels:
 
-\begin{itemize}
-  \item Globally, using \f{theme}.  Global options are applied when a plot is rendered, not when it is created.  This lets you experiment with plot structure and appearance independently.
-
-  \item For individual plots, using \f{opts}.  Local options override global options.  To apply the same set of options to multiple plots, you can assign the result of \f{opts} to a variable, and then add that variable to each plot.
-\end{itemize}
 
 \section{Built in themes}
 \label{sec:built_in}
 
-There are two built in themes.  The default has a grey background, and the other theme has a white background.
+There are two built in themes.  The default, \f{theme_gray}, uses a very light grey background with white gridlines.  This follows from the advice of \citet{tufte:2006,tufte:1990,tufte:2001,tufte:1997} and \citet{brewer:1994,carr:2002,carr:1994,carr:1999}. We can still see the gridlines to aid in the judgement of position \citep{cleveland:1993a}, but they have little visual impact and we can easily ``tune'' them out. The grey background gives the plot a similar colour (in a typographical sense) to the remainder of the text, ensuring that the graphics fit in with the flow of a text without jumping out with a bright white background. Finally, the grey background creates a continuous field of colour which ensures that the plot is perceived as a single visual entity. The other built-in theme, \f{theme_bw}, has a more traditional white background with dark grey grid lines.  
 
-Both these themes share a common set of parameters that allow you to perform the most common set of adjustments, including setting global text properties (like font family and size) and adjusting colours.  
+Both themes have a \code{base_size} parameter which controls the base font size.  The base font size is the size that the axis titles use: the plot title is 20\% bigger, and the tick and strip labels are 20\% smaller.  
+
+You can apply these themes in two ways:
+
+\begin{itemize}
+  \item Globally, affecting all plots when they are drawn: \code{set_theme(theme_grey())}.  \f{theme_set} returns the previous theme so that you can restore it later if you want.
+  
+  \item Locally, for an individual plot:  \code{qplot(...) + theme_grey()}.  A locally applied theme will override the global default.
+\end{itemize}
 
 \begin{itemize}
   \item Font size.  Title is 120\%, tick labels are 80\%.
   \item Colour
 \end{itemize}
 
-% EXAMPLES
+% INTERWEAVE
 % 
-% Change font size
-% Use black and white theme
-% Use custom colours (blues)
+% set_theme(theme_bw())
+% qplot(mpg, wt, data=mtcars)
+% qplot(mpg, wt, data=mtcars) + theme_bw(20)
+% qplot(mpg, wt, data=mtcars) + theme_gray()
 
 \section{Theme elements}
 \label{sec:theme_elements}
 
-Each theme elements renders a single element of the non-data components of plot.  Table~\ref{tbl:elements} lists all of the customisable elements in a plot.
+A theme is made up of multiple \emph{elements} which control the appearance of a single item on the plot.  To get more control over appearance than given by the default themes (or to create your own theme), you can modify these elements.  Each element draws a certain type of graphical object, like text or lines. Table~\ref{tbl:elements} lists all of the customisable elements in a plot. The following two sections describe the built in element functions, or if those don't meet your needs, how to write your own with \code{grid}.
+
 
 \begin{table}
   \begin{center}
   \begin{tabular}{lll}\\
     \toprule
-    Theme element              & Type   & Description  \\
-    \midrule                             
-    \texttt{axis.line}         & line   & Line along axis  \\
-    \texttt{axis.text.x}       & text   & x axis label  \\
-    \texttt{axis.text.y}       & text   & y axis label  \\
-    \texttt{axis.ticks}        & line   & axis tick marks  \\
-    \texttt{axis.title.x}      & text   & x axis tick labels  \\
-    \texttt{axis.title.y}      & text   & y axis tick labels  \\[0.5em]
-    \texttt{legend.background} & rect   & background of legend  \\
-    \texttt{legend.key}        & rect   & background underneath legend keys \\
-    \texttt{legend.text}       & text   & legend labels  \\
-    \texttt{legend.title}      & text   & legend name  \\[0.5em]
-    \texttt{panel.background}  & rect   &   \\
-    \texttt{panel.border}      & rect   &   \\
-    \texttt{panel.grid.major}  & line   &   \\
-    \texttt{panel.grid.minor}  & line   &   \\[0.5em]
-    \texttt{plot.box}          & rect   &   \\
-    \texttt{plot.title}        & text   &   \\[0.5em]
-    \texttt{strip.background}  & rect   &   \\
-    \texttt{strip.label}       &        &   \\
-    \texttt{strip.title.x}     & text   &   \\
-    \texttt{strip.title.y}     & text   &   \\
-    \bottomrule
+    Theme element              & Type     & Description  \\
+    \midrule                              
+    \texttt{axis.line}         & segment  & Line along axis  \\
+    \texttt{axis.text.x}       & text     & x axis label  \\
+    \texttt{axis.text.y}       & text     & y axis label  \\
+    \texttt{axis.ticks}        & segment  & axis tick marks  \\
+    \texttt{axis.ticks.y}      & segment  & axis tick marks  \\
+    \texttt{axis.title.x}      & text     & horizontal tick labels  \\
+    \texttt{axis.title.y}      & text     & vertical tick labels  \\[0.5em]
+    \texttt{legend.background} & rect     & background of legend  \\
+    \texttt{legend.key}        & rect     & background underneath legend keys \\
+    \texttt{legend.text}       & text     & legend labels  \\
+    \texttt{legend.title}      & text     & legend name  \\[0.5em]
+    \texttt{panel.background}  & rect     &   \\
+    \texttt{panel.border}      & rect     &   \\
+    \texttt{panel.grid.major}  & line     & major grid lines \\
+    \texttt{panel.grid.minor}  & line     & minor grid lines \\[0.5em]
+    \texttt{panel.empty}       & rect     & panel with no data   \\
+    \texttt{plot.background}   & rect     & background of the entire plot \\
+    \texttt{plot.title}        & text     & plot title   \\[0.5em]
+    \texttt{strip.background}  & rect     &   \\
+    \texttt{strip.text.x}      & text     & text for horizontal strips  \\
+    \texttt{strip.text.y}      & text     & text for vertical strips  \\
+    \bottomrule                           
   
   \end{tabular}
   \end{center}
@@ -81,14 +101,30 @@ Each theme elements renders a single element of the non-data components of plot.
   \label{tbl:elements}
 \end{table}
 
-The element type describes what sort of output that element uses, and roughly matches the grid grobs of the same name.  The following sections describes the built in element functions that you can use, or if those don't offer enough customisation, how to write your own.
+There are three elements that have individual \code{x} and \code{y} settings: \code{axis.text}, \code{axis.title} and \code{strip.text}.  Having a different setting for the horizontal and vertical elements allows you to control how text should appear in different orientations.
 
 \subsection{Built-in element functions}
 
+There are four basic types of built element functions.
+
 \begin{itemize}
-  \item \code{theme_text}
-  \item \code{theme_line}
-  \item \code{theme_rect}
+  \item \code{theme_text}. family, face, colour, size, hjust, vjust, angle, lineheight
+
+  \item \code{theme_line} and \code{theme_segment}.  Lines and segments have the same options but are drawn in a slightly different way.  Make sure you match the appropriate type or you will get strange grid errors.  colour, size, linetype
+
+  \item \code{theme_rect}, fill, colour, size, linetype
+
+  \item \code{theme_blank}.  Use this element type if you don't want anything drawn, or any space allocated for that element.  
+
+\end{itemize}
+
+Again there are two ways to set individual elements, globally or locally:
+
+\begin{itemize}
+  \item \f{theme_update} modifies the global theme: \code{theme_update(plot.title = theme_text(colour = "red"))}.
+  
+  \item \f{opts} modifies the local theme: \code{qplot(...) + opts(plot.title = theme_text(colour = "red"))}.
+  
 \end{itemize}
 
 % EXAMPLES
@@ -111,7 +147,19 @@ You'll notice that these are very similar to the arguments to \f{textGrob}, \f{r
 If you want to write your own, you need to copy this basic idea: take position arguments, and return a grid grob.  For example, let's say we'd like to give the strips a 3d appearance.  We can do this by drawing a rectangle, and then drawing highlights on the top-right and low-lights (shadows) on the bottom-left.
 
 
+
 \section{Customising scales and geoms}
+
+Section~\ref{sub:default_scales}:  {\tt set_default_scale("colour", "discrete", "grey")}.
+
+Changing geom defaults is a little trickier (mainly because you are less likely to have to do this).  The best way is to create new \code{geom} functions that override the default values of the old functions:
+
+
+
+% INTERWEAVE
+% 
+% update_geom_defaults("point", colour = "darkblue")
+% qplot(mpg, wt, data=mtcars)
 
 \section{Saving your output}
 \label{sec:saving}
