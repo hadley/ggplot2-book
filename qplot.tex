@@ -69,18 +69,16 @@ In this chapter we'll just use one data source, so you can get familiar with the
 
 \section{Basic use}\label{sec:basic_use}
 
-Just like {\tt plot}, the first two arguments to \f{qplot} are {\tt x} and {\tt y}, giving the x- and y-coordinates for the objects on the plot. There is also an optional {\tt data} argument.  If this is specified, \f{qplot} will look inside that data frame before looking for objects in your workspace.  Using the \code{data} argument is recommended: it's a good idea to keep related data in a single data frame.  If you don't specify one, \f{qplot} will try to build one up for you, and may find the variables in the wrong place.
+As with  {\tt plot}, the first two arguments to \f{qplot} are {\tt x} and {\tt y}, giving the x- and y-coordinates for the objects on the plot. There is also an optional {\tt data} argument.  If this is specified, \f{qplot} will look inside that data frame before looking for objects in your workspace.  Using the \code{data} argument is recommended: it's a good idea to keep related data in a single data frame.  If you don't specify one, \f{qplot} will try to build one up for you and may find the other variables bearing the same names.
 
-Here is a simple example of using \f{qplot}, investigating the relationship between price and carats (weight) of a diamond.  
-
+Here is a simple example of the use of \f{qplot}.  It produces a scatterplot showing the relationship between the price and carats (weight) of a diamond. 
 % INTERWEAVE
 % 
 % qplot(carat, price, data=dsmall)
 \input{_include/746afa28ed0817f3660f88da5278eaae.tex}
 % END
 
-
-You are not limited to specifying names of existing vectors: you can use functions of them as well.  The previously plot of price vs.\ carat showed a exponential looking relationship, so let's try looking at log(price) vs.\ log(carat):
+The plot shows a strong correlation with notable outliers and some interesting vertical striation.  The relationship looks exponential, though, so the first thing we'd like to do is to transform the variables.  Because \f{qplot} accepts functions of variables as arguments, we plot log(price) vs.\ log(carat):
 
 % INTERWEAVE
 % 
@@ -88,9 +86,9 @@ You are not limited to specifying names of existing vectors: you can use functio
 \input{_include/8d0ddad8b1ad13f24579780f51157038.tex}
 % END
 
-\noindent The relationship now looks linear.  However, with this much overplotting we need be cautious about drawing firm conclusions - we can only see the extent of the data, not it's distribution.
+\noindent The relationship now looks linear.  With this much overplotting, though, we need to be cautious about drawing firm conclusions.
 
-You can also use combinations of existing variables.  For example, if we are curious about the relationship between the volume of the diamond (approximately $x \times y \times z$) and its weight, we can look at the following:
+Arguments can also be combinations of existing variables, so, if we are curious about the relationship between the volume of the diamond (approximately $x \times y \times z$) and its weight, we can look at the following:
 
 % INTERWEAVE
 % 
@@ -98,17 +96,19 @@ You can also use combinations of existing variables.  For example, if we are cur
 \input{_include/460320d2ca6f5a56692c81262a2e0880.tex}
 % END
 
-We would expect the density of diamonds to be constant, and to see a linear relationship between volume and weight. The majority of diamonds do seem to fall along a line, but there are some large outliers.
+We would expect the density of diamonds to be constant, and thus to see a linear relationship between volume and weight. The majority of diamonds do seem to fall along a line, but there are some large outliers.
+
+% I don't think I see "some large outliers" in the plot.  I see some small deviations from the line.  dfs
 
 \section{Aesthetic attributes}\label{sec:aesthetic_attributes}
 
-The first big difference when using {\tt qplot} instead of {\tt plot} comes when you want to assign colours---or sizes or shapes---to the points on your plot.  With {\tt plot}, it's your responsibility to change your data (eg. ``apples'', ``bananas'', ``pears'') into something that {\tt plot} knows how to use (eg. ``red'', ``yellow'', ``green'').  {\tt qplot} will do this for you automatically, and will automatically provide a legend to make it easier to look up the actual data values.  This makes it easy to include additional data on the plot.  
+The first big difference when using {\tt qplot} instead of {\tt plot} comes when you want to assign colours---or sizes or shapes---to the points on your plot.  With {\tt plot}, it's your responsibility to convert a categorical variable in your data (e.g., ``apples'', ``bananas'', ``pears'') into something that {\tt plot} knows how to use (e.g., ``red'', ``yellow'', ``green'').  {\tt qplot} can do this for you automatically, and it will automatically provide a legend that maps the displayed attributes to the data values.  This makes it easy to include additional data on the plot.  
 
-In the next example, we augment the plot of carat and price with information about colour, clarity and cut of the diamonds.
+In the next example, we augment the plot of carat and price with information about diamond colour, clarity and cut.
 
 % FIGURE
 %  LABEL: qplot-aesthetics
-%  CAPTION: Mapping colour (left), size (middle) and shape (right) of 
+%  CAPTION: Mapping colour (using the argument "colour=cut", left), size ("size=cut", middle) and shape ("shape=cut", right) of 
 %    points to quality of cut.
 %  TEX-WIDTH: 0.33\textwidth GG-WIDTH: 4 GG-HEIGHT: 4
 % 
@@ -118,15 +118,15 @@ In the next example, we augment the plot of carat and price with information abo
 \input{_include/8517d8ec2e9da2292462e0d8f1cf336e.tex}
 % END
 
-Colour, size and shape are all examples of aesthetic attributes.  An aesthetic attribute is a visual property that affects how the observations are displayed.  For every aesthetic attribute, there is a function, called a \emph{scale}, which maps data values to valid values for that aesthetic.  It is this scale that controls how the points appear.  For example, in the above plots, the colour scale maps J to purple and F to green.  Note that while I use British spelling through this book, color will also work.
+Colour, size and shape are all examples of aesthetic attributes, visual properties that affect the way observations are displayed.  For every aesthetic attribute, there is a function, called a \emph{scale}, which maps data values to valid values for that aesthetic.  It is this scale that controls how the points appear.  For example, in the above plots, the colour scale maps J to purple and F to green. (Note that while I use British spelling throughout this book, the software also accepts American spellings.)
 
-You can also manually set the aesthetics using \f{I}.  For example, \code{colour = I("red")} or \code{size = I(2)}.  This is different from mapping and is explained in more detail in Section~\ref{sec:mapping-vs-setting}.  For large data sets, like the diamonds data, semi-transparent points are often useful to alleviate some of the overplotting.  To make a semi-transparent colour you can use \code{alpha(colour, transparency)}, where \code{colour} is an R colour (described in Appendix~\ref{cha:specifications}) and transparency is a value between 0 (completely transparent) and 1 (complete opaque).  It's often useful to specify the transparency as a fraction, e.g. \code{1/10} or \code{1/20}, as the denominator specifies the number of points that must overplot to get a complete opaque colour.
+You can also manually set the aesthetics using \f{I}.  For example, \code{colour = I("red")} or \code{size = I(2)}.  This is different from mapping and is explained in more detail in Section~\ref{sec:mapping-vs-setting}.  For large data sets, like the diamonds data, semi-transparent points are often useful to alleviate some of the overplotting.  To make a semi-transparent colour you can use \code{alpha(colour, transparency)}, where \code{colour} is an R colour (described in Appendix~\ref{cha:specifications}) and transparency is a value between 0 (completely transparent) and 1 (complete opaque).  It's often useful to specify the transparency as a fraction, e.g. \code{1/10} or \code{1/20}, as the denominator specifies the number of points that must overplot to get a completely opaque colour.
 
-Different types of aesthetic attributes work better with different types of variables.  For example, colour and shape work well with categorical variables, while size works better with continuous variables.  The amount of data also makes a difference: if there is a lot of data, like in the plots above, it can be hard to distinguish the different groups.  An alternative solution is to use faceting, as introduced by Section~\ref{sec:faceting}.
+Different types of aesthetic attributes work better with different types of variables.  For example, colour and shape work well with categorical variables, while size works better with continuous variables.  The amount of data also makes a difference: if there is a lot of data, like in the plots above, it can be hard to distinguish the different groups.  An alternative solution is to use faceting, which will be introduced in Section~\ref{sec:faceting}.
 
 \section{Plot geoms}\label{sec:plot_geoms}
 
-{\tt qplot} is not limited to just producing scatterplots.  In fact, it can produce almost any type of plots, by varying the {\bf geom} used. Geom, short for geometric object, describes the type of object that is used to display the data.  Some geoms have an associated statistical transformation, for example, a histogram is a binning statistic plus a bar geom.  These different components are described in the next chapter.  Here we'll introduce you to the most common and useful geoms, divided up by the dimensionality of data that they work with.  The following geoms enable you to investigate 2d relationships:
+{\tt qplot} is not limited to scatterplots, but can produce almost any kind of plot by varying the {\bf geom} argument. Geom, short for geometric object, describes the type of object that is used to display the data.  Some geoms have an associated statistical transformation, for example, a histogram is a binning statistic plus a bar geom.  These different components are described in the next chapter.  Here we'll introduce you to the most common and useful geoms, divided up by the dimensionality of data that they work with.  The following geoms enable you to investigate two-dimensional relationships:
 
 \begin{itemize}
 
@@ -165,12 +165,12 @@ If you have a scatterplot with many data points, it can be hard to see exactly w
 \input{_include/f46e953941f242cc698f47c0dcbe8414.tex}
 % END
 
-Notice that we have combined multiple geoms by supplying a vector of geom names to {\tt qplot}.  The geoms will be overlaid in the order that you specified them.
+Notice that we have combined multiple geoms by supplying a vector of geom names to {\tt qplot}.  The geoms will be overlaid in the order in which they appear.
 
 There are many different smoothers you can choose using the {\tt method} argument:
 
 \begin{itemize}
-	\item {\tt method="loess"}, the default, uses a smooth local regression.  More details about the algorithm used can be found in {\tt ?loess}.  You can modify the wiggliness of the line by varying the span between 0, exceeding wiggly, and 1, not so wiggly, as shown in Figure~\ref{fig:smooth-loess}.  Loess does not work well for large datasets (it's $O(n^2)$ in memory), so you'll need to use one of the other methods listed below.
+	\item {\tt method=``loess''}, the default, uses a smooth local regression.  More details about the algorithm used can be found in {\tt ?loess}.  The wiggliness of the line is controlled by the span parameter, which ranges from 0 (exceeding wiggly) to 1 (not so wiggly), as shown in Figure~\ref{fig:smooth-loess}.  Loess does not work well for large datasets (it's $O(n^2)$ in memory), so you'll need to use one of the other methods listed below.
 
   % FIGURE
   %  LABEL: smooth-loess
@@ -182,7 +182,7 @@ There are many different smoothers you can choose using the {\tt method} argumen
   \input{_include/28eaa946a2dda64a2fc4824f13bc2f1e.tex}  
   % END
 
-	\item {\tt method="lm"} fits a linear model.  The default will fit a straight line to your data, or you can specify {\tt formula = y $\sim$ poly(x, 2)} to specify a degree 2 polynomial, or better, load the {\tt splines} library and use a natural spline: {\tt formula = y $\sim$ ns(x, 2)}. The second parameter is the degrees of freedom: a higher number will create a wigglier curve. You are free to specify any formula involving $x$ and $y$.  
+	\item {\tt method=``lm''} fits a linear model.  The default will fit a straight line to your data, or you can specify {\tt formula = y $\sim$ poly(x, 2)} to specify a degree 2 polynomial, or better, load the {\tt splines} library and use a natural spline: {\tt formula = y $\sim$ ns(x, 2)}. The second parameter is the degrees of freedom: a higher number will create a wigglier curve. You are free to specify any formula involving $x$ and $y$.  
 
   % FIGURE
   %   LABEL: smooth-lm
@@ -196,10 +196,10 @@ There are many different smoothers you can choose using the {\tt method} argumen
   \input{_include/b0070383bda4f5875a7eec65919fe5b7.tex}  
   % END
 
-	\item {\tt method="rlm"} works the same as {\tt lm}, but uses a robust fitting algorithm so that outliers don't affect the fit as much.  It's part of the {\tt MASS} package, so remember to load that first.
+	\item {\tt method=``rlm''} works like {\tt lm}, but uses a robust fitting algorithm so that outliers don't affect the fit as much.  It's part of the {\tt MASS} package, so remember to load that first.
 
 	\item You could also load the {\tt mgcv} library and use {\tt method="gam", formula = y $\sim$ s(x)} to fit a generalised additive model.  This is similar 
-to using a spline with {\tt lm}, but the degree of smoothness is estimated from the data.  For large data, you should use the formula {\tt y $\sim$ s(x, bs="cr")}
+to using a spline with {\tt lm}, but the degree of smoothness is estimated from the data.  For large data, use the formula {\tt y $\sim$ s(x, bs="cr")}
  
   % FIGURE
   %  LABEL: smooth-gam
