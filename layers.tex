@@ -14,29 +14,48 @@
 
 \section{Introduction}
 
-As described in the previous chapter, layers can use different data sets and aesthetic mappings.  When creating a plot with \f{qplot}, you can't access these differences - all layers use the same default dataset and aesthetic mappings.  This means that you can't create certain more complex plots with \f{qplot}.  This chapter outlines an alternative method: building up the plot layer by layer.  
+% This is not really true: layering was barely mentioned in the 
+% previous chapter, so it needs to be defined here.
+% As described in the previous chapter, layers can use different data sets and aesthetic mappings.  When creating a plot with \f{qplot}, you can't access these differences - all layers use the same default dataset and aesthetic mappings.  This means that you can't create certain more complex plots with \f{qplot}.  This chapter outlines an alternative method: building up the plot layer by layer.  
 
-Section~\ref{sec:ggplot} will show you how to create a plot object, containing just the default data and aesthetics that you specify.  To build something that you can actually see, you will need to add layers to the plot, as described by Section~\ref{sec:layers}.  Sections~\ref{sec:data} and \ref{sec:aes} describe the data and aesthetic mappings in more detail, including more information about how layer settings override the plot defaults, the difference between setting values and mapping aesthetics, and the important group aesthetic.  Sections~\ref{sec:geom} and \ref{sec:stat} list the geoms and stats available in \ggplot.   Section~\ref{sec:pull-together} concludes by introducing you to some plotting techniques that take advantage of what you have learned in this chapter.
+Layering is the mechanism by which additional elements are added to a plot.  Each added element can come from a different dataset and have a different aesthetic mapping, allowing us to create plots that could not be generated using \f{qplot}, which permits only a single dataset and a single aesthetic mapping.
 
-This chapter is mainly a technical description of how layers, geoms and statistics work - how you call and customise them.  The next chapter, the \ggplot ``toolbox'', describes how you can use different geoms and stats to do data analysis.  In practice, I'd recommend flicking between these two chapters so you can learn both how layers work, and how you can use them to achieve your goals.
+Section~\ref{sec:ggplot} tells you how to initialize a plot object. The plot object is not yet ready to be displayed until at least one layer is added, as as described in Section~\ref{sec:layers}. Sections~\ref{sec:data} and \ref{sec:aes} describe the data and aesthetic mappings in more detail, including more information about how layer settings override the plot defaults, the difference between setting values and mapping aesthetics, and the important group aesthetic.  Sections~\ref{sec:geom} and \ref{sec:stat} list the geoms and stats available in \ggplot.  Section~\ref{sec:pull-together} concludes by introducing you to some plotting techniques that take advantage of what you have learned in this chapter.
+
+This chapter is mainly a technical description of how layers, geoms and statistics work - how you call and customise them.  The next chapter, the \ggplot ``toolbox'', describes how you can use different geoms and stats to do data analysis. 
+% In practice, I'd recommend flicking between these two chapters so you can learn both how layers work, and how you can use them to achieve your goals.
+% dfs: This isn't a very appealing instruction, because it doesn't
+% give you user a workable reading strategy.  I'll make a note here and 
+% plan to revisit this later.
+These two chapters are companions, with this one explaining how layers work and the next one how you can use layers to achieve your graphical goals.
 
 \section{Creating a plot}
 \label{sec:ggplot}
 
-To build up a plot layer by layer, we first need a plot object.  We have already learned one way to create a plot object, with \f{qplot}.  Most of the time, qplot saves you time because it makes educated guesses about what you actually want.  However, you can not fully customise layers, limiting the range of plots that you can create.  Another way to create a plot object is to call \f{ggplot}, which has two optional arguments: the default {\bf data} and aesthetic {\bf mapping} for the plot.  Data needs little explanation: it's the data frame that you want to visualise.  You are already familiar with aesthetic mappings from \f{qplot}, and the syntax here is quite similar, although you need to wrap the pairs of aesthetic attribute and variable name in an \f{aes}:
+To build up a plot layer by layer, we start by creating a plot object. When discussing \f{qplot}, we didn't note that it creates a plot object, but it does. It creates a plot object, adds layers, and shows the result, applying a lot of default values along the way. To initialize a plot object without any shortcuts, simply call \f{ggplot} with no arguments; assign the result to a variable in order to add to it afterward.  ggplot accepts two optional arguments: {\bf data} and aesthetic {\bf mapping}.  The data argument needs little explanation: It's the data frame that you want to visualise.  You are already familiar with aesthetic mappings from \f{qplot}, and the syntax here is quite similar, although you need to wrap the pairs of aesthetic attribute and variable name in an \f{aes}:
 
 % LISTING
 % 
-% ggplot(mtcars, aes(x = wt, y = mpg, colour = cyl))
+% p <- ggplot(mtcars, aes(x = wt, y = mpg, colour = cyl))
 \input{_include/95610ac07e2c3dc8f4174924b1accbf4.tex}
 % END
 
-These arguments set up defaults for the plot, and can be omitted if you specify data and aesthetics when adding each layer, as described shortly.   The result of calling \f{ggplot} is the same as the result of \f{qplot}: a ggplot object.  However, the plot created by ggplot can't be rendered yet: there isn't anything to draw.  You need to add some layers.  This is the main difference between \f{qplot} and \f{ggplot}: \f{qplot} initialises the plot with default \emph{and} adds layers.  
+These arguments set up defaults for the plot and can be omitted if you specify data and aesthetics when adding each layer. 
+
+This initial plot object can not be rendered until we add at least one layer.
 
 \section{Layers}
 \label{sec:layers}
 
-A layer encapsulates all of the information needed to draw most plots:  the data, a set of aesthetic mappings, a way of visual representing the data (the geom), an optional statistical transformation (the stat), and a position adjustment.  Position adjustments are described in detail in Chapter~\ref{cha:position}; in brief, they move around objects on the plot to avoid overplotting.  There are two ways to create layers.  The first way is to use the layer function:
+A minimal layer may do nothing more than specify a {\bf geom}, a way of visually representing the data.  The plot object we just initialized can be rendered after this addition, specifying a scatterplot:
+
+% LISTING
+% 
+% p <- p + layer(geom = ``point'')  
+\input{_include/7fbdecf9d60a89c8e1d65cea679364e3.tex}
+% p
+% END
+\noindent Note the use of \code{+} to add the layer to the plot.  This layer uses the plot defaults for data and aesthetic mapping and it uses default values for two optional arguments: the statistical transformation (the stat) and the position adjustment.  (Position adjustments are described in detail in Chapter~\ref{cha:position}; in brief, they shift objects on the plot to avoid overplotting.)  A more fully specified layer can take any or all of these arguments:
 
 % LISTING
 % 
@@ -44,37 +63,32 @@ A layer encapsulates all of the information needed to draw most plots:  the data
 \input{_include/96dbc1af8d31b91d69bba7717e65c4c5.tex}
 % END
 
-\noindent Here you specify the geom to use, its parameters; the stat, its parameters; data and aesthetic mapping (just like for \f{ggplot}) and a position adjustment (described in Section~\ref{sec:position}).  So, if you want to create layer for a scatterplot, you'd do something like:
+\noindent This more complicated layer calls for a histogram in ``steelblue'' and a bin width of 2:
 
 % LISTING
 % 
-% layer(geom = "point", stat = "identity", position = "identity")  
-\input{_include/7fbdecf9d60a89c8e1d65cea679364e3.tex}
-% END
-
-\noindent Omitting the data and mapping tells the layer to use the plot default.  A more complicated layer calls for a histogram with a grey background and an bin width of 2:
-
-% LISTING
-% 
-% layer(
-%   geom = "smooth", 
-%   geom_params = list(fill = "grey50"),
-%   stat = "smooth",
+% p <- ggplot(mtcars, aes(x = mpg))
+% p <- p + layer(
+%   geom = ``histogram'', 
+%   geom_params = list(fill = "steelblue"),
 %   stat_params = list(binwidth = 2)
 % )
+% p
 \input{_include/ac6fc8efec4aa770704443e5f90940d0.tex}
 % END
 
-\noindent  This specification is precise, but verbose.  We can make it shorter by relying on the fact that every geom is associated with a default statistic and position, and with every statistic a default geom.  This means that you only need to specify one of \code{stat} or \code{geom} to get a completely specified layer.  The two examples above would become:
+% dfs: I don't know what a legal value of stat might be in the above command.  
+% identity doesn't work, and neither does histogram.
+
+\noindent  This layer specification is precise but verbose. We can simplify it by using shortcuts that rely on the fact that every geom is associated with a default statistic and position, and every statistic with a default geom.  This means that you only need to specify one of \code{stat} or \code{geom} to get a completely specified layer, with parameters passed on to the geom or stat as appropriate.  This expression generates the same layer as the full layer command above:
 
 % LISTING
 % 
-% geom_point()
-% geom_histogram(binwidth = 2, fill = "grey50")
+% geom_histogram(binwidth = 2, fill = "steelblue")
 \input{_include/c2d6deb696a3dfc1ea30ea9f72acc181.tex}
 % END
 
-\noindent Where the parameters are passed on to the geom or stat as appropriate.  All the shortcut functions start with {\tt geom\_} or {\tt stat\_} and are singular, eg. {\tt geom\_point}, {\tt stat\_bin}.  They all have the same  basic form:
+\noindent All the shortcut functions have the same basic form, beginning with {\bf geom\_} or {\bf stat\_}:
 
 % LISTING
 % 
@@ -82,21 +96,20 @@ A layer encapsulates all of the information needed to draw most plots:  the data
 % stat_XXX(mapping, data, ..., stat, position)
 \input{_include/721310811b324a4322cf025af4c1d8e8.tex}
 % END
-
-\noindent Their common parameters describe the components of the layer:
+\noindent Their common parameters define the components of the layer:
 
 \begin{itemize}
-	\item A set of aesthetic {\bf mapping}s (optional), specified by the {\tt aes()} function, and combined with the plot defaults as described in Section~\ref{sec:aes}.
+	\item {\bf mapping} (optional): A set of aesthetic mappings, specified using the {\tt aes()} function and combined with the plot defaults as described in Section~\ref{sec:aes}.
 
-	\item The {\bf data} (optional).  You can use this to override the default plot data set.  Otherwise, it omitted  (as you will do most of the time), the layer will use the default plot data.
+	\item {\bf data} (optional): A data set which overrides the default plot data set.  It is most commonly omitted, in which case the layer will use the default plot data.
 	
-	\item Other parameters which differ from geom to geom, and stat to stat.  These parameters control various settings of the geom and statistic, for example, bin width in the histogram, or bandwidth for a loess smoother.  Any aesthetic that the geom recognises can also be specified as a parameter to the plot.  See Section~\ref{sub:setting-mapping}.
+	\item {\bf ...}: Parameters for the geom or stat, such as bin width in the histogram or bandwidth for a loess smoother.  Any aesthetic that the geom recognises can also be specified as a parameter to the layer.  See Section~\ref{sub:setting-mapping}.
 	
-	\item For geoms, you can override the default {\tt stat}, and for stats the default {\tt geom}.  This should be a text string containing the name of the geom to use.  Using the default will give you a standard plot - if you want something more exotic, overriding the defaults gives you more freedom.  This is described in more detail in Section~\ref{sub:new_plot_types}.
+	\item {\bf geom} or {\bf stat} (optional):  You can override the default {\tt stat} for a {\tt geom}, or the default {\tt geom} for a {\tt stat}.  This is a text string containing the name of the geom to use.  Using the default will give you a standard plot; overriding the defaults allows you to achieve something more exotic, as described in Section~\ref{sub:new_plot_types}.
   
 \end{itemize}
 
-After creating the layer, you'll typically combine it with a plot using  \code{+}:
+Simple layers can be used with \f{qplot}, without the option of changing the data or aesthetic mapping:
 
 % LISTING
 % 
@@ -105,29 +118,30 @@ After creating the layer, you'll typically combine it with a plot using  \code{+
 \input{_include/04f14b0830ab649c4d86cbc25d0f7873.tex}
 % END
 
-\noindent Although you might instead store it as a variable and use it multiple times later on.  
-
-The summary function can be helpful for inspecting the structure of a plot without plotting it:
+You've seen that plot objects can be stored as variables. The summary function can be helpful for inspecting the structure of a plot without plotting it:
 
 % INTERWEAVE
 %
 % p <- ggplot(data=mtcars, aes(mpg, wt))
 % summary(p)
+%
 % p <- p + geom_point()
 % summary(p)
 \input{_include/97457577a2b4d03eb5bc5323d4186f45.tex}
 % END
 
-Note that the order of \code{data} and \code{mapping} arguments is switched between {\tt ggplot()} and the layer functions.  This is for a good reason: you almost always specify data for the plot, and almost always specify aesthetics (but not data) for the layers.  To keep your code readable, I suggest always explicitly naming other arguments, rather than relying on positional matching.  This is the style that I follow in the book.
+Layers can also be stored as variables, so that it is easy to write clean code that generates a family of related plots.  For example, a set of plots can be initialised using different data then enhanced identically with carefully constructed layers.
 
-The following sections describe the data and aesthetic mappings in more detail, then go on to describe in what geoms and statistics are available and how they work.
+Note that the order of \code{data} and \code{mapping} arguments is switched between {\tt ggplot()} and the layer functions.  This should improve ease of use, because you almost always specify data for the plot, and almost always specify aesthetics ~--~ but {\em not} data ~--~ for the layers.  However, I suggest explicitly naming other arguments rather than relying on positional matching.  This makes the code more readable and it is the style followed in this book.
+
+The following sections describe the data and aesthetic mappings in more detail, then go on to describe the available geoms and stats.
 
 \section{Data}
 \label{sec:data}
 
-The restriction on the data is simple: it must be a data frame.  You must have a default data if you are using faceting, but otherwise it is optional.  This is because faceting is a global operation (i.e. works on all layers) and it needs to have some base dataset to add in any missing columns.  See Section~\ref{sub:missing_faceting_columns} for more details.  If the dataset is omitted, every layer must supply its own data.
+The restriction on the data is simple: It must be a data frame.  It is not necessary to specify a default dataset except when using faceting; faceting is a global operation (i.e., it works on all layers) and it needs to have some a dataset to add in any missing columns.  See Section~\ref{sub:missing_faceting_columns} for more details.  If the dataset is omitted, every layer must supply its own data.
 
-Another thing to remember is that the data is stored in the plot object as a copy, not a reference.  If you want to update (or change) the data later on, you can add on a new dataset with \code{\%+\%}:
+It is important to remember that the data is stored in the plot object as a copy, not a reference.  If you want to update (or change) the data later on, you can replace the default dataset with \code{\%+\%}:
 
 % LISTING
 % 
@@ -138,7 +152,9 @@ Another thing to remember is that the data is stored in the plot object as a cop
 \input{_include/54658d1c846136617768d3c96ab528df.tex}
 % END
 
-\noindent This can be useful if you need to produce the same plot for different datasets.
+\noindent This can be useful if you need to produce the same plot for different datasets.  It's also an easy way to experiment with influential points or imputation schemes.
+
+% HERE dfs
 
 \section{Aesthetic mapping}
 \label{sec:aes}
