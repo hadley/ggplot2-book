@@ -141,7 +141,9 @@ The following sections describe the data and aesthetic mappings in more detail, 
 
 The restriction on the data is simple: It must be a data frame.  It is not necessary to specify a default dataset except when using faceting; faceting is a global operation (i.e., it works on all layers) and it needs to have some a dataset to add in any missing columns.  See Section~\ref{sub:missing_faceting_columns} for more details.  If the dataset is omitted, every layer must supply its own data.
 
-It is important to remember that the data is stored in the plot object as a copy, not a reference.  If you want to update (or change) the data later on, you can replace the default dataset with \code{\%+\%}:
+It is important to remember that the data is stored in the plot object as a copy, not a reference.  This is important because ggplot2 objects are entirely self-contained.  You can save one to disk and later plot it without needing anything else from that session.
+
+If you want to update (or change) the data later on, you can replace the default dataset with \code{\%+\%}:
 
 % LISTING
 % 
@@ -152,14 +154,14 @@ It is important to remember that the data is stored in the plot object as a copy
 \input{_include/54658d1c846136617768d3c96ab528df.tex}
 % END
 
-\noindent This can be useful if you need to produce the same plot for different datasets.  It's also an easy way to experiment with influential points or imputation schemes.
+\noindent Any change of values or dimensions is legitimate as long as the variables used in the plot are still part of the data.  This facility can be useful if you need to produce the same plot for different datasets.  It's also an easy way to experiment with influential points or imputation schemes.
 
 % HERE dfs
 
 \section{Aesthetic mapping}
 \label{sec:aes}
 
-To describe the way that variables in the data are mapped to things that we can perceive on the plot (the ``aesthetics''), we use the {\tt aes} function.  The {\tt aes} function takes a list of aesthetic-variable pairs as follows:
+To describe the way that variables in the data are mapped to things that we can perceive on the plot (the ``aesthetics''), we use the {\tt aes} function.  The {\tt aes} function takes a list of aesthetic-variable pairs like these:
 
 % LISTING
 % 
@@ -167,30 +169,32 @@ To describe the way that variables in the data are mapped to things that we can 
 \input{_include/eb4989dafa003f510f392a47c1965fad.tex}
 % END
 
-Here we are mapping x-position to weight, y-position to height and colour to age.  Alternatively, the first two arguments can be left without names, in which case they are assumed to be for the x and y variables.  (This matches the way that \f{qplot} is normally used.)
-
+Here we are mapping x-position to weight, y-position to height and colour to age.  The first two arguments can be left without names, in which case they are assumed to correspond to the x and y variables.  (This matches the way that \f{qplot} is normally used.)
 % LISTING
 % 
-% aes(weight, height, colour = age)
+% aes(weight, height, colour = sqrt(age))
 \input{_include/07c1baa7ae460b23eac9c318c27c52ea.tex}
 % END
+\noindent Note that functions of variables can be used.
 
-Things inside \f{aes} can be functions, but all variables must be contained inside the plot (or layer) data.  This is important because ggplot2 objects are entirely self-contained.  You can save one to disk and later plot it without needing anything else from that session.
+Any variable in an \f{aes} specification must be contained inside the plot or layer data.  This is one of the ways in which ggplot2 objects are guaranteed to be entirely self-contained, so that they can be stored and re-used.
 
 \subsection{Plots and layers}
 \label{sub:plots_and_layers}
 
-Mappings are stored in two places: in the plot defaults and in individual layers.  The plot defaults can be set when the plot is created, or added on afterwards, with addition.
+When the aesthetic mappings are part of the plot defaults, they can be set when the plot is initialized or added later using \code\{+}, as in this example:
 
 % INTERWEAVE
 % 
-% p <- ggplot()
+% p <- ggplot(mtcars)
 % summary(p)
-% summary(p + aes(wt, hp))
+%
+% p <- p + aes(wt, hp)
+% summary(p)
 \input{_include/3b40dd4be601fd761990321914a6fe69.tex}
 % END
 
-When you add a layer to a plot, you can just use the default mapping: 
+We have seen several examples of using the default mapping when adding a layer to a plot:
 
 % INTERWEAVE
 % 
@@ -199,7 +203,7 @@ When you add a layer to a plot, you can just use the default mapping:
 \input{_include/d6c2b4f5c1243e1f710b36393c8a600d.tex}
 % END
 
-Or you can override the defaults:
+As these two examples show, the default mappings in the plot $p$ just defined  can be extended or overridden in added layers:
 
 % INTERWEAVE
 % 
@@ -208,7 +212,7 @@ Or you can override the defaults:
 \input{_include/2aa96cf95624773a83ea59e29db05a12.tex}
 % END
 
-\noindent The rules are summarised in Table~\ref{tbl:aes-override}.  Note that you are overriding the aesthetics only in that layer and unless you specify otherwise the axis and legend names will come from the default assignments. 
+\noindent The rules are summarised in Table~\ref{tbl:aes-override}.  Note that you are overriding the aesthetics only in that layer.  Unless you specify otherwise, the axis and legend names, as well as mappings in subsequent layers, will use the default assignments. 
 
 \begin{table}
   \begin{center}
@@ -222,7 +226,7 @@ Or you can override the defaults:
     \bottomrule
   \end{tabular}
   \end{center}
-  \caption{Rules for combining layer aesthetic mapping with default mapping of \code{aes(x = mpg, y= wt)}:  additional aesthetics are added, existing overridden, and {\tt NULL} removes.}
+  \caption{Rules for combining layer aesthetic mapping with default mapping of \code{aes(x = mpg, y= wt)}:  additional aesthetics can be added, overridden, and removed.}
   \label{tbl:aes-override}
 \end{table}
 
@@ -230,16 +234,16 @@ Or you can override the defaults:
 \subsection{Setting vs. mapping}
 \label{sub:setting-mapping}
 
-For every aesthetic the geom function understands, you can also set that aesthetic as an parameter to the function.  Aesthetics can vary for each observation being plotted, while parameters can not.  For example:
+For every aesthetic the geom function understands, you can also set that aesthetic as an parameter to the function.  Aesthetics can vary for each observation being plotted, while parameters can not.  For example, the following layer sets a parameter but not an aesthetic mapping:
 
 % LISTING
 % 
-% p <- ggplot()
+% p <- ggplot(mtcars, aes(x=mpg, y=wt))
 % p + geom_point(colour="darkblue")  
 \input{_include/04edc955ceda9562289e6cb0ba8ca099.tex}
 % END
 
-\noindent will set the line colour to be dark blue instead of black.  This is quite different to:
+\noindent will set the point colour to be dark blue instead of black.  This is quite different to:
 
 % LISTING
 % 
@@ -247,7 +251,9 @@ For every aesthetic the geom function understands, you can also set that aesthet
 \input{_include/7039aa7d66af82abd606f93467febfce.tex}
 % END
 
-\noindent which effectively creates a new column with the value ``red'' repeated according to R's vector recycling rules and then uses the default colour scale to map that value to a colour. Chapter~\ref{cha:specifications} describes how values should be specified for the various aesthetics.  With qplot, you can do the same thing by putting the value inside of \f{I}, e.g.\ \code{colour = I("darkblue")}.  The difference between setting and mapping is illustrated in Figure~\ref{fig:qplot-setting}.  
+% dfs: wow, I'm not sure how this works. (Why red?  Because it is equivalent to 0?) And isn't it a violation of the rule that any data in an aesthetic mapping must exist in the dataset?
+
+\noindent This assumes that the default data includes a column named ``darkblue'' which you want to map to point colour.  Since the data does not include such a column, it effectively creates a new column with the value ``red'' repeated according to R's vector recycling rules and then uses the default colour scale to map that value to a colour. Chapter~\ref{cha:specifications} describes how values should be specified for the various aesthetics.  With qplot, you can do the same thing by putting the value inside of \f{I}, e.g.,\ \code{colour = I("darkblue")}.  The difference between setting and mapping is illustrated in Figure~\ref{fig:qplot-setting}.  
 
 % FIGURE
 %   LABEL: qplot-setting
