@@ -270,37 +270,20 @@ For every aesthetic the geom function understands, you can also set that aesthet
 
 % dfs: this facility should be motivated before its operation is explained.
 
-The {\tt group} aesthetic divides the the data set into discrete components. It is designed to be used with data comprised of multiple groups of linked records, especially longitudinal data; for example, a medical experiment in which measurements were taken on each subject at more than one time point.  The {\tt group} is used by the line geom to determine which observations to connect; by the boxplot geom to determine which points to summarise in one box; and by the smooth geom to determine which group of points should be included in the smooth. By default, the group aesthetic is set to the combination (interaction) of all discrete variables used in the plot.  Generally, this will create the correct separation of the data, but sometimes you will need to override it.  There are three common cases where this occurs:
+The {\tt group} aesthetic partitions the the data set into discrete components. It is designed to be used with data comprised of multiple groups of linked records, especially longitudinal data; for example, a medical experiment in which measurements were taken on each subject at more than one time point.  The {\tt group} is used by the line geom to determine which observations to connect, by the boxplot geom to determine which points to summarise in each box, and by the smooth geom to determine which group of points should be included in the smooth. When one or more discrete variables are used in the plot, the default group aesthetic is their combination (formed by \f{interaction}); this often partitions the data correctly. When it does not, or when no discrete variable is used in the plot, the group needs to be explicitly defined. There are three common cases where this occurs, and we will consider each one separately in the following examples.  
 
-\begin{itemize}
-  \item You want to separate your data into groups but render them with the same aesthetic.  This is common in longitudinal studies with many subjects.  When looking at the data in aggregate you want to be able to distinguish individual subjects, but you don't need to be able to identify them.
-  
-  \item You want add summaries to different levels of the data. Here, different layers might have different grouping aesthetics, so that some display the full data, while others display summaries of larger groups.
+In these examples, we will use a simple longitudinal data set, \code{Oxboys} from the \pkg{nlme} package.  It records the heights (\var{height}) and ages (\var{age}) of 26 boys (\var{Subject}), measured on nine occasions (\var{Occasion}). 
 
-% dfs: this second item would benefit from an example.
+{\bf Multiple groups, one aesthetic}: In many situations, you want to separate your data into groups but render them with the same aesthetic.  This is common in longitudinal studies with many subjects.  When looking at the data in aggregate you want to be able to distinguish individual subjects, but you don't need to identify them.
 
-  \item You have a discrete x scale but want lines to connect horizontally across groups.  This is true for interaction plots, profile plots, and parallel coordinate plots, among others.
-  
-\end{itemize}
-
-To illustrate these ideas, we will look at a simple longitudinal data set, \code{Oxboys} from the \pkg{nlme} package.  It records the heights (\var{height}) and ages (\var{age}) of 26 boys (\var{Subject}) measured on nine occasions (\var{Occasion}). Figure~\ref{fig:group-lines} shows a time series plot for each boy, generated as follows:
+The first plot in Figure~\ref{fig:group-lines} shows a set of time series plots, one for each boy.  It was generated generated as follows:
 
 % LISTING
-% ggplot(Oxboys, aes(x=age, y=height)) + geom_line(aes(group=Subject))
+% p <- ggplot(Oxboys, aes(x=age, y=height)) + geom_line(aes(group=Subject))
+% p
 % END
 
-\noindent We specified the group aesthetic, {\tt aes(group = Subject)}, to identify the observations to be connected by line segments.  This was a requirement in this example due to the presence of a second categorical variable, \var{Occasion}.  The second plot in  Figure~\ref{fig:group-lines} shows the result of relying  ...  I'm confused here because I can't figure out what argument produces the plot we see when no grouping variable is specified. ... sent email to hadley.
-
-Figure~\ref{fig:group-smooths} adds
-a smooth line to this plot.  If we use the same grouping as the line
-geom, we will get a smooth for each boy.  This is probably not what we
-want, so we override the group aesthetic for this layer to get a
-single line: {\tt aes(group = 1)}.  Figure~\ref{fig:group-boxplots}
-explores the distribution of heights at each occasion of measurement.
-The default grouping works here because occasion is a discrete
-variable.  If we overlay individual trajectories we again need to
-override the default grouping for that layer with {\tt aes(group =
-Subject)}.
+\noindent We specified the Subject as the grouping variable to create a partition for each boy. The second plot in Figure~\ref{fig:group-lines} shows the result of omitting the group; plots with an incorrect group aesthetic often look something like this.
 
 % FIGURE
 %   LABEL: group-lines
@@ -312,6 +295,21 @@ Subject)}.
 % qplot(age, height, data=Oxboys, group = Subject, geom="line")
 % qplot(age, height, data=Oxboys, geom="line")
 \input{_include/f8049cf110638c127875c39c76d31b3c.tex}
+% END
+
+
+{\bf Different groupings in the same plot}:  Sometimes we want to plot summaries based on different levels of aggregation of the data. Here, different layers might have different grouping aesthetics, so that some display the full data while others display summaries of larger groups.
+
+Building on the current example, suppose we want to add a single smooth line to the plot just created, based on the ages and heights of {\em all} the boys.  If we use the same grouping for the smooth that we used for the line, we get the first plot in Figure~\ref{fig:group-smooths}.  
+
+%LISTING
+% p + geom_smooth(aes(group=Subject), method="lm")
+% END
+
+This is not what we wanted; we have inadvertently added a smoothed line for each boy. This new layer needs a different group aesthetic, so that the new smoothed line will be based on all the data, as shown in the second plot in the figure:
+
+%LISTING
+% p + geom_smooth(aes(group=1), method="lm")
 % END
 
 % FIGURE
@@ -326,20 +324,39 @@ Subject)}.
 \input{_include/881ecc26d3a6162106bded6eff182d9b.tex}
 % END
  
+Note because the first plot was stored in the variable p, we could experiment with the code to generate the added layer without having to re-enter any of the code for the first layer.
+
+{\bf Using the default group aesthetic}:  In this case, the plot has a discrete scale but you want to draw lines that connect {\em across} groups.  This is the strategy used in interaction plots, profile plots, and parallel coordinate plots, among others.
+  
+We start with boxplots of height at each occasion of measurement, as shown in the first figure in Figure~\ref{fig:group-boxplots}, created this way:
+
+% LISTING
+% ggplot(Oxboys, aes(x=Occasion, y=height)) + geom_boxplot()
+% END
+
+\noindent There is no need to specify the group aesthetic here; the default grouping works here because occasion is a discrete variable.  To overlay individual trajectories we again need to override the default grouping for that layer with {\tt aes(group = Subject)}, as shown in the second plot in the figure.
+
+% LISTING
+% p <- ggplot(Oxboys, aes(x=Occasion, y=height)) + geom_boxplot(colour=I("#3366FF"), size=I(1))
+% p + geom_line(aes(group=Subject))
+% END
+
+There's another difference in the second plot.  The boxplots are drawn in thick blue lines so that they will still be visible once the line segments for each subject have been added. Note that the color and size in the boxplots in the second plots are settings rather than mappings, as discussed earlier in this chapter.  They are rendering attributes, but they have no correspondance to variables in the data.
+
 % FIGURE
 %   LABEL: group-boxplots
 %   CAPTION: \leftc If boxplots are used to look at the distribution of
 %   heights at each occasion (a discrete variable), the default grouping 
-%   works correctly.  \rightc If trajectories of individual boys are overlayed
+%   works correctly.  \rightc If trajectories of individual boys are overlaid
 %   with {\tt geom\_line()} then {\tt aes(group = Subject)} must be set 
-%   for that layer.
+%   for the new layer.
 % 
 % qplot(Occasion, height, data=Oxboys, geom="boxplot")
 % qplot(Occasion, height, data=Oxboys, geom="boxplot", colour=I("#3366FF"), size= I(1)) + geom_line(aes(group = Subject))
 \input{_include/3558728378a305acefcdd9d27470d8e6.tex}
 % END
 
-The {\tt interaction()} function is particularly useful if there isn't a pre-existing variable that separates the groups you are interested in, but a combination of variables does.  
+The {\tt interaction()} function is particularly useful if there isn't a pre-existing variable that separates the groups you are interested in, but a combination of variables does.
 
 \section{Geoms}
 \label{sec:geom}
