@@ -71,14 +71,12 @@ A minimal layer may do nothing more than specify a {\bf geom}, a way of visually
 % p <- p + layer(
 %   geom = ``histogram'', 
 %   geom_params = list(fill = "steelblue"),
+%   stat = ``bin'',
 %   stat_params = list(binwidth = 2)
 % )
 % p
 \input{_include/ac6fc8efec4aa770704443e5f90940d0.tex}
 % END
-
-% dfs: I don't know what a legal value of stat might be in the above command.  
-% identity doesn't work, and neither does histogram.
 
 \noindent  This layer specification is precise but verbose. We can simplify it by using shortcuts that rely on the fact that every geom is associated with a default statistic and position, and every statistic with a default geom.  This means that you only need to specify one of \code{stat} or \code{geom} to get a completely specified layer, with parameters passed on to the geom or stat as appropriate.  This expression generates the same layer as the full layer command above:
 
@@ -270,18 +268,39 @@ For every aesthetic the geom function understands, you can also set that aesthet
 \subsection{Grouping}
 \label{sub:grouping}
 
-The {\tt group} aesthetic divides the the data set into discrete components.   This is used by the line geom to determine which observations to connect; by the boxplot geom to determine which points to summarise in one box; and by the smooth geom to determine which group of points should be included in the smooth. By default, the group aesthetic is set to the combination (interaction) of all discrete variables used in the plot.  Generally, this will create the correct separation of the data, but sometimes you will need to override it.  There are three common cases where this occurs:
+% dfs: this facility should be motivated before its operation is explained.
+
+The {\tt group} aesthetic divides the the data set into discrete components. It is designed to be used with data comprised of multiple groups of linked records, especially longitudinal data; for example, a medical experiment in which measurements were taken on each subject at more than one time point.  The {\tt group} is used by the line geom to determine which observations to connect; by the boxplot geom to determine which points to summarise in one box; and by the smooth geom to determine which group of points should be included in the smooth. By default, the group aesthetic is set to the combination (interaction) of all discrete variables used in the plot.  Generally, this will create the correct separation of the data, but sometimes you will need to override it.  There are three common cases where this occurs:
 
 \begin{itemize}
-  \item You want to separate your data into groups, but not distinguish them with different aesthetics.  This is common for longitudinal studies with many subjects.  When looking at the data in aggregate you want to be able to distinguish individual subjects, but you don't need to be able to identify them.
+  \item You want to separate your data into groups but render them with the same aesthetic.  This is common in longitudinal studies with many subjects.  When looking at the data in aggregate you want to be able to distinguish individual subjects, but you don't need to be able to identify them.
   
   \item You want add summaries to different levels of the data. Here, different layers might have different grouping aesthetics, so that some display the full data, while others display summaries of larger groups.
 
-  \item You have a discrete x scale, but want lines to connect horizontally across groups.  This sort of plot includes interaction plots, profile plots and parallel coordinate plots.  
+% dfs: this second item would benefit from an example.
+
+  \item You have a discrete x scale but want lines to connect horizontally across groups.  This is true for interaction plots, profile plots, and parallel coordinate plots, among others.
   
 \end{itemize}
 
-To illustrate these ideas, we will look at a simple longitudinal data set, \code{Oxboys} from the \pkg{nlme} package.  This records the heights (\var{height}) and ages (\var{age}) of 26 boys (\var{Subject}) measured at nine different occasions (\var{Occasion}). Figure~\ref{fig:group-lines} shows a time series plot for each boy.  This requires us to identify the observations that should be connected with {\tt aes(group = Subject)}.  Figure~\ref{fig:group-smoothes} adds a smooth line to this plot.  If we use the same grouping as the line geom, we will get a smooth for each boy.  This is probably not what we want, so we override the group aesthetic for this layer to get a single line: {\tt aes(group = 1)}.  Figure~\ref{fig:group-boxplots} explores the distribution of heights at each occasion of measurement.  The default grouping works here because occasion is a discrete variable.  If we overlay individual trajectories we again need to override the default grouping for that layer with {\tt aes(group = Subject)}.
+To illustrate these ideas, we will look at a simple longitudinal data set, \code{Oxboys} from the \pkg{nlme} package.  It records the heights (\var{height}) and ages (\var{age}) of 26 boys (\var{Subject}) measured on nine occasions (\var{Occasion}). Figure~\ref{fig:group-lines} shows a time series plot for each boy, generated as follows:
+
+% LISTING
+% ggplot(Oxboys, aes(x=age, y=height)) + geom_line(aes(group=Subject))
+% END
+
+\noindent We specified the group aesthetic, {\tt aes(group = Subject)}, to identify the observations to be connected by line segments.  This was a requirement in this example due to the presence of a second categorical variable, \var{Occasion}.  The second plot in  Figure~\ref{fig:group-lines} shows the result of relying  ...  I'm confused here because I can't figure out what argument produces the plot we see when no grouping variable is specified. ... sent email to hadley.
+
+Figure~\ref{fig:group-smooths} adds
+a smooth line to this plot.  If we use the same grouping as the line
+geom, we will get a smooth for each boy.  This is probably not what we
+want, so we override the group aesthetic for this layer to get a
+single line: {\tt aes(group = 1)}.  Figure~\ref{fig:group-boxplots}
+explores the distribution of heights at each occasion of measurement.
+The default grouping works here because occasion is a discrete
+variable.  If we overlay individual trajectories we again need to
+override the default grouping for that layer with {\tt aes(group =
+Subject)}.
 
 % FIGURE
 %   LABEL: group-lines
@@ -296,8 +315,8 @@ To illustrate these ideas, we will look at a simple longitudinal data set, \code
 % END
 
 % FIGURE
-%   LABEL: group-smoothes
-%   CAPTION: Adding smoothes to the Oxboys data.  \leftc Using the 
+%   LABEL: group-smooths
+%   CAPTION: Adding smooths to the Oxboys data.  \leftc Using the 
 %   same grouping as the lines results in a line of best fit for 
 %   each boy.  \rightc Using {\tt aes(group = 1)} in the smooth layer
 %   fits a single line of best fit across all boys.
@@ -473,7 +492,7 @@ In fact, a number of geoms are created this way.  They are aren't really geoms i
 \subsection{Varying aesthetics and data}
 \label{sub:different_aesthetics}
 
-One of the more powerful capabilities of \ggplot is the ability to plot different data sets on different layers.  This may seem strange: why would you want to plot different data on the same plot?  In practice, you often have related data sets that should be shown together.  A very common example is supplementing the data with predictions from a model.  While the smooth geom can add a wide range of different smoothes to your plot, it is no substitute for a external quantitative model that summarises your understanding of the data.
+One of the more powerful capabilities of \ggplot is the ability to plot different data sets on different layers.  This may seem strange: why would you want to plot different data on the same plot?  In practice, you often have related data sets that should be shown together.  A very common example is supplementing the data with predictions from a model.  While the smooth geom can add a wide range of different smooths to your plot, it is no substitute for a external quantitative model that summarises your understanding of the data.
 
 Let's look again at the \code{oxboys} dataset which we displayed in Section~\ref{sub:grouping}.  There we showed linear fits to individual boys, and to the whole group.  Neither model is particularly appropriate: the group model ignores the within subject correlation, and the individual model doesn't use information about the typical growth pattern to more accurate predict individuals.  In practice we might use a linear mixed effects model to do better.  This section explores how we can combine the output from this more sophisticated model with the original data to gain more insight into both the data and the model.
 
