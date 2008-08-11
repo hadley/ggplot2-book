@@ -9,5 +9,13 @@ hcl <- transform(hcl,
 )
 hcl$colour <- hcl(hcl$h, hcl$c, hcl$l)
 
-with(hcl, plot(x, y, col=colour, pch=20, cex=3))
+
+
+# with(hcl, plot(x, y, col=colour, pch=20, cex=3))
 # print(qplot(x, y, data=hcl, colour=colour) + scale_colour_identity())
+
+
+rgb_vals <- expand.grid(r = seq(0, 1, length = 10), g = seq(0, 1, length=10), b = 0.5)
+rgb_vals$colour <- do.call(rgb, rgb_vals)
+
+with(rgb_vals, plot(r, g, col=colour, pch=20, cex=5))
