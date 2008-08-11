@@ -7,10 +7,9 @@
 % Introduction to the data structure
 % Roadmap for next few chapters
 
-
 \section{Introduction}\label{sec:introduction}
 
-You can choose to use just {\tt qplot}, without any understanding of the underlying grammar, but you will not be able to use the full power of ggplot.  By learning more about the grammar, and the components that make it up, you will be able to create a wider range of plots, as well as being able to combine multiple sources of data, and customise to your heart's content.
+You can choose to use just {  t qplot}, without any understanding of the underlying grammar, but you will not be able to use the full power of ggplot.  By learning more about the grammar, and the components that make it up, you will be able to create a wider range of plots, as well as being able to combine multiple sources of data, and customise to your heart's content.
 
 This chapter describes the theoretical basis of ggplot2: the layered grammar of graphics, a based based on Wilkinson's grammar of graphics \citep{wilkinson:2006}.  The next chapters then describe parts of the grammar in more detail: layers (geoms and stats), scales, and positioning (coordinate systems, faceting and position adjustments),
 
@@ -18,79 +17,114 @@ You may want to skip this chapter in a first reading of the book, and then come 
 
 This chapter begins by describing in detail a simple plot is drawn.  We'll start with a simple scatterplot, and then grow progressively more complicated, by transforming the axes and adding a smooth line.
 
+Important terms that are used throughout the book are emboldened.
+
 \section{Building a scatterplot}
 \label{sec:building_a_plot}
 
-When creating a plot we start with data.  Consider the mammal's sleep dataset illustrated in Table~\ref{tbl:sleep}.  This is included in \ggplot and is called \code{msleep}.  The data records the brain and body weights, sleep times, and a few other variables for 83 mammals.   You can find out more about the data by typing \code{?msleep} within R. 
+When creating a plot we start with data.  Consider the fuel economy dataset illustrated in Table~\ref{tbl:mpg}.  This is included in \ggplot and is called \code{mpg}.  It contains all models of car that have had a new model every year from 1999 to 2008, but just for 1999 and 2008. It contains 38 cars produced by 15 manufacturers, for a total of 234 cars.
 
-% msleep <- read.csv("~/Documents/data/08-msleep/msleep.csv")
-% animals <- sort(c("African elephant", "Pilot whale", "Human", "Horse", "Domestic cat"))
-% msel <- subset(msleep, name %in% animals)
-
-
+% load("~/documents/ggplot/ggplot/data/mpg.rda")
 % source("latex.r")
-% tabulate(msel[, c("name", "order", "brainwt", "bodywt", "awake", "sleep_rem")])
+% cat(tabulate(mpg[1:10, -6]))
 
 \begin{table}
   \begin{center}
-  \begin{tabular}{llrrp{2cm}p{2cm}}
+  \begin{tabular}{llrrrlrrl}
     \toprule
-    Animal & Order & Brain weight & Body weight & Awake (hours) & Rem sleep (hours) \\
+    Model & Manufacturer & Displacement (l) & Year & Cylinders & City mpg & Highway mpg & Class \\
     \midrule
-    Domestic cat     & Carnivora      & 0.0256 &    3.3 & 11.50 & 3.2\\
-    Horse            & Perissodactyla & 0.6550 &  521.0 & 21.10 & 0.6\\
-    Human            & Primates       & 1.3200 &   62.0 & 16.00 & 1.9\\
-    African elephant & Proboscidea    & 5.7120 & 6654.0 & 20.70 & ---\\
-    Pilot whale      & Cetacea        &    --- &  800.0 & 21.35 & 0.1\\
+    audi & a4         & 1.8 & 1999 & 4 & 18 & 29 & compact\\
+    audi & a4         & 1.8 & 1999 & 4 & 21 & 29 & compact\\
+    audi & a4         & 2.0 & 2008 & 4 & 20 & 31 & compact\\
+    audi & a4         & 2.0 & 2008 & 4 & 21 & 30 & compact\\
+    audi & a4         & 2.8 & 1999 & 6 & 16 & 26 & compact\\
+    audi & a4         & 2.8 & 1999 & 6 & 18 & 26 & compact\\
+    audi & a4         & 3.1 & 2008 & 6 & 18 & 27 & compact\\
+    audi & a4 quattro & 1.8 & 1999 & 4 & 18 & 26 & compact\\
+    audi & a4 quattro & 1.8 & 1999 & 4 & 16 & 25 & compact\\
+    audi & a4 quattro & 2.0 & 2008 & 4 & 20 & 28 & compact\\
+        \bottomrule
+  \end{tabular}
+  \end{center}
+  \caption{10 cars from the \code{mpg} data set.}
+  \label{tbl:mpg}
+\end{table}
+
+% FIGURE
+%   LABEL: mpg
+%   CAPTION: A scatterplot of engine displacement in litres (displ) vs
+%   average highway miles per gallon (hwy).  Points are coloured according
+%   to number of cylinders.  This plot summarises the most important
+%   factor governing fuel economy: engine size
+% 
+% qplot(displ, hwy, data=mpg, colour=factor(cyl))
+
+Consider Figure~\ref{fig:mpg}.  It is a scatterplot of two continuous variables, with points coloured by a third variable.  From your experience in the previous chapter, you should have a pretty good feel for how to create this plot with \f{qplot}.  But what is going on underneath the surface?  How does \ggplot draw this plot?
+
+We need to start by considering exactly what a scatterplot is. One way to describe it is has a point for each observation, positioned in a Cartesian coordinate system.  Each point has a horizontal and vertical position, a size and a colour.  We $x$-position, $y$-position, size and colour {\bf aesthetics}, things that can be perceived on the graphic.  For this plot \var{displ} is mapped to $x$-position, \var{hwy} to $y$-position and \var{cyl} to colour.  Size is not mapped to a variable and so is fixed at its default value.  
+
+This information can be represented in a new dataset which reflects these mappings, and removes other variables not needed for this plot. This new dataset is shown in Table \ref{tbl:mapping}.
+
+% scatter <- with(mpg, data.frame(x = displ, y = hwy, colour = cyl))
+% cat(tabulate(scatter[1:10, ]))
+
+\begin{table}[ht]
+  \begin{center}
+  \begin{tabular}{rrr}
+    \toprule
+    $x$ & $y$ & $colour$\\
+    \midrule
+    1.8 & 29 & 4\\
+    1.8 & 29 & 4\\
+    2.0 & 31 & 4\\
+    2.0 & 30 & 4\\
+    2.8 & 26 & 6\\
+    2.8 & 26 & 6\\
+    3.1 & 27 & 6\\
+    1.8 & 26 & 4\\
+    1.8 & 25 & 4\\
+    2.0 & 28 & 4\\
     \bottomrule
   \end{tabular}
   \end{center}
-  \caption{Five mammals from the \code{msleep} data set.  Missing values are illustrated with a ---.  }
-  \label{label}
+  \caption{Sample rows from \code{msleep} with variables named according to the aesthetic that they use.}
+  \label{tbl:mapping}
 \end{table}
 
+We can create many different types of plots using this data.  The scatterplot uses points, but we were instead to draw lines we would get a line plot.  If we used bars, we'd get a bar plot.  Bars, lines and points are all examples of geometric objects, or {\bf geom}s.
 
-Let's draw a scatterplot of \var{brainwt} vs. \var{bodywt}.  What exactly is a scatterplot?  One way to describe it is has a point for each observation, positioned horizontally according to the value of \var{brainwt}, and vertically according to \var{bodywt}.  The first step in making this plot is to create a new dataset which reflects the mapping of $x$-position to \var{brainwt}, and $y$-position to \var{bodywt} and colour to \var{diet}.  $x$-position, $y$-position and colour are all aesthetics, things that can be perceived on the graphic. We will also remove all other variables that do not appear in the plot.  This is shown in Table \ref{tbl:mapping}.
+The values in Table~\ref{tbl:mapping} have no meaning to the computer.  We need to convert them from data units (e.g.\ litres and miles per gallon) to physical units (e.g.\ pixels and colours), that the computer can display.  The way that these physical units can been specified in R is described in Appendix~\ref{chp:specification}.  This conversion process is called {\bf scaling} and performed by scales, in conjunction with the coordinate system for  position aesthetics.
 
-\begin{table}[ht]
-	\begin{center}
-	\begin{tabular}{r|r|r}
-		$x$ & $y$ & $colour$\\
-		\hline
-		2 & 4 & a\\
-		1 & 1 & a\\
-		4 & 15 & b\\
-		9 & 80 & b
-	\end{tabular}
-	\end{center}
-	\caption{Sample rows from \code{msleep} with variables named according to the aesthetic that they use.}
-	\label{tbl:mapping}
-\end{table}
-
-We can create many different types of plots using this data.  For example, if we were to draw lines instead of points we would get a line plot.  If we used bars, we'd get a bar plot.  Bars, lines and points are all examples of geometric objects.  
-
-These values currently have no meaning to the computer.  We need to convert them from being in data units (e.g.\ kg) to physical units (e.g.\ pixels), that the computer knows how to display.  (The way that these physical units can been specified in R is described in Appendix~\ref{chp:specification}). Converting position is easy for this example which has linear scales and a Cartesian coordinate system - we just need a linear mapping from the range of the data to $[0, 1]$.  (We can use $[0, 1]$ instead of exact pixels because the drawing system that \ggplot uses, \code{grid}, will take care of that for us.)
-
-\[ \frac{x - \min(x)}{\mbox{range}(x)}  \] 
+Scaling position is easy in this example because we are using the defaults: linear scales and a Cartesian coordinate system.  We just need a linear mapping from the range of the data to $[0, 1]$.  We use $[0, 1]$ instead of exact pixels because in practice the drawing system that \ggplot uses, \code{grid}, will takes care of that final conversion.  However, there actually two steps in this process, which we only see for more complicated examples - both the scale and the coordinate system do a separate transformation.
 
 It is the coordinate system that performs this mapping, and for other coordinate systems the mapping is more complex (and may depend on both x and y variables), but in all cases is mapped to range $[0, 1]$.
 
-The process for mapping the colour is a little more complicated, and here the scale does all of the work.  A scale needs to know the range and the domain of the data.  The default scale in \ggplot maps colour to evenly space hues on a colour wheel.
+The process for mapping the colour is a little more complicated, and here the scale does all of the work.  A scale needs to know the range and the domain of the data.  The default scale in \ggplot maps colour to evenly spaced hues on a colour wheel as illustrated by Figure~\ref{fig:colour-wheel}.
+
+
+\begin{figure}[htbp]
+  \centering
+    \includegraphics[width=3in]{colour-wheel.pdf}
+  \caption{A colour wheel showing how the default colour scheme for discrete values is produced.}
+  \label{fig:colour-wheel}
+\end{figure}
+
 
 
 \begin{table}[ht]
-	\begin{center}
-	\begin{tabular}{r|r|r}
-		$x$ & $y$ & $colour$\\
-		\hline
-		25 & 11 & red\\
-		0 & 0 & red \\
-		75  & 53 & blue \\
-		200 & 300 & blue
-	\end{tabular}
-	\end{center}
-	\caption{Simple dataset with variables mapped into aesthetic space.}
-	\label{tbl:scaled}
+  \begin{center}
+  \begin{tabular}{r|r|r}
+    $x$ & $y$ & $colour$\\
+    \hline
+    25 & 11 & red\\
+    0 & 0 & red \\
+    75  & 53 & blue \\
+    200 & 300 & blue
+  \end{tabular}
+  \end{center}
+  \caption{Simple dataset with variables mapped into aesthetic space.}
+  \label{tbl:scaled}
 \end{table}
 
 In general, there is another step that we've skipped in this simple example: a statistical transformation.  Here we are using the identity transformation, but there are many others that are useful, such as binning or aggregating.  Statistical transformations, or stats, are described in detail in Section~\ref{sub:stats}.
@@ -98,15 +132,15 @@ In general, there is another step that we've skipped in this simple example: a s
 Finally, we need to render this data to create the graphical objects that are displayed on the screen.  To create a complete plot we need to combine graphical objects from three sources: the \emph{data}, represented by the point geom; the \emph{scales and coordinate system}, which generates axes and legends so that we can read values from the graph; and the \emph{plot annotations}, such as the background and plot title.  These components are shown in Figure~\ref{fig:simple-exploded}.  Combining and displaying these graphical objects produces the final plot, as in Figure~\ref{fig:simple}.
 
 \begin{figure}[htbp]
-	\centering
-	\caption{Graphics objects produced by (from left to right): geometric objects, scales and coordinate system, plot annotations.}
-	\label{fig:simple-exploded}
+  \centering
+  \caption{Graphics objects produced by (from left to right): geometric objects, scales and coordinate system, plot annotations.}
+  \label{fig:simple-exploded}
 \end{figure}
 
 \begin{figure}[htbp]
-	\centering
-	\caption{The final graphic, produced by combining the pieces in Figure~\ref{fig:simple-exploded}.}
-	\label{fig:simple}
+  \centering
+  \caption{The final graphic, produced by combining the pieces in Figure~\ref{fig:simple-exploded}.}
+  \label{fig:simple}
 \end{figure}
 
 \subsection{A more complicated plot}\label{sec:how_to_build_a_more_complicated_plot} 
@@ -114,71 +148,71 @@ Finally, we need to render this data to create the graphical objects that are di
 Now that you are acquainted with drawing a simple plot, we will create a more complicated plot.  The big difference with this plot is that we'll use faceting.  Faceting is also known as conditioning, trellising and latticing, and produces small multiples showing different subsets of the data.  If we facet the previous plot by $D$ we will get a plot that looks like Figure~\ref{fig:complex}, where each value of $D$ is displayed in a different panel.
 
 \begin{figure}[htbp]
-	\centering
-	\caption{A more complicated plot, which is faceted by variable $D$.  Here the faceting uses the same variable that is mapped to colour so that there is some redundancy in our visual representation.  This allows us to easily see how the data has been broken into panels.}
-	\label{fig:complex}
+  \centering
+  \caption{A more complicated plot, which is faceted by variable $D$.  Here the faceting uses the same variable that is mapped to colour so that there is some redundancy in our visual representation.  This allows us to easily see how the data has been broken into panels.}
+  \label{fig:complex}
 \end{figure}
 
 Faceting splits the original dataset into a dataset for each subset, so the data that underlies Figure~\ref{fig:complex} looks like Table \ref{tbl:complex}.
 
 \begin{table}[ht]
-	\centering
-	\begin{tabular}{r|r|r|r}
-		& $x$ & $y$ & $colour$\\
-		\hline
-		a & 2 & 4 & red\\
-		a & 1 & 1 & red\\
-		\hline \hline
-		b & 4 & 15 & blue\\
-		b & 9 & 80 & blue
-	\end{tabular}
+  \centering
+  \begin{tabular}{r|r|r|r}
+    & $x$ & $y$ & $colour$\\
+    \hline
+    a & 2 & 4 & red\\
+    a & 1 & 1 & red\\
+    \hline \hline
+    b & 4 & 15 & blue\\
+    b & 9 & 80 & blue
+  \end{tabular}
 
-	\caption{Simple dataset faceted into subsets.}
-	\label{tbl:complex}
+  \caption{Simple dataset faceted into subsets.}
+  \label{tbl:complex}
 \end{table}
 
 The first steps of plot creation proceed as before, but new steps are necessary when we get to the scales.   Scaling actually occurs in three parts: transforming, training and mapping. 
 
 \begin{itemize}
-	\item  Scale transformation occurs before statistical transformation so that statistics are computed on the scale-transformed data.  This ensures that a plot of $log(x)$ vs $log(y)$ on linear scales looks the same as $x$ vs $y$ on log scales.  See Section~\ref{sub:transformation} for more details. Transformation is only necessary for non-linear scales, because all statistics are location-scale invariant.
+  \item  Scale transformation occurs before statistical transformation so that statistics are computed on the scale-transformed data.  This ensures that a plot of $log(x)$ vs $log(y)$ on linear scales looks the same as $x$ vs $y$ on log scales.  See Section~\ref{sub:transformation} for more details. Transformation is only necessary for non-linear scales, because all statistics are location-scale invariant.
 
-	\item After the statistics are computed, each scale is trained on every faceted dataset (a plot can contain multiple datasets, e.g.\ raw data and predictions from a model).  The training operation combines the ranges of the individual datasets to get the range of the complete data.  If scales were applied locally, comparisons would only be meaningful within a facet.  This is shown in Table \ref{tbl:complex-incorrect}.
+  \item After the statistics are computed, each scale is trained on every faceted dataset (a plot can contain multiple datasets, e.g.\ raw data and predictions from a model).  The training operation combines the ranges of the individual datasets to get the range of the complete data.  If scales were applied locally, comparisons would only be meaningful within a facet.  This is shown in Table \ref{tbl:complex-incorrect}.
 
   % FIXME
-	\item Finally the scales map the data values into aesthetic values.  This gives Table \ref{tbl:complex-mapping} which is essentially identical to Table \ref{tbl:mapping} apart from the structure of the datasets.  Given that we end up with an essentially identical structure you might wonder why we don't simply split up the final result.  There are several reasons for this.  It makes writing statistical transformation functions easier, as they only need to operate on a single facet of data, and some need to operate on a single subset, for example, calculating a percentage.  Also, in practice we may have a more complicated training scheme for the position scales so that different columns or rows can have different $x$ and $y$ scales.  
-	
+  \item Finally the scales map the data values into aesthetic values.  This gives Table \ref{tbl:complex-mapping} which is essentially identical to Table \ref{tbl:mapping} apart from the structure of the datasets.  Given that we end up with an essentially identical structure you might wonder why we don't simply split up the final result.  There are several reasons for this.  It makes writing statistical transformation functions easier, as they only need to operate on a single facet of data, and some need to operate on a single subset, for example, calculating a percentage.  Also, in practice we may have a more complicated training scheme for the position scales so that different columns or rows can have different $x$ and $y$ scales.  
+  
 \end{itemize}
 
 \begin{table}[ht]
-	\centering
-	\begin{tabular}{r|r|r|r}
-		& $x$ & $y$ & $colour$\\
-		\hline
-		a & 200 & 300 & red\\
-		a & 0 & 0 & red\\
-		\hline \hline
-		b & 0 & 0 & red\\
-		b & 200 & 300 & red
-	\end{tabular}
+  \centering
+  \begin{tabular}{r|r|r|r}
+    & $x$ & $y$ & $colour$\\
+    \hline
+    a & 200 & 300 & red\\
+    a & 0 & 0 & red\\
+    \hline \hline
+    b & 0 & 0 & red\\
+    b & 200 & 300 & red
+  \end{tabular}
 
-	\caption{Local scaling, where data are scaled independently within each facet. Note that each facet occupies the full range of positions, and only uses one colour.  Comparisons across facets are not necessarily meaningful.}
-	\label{tbl:complex-incorrect}
+  \caption{Local scaling, where data are scaled independently within each facet. Note that each facet occupies the full range of positions, and only uses one colour.  Comparisons across facets are not necessarily meaningful.}
+  \label{tbl:complex-incorrect}
 \end{table}
 
 \begin{table}[ht]
-	\centering
-	\begin{tabular}{r|r|r|r}
-		& $x$ & $y$ & $colour$\\
-		\hline
-		a & 25 & 11 & red\\
-		a & 0 & 0 & red\\
-		\hline \hline
-		b & 75 & 53 & blue\\
-		b & 200 & 300 & blue
-	\end{tabular}
+  \centering
+  \begin{tabular}{r|r|r|r}
+    & $x$ & $y$ & $colour$\\
+    \hline
+    a & 25 & 11 & red\\
+    a & 0 & 0 & red\\
+    \hline \hline
+    b & 75 & 53 & blue\\
+    b & 200 & 300 & blue
+  \end{tabular}
 
-	\caption{faceted data correctly mapped to aesthetics.  Note the similarity to Table \ref{tbl:scaled}.}
-	\label{tbl:complex-mapping}
+  \caption{faceted data correctly mapped to aesthetics.  Note the similarity to Table \ref{tbl:scaled}.}
+  \label{tbl:complex-mapping}
 \end{table}
 
 \subsection{Summary}\label{sec:the_grammar}
@@ -225,10 +259,10 @@ For the developer, it makes it much easier to add new capabilities. You only nee
 Layers are responsible for creating the objects that we perceive on the plot.  A layer is composed of four parts:  
 
 \begin{itemize}
-	\item data and aesthetic mapping,
-	\item a statistical transformation (stat), 
-	\item a geometric object (geom)
-	\item and a position adjustment.
+  \item data and aesthetic mapping,
+  \item a statistical transformation (stat), 
+  \item a geometric object (geom)
+  \item and a position adjustment.
 \end{itemize}
 
 \noindent These parts are described in detail below.
@@ -251,26 +285,26 @@ A stat takes a dataset as input and returns a dataset as output, and so a stat c
 The actual statistical method used by a stat is conditional on the coordinate system.  For example, a smoother in polar coordinates should use circular regression, and in 3d should return a 2d surface rather than a 1d curve.  However, many statistical operations have not been derived for non-Cartesian coordinates and we so we generally fall back to Cartesian coordinates for calculation, which, while not strictly correct, will normally be a fairly close approximation.  
 
 \begin{table}
-	\begin{center}
-	\begin{tabular}{l|l}
-	Name & Description \\
-	\hline
-	bin & Divide continuous range into bins, and count number of points in each\\ 
-	boxplot & Compute statistics necessary for boxplot\\
-	contour & Calculate contour lines\\
-	density & Compute 1d density estimate \\
-	identity & Identity transformation, $f(x) = x$ \\
-	jitter & Jitter values by adding small random value \\
-	qq & Calculate values for quantile-quantile plot \\
-	quantile & Quantile regression\\
-	smooth & Smoothed conditional mean of $y$ given $x$ \\
-	summary & Aggregate values of $y$ for given $x$ \\
-	sortx & Sort values in order of ascending $x$\\
-	unique & Remove duplicated observations\\
-	\end{tabular}
-	\end{center}
-	\caption{Some statistical transformations provided by ggplot2.  The user is able to supplement this list in a straight forward manner.}
-	\label{tbl:statistics}
+  \begin{center}
+  \begin{tabular}{l|l}
+  Name & Description \\
+  \hline
+  bin & Divide continuous range into bins, and count number of points in each\\ 
+  boxplot & Compute statistics necessary for boxplot\\
+  contour & Calculate contour lines\\
+  density & Compute 1d density estimate \\
+  identity & Identity transformation, $f(x) = x$ \\
+  jitter & Jitter values by adding small random value \\
+  qq & Calculate values for quantile-quantile plot \\
+  quantile & Quantile regression\\
+  smooth & Smoothed conditional mean of $y$ given $x$ \\
+  summary & Aggregate values of $y$ for given $x$ \\
+  sortx & Sort values in order of ascending $x$\\
+  unique & Remove duplicated observations\\
+  \end{tabular}
+  \end{center}
+  \caption{Some statistical transformations provided by ggplot2.  The user is able to supplement this list in a straight forward manner.}
+  \label{tbl:statistics}
 \end{table}
 
 \subsubsection{Geometric object}\label{sub:geometric-objects} 
@@ -278,17 +312,17 @@ The actual statistical method used by a stat is conditional on the coordinate sy
 Geometric objects, or {\bf geom}s for short, control the type of plot that you create.  For example, using a point geom will create a scatterplot, while using a line geom will create a line plot.  We can classify geoms by their dimensionality:
 
 \begin{itemize}
-	\item 0d: point, text
-	\item 1d: path, line (ordered path)
-	\item 2d: polygon, interval
+  \item 0d: point, text
+  \item 1d: path, line (ordered path)
+  \item 2d: polygon, interval
 \end{itemize}
 
 Geometric objects are an abstract component and can be rendered in different ways. Figure~\ref{fig:interval} illustrates four possible renderings of the interval geom. 
 
 \begin{figure}[htbp]
-	\centering
-	\caption{Four representations of an interval geom.  From left to right: as a bar, as a line, as a error bar, and (for continuous x) as a ribbon.}
-	\label{fig:interval}
+  \centering
+  \caption{Four representations of an interval geom.  From left to right: as a bar, as a line, as a error bar, and (for continuous x) as a ribbon.}
+  \label{fig:interval}
 \end{figure}
 
 Geoms are mostly general purpose, but do require certain outputs from a statistic.  For example, the boxplot geom requires the position of the upper and lower fences, upper and lower hinges, the middle bar and the outliers. Any statistic used with the boxplot needs to provide these values. 
@@ -306,9 +340,9 @@ Sometimes we need to tweak the position of the geometric elements on the plot, w
 A {\bf scale} controls the mapping from data to aesthetic attributes, and so we need one scale for each aesthetic property used in a layer.  Scales are common across layers to ensure a consistent mapping from data to aesthetics.  Some scales are illustrated in Figure~\ref{fig:scales}.
 
 \begin{figure}[htbp]
-	\centering
-	\caption{Examples of four scales from ggplot2.  From left to right: continuous variable mapped to size and colour, discrete variable mapped to shape and colour.  The ordering of scales seems upside-down, but this matches the labelling of the $y$-axis: small values occur at the bottom.}
-	\label{fig:scales}
+  \centering
+  \caption{Examples of four scales from ggplot2.  From left to right: continuous variable mapped to size and colour, discrete variable mapped to shape and colour.  The ordering of scales seems upside-down, but this matches the labelling of the $y$-axis: small values occur at the bottom.}
+  \label{fig:scales}
 \end{figure}
 
 % sc <- ScaleSize$new()
@@ -353,16 +387,14 @@ Coordinate systems control how the axes and grid lines are drawn.  Figure~\ref{f
 % ggtheme(old)
 
 \begin{figure}[htbp]
-	\centering
-	\caption{Examples of axes and grid lines for three coordinate systems: Cartesian, semi-log and polar. The polar coordinate system illustrates the difficulties associated with non-Cartesian coordinates: it is hard to draw the axes correctly!}
-	\label{fig:coord}
+  \centering
+  \caption{Examples of axes and grid lines for three coordinate systems: Cartesian, semi-log and polar. The polar coordinate system illustrates the difficulties associated with non-Cartesian coordinates: it is hard to draw the axes correctly!}
+  \label{fig:coord}
 \end{figure}
 
 \subsection{Faceting}\label{sec:faceting}
 
 There is also another thing that turns out to be sufficiently useful that we should include it in our general framework: faceting (also known as conditioned or trellis plots). This makes it easy to create small multiples of different subsets of an entire dataset. This is a powerful tool when investigating whether patterns hold across all conditions.  The faceting specification describes which variables should be used to split up the data, and how they should be arranged in a grid.
-
-
 
 \section{Data structures}
 \label{sec:data_structures}
@@ -373,9 +405,9 @@ There are two ways to create these plot objects: all at once with \f{qplot}, as 
 
 One thing to note is that all ggplot2 objects (with the exception of the main plot object) are proto objects.  Proto is a package which implements the prototype-style of object-oriented programming.  There are some major differences between this and the typical S3 or S4 style of OO in R, but the good news is that you only need to worry about them if you want to develop your own extensions to ggplot2.  For everyday use, the proto objects are hidden behind a facade which makes them act like normal R objects.
 
-{\tt str} to see full structure (it can be large!)
+{  t str} to see full structure (it can be large!)
 
-{\tt summary} briefly describes the structure of the plot
+{  t summary} briefly describes the structure of the plot
 
 Data stored inside the plot - if you change the data outside of the plot, and then redraw a saved plot, it will not be updated.  Consequence of R copying semantics.
 
