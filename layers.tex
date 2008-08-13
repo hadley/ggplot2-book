@@ -32,7 +32,7 @@ These two chapters are companions, with this one explaining how layers work and 
 \section{Creating a plot}
 \label{sec:ggplot}
 
-To build up a plot layer by layer, we start by creating a plot object. When discussing \f{qplot}, we didn't note that it creates a plot object, but it does. It creates a plot object, adds layers, and shows the result, applying a lot of default values along the way. To initialize a plot object without any shortcuts, simply call \f{ggplot} with no arguments; assign the result to a variable in order to add to it afterward.  ggplot accepts two optional arguments: {\bf data} and aesthetic {\bf mapping}.  The data argument needs little explanation: It's the data frame that you want to visualise.  You are already familiar with aesthetic mappings from \f{qplot}, and the syntax here is quite similar, although you need to wrap the pairs of aesthetic attribute and variable name in an \f{aes}:
+To build up a plot layer by layer, we start by creating a plot object. When discussing \f{qplot}, we didn't note that it creates a plot object, but it does. It creates a plot object, adds layers, and shows the result, applying a lot of default values along the way. To initialise a plot object without any shortcuts, simply call \f{ggplot} with no arguments; assign the result to a variable in order to add to it afterward.  ggplot accepts two optional arguments: {\bf data} and aesthetic {\bf mapping}.  The data argument needs little explanation: It's the data frame that you want to visualise.  You are already familiar with aesthetic mappings from \f{qplot}, and the syntax here is quite similar, although you need to wrap the pairs of aesthetic attribute and variable name in an \f{aes}:
 
 % LISTING
 % 
@@ -359,6 +359,25 @@ There's another difference in the second plot.  The boxplots are drawn in thick 
 % END
 
 The {\tt interaction()} function is particularly useful if there isn't a pre-existing variable that separates the groups you are interested in, but a combination of variables does.
+
+\subsection{Matching aesthetics to graphic objects}
+\label{sub:matching}
+
+In ggplot2, geoms can be roughly divided into individual and collective geoms.  An individual geom has a distinctive graphical object for each row in the data frame.  For example, the point geom has a single point for each  .  On the other, collective geoms represent multiple observations.  This maybe a result of a statistical summary, or may be fundamental to the display of the geom, as with polygons.  Lines and paths fall somewhere in between - each overall line is composed of a set of straight segments, but each segment represents two points (compare this with \code{geom_segment} where each segment represents a single row).  What happens when the aesthetic attributes of the points are different?
+
+% Need example of each: point, line, polygon
+
+For individual geoms, this isn't a problem at the drawing level, but still may be a problem at the perceptual level - overplotting means that you can't distinguish between individual points and in some sense the point geom becomes a collective geom.
+
+For lines and paths, operates on an off by one principle.  Blending too complicated in general (how would you blend from green dotted lines to red dashed lines?).  Rules for colour & line type (due to technical limitations in R).
+
+% Need point + line example
+
+For all other collective geoms, all aesthetic attributes must be the same, or the default value will be used.  This makes sense for fill as it is a property of the entire object - it doesn't make sense to think about having a different fill for each point on the border.
+
+There is of course also an interaction with grouping.  This results in an intuitive display for bars and area plots because stacking the individual bars or areas results in the same shape as the original data.
+
+% Need bar & area example, and line & polygon example
 
 \section{Geoms}
 \label{sec:geom}
