@@ -9,13 +9,17 @@
 
 \section{Introduction}\label{sec:introduction}
 
-You can choose to use just {  t qplot}, without any understanding of the underlying grammar, but you will not be able to use the full power of ggplot.  By learning more about the grammar, and the components that make it up, you will be able to create a wider range of plots, as well as being able to combine multiple sources of data, and customise to your heart's content.
+You can choose to use just \f{qplot}, without any understanding of the underlying grammar, but you will not be able to use the full power of ggplot.  By learning more about the grammar, and the components that make it up, you will be able to create a wider range of plots, as well as being able to combine multiple sources of data, and customise to your heart's content.
 
-This chapter describes the theoretical basis of ggplot2: the layered grammar of graphics, a based based on Wilkinson's grammar of graphics \citep{wilkinson:2006}.  The next chapters then describe parts of the grammar in more detail: layers (geoms and stats), scales, and positioning (coordinate systems, faceting and position adjustments),
+This chapter describes the theoretical basis of \ggplot and introduces you to the components that make a \ggplot graphic:  .  The following chapters describe each part in more detail: layers (geoms and stats), scales, and positioning (coordinate systems, faceting and position adjustments),
+
+the layered grammar of graphics, a based based on Wilkinson's grammar of graphics \citep{wilkinson:2006}
 
 You may want to skip this chapter in a first reading of the book, and then come back to it when you want a deeper understanding of how all the pieces fit together.
 
 This chapter begins by describing in detail a simple plot is drawn.  We'll start with a simple scatterplot, and then grow progressively more complicated, by transforming the axes and adding a smooth line.
+
+This chapter also describes the R data structures that underlie \ggplot.  
 
 Important terms that are used throughout the book are emboldened.
 
@@ -32,7 +36,8 @@ When creating a plot we start with data.  Consider the fuel economy dataset illu
   \begin{center}
   \begin{tabular}{llrrrlrrl}
     \toprule
-    Model & Manufacturer & Displacement (l) & Year & Cylinders & City mpg & Highway mpg & Class \\
+    manufacturer & model & disp & year & cyl & cty & hwy & class \\
+    % Model & Manufacturer & Displacement (l) & Year & Cylinders & City mpg & Highway mpg & Class \\
     \midrule
     audi & a4         & 1.8 & 1999 & 4 & 18 & 29 & compact\\
     audi & a4         & 1.8 & 1999 & 4 & 21 & 29 & compact\\
@@ -47,7 +52,7 @@ When creating a plot we start with data.  Consider the fuel economy dataset illu
         \bottomrule
   \end{tabular}
   \end{center}
-  \caption{10 cars from the \code{mpg} data set.}
+  \caption{The first 10 cars in the \code{mpg} data set.}
   \label{tbl:mpg}
 \end{table}
 
@@ -62,7 +67,9 @@ When creating a plot we start with data.  Consider the fuel economy dataset illu
 
 Consider Figure~\ref{fig:mpg}.  It is a scatterplot of two continuous variables, with points coloured by a third variable.  From your experience in the previous chapter, you should have a pretty good feel for how to create this plot with \f{qplot}.  But what is going on underneath the surface?  How does \ggplot draw this plot?
 
-We need to start by considering exactly what a scatterplot is. One way to describe it is has a point for each observation, positioned in a Cartesian coordinate system.  Each point has a horizontal and vertical position, a size and a colour.  We $x$-position, $y$-position, size and colour {\bf aesthetics}, things that can be perceived on the graphic.  For this plot \var{displ} is mapped to $x$-position, \var{hwy} to $y$-position and \var{cyl} to colour.  Size is not mapped to a variable and so is fixed at its default value.  
+\subsubsection{Mapping}
+
+We need to start by considering exactly what a scatterplot is. One way to describe it is has a point for each observation, positioned in a Cartesian coordinate system.  Each point has a horizontal and vertical position, a size and a colour.  We $x$-position, $y$-position, size and colour {\bf aesthetics}, things that can be perceived on the graphic.  For this plot \var{displ} is mapped to $x$-position, \var{hwy} to $y$-position and \var{cyl} to colour.  Size is not mapped to a variable and so is left at its default value.  
 
 This information can be represented in a new dataset which reflects these mappings, and removes other variables not needed for this plot. This new dataset is shown in Table \ref{tbl:mapping}.
 
@@ -88,19 +95,30 @@ This information can be represented in a new dataset which reflects these mappin
     \bottomrule
   \end{tabular}
   \end{center}
-  \caption{Sample rows from \code{msleep} with variables named according to the aesthetic that they use.}
+  \caption{First 10 rows from \code{mpg} rearranged into format for scatterplot.  This is all the information we need to draw the scatterplot.}
   \label{tbl:mapping}
 \end{table}
 
-We can create many different types of plots using this data.  The scatterplot uses points, but we were instead to draw lines we would get a line plot.  If we used bars, we'd get a bar plot.  Bars, lines and points are all examples of geometric objects, or {\bf geom}s.
+We can create many different types of plots using this data.  The scatterplot uses points, but we were instead to draw lines we would get a line plot.  If we used bars, we'd get a bar plot.  (Neither of those examples would make much sense here, but we could still draw them).  Bars, lines and points are all examples of geometric objects, or {\bf geom}s.  Geoms determine the ``type'' of plot.  Plots that use a single geom have common names like scatterplot, bar chart and line plot, but as we make more complex plots with combinations of multiple geoms we will soon produce plots that don't have a special name.  In fact, once you've mastered the grammar, I think you'll find that most of the plots that you produce a uniquely tailored to your problem and no longer have convenient names to call them by.
 
-The values in Table~\ref{tbl:mapping} have no meaning to the computer.  We need to convert them from data units (e.g.\ litres and miles per gallon) to physical units (e.g.\ pixels and colours), that the computer can display.  The way that these physical units can been specified in R is described in Appendix~\ref{chp:specification}.  This conversion process is called {\bf scaling} and performed by scales, in conjunction with the coordinate system for  position aesthetics.
+\subsubsection{Scaling} 
 
-Scaling position is easy in this example because we are using the defaults: linear scales and a Cartesian coordinate system.  We just need a linear mapping from the range of the data to $[0, 1]$.  We use $[0, 1]$ instead of exact pixels because in practice the drawing system that \ggplot uses, \code{grid}, will takes care of that final conversion.  However, there actually two steps in this process, which we only see for more complicated examples - both the scale and the coordinate system do a separate transformation.
+The values in Table~\ref{tbl:mapping} have no meaning to the computer.  We need to convert them from data units (e.g.\ litres and miles per gallon) to physical units (e.g.\ pixels and colours), that the computer can display.  The way that these physical units can been specified in R is described in Appendix~\ref{chp:specification}.  This conversion process is called {\bf scaling} and performed by scales.  For position scales, we need an additional step which determines how the two positions (x and y) combine to form the final position on the plot.  This is done by the coordinate system, or {\bf coord}.
 
-It is the coordinate system that performs this mapping, and for other coordinate systems the mapping is more complex (and may depend on both x and y variables), but in all cases is mapped to range $[0, 1]$.
+Scaling position is easy in this example because we are using the defaults: linear scales and a Cartesian coordinate system.  We just need a linear mapping from the range of the data to $[0, 1]$.  We use $[0, 1]$ instead of exact pixels because in practice the drawing system that \ggplot uses, \code{grid}, will takes care of that final conversion.  However, there actually two steps in this process, which we will only see in more complex cases - both the scale and the coordinate system do a separate transformation.
 
-The process for mapping the colour is a little more complicated, and here the scale does all of the work.  A scale needs to know the range and the domain of the data.  The default scale in \ggplot maps colour to evenly spaced hues on a colour wheel as illustrated by Figure~\ref{fig:colour-wheel}.
+It is the coordinate system that performs this mapping, and for other coordinate systems the mapping is more complex (and may depend on both x and y variables), but in all cases is mapped to $[0, 1]$.
+
+The process for mapping the colour is a little more complicated, as we have a  non-numeric range.  and here the scale does all of the work.  A scale needs to know the range and the domain of the data.  The default scale in \ggplot maps colour to evenly spaced hues on a colour wheel as illustrated by Figure~\ref{fig:colour-wheel}.
+
+% scaled <- transform(scatter,
+%   x = format(rescaler(x, "range"), digits=2),
+%   y = format(rescaler(y, "range"), digits=2)
+% )
+% col <- scale_colour_discrete()
+% col$train(factor(scaled$colour))
+% scaled$colour <- col$map(factor(scaled$colour))
+% cat(tabulate(scaled[1:10, ]))
 
 
 \begin{figure}[htbp]
@@ -110,17 +128,23 @@ The process for mapping the colour is a little more complicated, and here the sc
   \label{fig:colour-wheel}
 \end{figure}
 
-
-
 \begin{table}[ht]
   \begin{center}
-  \begin{tabular}{r|r|r}
+  \begin{tabular}{rrr}
+    \toprule
     $x$ & $y$ & $colour$\\
-    \hline
-    25 & 11 & red\\
-    0 & 0 & red \\
-    75  & 53 & blue \\
-    200 & 300 & blue
+    \midrule
+    0.037 & 0.531 & \#FF6C91FF\\
+    0.037 & 0.531 & \#FF6C91FF\\
+    0.074 & 0.594 & \#FF6C91FF\\
+    0.074 & 0.562 & \#FF6C91FF\\
+    0.222 & 0.438 & \#00C1A9FF\\
+    0.222 & 0.438 & \#00C1A9FF\\
+    0.278 & 0.469 & \#00C1A9FF\\
+    0.037 & 0.438 & \#FF6C91FF\\
+    0.037 & 0.406 & \#FF6C91FF\\
+    0.074 & 0.500 & \#FF6C91FF\\
+    \bottomrule
   \end{tabular}
   \end{center}
   \caption{Simple dataset with variables mapped into aesthetic space.}
@@ -143,7 +167,7 @@ Finally, we need to render this data to create the graphical objects that are di
   \label{fig:simple}
 \end{figure}
 
-\subsection{A more complicated plot}\label{sec:how_to_build_a_more_complicated_plot} 
+\section{A more complicated plot}\label{sec:how_to_build_a_more_complicated_plot} 
 
 Now that you are acquainted with drawing a simple plot, we will create a more complicated plot.  The big difference with this plot is that we'll use faceting.  Faceting is also known as conditioning, trellising and latticing, and produces small multiples showing different subsets of the data.  If we facet the previous plot by $D$ we will get a plot that looks like Figure~\ref{fig:complex}, where each value of $D$ is displayed in a different panel.
 
@@ -215,7 +239,7 @@ The first steps of plot creation proceed as before, but new steps are necessary 
   \label{tbl:complex-mapping}
 \end{table}
 
-\subsection{Summary}\label{sec:the_grammar}
+\section{Components of the layered grammar}
 
 In the examples above, we have seen some of the components that make up a plot:
 
@@ -234,8 +258,6 @@ In the examples above, we have seen some of the components that make up a plot:
 \end{itemize}
 
 \noindent Together, the data, mappings, statistical transformation and geometric object form a layer.  A plot may have multiple layers, for example, when we overlay a scatterplot with a smoothed line.
-
-\section{Components of the layered grammar}
 
 To be precise, the layered grammar defines the components of a plot as:
 
