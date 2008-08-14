@@ -51,11 +51,32 @@ The domain can also be specified directly, overriding the training process, by m
 We have left a few stages out of this description of the process for simplicity.  For example, we haven't discussed the role facetting plays in training, and we have also ignored position adjustments.
 
 
-\section{Using scales}
+\section{Constructing and using scales}
 \label{sec:scale-usage}
 
-Table~\ref{tbl:scale_list} lists all the built-in scales.  To add a scale to your plot, you create a scale object and then add it (using \code{+}) to your plot. Scale constructors have a common naming scheme.  They all start with \code{scale_}, followed by the name of the aesthetic, followed by by the name of the scale. For example, the name of the default scale for the colour aesthetic and discrete data is {\tt scale\_colour\_hue()}, and to use the Brewer colour scale for fill, you would add {\tt scale\_fill\_brewer()} to your plot.
+Every aesthetic has a default scale that is added to the plot whenever you use that aesthetic in a layer.  These are listed in Table~\ref{tbl:default-scales}.
 
+\begin{table}
+  \begin{center}
+  \begin{tabular}{lll}
+    \toprule
+    Aesthetic & Discrete & Continuous \\
+    \midrule
+    Colour and fill & hue & gradient \\
+    Position & discrete & continuous \\
+    Shape & shape & --- \\
+    Line type & linetype & --- \\
+    Size & discrete  & size \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \caption{Default scales, by aesthetic and variable type.  The default scale varies depending on whether the variable is continuous or discrete.  Shape and line type do not not have a default continuous scale; size does not have a default discrete scale.}
+  \label{tbl:default-scales}
+\end{table}
+
+To add a different scale or to modify some features of the default scale, create a scale object and add it to a plot (using \code{+}). All scale constructors have a common naming scheme.  They start with \code{scale_}, followed by the name of the aesthetic (e.g., ``colour,'' ``shape,'' or ``x''), and finally by the name of the scale (e.g., ``gradient,'' ``hue'', or ``discrete''). For example, the name of the default scale for the colour aesthetic based on discrete data is {\tt scale\_colour\_hue()}, and the name of the Brewer colour scale for filled points is {\tt scale\_fill\_brewer()}.
+
+% unused, Hadley says.
 % TABLE
 %  CAPTION: List of all scales, arranged by the aesthetic that they apply to
 %  LABEL: tbl:scale_list
@@ -63,6 +84,34 @@ Table~\ref{tbl:scale_list} lists all the built-in scales.  To add a scale to you
 % source("scales-list.r")
 % cat(laply(names(scales), function(s) paste(type_header(s), type_table(s), sep ="")))
 % cat("\\bottomrule\n")
+
+The following example shows the difference between the default discrete and continuous scales for colour, as well as how to override the default scale.
+
+% FIGURE
+%  COL: 3
+%  LABEL: scale-defaults
+%  CAPTION: 
+% 
+% p <- qplot(sleep_total, sleep_cycle, data=msleep, colour=vore)
+% p 
+% p + scale_colour_discrete("What does\nit eat?", 
+%    breaks = rev(c("herbi", "carni", "omni", NA)), 
+%    labels = rev(c("plants", "meat", "both", "don't know")))
+% p + scale_colour_brewer(pal="Set1")
+
+
+The default colour scale for discrete values uses equally spaced hues, the default scale for continuous values uses a gradient of colours between blue and yellow, and the Brewer colour scale uses colours selected to work well in a variety of situations (see \url{http://colorbrewer.org} for more detail).
+
+As well as referring to scales explicitly by name, you can also refer to the default scales with the shorthand scale name {\tt discrete} or {\tt continuous}.  For example, the default discrete colour scale is \code{scale_colour_discrete}.  You can change the default scales with \code{set_default_scale(aesthetic, variable_type, scale_name, ...)}.  Extra arguments are passed to the scale constructor.  For example, if you wanted to set up default black and white colour scales you could do:
+
+% LISTING
+% 
+% set_default_scale("colour", "discrete", "grey")
+% set_default_scale("colour", "continous", "gradient", 
+%  low = "white", high = "black"
+% )
+
+% Having to specify the type of variable (continuous or discrete) seems like extra work: why can't ggplot2 figure that out by itself?  Well, it can't because you can create the scales independently of (and before) the plot.  Allows you to create scales independently of the plot.  
 
 As well as having a common naming scheme, all scales share a set of common arguments.  These arguments control the basic operation of the scale and are described below.
 
@@ -126,58 +175,6 @@ This code generates the plots in the window:
 % p + scale_x_continuous(breaks=c(5.5, 6.5))
 % p + scale_x_continuous(limits=c(5.5, 6.5))
 % END
-
-
-\subsection{Default scales}
-\label{sub:default_scales}
-
-Every aesthetic has a default scale that is added to the plot whenever you use that aesthetic in a layer.  These are listed in Table~\ref{tbl:default-scales}.
-
-\begin{table}
-  \begin{center}
-  \begin{tabular}{lll}
-    \toprule
-    Aesthetic & Discrete & Continuous \\
-    \midrule
-    Colour and fill & hue & gradient \\
-    Position & discrete & continuous \\
-    Shape & shape & --- \\
-    Line type & linetype & --- \\
-    Size & discrete  & size \\
-    \bottomrule
-  \end{tabular}
-  \end{center}
-  \caption{Default scales, by aesthetic and variable type.  The default scale varies depending on whether the variable is continuous or discrete.  Shape and line type do not not have a default continuous scale; size does not have a default discrete scale.}
-  \label{tbl:default-scales}
-\end{table}
-
-The following example shows the difference between the default discrete and continuous scales for colour, as well as how to override the default scale.
-
-% FIGURE
-%  COL: 3
-%  LABEL: scale-defaults
-%  CAPTION: 
-% 
-% p <- qplot(sleep_total, sleep_cycle, data=msleep, colour=vore)
-% p 
-% p + scale_colour_discrete("What does\nit eat?", 
-%    breaks = rev(c("herbi", "carni", "omni", NA)), 
-%    labels = rev(c("plants", "meat", "both", "don't know")))
-% p + scale_colour_brewer(pal="Set1")
-
-The default colour scale for discrete values uses equally spaced hues, the default scale for continuous values uses a gradient of colours between blue and yellow, and the Brewer colour scale uses colours selected to work well in a variety of situations (see \url{http://colorbrewer.org} for more detail).
-
-As well as referring to scales explicitly by name, as in Section~\ref{sec:scale-usage}, you can also refer to the default scales with  scale name {\tt discrete} or {\tt continuous}.  For example, the default discrete colour scale is \code{scale_colour_discrete}.  You can change the default scales with \code{set_default_scale(aesthetic, variable_type, scale_name, ...)}.  Extra arguments are passed to the scale constructure.  For example, if you wanted to set up default black and white colours scales you could do:
-
-% LISTING
-% 
-% set_default_scale("colour", "discrete", "grey")
-% set_default_scale("colour", "continous", "gradient", 
-%  low = "white", high = "black"
-% )
-
-% Having to specify the type of variable (continuous or discrete) seems like extra work: why can't ggplot2 figure that out by itself?  Well, it can't because you can create the scales independently of (and before) the plot.  Allows you to create scales independently of the plot.  
-
 
 \section{More details}
 \label{sec:more-details}
