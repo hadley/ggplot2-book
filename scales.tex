@@ -182,10 +182,14 @@ This code generates the plots in the window:
 Scales can be divided roughly into four separate groups:
 
 \begin{itemize}
-  \item Continuous position scales.
-  \item Colour gradients.
-  \item Discrete scales.
-  \item The identity scale.
+  \item Continuous position scales, used to map continuous variables onto the plotting region and to construct the corresponding axes.
+
+  \item Colour gradients, used to map continuous variables to points or sub-regions in the plotting area and to construct the corresponding legends.  For example, colour gradients are used in rendering density surfaces.
+
+  \item Discrete scales, used to map discrete variables to symbol size, shape or colour, and to create the corresponding legend.
+
+  \item The identity scale, used to plot variable values directly to the aesthetic rather than mapping them.  For example, if the variable you want to map to symbol colour is itself a vector of colours, use the colours in the variable.
+
 \end{itemize}
 
 \noindent  This section describes each type in more detail.  Precise details about individual scales can be found in the documentation, which can be used either within R (e.g.\ {\tt ?scale\_brewer}), or online at  \url{http://had.co.nz/ggplot2}.  The advantage of the online documentation is that you can see all the example plots, and navigate between pages more easily.
@@ -193,7 +197,7 @@ Scales can be divided roughly into four separate groups:
 \subsection{Continuous position scales}
 \label{sub:scale_position}
 
-Every continuous scale takes a {\tt trans} argument.  This argument allows to specify a non-linear transformation.  The transformation is carried out by a transformer, which describes the transformation, its inverse and how to draw the labels. Table~\ref{tbl:common-trans} lists some of the more common transformers. 
+The most common continuous position scales are {\tt scale\_x\_continuous} and {\tt scale\_y\_continuous}, which map data to the x and y axis.  The most interesting variations are produced using transformations.  Every continuous scale takes a {\tt trans} argument, allowing the specification of a variety of transformations, both linear and non-linear.  The transformation is carried out by a ``transformer,'' which describes the transformation, its inverse, and how to draw the labels. Table~\ref{tbl:common-trans} lists some of the more common transformers.
 
 \begin{table}
   \centering
@@ -216,30 +220,41 @@ Every continuous scale takes a {\tt trans} argument.  This argument allows to sp
     % power     & $\frac{x^p - 1}{p * sgn(values - 1)}$ & $|values| * p + 1 $ 
     \bottomrule
   \end{tabular}
-  \caption{List of built transformers.}
+  \caption{List of built-in transformers.}
   \label{tbl:common-trans}
 \end{table}
 
-Transformations are most often used to modify position scales, so there is a shortcut for x, y, and z scales: \verb|scale_x_log10()| is equivalent to \verb|scale_x_continuous(trans = "log10")|.
+Transformations are most often used to modify position scales, so there are shortcuts for x, y, and z scales: \verb|scale_x_log10()| is equivalent to \verb|scale_x_continuous(trans = "log10")|.
 
-Of course, you can also perform the transformation yourself.  For example instead of adding {\tt scale\_x\_log}, you could plot {\tt log(x)}.  That makes an identical graphs except for one difference: the axis and tick labels.  If you use a transformed scale, the axes will be labelled in the original data space. In both cases, the transformation occurs before the statistical summary. Figure~\ref{fig:trans} illustrates this difference.
+Of course, you can also perform the transformation yourself.  For example instead of adding {\tt scale\_x\_log}, you could plot {\tt log(x)}.  That produces an identical result inside the plotting region, but the the axis and tick labels won't be the same.  If you use a transformed scale, the axes will be labelled in the original data space. In both cases, the transformation occurs before the statistical summary. Figure~\ref{fig:trans} illustrates this difference, and these commands produce the two plots in the figure:
+
+% dfs: Is one of these log base 10 and the other natural log?
+
+% LISTING
+% qplot(carat, price, data=diamonds) + scale_x_log10() + scale_y_log10()
+% qplot(log10(carat), log10(price), data=diamonds)
+% END
 
 \begin{figure}[htbp]
   \centering
     \includegraphics[width=0.5\textwidth]{trans-scale}%
     \includegraphics[width=0.5\textwidth]{trans-data}
-  \caption{A scatterplot of diamond price vs carat illustrating the difference between log transforming the scale (left) and log transforming the data (right).  The plots are identical, but the axis labels are different.}
+  \caption{A scatterplot of diamond price vs. carat illustrating the difference between log transforming the scale (left) and log transforming the data (right).  The plots are identical, but the axis labels are different.}
   \label{fig:trans}
 \end{figure}
 
+
+%%% dfs -- note that the word 'grob' suddenly appears here without
+%%% any definition or explanation.
+
 Transformers are also used in \verb|coord_trans|, where the transformation occurs after the statistic has been calculated, and affect the shape of the grob.  \verb|coord_trans| is described in more detail in Section XXX.
 
-The \code{trans} argument works for any continuous scale, including the colour gradients described below, but there are no shortcut functions.
+The \code{trans} argument works for any continuous scale, including the colour gradients described below, but the shortcuts only exist for position scales.
 
 \subsection{Colour gradients}
 \label{sub:scale-gradient}
 
-There are three types of colour gradients available.  A two colour gradient, a three colour gradient and a custom n colour gradient.  This section introduces you to a little bit of theory how these gradients work, and shows you how to create your own for specific purposes.
+There are three types of colour gradients available.  A two--colour gradient, a three--colour gradient and a custom n--colour gradient.  This section introduces you to a little bit of theory how these gradients work and shows you how to create your own for specific purposes.
 
 % f2d <- with(faithful, kde2d(eruptions, waiting, h= c(1, 10), n=50))
 % df <- with(f2d, cbind(expand.grid(x, y), as.vector(z)))
