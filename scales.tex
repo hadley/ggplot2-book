@@ -4,9 +4,13 @@
 
 \section{Introduction}
 
-Scales control the mapping between data and aesthetics.  They convert abstract data values into concrete aesthetics that you can perceive and that R can understand, such as position, colour, shape, size, and line type.  You don't have to learn about scales, because \ggplot will automatically add default scales when needed, but understanding how scales work and how you can control them gives you much more control over your plots. 
+Scales control the mapping from data to aesthetics. Each scale is a function from a region in data space (the domain) to a region in aesthetic space (the range).  The domain, as we already know, can be continuous or discrete, ordered or unordered.  The range consists of concrete aesthetics that you can perceive and that R can understand, such as position, colour, shape, size, and line type.  
 
-A scale is a function from a region in data space (the domain) to a region in aesthetic space (the range).  The domain can be continuous or discrete.  The range is much more diverse and can be position, colour, size or shape.  For each scale there is also a {\bf guide} which allows the viewer to perform the inverse mapping, from aesthetic space to data space.  For position aesthetics, these are the axes, and for all other aesthetics they are the legends.
+If you blinked when you read that scales map data both to position and colour, you are not alone.  The notion that the same kind of object is used to map data to positions and symbols strikes some people as unintuitive.  However, you will see the logic and power of this notion as you read further in the chapter.
+
+For each scale there is also a {\bf guide} which allows the viewer to perform the inverse mapping, from aesthetic space to data space.  For position aesthetics, the axes are the guides; for all other aesthetics, the legends do that job.
+
+When a scale (and guide) are needed, ggplot automatically adds them using default values, so you can generate quite a lot of plots without knowing how scales work.  However, understanding scales and learning how to manipulate them gives you much more control over your plots.
 
 % Add example showing an axis and legend(s?) for the same variable mapped to different aesthetics
 
@@ -22,82 +26,39 @@ This chapter covers:
 \section{How scales work}
 \label{sec:how-scales-work}
 
-A scale is a function from a region in data space (the domain) to a region in aesthetic space (the range).  While the range of the scale is specified during construction, the domain must be learned from the data. For continuous variables, this is an interval on the real line (stored as a numeric vector of length 2), and for discrete variables it is set of values (stored as a character vector).  For example, in the mammals sleep dataset, the domain of the continuous variable \var{bodywt} variable is $[0.005, 6654]$, and the domain of the discrete variable \var{vore} is \{carni, herbi, omni\}.
+To describe how scales work, we will first describe the domain (the data space) and the range (the aesthetic space), and then outline the process by which one is mapped to the other.
 
-The each scale also has range.  For discrete scales, this is just a vector of aesthetic values corresponding to the input values.  For continuous scales, this will be a 1d path some more complicated space.  For example, the continuous colour scales have a range which is a path through colour space.
+Since an input variable is either discrete or continuous, the domain is either a set of values (stored as a factor, character vector, or logical vector) or an interval on the real line (stored as a numeric vector of length 2). For example, in the mammals sleep dataset, the domain of the discrete variable \var{vore} is \{carni, herbi, omni\}, and the domain of the continuous variable \var{bodywt} is $[0.005, 6654]$.
 
-The process by which a scale learns the domain is called training, and takes place in three steps when the plot is drawn: transformation, domain calculation and mapping.  
+The range can also be discrete or continuous.  For discrete scales, it is a vector of aesthetic values corresponding to the input values. For continuous scales, it is a 1d path through some more complicated space.  For example, the continuous colour scales have a range which is a path through colour space.
+
+%  'path through colour space' could use some elaboration
+
+The range is either specified by the user when the scale is created, or by the scale itself.
+
+The process of mapping the domain to the range often includes the following stages:
 
 \begin{itemize}
-	\item  For continuous data, it is often useful to display a transformation of the data, like a logarithm or square root.  The {\bf transform} step performs this transformation, before any statistical summaries are calculated.  This ensures that a plot of $log(x)$ vs $log(y)$ on linear scales looks the same as $x$ vs $y$ on log scales.  Transformations are described in more depth in Section~\ref{sec:trans}. 
+\item
+{\bf transformation}: For continuous variables, it is often useful to display a transformation of the data, such as a logarithm or square root.  This ensures that a plot of $log(x)$ vs $log(y)$ on linear scales looks the same as $x$ vs $y$ on log scales.  Transformations are described in more depth in Section~\ref{sec:trans}.
 
-	\item After the statistics are computed, the {\bf domain} is calculated for the data in each layer.  The individual domains are then combined to get a global domain, across all layers and facets.  
-	
-	Training can be overridden by manually setting the domain of the scale with the {\tt limits} argument, as described in Section~\ref{sec:scale-usage}.  Any data values outside of the domain of the scale, will be set to \code{NA}.
+After any transformations have been applied, the statistical summaries for each layer are computed based on the transformed data.
+\item
+{\bf training}:  During this key stage, the domain is learned.  Sometimes learning the domain of a scale is extremely straightforward: In a plot with only one layer, representing only raw data, it may consist simply of determining the minimum and maximum values of a continuous variable (after transformation), or listing the unique levels of a categorical variable.  However, sometimes the domain must reflect multiple layers.  For example, imagine a scale that will be used to create an axis; the minimum and maxiumum values of the raw data in the first layer and the statistical summary in the second layer are likely to be different, but they must all eventually be drawn on the same plot.
 
-	\item Now that both global domain and range are known, the scaling function can be applied to {\bf map} data values to aesthetic values.  Nothing needs to be done for some scales: for example, for continuous position scales, all the difficult work has already been done by the transformation step.
+After all statistics have been computed, the domain is calculated for the data in each layer.  The individual domains are then combined to get a global domain, across all layers. 
+
+The domain can also be specified directly, overriding the training process, by manually setting the domain of the scale with the {\tt limits} argument, as described in Section~\ref{sec:scale-usage}.  Any data values outside of the domain of the scale will be set to \code{NA}.
+\item
+{\bf mapping:}  The global domain has now been determined, and we already knew the range before we started this process.  The last thing to do, then, is to apply the scaling function that maps data values to aesthetic values.  Nothing needs to be done for some scales: For example, for continuous position scales, all the difficult work has already been done by the transformation step.
 	
 \end{itemize}
 
-\section{Using scales}
+We have left a few stages out of this description of the process for simplicity.  For example, we haven't discussed the role facetting plays in training, and we have also ignored position adjustments.
+
+
+\section{Constructing and using scales}
 \label{sec:scale-usage}
-
-Table~\ref{tbl:scale_list} lists all the built-in scales.  To add a scale to your plot, you create a scale object and then add it (using \code{+}) to your plot. Scale constructors have a common naming scheme.  They all start with \code{scale_}, followed by the name of the aesthetic, followed by by the name of the scale. For example, to use the Brewer colour scale for fill, you would add {\tt scale\_fill\_brewer()} on to your plot.  
-
-% TABLE
-%  CAPTION: List of all scales, arranged by the aesthetic that they apply to
-%  LABEL: tbl:scale_list
-%
-% source("scales-list.r")
-% cat(laply(names(scales), function(s) paste(type_header(s), type_table(s), sep ="")))
-% cat("\\bottomrule\n")
-
-As well as having a common naming scheme, all scales share a set of common arguments.  These arguments control the basic operation of the scale and are described below.
-
-\begin{itemize}
-  \item {\bf name}:  the label which will appear on the axis or legend. You can supply text strings (using ``$\backslash$n'' for line breaks) or mathematical expressions (as described by \verb|?plotmath|):
-  
-  \begin{figure}[htbp]
-    \centering
-      \includegraphics[width=0.33\textwidth]{scales-name-1}%
-      \includegraphics[width=0.33\textwidth]{scales-name-2}%
-      \includegraphics[width=0.33\textwidth]{scales-name-3}
-    \caption{Legends with names given by (from left to right): {\tt "Tip rate"}, {\tt "The amount of the tip$\backslash$ndivided by the total bill"} and {\tt expression(frac(tip, total\_bill)} }
-    \label{fig:legend-names}
-  \end{figure}
-  
-  % FIGURE 
-  %  CAPTION: Legends with names given by (from left to right): {\tt "Tip rate"}, {\tt "The amount of the tip$\backslash$ndivided by the total bill"
-  %
-  % p <- qplot(tip, total_bill, data=tips, colour=tip/total_bill)
-  % p + scale_colour_hue("Tip rate")
-  % p + scale_colour_hue("The amount of the tip\ndivided by the total bill")
-  % p + scale_colour_hue(expression(frac(tip, total_bill))
-
-  \item {\bf limits}: fixes the domain of the scale.   Continuous scales take a numeric vector of length two; discrete scales a character vector. If limits are set, no training of the data will be performed.  
-  
-  There are shortcut functions for setting the limits of continuous x and y scales: \f{xlim} and \f{ylim}.  Each has two arguments, specifying the new domain, and create a scale object.  
-  
-  Particularly useful for zooming (limits smaller than range of data), and ensuring that limits are consistent across multiple plots (limits larger than range of some subsets of data).  
-  
-  Any value not in the domain of the scale is not displayed (i.e.\ for an observation to be displayed it must be in the domain of every scale on the plot)
-
-  \item {\bf breaks} and {\bf labels}: control where the values and labels that appear on the axis or legend. If {\tt labels} is set, you must also specify {\tt breaks}, so that the two can be matched up correctly.  Breaks differs from limits in that it affects what appears on the guide, not what appears on the plot, as illustrated by Figure~\ref{fig:breaks_vs_legends}.
-  
-  % Alternatively, both breaks and labels can be a function with a single  argument, range, that returns a numeric vector (for breaks) or a character vector (for labels) with desired break positions and labels.
-\end{itemize}
-
-\begin{figure}[htbp]
-  \centering
-    \includegraphics[width=0.33\textwidth]{scales-unlimited}%
-    \includegraphics[width=0.33\textwidth]{scales-breaks}%
-    \includegraphics[width=0.33\textwidth]{scales-limits}
-  \caption{The difference between breaks and legends.  (Left) default plot \code{limits = c(4, 6), breaks = 4:8}.  (Middle)  {\tt breaks = c(4.5,5.5)} and (right) {\tt limits = c(4.5,5.5)}.}
-  \label{fig:breaks_vs_legends}
-\end{figure}
-
-\subsection{Default scales}
-\label{sub:default_scales}
 
 Every aesthetic has a default scale that is added to the plot whenever you use that aesthetic in a layer.  These are listed in Table~\ref{tbl:default-scales}.
 
@@ -119,6 +80,17 @@ Every aesthetic has a default scale that is added to the plot whenever you use t
   \label{tbl:default-scales}
 \end{table}
 
+To add a different scale or to modify some features of the default scale, create a scale object and add it to a plot (using \code{+}). All scale constructors have a common naming scheme.  They start with \code{scale_}, followed by the name of the aesthetic (e.g., ``colour,'' ``shape,'' or ``x''), and finally by the name of the scale (e.g., ``gradient,'' ``hue'', or ``discrete''). For example, the name of the default scale for the colour aesthetic based on discrete data is {\tt scale\_colour\_hue()}, and the name of the Brewer colour scale for filled points is {\tt scale\_fill\_brewer()}.
+
+% unused, Hadley says.
+% TABLE
+%  CAPTION: List of all scales, arranged by the aesthetic that they apply to
+%  LABEL: tbl:scale_list
+%
+% source("scales-list.r")
+% cat(laply(names(scales), function(s) paste(type_header(s), type_table(s), sep ="")))
+% cat("\\bottomrule\n")
+
 The following example shows the difference between the default discrete and continuous scales for colour, as well as how to override the default scale.
 
 % FIGURE
@@ -133,9 +105,10 @@ The following example shows the difference between the default discrete and cont
 %    labels = rev(c("plants", "meat", "both", "don't know")))
 % p + scale_colour_brewer(pal="Set1")
 
+
 The default colour scale for discrete values uses equally spaced hues, the default scale for continuous values uses a gradient of colours between blue and yellow, and the Brewer colour scale uses colours selected to work well in a variety of situations (see \url{http://colorbrewer.org} for more detail).
 
-As well as referring to scales explicitly by name, as in Section~\ref{sec:scale-usage}, you can also refer to the default scales with  scale name {\tt discrete} or {\tt continuous}.  For example, the default discrete colour scale is \code{scale_colour_discrete}.  You can change the default scales with \code{set_default_scale(aesthetic, variable_type, scale_name, ...)}.  Extra arguments are passed to the scale constructure.  For example, if you wanted to set up default black and white colours scales you could do:
+As well as referring to scales explicitly by name, you can also refer to the default scales with the shorthand scale name {\tt discrete} or {\tt continuous}.  For example, the default discrete colour scale is \code{scale_colour_discrete}.  You can change the default scales with \code{set_default_scale(aesthetic, variable_type, scale_name, ...)}.  Extra arguments are passed to the scale constructor.  For example, if you wanted to set up default black and white colour scales you could execute:
 
 % LISTING
 % 
@@ -146,17 +119,84 @@ As well as referring to scales explicitly by name, as in Section~\ref{sec:scale-
 
 % Having to specify the type of variable (continuous or discrete) seems like extra work: why can't ggplot2 figure that out by itself?  Well, it can't because you can create the scales independently of (and before) the plot.  Allows you to create scales independently of the plot.  
 
+As well as having a common naming scheme, all scales share a set of common arguments.  These arguments control the basic operation of the scale and are described below.
+
+\begin{itemize}
+  \item {\bf name}:  sets the label which will appear on the axis or legend. You can supply text strings (using ``$\backslash$n'' for line breaks) or mathematical expressions (as described by \verb|?plotmath|).  The plots in the following figure are produced using this code:
+
+% LISTING
+% p <- qplot(tip, total_bill, data=tips, colour=tip/total_bill)
+% p + scale_colour_gradient("Tip rate")
+% p + scale_colour_gradient("The amount of the tip\ndivided by the total bill")
+% p + scale_colour_gradient(expression(frac(tip, total_bill))
+% END
+
+Because {\tt scale\_colour\_gradient()} is the default scale for the colour aesthetic and continuous data, the only variation we see in the the plots is the different labels on the legends ~--~ and the resulting change in the plot's aspect ratio, in the case of the middle plot.
+
+  \begin{figure}[htbp]
+    \centering
+      \includegraphics[width=0.33\textwidth]{scales-name-1}%
+      \includegraphics[width=0.33\textwidth]{scales-name-2}%
+      \includegraphics[width=0.33\textwidth]{scales-name-3}
+    \caption{Legends with names given by (from left to right): {\tt "Tip rate"}, {\tt "The amount of the tip$\backslash$ndivided by the total bill"} and {\tt expression(frac(tip, total\_bill)} }
+    \label{fig:legend-names}
+  \end{figure}
+  
+  % FIGURE 
+  %  CAPTION: Legends with names given by (from left to right): {\tt "Tip rate"}, {\tt "The amount of the tip$\backslash$ndivided by the total bill"
+  %
+  % p <- qplot(tip, total_bill, data=tips, colour=tip/total_bill)
+  % p + scale_colour_gradient("Tip rate")
+  % p + scale_colour_gradient("The amount of the tip\ndivided by the total bill")
+  % p + scale_colour_gradient(expression(frac(tip, total_bill))
+
+  \item {\bf limits}: fixes the domain of the scale.   Continuous scales take a numeric vector of length two; discrete scales take a character vector. If limits are set, no training of the data will be performed.  
+  
+  There are shortcut functions for setting the limits of continuous x and y scales: \f{xlim} and \f{ylim}.  Each has two arguments specifying the endpoints of the new domain, and each creates a scale object.  
+  
+  This is particularly useful for zooming (i.e., setting limits that are smaller than the full range of data), and for ensuring that limits are consistent across multiple plots intended to be compared (i.e., setting limits that are larger or smaller than some of the default ranges).  
+  
+  Any value not in the domain of the scale is not displayed; i.e., for an observation to be displayed it must be in the domain of every scale on the plot.
+
+  \item {\bf breaks} and {\bf labels}: {\bf breaks} controls which values appear on the axis or legend ~--~ e.g., at what values tick marks should appear on an axis or how a continuous scale is segmented in a legend.  {bf labels} specifies the values that should appear at the breakpoints. (If {\tt labels} is set, you must also specify {\tt breaks}, so that the two can be matched up correctly.)  
+
+To distinguish breaks from limits, remember that breaks affect what appears on the guides, while limits affect what appears on the plot.  See by Figure~\ref{fig:breaks_vs_legends} for an illustration.  The first plot uses the default settings for both breaks and limits, which happen to be limits = c(4, 8) and breaks = 4:8.  In the second plot, the breaks have been reset: The plotted region is the same, but the tick positions and labels have shifted.  In the third plot, it is the limits which have been redefined, so much of the data now falls outside the plotting region. 
+  % Alternatively, both breaks and labels can be a function with a single  argument, range, that returns a numeric vector (for breaks) or a character vector (for labels) with desired break positions and labels.
+\end{itemize}
+
+\begin{figure}[htbp]
+  \centering
+    \includegraphics[width=0.33\textwidth]{scales-unlimited}%
+    \includegraphics[width=0.33\textwidth]{scales-breaks}%
+    \includegraphics[width=0.33\textwidth]{scales-limits}
+  \caption{The difference between breaks and limits.  (Left) default plot \code{limits = c(4, 8), breaks = 4:8}.  (Middle)  {\tt breaks = c(5.5,6.5)} and (right) {\tt limits = c(5.5,6.5)}.}
+  \label{fig:breaks_vs_legends}
+\end{figure}
+
+This code generates the plots in the window:
+
+% LISTING
+% p <- qplot(cyl, wt, data=mtcars)
+% p
+% p + scale_x_continuous(breaks=c(5.5, 6.5))
+% p + scale_x_continuous(limits=c(5.5, 6.5))
+% END
 
 \section{More details}
 \label{sec:more-details}
 
+
 Scales can be divided roughly into four separate groups:
 
 \begin{itemize}
-  \item Continuous position scales.
-  \item Colour gradients.
-  \item Discrete scales.
-  \item The identity scale.
+  \item Continuous position scales, used to map continuous variables onto the plotting region and to construct the corresponding axes.
+
+  \item Colour gradients, used to map continuous variables to points or sub-regions in the plotting area and to construct the corresponding legends.  For example, colour gradients are used in rendering density surfaces.
+
+  \item Discrete scales, used to map discrete variables to symbol size, shape or colour, and to create the corresponding legend.
+
+  \item The identity scale, used to plot variable values directly to the aesthetic rather than mapping them.  For example, if the variable you want to map to symbol colour is itself a vector of colours, you want to plot those values rather than mapping them to some other colour scale.
+
 \end{itemize}
 
 \noindent  This section describes each type in more detail.  Precise details about individual scales can be found in the documentation, which can be used either within R (e.g.\ {\tt ?scale\_brewer}), or online at  \url{http://had.co.nz/ggplot2}.  The advantage of the online documentation is that you can see all the example plots, and navigate between pages more easily.
@@ -164,7 +204,7 @@ Scales can be divided roughly into four separate groups:
 \subsection{Continuous position scales}
 \label{sub:scale_position}
 
-Every continuous scale takes a {\tt trans} argument.  This argument allows to specify a non-linear transformation.  The transformation is carried out by a transformer, which describes the transformation, its inverse and how to draw the labels. Table~\ref{tbl:common-trans} lists some of the more common transformers. 
+The most common continuous position scales are {\tt scale\_x\_continuous} and {\tt scale\_y\_continuous}, which map data to the x and y axis.  The most interesting variations are produced using transformations.  Every continuous scale takes a {\tt trans} argument, allowing the specification of a variety of transformations, both linear and non-linear.  The transformation is carried out by a ``transformer,'' which describes the transformation, its inverse, and how to draw the labels. Table~\ref{tbl:common-trans} lists some of the more common transformers.
 
 \begin{table}
   \centering
@@ -187,30 +227,41 @@ Every continuous scale takes a {\tt trans} argument.  This argument allows to sp
     % power     & $\frac{x^p - 1}{p * sgn(values - 1)}$ & $|values| * p + 1 $ 
     \bottomrule
   \end{tabular}
-  \caption{List of built transformers.}
+  \caption{List of built-in transformers.}
   \label{tbl:common-trans}
 \end{table}
 
-Transformations are most often used to modify position scales, so there is a shortcut for x, y, and z scales: \verb|scale_x_log10()| is equivalent to \verb|scale_x_continuous(trans = "log10")|.
+Transformations are most often used to modify position scales, so there are shortcuts for x, y, and z scales: \verb|scale_x_log10()| is equivalent to \verb|scale_x_continuous(trans = "log10")|.
 
-Of course, you can also perform the transformation yourself.  For example instead of adding {\tt scale\_x\_log}, you could plot {\tt log(x)}.  That makes an identical graphs except for one difference: the axis and tick labels.  If you use a transformed scale, the axes will be labelled in the original data space. In both cases, the transformation occurs before the statistical summary. Figure~\ref{fig:trans} illustrates this difference.
+Of course, you can also perform the transformation yourself.  For example instead of adding {\tt scale\_x\_log}, you could plot {\tt log(x)}.  That produces an identical result inside the plotting region, but the the axis and tick labels won't be the same.  If you use a transformed scale, the axes will be labelled in the original data space. In both cases, the transformation occurs before the statistical summary. Figure~\ref{fig:trans} illustrates this difference, and these commands produce the two plots in the figure:
+
+% dfs: Is one of these log base 10 and the other natural log?
+
+% LISTING
+% qplot(carat, price, data=diamonds) + scale_x_log10() + scale_y_log10()
+% qplot(log10(carat), log10(price), data=diamonds)
+% END
 
 \begin{figure}[htbp]
   \centering
     \includegraphics[width=0.5\textwidth]{trans-scale}%
     \includegraphics[width=0.5\textwidth]{trans-data}
-  \caption{A scatterplot of diamond price vs carat illustrating the difference between log transforming the scale (left) and log transforming the data (right).  The plots are identical, but the axis labels are different.}
+  \caption{A scatterplot of diamond price vs. carat illustrating the difference between log transforming the scale (left) and log transforming the data (right).  The plots are identical, but the axis labels are different.}
   \label{fig:trans}
 \end{figure}
 
+
+%%% dfs -- note that the word 'grob' suddenly appears here without
+%%% any definition or explanation.
+
 Transformers are also used in \verb|coord_trans|, where the transformation occurs after the statistic has been calculated, and affect the shape of the grob.  \verb|coord_trans| is described in more detail in Section XXX.
 
-The \code{trans} argument works for any continuous scale, including the colour gradients described below, but there are no shortcut functions.
+The \code{trans} argument works for any continuous scale, including the colour gradients described below, but the shortcuts only exist for position scales.
 
 \subsection{Colour gradients}
 \label{sub:scale-gradient}
 
-There are three types of colour gradients available.  A two colour gradient, a three colour gradient and a custom n colour gradient.  This section introduces you to a little bit of theory how these gradients work, and shows you how to create your own for specific purposes.
+There are three types of colour gradients available.  A two--colour gradient, a three--colour gradient and a custom n--colour gradient.  This section introduces you to a little bit of theory how these gradients work and shows you how to create your own for specific purposes.
 
 % f2d <- with(faithful, kde2d(eruptions, waiting, h= c(1, 10), n=50))
 % df <- with(f2d, cbind(expand.grid(x, y), as.vector(z)))
