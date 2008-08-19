@@ -4,11 +4,13 @@
 
 \section{Introduction}
 
-Scales control the mapping between data and aesthetics.  They convert abstract data values into concrete aesthetics that you can perceive and that R can understand, such as position, colour, shape, size, and line type.  When a scale is needed, ggplot automatically adds one using default values, so you can generate quite a lot of plots without knowing how they work.  However, understanding scales and learning how to manipulate them gives you much more control over your plots.
+Scales control the mapping from data to aesthetics. Each scale is a function from a region in data space (the domain) to a region in aesthetic space (the range).  The domain, as we already know, can be continuous or discrete, ordered or unordered.  The range consists of concrete aesthetics that you can perceive and that R can understand, such as position, colour, shape, size, and line type.  
 
-If you blinked when you read that scales map data both to position and colour, you are not alone.  The notion that the same kind of object is used to map data to positions and symbols strikes many people as unintuitive.  However, you will see the logic and power of this notion as you read further in the chapter.
+If you blinked when you read that scales map data both to position and colour, you are not alone.  The notion that the same kind of object is used to map data to positions and symbols strikes some people as unintuitive.  However, you will see the logic and power of this notion as you read further in the chapter.
 
-To define a scale more precisely, it is a function from a region in data space (the domain) to a region in aesthetic space (the range). The domain, as we already know, can be continuous or discrete, ordered or unordered.  The range is much more diverse and can be position, colour, size or shape.  For each scale there is also a {\bf guide} which allows the viewer to perform the inverse mapping, from aesthetic space to data space.  These are the axes for position aesthetics and the legends for all other aesthetics.
+For each scale there is also a {\bf guide} which allows the viewer to perform the inverse mapping, from aesthetic space to data space.  For position aesthetics, the axes are the guides; for all other aesthetics, the legends do that job.
+
+When a scale (and guide) are needed, ggplot automatically adds them using default values, so you can generate quite a lot of plots without knowing how scales work.  However, understanding scales and learning how to manipulate them gives you much more control over your plots.
 
 This chapter covers:
 
@@ -22,11 +24,13 @@ This chapter covers:
 \section{How scales work}
 \label{sec:how-scales-work}
 
-A scale is a function from a region in data space (the domain) to a region in aesthetic space (the range).  We will first describe the domain and the range, and then outline the process by which one is mapped to the other.
+To describe how scales work, we will first describe the domain (the data space) and the range (the aesthetic space), and then outline the process by which one is mapped to the other.
 
 Since an input variable is either discrete or continuous, the domain is either a set of values (stored as a factor, character vector, or logical vector) or an interval on the real line (stored as a numeric vector of length 2). For example, in the mammals sleep dataset, the domain of the discrete variable \var{vore} is \{carni, herbi, omni\}, and the domain of the continuous variable \var{bodywt} is $[0.005, 6654]$.
 
 The range can also be discrete or continuous.  For discrete scales, it is a vector of aesthetic values corresponding to the input values. For continuous scales, it is a 1d path through some more complicated space.  For example, the continuous colour scales have a range which is a path through colour space.
+
+%  'path through colour space' could use some elaboration
 
 The range is either specified by the user when the scale is created, or by the scale itself.
 
@@ -38,9 +42,9 @@ The process of mapping the domain to the range often includes the following stag
 
 After any transformations have been applied, the statistical summaries for each layer are computed based on the transformed data.
 \item
-{\bf training}:  During this key stage, the domain is learned.  Sometimes learning the domain of a scale is extremely straightforward: In a plot with only one layer, representing only raw data, it may consist simply of determining the minimum and maximum values of a continuous variable (after transformation), or listing the unique levels of a categorical variable.  However,  sometimes the plot includes multiple layers, so statistical summaries may affect the domain.  For example, imagine a scale that will be used to create an axis; the minimum and maxiumum values of the raw data and the statistical summary are likely to be different, but they must all eventually be drawn on the same plot.
+{\bf training}:  During this key stage, the domain is learned.  Sometimes learning the domain of a scale is extremely straightforward: In a plot with only one layer, representing only raw data, it may consist simply of determining the minimum and maximum values of a continuous variable (after transformation), or listing the unique levels of a categorical variable.  However, sometimes the domain must reflect multiple layers.  For example, imagine a scale that will be used to create an axis; the minimum and maxiumum values of the raw data in the first layer and the statistical summary in the second layer are likely to be different, but they must all eventually be drawn on the same plot.
 
-After all statistics are computed, the domain is calculated for the data in each layer.  The individual domains are then combined to get a global domain, across all layers. 
+After all statistics have been computed, the domain is calculated for the data in each layer.  The individual domains are then combined to get a global domain, across all layers. 
 
 The domain can also be specified directly, overriding the training process, by manually setting the domain of the scale with the {\tt limits} argument, as described in Section~\ref{sec:scale-usage}.  Any data values outside of the domain of the scale will be set to \code{NA}.
 \item
@@ -102,7 +106,7 @@ The following example shows the difference between the default discrete and cont
 
 The default colour scale for discrete values uses equally spaced hues, the default scale for continuous values uses a gradient of colours between blue and yellow, and the Brewer colour scale uses colours selected to work well in a variety of situations (see \url{http://colorbrewer.org} for more detail).
 
-As well as referring to scales explicitly by name, you can also refer to the default scales with the shorthand scale name {\tt discrete} or {\tt continuous}.  For example, the default discrete colour scale is \code{scale_colour_discrete}.  You can change the default scales with \code{set_default_scale(aesthetic, variable_type, scale_name, ...)}.  Extra arguments are passed to the scale constructor.  For example, if you wanted to set up default black and white colour scales you could do:
+As well as referring to scales explicitly by name, you can also refer to the default scales with the shorthand scale name {\tt discrete} or {\tt continuous}.  For example, the default discrete colour scale is \code{scale_colour_discrete}.  You can change the default scales with \code{set_default_scale(aesthetic, variable_type, scale_name, ...)}.  Extra arguments are passed to the scale constructor.  For example, if you wanted to set up default black and white colour scales you could execute:
 
 % LISTING
 % 
@@ -179,6 +183,7 @@ This code generates the plots in the window:
 \section{More details}
 \label{sec:more-details}
 
+
 Scales can be divided roughly into four separate groups:
 
 \begin{itemize}
@@ -188,7 +193,7 @@ Scales can be divided roughly into four separate groups:
 
   \item Discrete scales, used to map discrete variables to symbol size, shape or colour, and to create the corresponding legend.
 
-  \item The identity scale, used to plot variable values directly to the aesthetic rather than mapping them.  For example, if the variable you want to map to symbol colour is itself a vector of colours, use the colours in the variable.
+  \item The identity scale, used to plot variable values directly to the aesthetic rather than mapping them.  For example, if the variable you want to map to symbol colour is itself a vector of colours, you want to plot those values rather than mapping them to some other colour scale.
 
 \end{itemize}
 
