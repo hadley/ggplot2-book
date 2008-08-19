@@ -14,60 +14,80 @@
 
 \section{Introduction}\label{sec:introduction}
 
-A typical graphic has three layers:
+The use of layers in ggplot, introduced in the preceding chapter, encourages you to design and construct graphics in a structured manner.  You have learned what a layer is and how to add one to your graphic, but not 
+
+This chapter is a reference guide for why you would want to use many of the geoms and stats included in \ggplot.  It only scratches the surface of the capabilities of each geom, but more information can be found in the online and electronic documentation.
+
+Touch on strategies for creating a graphic
+
+It is useful to think about the purpose of each layer before it is added.  
+
+In general, there are three purposes for a layer:
 
 \begin{itemize}
-  \item The {\bf data}.  This layer appears on every graphic and 
+  \item To display the {\bf data}.  We plot the raw data for many reasons, relying on our skills at pattern detection to spot gross structure, local structure, and outliers.  This layer appears on virtually every graphic.  In the earliest stages of data exploration, it is often the only layer.
 
-  \item A statistical {\bf summary}.  For the purposes of communication and inference, any conclusions we make about the data will typically be summarised and supported by a quantitative model.  Displaying the predictions from this model in the context of the data is useful to both summarise the data, and to detect potential problems with the model.  This is normally the top layer.
+  \item To display a statistical {\bf summary} of the data. As we develop and explore models, it is useful to display the predictions from each model in the context of the data. We learn from the data summaries and we evaluate the model. A summary layer is often a part of a presentation graphic, plots produced to communicate conclusions to others. This layer is normally drawn on top of the data.
 
-  \item {\bf Context}.  The context for the data shouldn't interfere with the perception of the data, so it should normally be on the bottom layer and formatted so that it is minimally perceptible.  That is, if you concentrate on it, you can see it with ease, but it doesn't jump out at you when you are casually browsing the plot.
+  If you review the examples in the preceding chapter, you'll see many examples of plots of data with an added layer displaying a statistical summary.
+
+  \item To add additional {\bf metadata}, context and annotations. A metadata layer displays background context or annotations that help to give meaning to the raw data. 
   
-  For spatial data, the context will often be a map.  For temporal data, it might be significant events outside the data.  Context can also include labelling unusual points.
+  A map is often used as a background layer with spatial data. Background data should be rendered so that it doesn't interfere with the perception of the data, so it should normally be on the bottom layer and formatted so that it is minimally perceptible. That is, if you concentrate on it, you can see it with ease, but it doesn't jump out at you when you are casually browsing the plot.
+
+  Some metadata, on the other hand, is intended to highlight important features of the data. If you have added explanatory labels to a couple of inflection points or outliers, then you want to render them so that they pop out at the viewer. In that case, you want this to be the very last layer drawn.
+
 \end{itemize}
 
-
-\section{Categories}
-\label{sec:categories}
+Keep these distinctions in mind as you read learn about the graphical tools in \ggplot.  
 
 \begin{itemize}
   \item Basic plot types, \secref{sec:basics}.
   \item Displaying distributions, \secref{sec:distributions}.
   \item Dealing with overplotting, \secref{sec:overplotting}.
   \item Surface plots, \secref{sec:surface}.
-  \item Statistical summaries, \secref{sec:summary}
-  \item Revealing uncertainty, \secref{sec:uncertainty}.
+  \item Showing intervals, \secref{sec:intervals}
+  \item Statistical summaries, \secref{sec:summary}.
+  \item Revealing uncertainty and showing intervals, \secref{sec:uncertainty}.
   \item Connecting related observations, \secref{sec:connecting}.
   \item Annotating a plot, \secref{sec:annotating}.
-  \item Weighted data, \secref{sec:weighting}
+  \item Weighted data, \secref{sec:weighting}.
 \end{itemize}
 
-The examples in this section use a mixture of {\tt ggplot()} and {\tt qplot()} calls, reflecting real life.  If you need a reminder on how to translate between the two, see Section~\ref{sec:qplot-ggplot}.
+This is not an exhaustive or exclusive guide.  Many geoms can be used for many different purposes, especially if you are creative.
 
-\section{Basics}\label{sec:basics}
+The examples in this section use a mixture of {\tt ggplot()} and {\tt qplot()} calls, reflecting real life.  If you need a reminder on how to translate between the two, see Appendix~\ref{sec:qplot-ggplot}.
 
-These geoms are the basic geoms used to build up almost all of the other geoms.  These are useful for creating basic graphics, and when building your own geom function (see section \ref{sec:writing_your_own}).
+\section{Basic plot types}\label{sec:basics}
+
+These geoms are the basic geoms used to build up many of the other geoms.  Each of these geoms is associated with a named plot
+
+These are useful for creating basic graphics, and when building your own geom function (see section \ref{sec:writing_your_own}).
 
 \begin{itemize}
-  \item \code{geom_point}: points
+  \item \code{geom_point}: (the scatterplot).  
   \item \code{geom_line}, \code{geom_path}: paths and lines.  Lines are paths that have their x-axis values ordered in increasing value.
   \item \code{geom_polygon}: polygons
-  \item \code{geom_bar}: bars
+  \item \code{geom_bar}: (the barchart).
   \item \code{geom_text}: text
-  \item \code{geom_tile}: tiles, rectangles which form a regular tessellation of the plane
+  \item \code{geom_tile}: (the image plot or level plot), tiles, rectangles which form a regular tessellation of the plane
 \end{itemize}
+
+These geoms are used for displaying data, summaries and metadata.
 
 \section{Displaying distributions}\label{sec:distributions}
 
-There are quite a few geoms associated with displaying distributions:
+There are a number of geoms associated with displaying distributions, depending on the dimensionality of the distribution, whether it is continuous or discrete, and whether you are interested in conditional or joint distributions.
+
+Many of these come in geom/stat pairs.  You can use either.  
 
 \begin{itemize}
 	\item \code{geom_boxplot}: box and whisker plot, for a continuous variable possibly conditioned by a categorical variable
-	\item \code{geom_jitter}: a crude way of investigating densities
-	\item \code{geom_quantile}: quantiles, for a continuous variable conditional on another continuous variable.
-	\item \code{geom_density}: 
-	\item \code{geom_histogram}: 
-	\item \code{geom_2ddensity}: for displaying the density of points on the plot surface.
+	\item \code{geom_jitter} = \code{position_jitter} + \code{geom_point}: a crude way of investigating densities
+	\item \code{geom_quantile} = \code{stat_quantile} + \code{geom_line}: quantiles, for a continuous variable conditional on another continuous variable.
+	\item \code{geom_density} = \code{stat_density} + \code{geom_area}: a density
+	\item \code{geom_histogram} = \code{stat_bin} + \code{geom_bar}: 
+	\item \code{geom_2ddensity} = \code{stat_density2d} + \code{geom_contour}: for displaying the density of points on the plot surface.
 \end{itemize}
 
 % (Ask Heike about this)
@@ -97,7 +117,7 @@ Jittered points can be used for any joint distribution (or conditional if one or
 \section{Dealing with overplotting}
 \label{sec:overplotting}
 
-The simplest way to deal with overplotting is to bin the plot into small squares and count the number of points that lies in each square, much like a 2D histogram.  This count can then be visualised as the third variable on a plot.  However, breaking the plot into many small squares produces distracting visual artefacts.  Carr (reference) suggests using hexagons instead, and this is implemented with \code{geom_hexagon}, using the capabilities of the {\tt hexbin package}.
+The simplest way to deal with overplotting is to bin the plot into small squares and count the number of points that lies in each square, much like a 2D histogram.  This count can then be visualised as the third variable on a plot.  However, breaking the plot into many small squares produces distracting visual artefacts.  Carr \citep{carr:1987} suggests using hexagons instead, and this is implemented with \code{geom_hexagon}, using the capabilities of the {\tt hexbin package}.
 
 A continuous analogue of this is to compute a 2D density function and then visualise this as coloured tiles or contour lines.  This can be done with \code{geom_2ddensity}.
 
