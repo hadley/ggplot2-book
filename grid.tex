@@ -13,13 +13,14 @@ What is \pkg{grid}?  It's the graphics engine that powers ggplot.  It is respons
 
 The grobs (graphical objects) used in this chapter are a bit different to the geoms (geometric objects) used in previous chapters.  A grob is the object that is actually drawn onto the screen, while a geom is a more abstract object which describes the type of object used to draw a plot.  An example may make this more clear. In a line plot, the geom describes that the data should be visualised with a line, and the grobs draw the line itself, as well as the other lines that appear in the grid and axes.
 
-The chapter begins with a discussion of the structure of viewports (\S \ref{sec:plot-viewports}) and grobs (\S \ref{sec:plot-grobs}) used by \ggplot, and then continues to describe the four principle ways to enhance a plot with grid:
+The chapter begins with a discussion of the structure of viewports (\secref{sec:plot-viewports}) and grobs (\secref{sec:plot-grobs}) used by \ggplot, and then continues to describe the four principle ways to enhance a plot with grid:
 
 \begin{itemize}
-  \item Edit existing objects on the plot, \S \ref{sec:grid-existing}.
-  \item Add annotations to the plot, \S \ref{sec:grid-new}.
-  \item Removing grobs from a plot, \S \ref{sec:grid-delete}.
-  \item Arrange multiple plots on a single page, \S \ref{sec:grid-layout}.
+  \item Custom element functions
+  \item Edit existing objects on the plot, \secref{sec:grid-existing}.
+  \item Add annotations to the plot, \secref{sec:grid-new}.
+  \item Removing grobs from a plot, \secref{sec:grid-delete}.
+  \item Arrange multiple plots on a single page, \secref{sec:grid-layout}.
 \end{itemize}
 
 \section{Plot viewports}
@@ -108,8 +109,31 @@ The most important components are:
 
 \end{itemize}
 
+
+\section{Custom element functions}
+\label{sec:element-functions}
+
+To see how to write custom element functions, it's good to start by seeing how the built-in element functions work:
+
+% INTERWEAVE
+% 
+% str(args(theme_text()))
+% str(args(theme_rect()))
+% str(args(theme_line()))
+\input{_include/1d9a99fa7a894d2c4a76f7c03cb0fea2.tex}
+% END
+
+You'll notice that these are very similar to the arguments to \f{textGrob}, \f{rectGrob} and \f{polylineGrob} and these are exactly the functions that they are based on.  All that the element function do is set up some defaults.  
+
+If you want to write your own, you need to copy this basic idea: take position arguments, and return a grid grob.  For example, let's say we'd like to give the strips a 3d appearance.  We can do this by drawing a rectangle, and then drawing highlights on the top-right and low-lights (shadows) on the bottom-left.
+
+
 \section{Editing existing objects on the plot}
 \label{sec:grid-existing}
+
+From time to time, the theming system will not give you enough control.  This may occur if you want to modify a single element of a 
+
+Where possible, using the theming system will be easier, because using grid will affect a component, but not the space saved for that element.
 
 Most of the difficulty in modifying elements of the plot is figuring out what the grob you want to modify is called.  Once you have that you can use {\tt grid.gedit}, to locate and then modify that grob. 
 
@@ -134,6 +158,7 @@ Modifying a grob requires some knowledge of the different parameters of the grob
   \caption{Common graphical parameters for grid grobs.  Note that point size is controlled separately.}
   \label{tbl:gpar}
 \end{table}
+
 
 In this example, we edit the font of all labels.
 
