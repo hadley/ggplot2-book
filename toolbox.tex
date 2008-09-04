@@ -39,56 +39,111 @@ In general, there are three purposes for a layer:
 
 \end{itemize}
 
-Keep these distinctions in mind as you read learn about the graphical tools in \ggplot.  
+Keep these distinctions in mind as you learn about the graphical tools in \ggplot.  
+
+This chapter is broken up into the following sections, each of which deals with a particular graphical challenge.  This is not an exhaustive or exclusive categorisation, and there are many other possible ways to break up graphics into different categories.  Many geoms can be used for many different purposes, especially if you are creative.
 
 \begin{itemize}
-  \item Basic plot types, \secref{sec:basics}.
-  \item Displaying distributions, \secref{sec:distributions}.
-  \item Dealing with overplotting, \secref{sec:overplotting}.
-  \item Surface plots, \secref{sec:surface}.
-  \item Showing intervals, \secref{sec:intervals}
+  \item Basic plot types, \secref{sec:basics}, to produce common, ``named'' graphics.
+  
+  \item Displaying distributions, \secref{sec:distributions}, whether continuous or discrete, 1d or 2d, joint or conditional, with histograms, density plots, boxplots and other creative combinations.
+  
+  \item Dealing with overplotting, \secref{sec:overplotting} is a challenge for large data.
+
+  \item Surface plots, \secref{sec:surface}, display 3d surfaces in 2d, with imageplots, contours and other variations.
+
   \item Statistical summaries, \secref{sec:summary}.
+
   \item Revealing uncertainty and showing intervals, \secref{sec:uncertainty}.
+
   \item Connecting related observations, \secref{sec:connecting}.
+
   \item Annotating a plot, \secref{sec:annotating}.
+
   \item Weighted data, \secref{sec:weighting}.
 \end{itemize}
 
-This is not an exhaustive or exclusive guide.  Many geoms can be used for many different purposes, especially if you are creative.
 
 The examples in this section use a mixture of {\tt ggplot()} and {\tt qplot()} calls, reflecting real life.  If you need a reminder on how to translate between the two, see Appendix~\ref{sec:qplot-ggplot}.
 
 \section{Basic plot types}\label{sec:basics}
 
-These geoms are the basic geoms used to build up many of the other geoms.  Each of these geoms is associated with a named plot
+These geoms are the basic geoms used to build up many of the other geoms.  Most of these geoms are associated with a named plot: when that geom is used by itself in a plot, that plot has a special name.
 
-These are useful for creating basic graphics, and when building your own geom function (see section \ref{sec:writing_your_own}).
+Each of these geoms is 2 dimensional and requires both \code{x} and \code{y} aesthetics.  All understand \code{colour} and \code{size} aesthetics, and the filled geoms also understand \code{fill}.  The point geom also uses \code{shape} and line and path geoms understand \code{linetype}. The geoms are used for displaying data, summaries and metadata.
 
 \begin{itemize}
-  \item \code{geom_point}: (the scatterplot).  
-  \item \code{geom_line}, \code{geom_path}: paths and lines.  Lines are paths that have their x-axis values ordered in increasing value.
-  \item \code{geom_polygon}: polygons
-  \item \code{geom_bar}: (the barchart).
-  \item \code{geom_text}: text
-  \item \code{geom_tile}: (the image plot or level plot), tiles, rectangles which form a regular tessellation of the plane
+  \item \code{geom_point} produces a scatterplot.
+
+  \item \code{geom_line} makes a line plot.  The \code{group} aesthetic determine which observations are connected.
+
+  \item \code{geom_area} draws an area plot, which is a line plot filled to the y-axis (filled lines).
+
+  \item \code{geom_path} is similar to a line plot, but lines are connected in the order they appear in the data, not from left to right.  
+
+  \item \code{geom_polygon} draws polygons, which are filled paths.
+
+  \item \code{geom_bar(stat = "identity")} makes a barchart).  By default, the bar geom automatically counts values (so is essentially a 1d geom, see \secref{sec:distributions}), so to make it use y values instead of counts, we have to specify the identity stat.
+
+  \item \code{geom_text} adds labels at the specified points.  This is the only geom in this group that requires another aesthetic: label.
+
+  \item \code{geom_tile}: (the image plot or level plot), tiles, rectangles which form a regular tessellation of the plane.  Typically, tiles are given a fill aesthetic mapped to a third variable.
 \end{itemize}
 
-These geoms are used for displaying data, summaries and metadata.
+% FIGURE
+%   LABEL: geom-basic
+%   CAPTION: The basic geoms applied to the same data.  Many give rise to 
+%   to named plots (from top-left to bottom-right): scatterplot, barchart,
+%   line chart, area chart, path plot, labelled scatterplot, image/level 
+%   plot and polygon plot.  Observe the different axis ranges for the 
+%   bar chart and image plot - these geoms take up space outside the 
+%   range of the data, so push the axes out.
+%   GG-WIDTH: 3  GG-HEIGHT: 3 COL: 4
+%   TEX-WIDTH: 0.25\textwidth
+% 
+% df <- data.frame(x = c(3, 1, 5), y = c(2, 4, 6), label = c("a","b","c"))
+% p <- ggplot(df, aes(x, y, label = label)) + scale_x_continuous("") + scale_y_continuous("")
+% p + geom_point() + opts(title = "geom_point")
+% p + geom_bar(stat="identity") + opts(title = "geom_bar(stat=\"identity\")")
+% p + geom_line() + opts(title = "geom_line")
+% p + geom_area() + opts(title = "geom_area")
+% p + geom_path() + opts(title = "geom_path")
+% p + geom_text() + opts(title = "geom_text")
+% p + geom_tile() + opts(title = "geom_tile")
+% p + geom_polygon() + opts(title = "geom_polygon")
+\input{_include/e5035cd379dd21e27042298fcc90ba9f.tex}
+% END
 
 \section{Displaying distributions}\label{sec:distributions}
 
 There are a number of geoms associated with displaying distributions, depending on the dimensionality of the distribution, whether it is continuous or discrete, and whether you are interested in conditional or joint distributions.
 
-Many of these come in geom/stat pairs.  You can use either.  
+Many of these come in geom/stat pairs.  Most of these geoms are aliases: a basic geom is combined with a stat to produce the desired plot.  It looks like the boxplot is an exception to this, but behind the scenes it is using a combination of bars, lines and points.
 
 \begin{itemize}
-	\item \code{geom_boxplot}: box and whisker plot, for a continuous variable possibly conditioned by a categorical variable
+	\item \code{geom_boxplot} = = \code{stat_boxplot} + \code{geom_boxplot}: box and whisker plot, for a continuous variable possibly conditioned by a categorical variable
 	\item \code{geom_jitter} = \code{position_jitter} + \code{geom_point}: a crude way of investigating densities
 	\item \code{geom_quantile} = \code{stat_quantile} + \code{geom_line}: quantiles, for a continuous variable conditional on another continuous variable.
 	\item \code{geom_density} = \code{stat_density} + \code{geom_area}: a density
 	\item \code{geom_histogram} = \code{stat_bin} + \code{geom_bar}: 
 	\item \code{geom_2ddensity} = \code{stat_density2d} + \code{geom_contour}: for displaying the density of points on the plot surface.
 \end{itemize}
+
+The density geom is particularly flexible and creative use can allow it to ...: 
+
+\begin{itemize}
+  \item \code{fill = NA}, colour mapped to another variable, allows you to superimpose the densities of multiple groups on a single plot.  Combined with faceting, this can allow the display of many densities on a single plot.
+  
+  \item \code{position = "stack"}
+
+  \item \code{position = "fill"}: conditional density estimates.
+\end{itemize}
+
+A frequency polygon uses the same underlying stat as the histogram, but a different geom.  \code{stat_bin(geom = "area")} or \code{geom_area(stat = "bin")}
+
+\code{stat_qq} can be used to compare two distributions.  A plot matrix with qq plots can be used to see all pairwise comparisons of variable distributions in a dataset.
+
+Recommendations:  don't use a density plot until you're sure that the underlying density is continuous and unbounded.  If not, you will get some strange artefacts.  When you use a histogram, make sure to experiment with various bin widths.  Remember to try very small bin widths, right down to the resolution of the data.  
 
 % (Ask Heike about this)
 % 
@@ -112,8 +167,6 @@ Many of these come in geom/stat pairs.  You can use either.
 % + cont * cont: bagplot, geom\_2ddensity
 % \end{Verbatim}
 
-Jittered points can be used for any joint distribution (or conditional if one or both variables are categorical)
-
 \section{Dealing with overplotting}
 \label{sec:overplotting}
 
@@ -131,7 +184,7 @@ Another approach to dealing with overplotting is to add supplemental information
 \section{Surface plots}
 \label{sec:surface}
 
-\ggplot currently does not support true 3D plots.  However, it does offer two tools for producing pseudo-3d plots, the imageplot and the contour plot.
+\ggplot currently does not support true 3D plots.  However, it does offer two tools for producing pseudo-3d plots, the image/level plot and the contour plot.  
 
 \begin{itemize}
 	\item \code{geom_tile}: map z variable to fill colour
@@ -249,7 +302,7 @@ There are few different things we might want to weight by:
 % qplot(percwhite, percbelowpoverty, data=midwest)
 % qplot(percwhite, percbelowpoverty, data=midwest, size=poptotal) + scale_area()
 % qplot(percwhite, percbelowpoverty, data=midwest, size=area) + scale_area()
-\input{_include/8ae81761d9336239d9fad7e972273fb8.tex}
+\input{_include/d3c4ad4732d293930d25658f54140a76.tex}
 % END
 
 For more complicated grobs which involve some statistical transformation, we specify weights with the {\tt weight} aesthetic.  These weights will be passed on to the statistical summary function.  Weights are supported for every case where it makes sense: smoothers, quantile regressions, box plots, histograms, and density plots.  You can't see this weighting variable directly, and it doesn't produce a legend, but it will change the results of the statistical summary.  Figure~\ref{weight-lm} shows how weighting by population density effects the relationship between percent white and percent below the poverty line.
@@ -263,7 +316,7 @@ For more complicated grobs which involve some statistical transformation, we spe
 % qplot(percwhite, percbelowpoverty, data = midwest) + lm_smooth 
 % qplot(percwhite, percbelowpoverty, data = midwest, 
 %   weight = popdensity, size = popdensity) + lm_smooth
-\input{_include/cc5982ca207a7fead0444ca88cd753d9.tex}
+\input{_include/c8e5a52420f972202c2f885b787c931d.tex}
 % END
 
 When we weight a histogram or density plot by total population, we change from looking at the distribution of the number of counties, to the distribution of the number of people.  Figure~\ref{fig:weight-hist} shows the difference this makes for a histogram of the percentage below the poverty line.
@@ -276,7 +329,7 @@ When we weight a histogram or density plot by total population, we change from l
 %
 % qplot(percbelowpoverty, data=midwest, geom="histogram", binwidth=1)
 % qplot(percbelowpoverty, data=midwest, geom="histogram", weight=poptotal, binwidth=1) + scale_y_continuous("population")
-\input{_include/175b688d39bab5e108570729e9fbb2d0.tex}
+\input{_include/25be725d61115d40ccfa3aa9d9dbdf79.tex}
 % END
 
 \input{_footer.tex}
