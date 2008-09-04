@@ -10,32 +10,33 @@
 % END
 
 \chapter{Polishing your plots for publication}
-\label{cha:theming}
+\label{cha:polishing}
 
-This chapter will teach you how to use the theming capability of \ggplot to control many aspects of plot appearance.  Together with the next chapter, manipulating plot rendering with \code{grid}, you will learn how to control every aspect of the rendering to get exactly the appearance that you want.
+In this chapter you will learn how to prepare polished plots for publication.  Most of this chapter focusses on the theming capability of \ggplot which allows you to control many non-data aspects of plot appearance, but you will also learn how to adjust geom, stat and scale defaults, and the best way to save plots for inclusion into other software packages.  Together with the next chapter, manipulating plot rendering with \code{grid}, you will learn how to control every visual aspect of the plot to get exactly the appearance that you want.
 
-In \ggplot, the appearance and the structure of the plot are quite separate.  This is different from base and lattice graphics in that you do not specify the appearance of the plot while you are creating it (defining its structure).  In base and lattice graphics, most functions take a very large number arguments that specify the finer points of appearance, which can make the functions complicated and hard to understand.  \ggplot takes a different approach: you create the plot in one step, and then {\em after} it has been created you can edit every detail of the rendering, using the theming system.
+The visual appearance of the plot is determined by both data and non-data related components.  Section~\ref{sec:themes} introduces the theme system which controls all aspects of non-data display.
 
-Themes allow you to customise the appearance of non-data elements of the plot.  They do not affect how the data is rendered by geoms, or how it is transformed by scales.  Themes don't change the perceptual properties of the plot, but they do help you customise the plot to be aesthetically pleasing or match existing style guides.  Themes give you control over:
+By now you should be familiar with the many ways that you can alter the data related components of the plot---layers and scales---to visualise your data and change the appearance of the plot.  In Section~\ref{sec:theme-scale-geom} you will learn how you can change the defaults for these, so that you do not need to repeat the same parameters again and again.
 
-\begin{itemize}
-  \item Fonts in all parts of the plot: the title, axis labels, axis tick labels, strips, legend labels and legend key labels.    
+Finally, Section~\ref{sec:saving} concludes the chapter with a discussion about how to get your graphics out of R and into \LaTeX, Word or other presentation or word-processing software.
 
-  \item Colour of ticks, grid lines, and backgrounds (panel, plot, strip and legend)
+\section{Themes} 
+\label{sec:themes}
 
-\end{itemize}
+The appearance of non-data elements of the plot are controlled by the theme system.  They do not affect how the data is rendered by geoms, or how it is transformed by scales.  Themes don't change the perceptual properties of the plot, but they do help you customise the plot to be aesthetically pleasing or match existing style guides.  Themes give you control over the things like the  fonts in all parts of the plot: the title, axis labels, axis tick labels, strips, legend labels and legend key labels; and the colour of ticks, grid lines, and backgrounds (panel, plot, strip and legend).
 
-\noindent Figure~\ref{fig:themes} shows some of the effects of changing the theme of a plot.  The two examples show the two themes included by default in \ggplot.
+This separation into data and non-data components is quite different from base and lattice graphics.  In base and lattice graphics, most functions take a very large number arguments that specify the finer points of appearance, which can make the functions complicated and hard to understand.  \ggplot takes a different approach: when creating the plot you determine how the data is display, then {\em after} it has been created you can edit every detail of the rendering, using the theming system.  \noindent Figure~\ref{fig:themes} shows some of the effects of changing the theme of a plot.  The two examples show the two themes included by default in \ggplot.
 
 % FIGURE
 %  LABEL: themes
 %  CAPTION: The effect of changing themes.  \Leftc the default grey theme with
 %  grey background and white gridlines.  \Rightc the alternative black and 
-%  white theme with white background and grey gridlines.
+%  white theme with white background and grey gridlines.  Notice how the 
+%  bars, data elements, are identical in both plots.
 % 
 % qplot(rating, data=movies, geom="histogram", binwidth=1)
 % last_plot() + theme_bw()
-\input{_include/4086865e32ebdd97b747895310bc23db.tex}
+\input{_include/c0f2afac2b11b85c988b2dd46a272b98.tex}
 % END
 
 Like many other areas of \ggplot, themes can be controlled on multiple levels from the very coarse to the very fine:
@@ -53,9 +54,7 @@ Like many other areas of \ggplot, themes can be controlled on multiple levels fr
 
 \noindent Generally each of these theme settings can be applied globally, to all plots, or locally to a single plot.  How to do this is described individually for each section.
 
-The chapter concludes with a discussion about how to get your graphics out of R and into \LaTeX, Word or other presentation or word-processing software (\secref{}).
-
-\section{Built-in themes}
+\subsection{Built-in themes}
 \label{sec:built_in}
 
 There are two built-in themes.  The default, \f{theme_gray}, uses a very light grey background with white gridlines.  This follows from the advice of \citet{tufte:2006,tufte:1990,tufte:2001,tufte:1997} and \citet{brewer:1994,carr:2002,carr:1994,carr:1999}. We can still see the gridlines to aid in the judgement of position \citep{cleveland:1993a}, but they have little visual impact and we can easily ``tune'' them out. The grey background gives the plot a similar colour (in a typographical sense) to the remainder of the text, ensuring that the graphics fit in with the flow of a text without jumping out with a bright white background. Finally, the grey background creates a continuous field of colour which ensures that the plot is perceived as a single visual entity. 
@@ -78,14 +77,22 @@ You can apply themes in two ways:
 % 
 % histogram <- qplot(rating, data=movies, geom="histogram", binwidth=1)
 % previous_theme <- theme_set(theme_bw())
+% 
+% # Themes affect the plot when they are drawn, not when they are created
 % histogram
+% 
+% # Override the theme for a single plot by adding it on
 % histogram + theme_bw(30)
+% 
+% # Apply the original theme to a single plot
 % histogram + previous_theme
+% 
+% # Permanently restore the original theme
 % theme_set(previous_theme)
 \input{_include/346905de2684e05ec73594ea9342d814.tex}
 % END
 
-\section{Theme elements}
+\subsection{Theme elements}
 \label{sec:theme_elements}
 
 A theme is made up of multiple \emph{elements} which control the appearance of a single item on the plot.  To get more control over appearance than given by the default themes (or to create your own theme), you can modify these elements.  Each element draws a certain type of graphical object, like text or lines. Table~\ref{tbl:elements} lists all of the customisable elements in a plot. The following two sections describe the built-in element functions, or if those don't meet your needs, how to write your own with \code{grid}.
@@ -155,11 +162,18 @@ Again there are two ways to set individual elements, globally or locally:
 % Change angle of axis labels
 % 
 
+\subsection{More advanced control}
+\label{sub:more_advanced_control}
+
 You can also write your own custom element functions.  You'll need to know more about grid to do this, so this is described in Section~\ref{sec:element-functions}.
 
 \section{Customising scales and geoms}
+\label{sec:theme-scale-geom}
 
 When producing a consistent theme, you may also want to tune some of the scale and geom defaults.  Rather than having to manually specify the changes every time you add the scale or geom, you can use the following functions to alter the default settings for scales and geoms.
+
+\subsection{Scales}
+\label{sub:customise-scales}
 
 To change the default scale associated with an aesthetic, use \f{set_default_scale}. (See Table~\ref{tbl:default-scales} for the defaults.)  This function takes three arguments: the name of the aesthetic, the type of variable (discrete or continuous) and the name of the scale to use as the default.  Further arguments override the default parameters of the scale.  The following example sets up colour and fill scales for black and white printing:
 
@@ -173,6 +187,13 @@ To change the default scale associated with an aesthetic, use \f{set_default_sca
 %   low = "white", high = "black")
 \input{_include/7e79182ad9d19098cfab168d90648015.tex}
 % END
+
+\subsection{Geoms and stats}
+\label{sub:geoms_and_stats}
+
+You can customise geoms and stats in a similar way with \f{update_geom_defaults} and \f{update_stat_defaults}.  The following example demonstrates changing the default point colour and changing the default histogram to a density (``true'') histogram.
+
+Table~\ref{tbl:geom-defaults} lists all of the common aesthetic defaults.  If you change one, it's a good idea to change all the other that you use to ensure that your plots look consistent.  See Chapter~\ref{cha:specifications} for how the values are interpreted by R.
 
 % aes_value <- function(x) paste(names(x), x, sep =": ")
 % 
@@ -205,8 +226,8 @@ To change the default scale associated with an aesthetic, use \f{set_default_sca
   \bottomrule
   \end{tabular}
   \end{center}
-  \caption{Default aesthetic values for geoms.  }
-  \label{tab:}
+  \caption{Default aesthetic values for geoms.  See Chapter~\ref{cha:specifications} for how the values are interpreted by R.}
+  \label{tbl:geom-defaults}
 \end{table}
 
 
@@ -225,7 +246,6 @@ To change the default scale associated with an aesthetic, use \f{set_default_sca
 For interactive use, \f{ggsave}, will use the size of the current graphics device (useful for ensuring a good aspect ratio), but when creating final versions it's recommended to set width and height so that all graphics for a document are the same size.
 
 You have two basic choices of output: raster or vector.  Vector graphics are procedural: .  This means that they are essentially ``infinitely'' zoomable - there is no loss of detail.  Raster graphics are stored as an array of pixels.  Fixed resolution.  Generally, vector output is more desirable, but for complex graphics containing thousands of graphical objects it can be slow to render.  In this case, it may be better to switch to raster output.  For printed use, a high-resolution (e.g. 600 dpi) graphic may be an acceptable compromise, but can be large.
-
 
 \begin{figure}[htbp]
   \centering
