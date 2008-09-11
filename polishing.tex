@@ -2,7 +2,7 @@
 
 % SET_DEFAULTS
 %   GG-WIDTH: 4  GG-HEIGHT: 4
-%   TEX-WIDTH: 0.5\textwidth COL: 2 
+%   TEX-WIDTH: 0.33\textwidth
 %   INLINE: FALSE
 %   CACHE: TRUE
 % 
@@ -36,7 +36,7 @@ This separation into data and non-data components is quite different from base a
 % 
 % qplot(rating, data=movies, geom="histogram", binwidth=1)
 % last_plot() + theme_bw()
-\input{_include/c0f2afac2b11b85c988b2dd46a272b98.tex}
+\input{_include/ec0653ef337ebbb258d3dd6019b88749.tex}
 % END
 
 Like many other areas of \ggplot, themes can be controlled on multiple levels from the very coarse to the very fine:
@@ -89,14 +89,15 @@ You can apply themes in two ways:
 % 
 % # Permanently restore the original theme
 % theme_set(previous_theme)
-\input{_include/346905de2684e05ec73594ea9342d814.tex}
+\input{_include/c56d19110040bd2d35932ceae120bf22.tex}
 % END
 
 \subsection{Theme elements}
 \label{sec:theme_elements}
 
-A theme is made up of multiple \emph{elements} which control the appearance of a single item on the plot.  To get more control over appearance than given by the default themes (or to create your own theme), you can modify these elements.  Each element draws a certain type of graphical object, like text or lines. Table~\ref{tbl:elements} lists all of the customisable elements in a plot. The following two sections describe the built-in element functions, or if those don't meet your needs, how to write your own with \code{grid}.
+A theme is made up of multiple \emph{elements} which control the appearance of a single item on the plot, as listed in Table~\ref{tbl:elements}.  The appearance of each element is controlled an \emph{element function}. There are four main types of elements: segments and lines, rectangles, and text.  Each of these elements has parameters that you can tune, as described in Section~\ref{sec:element_functions}, or you can write your own, as described in Section~\ref{sec:custom-elements}.
 
+There are three elements that have individual \code{x} and \code{y} settings: \code{axis.text}, \code{axis.title} and \code{strip.text}.  Having a different setting for the horizontal and vertical elements allows you to control how text should appear in different orientations.
 
 \begin{table}
   \begin{center}
@@ -133,39 +134,61 @@ A theme is made up of multiple \emph{elements} which control the appearance of a
   \label{tbl:elements}
 \end{table}
 
-There are three elements that have individual \code{x} and \code{y} settings: \code{axis.text}, \code{axis.title} and \code{strip.text}.  Having a different setting for the horizontal and vertical elements allows you to control how text should appear in different orientations.
+\subsection{Element functions} % (fold)
+\label{sub:element_functions}
 
-There are four basic types of built element functions.
+There are four basic types of built-in element functions: text, lines and segments, rectangles and blank.  Each element function has a set of parameters that control the appearance as described below:
 
 \begin{itemize}
-  \item \code{theme_text}. family, face, colour, size, hjust, vjust, angle, lineheight
+  \item \f{theme_text} draws labels and headings. You can control the font \code{family}, \code{face}, \code{colour}, \code{size}, \code{hjust}, \code{vjust}, \code{angle}, and \code{lineheight}.
 
-  \item \code{theme_line} and \code{theme_segment}.  Lines and segments have the same options but are drawn in a slightly different way.  Make sure you match the appropriate type or you will get strange grid errors.  colour, size, linetype
+  \item \f{theme_line} and \f{theme_segment} draw lines and segments with the same options but in a slightly different way.  Make sure you match the appropriate type or you will get strange grid errors.  For these element functions you can control the \code{colour}, \code{size}, and \code{linetype}.
 
-  \item \code{theme_rect}, fill, colour, size, linetype
+  \item \f{theme_rect} draws rectangles, mostly used for backgrounds, you can control the \code{fill}, \code{colour}, \code{size}, and \code{linetype}.
 
-  \item \code{theme_blank}.  Use this element type if you don't want anything drawn, or any space allocated for that element.  
+  \item \code{theme_blank} draws nothing.  Use this element type if you don't want anything drawn, or any space allocated for that element.  
 
 \end{itemize}
 
-Again there are two ways to set individual elements, globally or locally:
+You can see the settings for the current theme with \f{theme_get}.  I haven't included the output here because it takes up several pages.  (Debby: do you think I should include it regardless?  In an appendix?).  You can modify the elements locally for a single plot with \f{opts}, or globally for all future plots with \f{theme_update}.  The following examples shows how you can use these functions.  It's a good idea to look at an existing theme for details about setting the correct angles and justifications for text elements.
 
-\begin{itemize}
-  \item \f{theme_update} modifies the global theme: \code{theme_update(plot.title = theme_text(colour = "red"))}.
-  
-  \item \f{opts} modifies the local theme: \code{qplot(...) + opts(plot.title = theme_text(colour = "red"))}.
-  
-\end{itemize}
+% INTERWEAVE
+% 
+% (p <- qplot(cut, data=diamonds, geom="bar"))
+% p + opts(axis.text.x = theme_text(angle = 45, hjust=1))
+% old_theme <- theme_update(
+%   plot.background = theme_rect(fill = "#3366FF"),
+%   panel.background = theme_rect(fill = "#003DF5"),
+%   axis.text.x = theme_text(colour = "#CCFF33"),
+%   axis.text.y = theme_text(colour = "#CCFF33", hjust = 1),
+%   axis.title.x = theme_text(colour = "#CCFF33", face = "bold"),
+%   axis.title.y = theme_text(colour = "#CCFF33", face = "bold", angle = 90)
+% )
+% p
+% theme_set(old_theme)
+\input{_include/643d0160eb56484423da3102714b6fce.tex}
+% END
 
-% EXAMPLES
+There is some duplication in this example because we have to specify the x and y elements separately.  This is a necessary evil so that you can have total control over the appearance of the elements.
+
+In the following example we use \f{theme_blank} to progressively suppress the appearance of elements we're not interested in.   Notice how the plot automatically reclaims the space previously used by these elements - if you don't want this to happen (perhaps because they need to line up with other plots on the page), use \code{colour = NA, fill = NA} as parameter to create invisible elements that still take up space.
+
+% INTERWEAVE
 % 
-% Change angle of axis labels
-% 
+% p
+% last_plot() + opts(panel.grid.minor = theme_blank())
+% last_plot() + opts(panel.grid.major = theme_blank())
+% last_plot() + opts(panel.background = theme_blank())
+% last_plot() + opts(axis.title.x = theme_blank())
+% last_plot() + opts(axis.title.y = theme_blank())
+% last_plot() + opts(axis.line = theme_segment())
+\input{_include/26d5b2934331b905169eda542302eb76.tex}
+% END
 
 \subsection{More advanced control}
 \label{sub:more_advanced_control}
 
-You can also write your own custom element functions.  You'll need to know more about grid to do this, so this is described in Section~\ref{sec:element-functions}.
+You can also write your own custom element functions.  You'll need to know more about grid to do this, so this is described in Section~\ref{sec:custom-elements}.
 
 \section{Customising scales and geoms}
 \label{sec:theme-scale-geom}
@@ -191,19 +214,22 @@ To change the default scale associated with an aesthetic, use \f{set_default_sca
 \subsection{Geoms and stats}
 \label{sub:geoms_and_stats}
 
-You can customise geoms and stats in a similar way with \f{update_geom_defaults} and \f{update_stat_defaults}.  The following example demonstrates changing the default point colour and changing the default histogram to a density (``true'') histogram.
+You can customise geoms and stats in a similar way with \f{update_geom_defaults} and \f{update_stat_defaults}.  Unlike the other theme settings these will only affect plots \emph{created} after the setting has been changed, not all plots drawn after the setting has been changed.  The following example demonstrates changing the default point colour and changing the default histogram to a density (``true'') histogram.  
 
 Table~\ref{tbl:geom-defaults} lists all of the common aesthetic defaults.  If you change one, it's a good idea to change all the other that you use to ensure that your plots look consistent.  See Chapter~\ref{cha:specifications} for how the values are interpreted by R.
 
 % aes_value <- function(x) paste(names(x), x, sep =": ")
 % 
 % geoms <- Geom$find_all()
+% escape <- function(x) paste("\\code{", x, "}", sep ="")
 % aes_defaults <- lapply(geoms, function(y) aes_value(y$default_aes()))
 % names(aes_defaults) <- unname(sapply(geoms, function(y) y$objname))
 % aes_list <- invert(aes_defaults)
 % aes_list <- Filter(function(x) length(x) > 1, aes_list)
-% aes_names <- lapply(aes_list, function(x) paste(sort(x), collapse = ", "))
-% tabulate(data.frame(names(aes_names), unlist(aes_names)))
+% aes_names <- lapply(aes_list, function(x) paste(escape(sort(x)), collapse = ", "))
+% names <- colsplit(names(aes_names), ": ", c("aes", "value"))
+% names <- apply(names, c(1,2), escape)
+% cat(tabulate(data.frame(names, unlist(aes_names))))
 
 \begin{table}
   \begin{center}
@@ -211,19 +237,19 @@ Table~\ref{tbl:geom-defaults} lists all of the common aesthetic defaults.  If yo
     \toprule
     Aesthetic & Default value & Geoms \\
     \midrule
-    colour & \#3366FF & contour, density\_2d, quantile, smooth                                                                                                                                                                \\
-     & NA      & area, bar, histogram, polygon, rect, tile                                                                                                                                                            \\
-     & black   & abline, crossbar, density, errorbar, hline, jitter, line, linerange, path, point, pointrange, rug, segment, step, text, vline                                                                        \\
-     & grey60  & boxplot, ribbon                                                                                                                                                                                      \\
-    fill & NA        & crossbar, density, jitter, point, pointrange                                                                                                                                                         \\
-     & grey60    & area, bar, histogram, polygon, rect, ribbon, smooth, tile                                                                                                                                            \\
-    intercept & 0    & abline, hline, vline                                                                                                                                                                                 \\
-    linetype & 1     & abline, area, bar, contour, crossbar, density, density\_2d, errorbar, histogram, hline, line, linerange, path, pointrange, polygon, quantile, rect, ribbon, rug, segment, smooth, step, tile, vline   \\
-    shape & 19       & jitter, point, pointrange                                                                                                                                                                            \\
-    size & 0.5       & abline, area, bar, boxplot, contour, crossbar, density, density\_2d, errorbar, histogram, hline, line, linerange, path, pointrange, polygon, quantile, rect, ribbon, rug, segment, smooth, step, vline\\
-     & 2         & jitter, point                                                                                                                                                                                        \\
-    weight & 1       & bar, boxplot, contour, density, density\_2d, histogram, quantile, smooth                                                                                                                              \\
-  \bottomrule
+    \code{colour}   & \code{#3366FF}  & \code{contour}, \code{density2d}, \code{quantile}, \code{smooth}                                                                                                                                                                                                                                                                                                                                \\
+    \code{colour}   & \code{NA}       & \code{area}, \code{bar}, \code{histogram}, \code{polygon}, \code{rect}, \code{tile}                                                                                                                                                                                                                                                                                                           \\
+    \code{colour}   & \code{black}    & \code{abline}, \code{crossbar}, \code{density}, \code{errorbar}, \code{hline}, \code{line}, \code{linerange}, \code{path}, \code{pointrange}, \code{rug}, \code{segment}, \code{step}, \code{text}, \code{vline}                                                                                                                                                                      \\
+    \code{colour}   & \code{darkblue} & \code{jitter}, \code{point}                                                                                                                                                                                                                                                                                                                                                                       \\
+    \code{colour}   & \code{grey60}   & \code{boxplot}, \code{ribbon}                                                                                                                                                                                                                                                                                                                                                                     \\
+    \code{fill}     & \code{NA}       & \code{crossbar}, \code{density}, \code{jitter}, \code{point}, \code{pointrange}                                                                                                                                                                                                                                                                                                                \\
+    \code{fill}     & \code{grey60}   & \code{area}, \code{bar}, \code{histogram}, \code{polygon}, \code{rect}, \code{ribbon}, \code{smooth}, \code{tile}                                                                                                                                                                                                                                                                           \\
+    \code{linetype} & \code{1}        & \code{abline}, \code{area}, \code{bar}, \code{contour}, \code{crossbar}, \code{density}, \code{density2d}, \code{errorbar}, \code{histogram}, \code{hline}, \code{line}, \code{linerange}, \code{path}, \code{pointrange}, \code{polygon}, \code{quantile}, \code{rect}, \code{ribbon}, \code{rug}, \code{segment}, \code{smooth}, \code{step}, \code{tile}, \code{vline}   \\
+    \code{shape}    & \code{19}       & \code{jitter}, \code{point}, \code{pointrange}                                                                                                                                                                                                                                                                                                                                                   \\
+    \code{size}     & \code{0.5}      & \code{abline}, \code{area}, \code{bar}, \code{boxplot}, \code{contour}, \code{crossbar}, \code{density}, \code{density2d}, \code{errorbar}, \code{histogram}, \code{hline}, \code{line}, \code{linerange}, \code{path}, \code{pointrange}, \code{polygon}, \code{quantile}, \code{rect}, \code{ribbon}, \code{rug}, \code{segment}, \code{smooth}, \code{step}, \code{vline}\\
+    \code{size}     & \code{2}        & \code{jitter}, \code{point}                                                                                                                                                                                                                                                                                                                                                                       \\
+    \code{weight}   & \code{1}        & \code{bar}, \code{boxplot}, \code{contour}, \code{density}, \code{density2d}, \code{histogram}, \code{quantile}, \code{smooth}                                                                                                                                                                                                                                                              \\
+ \bottomrule
   \end{tabular}
   \end{center}
   \caption{Default aesthetic values for geoms.  See Chapter~\ref{cha:specifications} for how the values are interpreted by R.}
@@ -237,7 +263,7 @@ Table~\ref{tbl:geom-defaults} lists all of the common aesthetic defaults.  If yo
 % qplot(mpg, wt, data=mtcars)
 % # update_stat_defaults("bin", aes(y = ..density..), binwidth = 1)
 % qplot(rating, data=movies, geom="histogram", binwidth=1)
-\input{_include/5b2dbe0c7bf07635d822df51e228ad8f.tex}
+\input{_include/c03dc15839c758b00e7f2a658aaf4914.tex}
 % END
 
 \section{Saving your output}
