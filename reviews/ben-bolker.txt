@@ -1,0 +1,160 @@
+                                                                     
+                                                                     
+                                                                     
+                                             
+
+library(ggplot2)
+
+p. 7 bullet point 4 "a way of constructing plots that ..."
+
+p. 8 l. 3 "will tell you provides links"
+
+section 1.4: "crude vs sophisticated" -- lattice is
+great, but harder to learn to use and considerably
+harder to modify
+
+p. 5 Grothendieck?
+
+p. 8 dsmall not given
+I used
+
+set.seed(1001)
+dsmall = diamonds[sample(1:nrow(diamonds),size=1000,replace=FALSE),]
+
+but this won't be exactly identical without the same
+random number seed ... include dsmall in the package?
+(among other things, my dsmall doesn't include the big
+outlier seen in the plots)
+
+p. 15 "it's distribution"
+
+p. 16: "color" doesn't work. should it be a synonym
+for "colour"? (also, no warning for unknown aesthetics --
+maybe not possible?)
+
+p. 16 possibility of getting transparent colo(u)r, or
+open symbols, for size plot?  pretty blobby ...
+
+p. 16 tried
+
+[ggplot2 0.6]
+> qplot(carat,price,size=cut,data=dsmall,colour=I("red"))
+Error in unit(values, units, data = data) : 
+  'x' and 'units' must have length > 0
+
+qplot(carat,price,data=dsmall,colour=I("red"))
+(ditto)
+
+qplot(carat,price,data=dsmall,size=I(2))
+Error in data.frame(size = 2, x = c(0.71, 1.4, 1.2, 2.22, 1.02, 0.56,  : 
+  arguments imply differing number of rows: 1, 1000
+
+
+played around with this a bit but couldn't figure
+out how this should be specified ...
+
+p. 17: will majority of readers know the O(n^2) notation?
+
+WISH list:
+
+datetime axes
+faceting extensions (lots of what I do with lattice)
+
+geom="violin"?
+
+plot 95% ci (or 2*se) instead of se?
+
+dlittle <- subset(dsmall, carat<2)
+qplot(carat,price, data=dlittle,geom=c("point","quantile"),
+   formula = y ~ x + I(x>0.5)+I(x>1),quantiles=c(0.025,0.975))
+
+qplot(carat,price,data=dsmall,geom=c("point","density2d"))
+Figure 2.5 caption missing chars?
+
+figures have blue lines overlaid, default is gray: how to
+change?
+
+qplot(carat,price,data=dsmall,geom=c("point","density2d"))
+
+qplot(color,price/carat,data=diamonds,geom="boxplot")
+
+2.5.4: less and less information about how to do this --
+  do we have to wait to ch. 3, e.g. to figure out how to jitter?
+  can fig 2.8 be done with qplot?
+
+qplot(color,price/carat,data=diamonds,geom="boxplot")
+qplot(color,price/carat,data=dsmall,position="jitter")
+qplot(color,price/carat,data=dsmall,position="jitter",colour=I("red"))
+## same error again
+
+BIG disadvantage of jittering is that the plots are slow,
+and huge if saved ... violin plots sound like an even better idea here ...
+still can't get specified colors to work
+
+qplot(carat,geom="histogram",data=dsmall)
+qplot(carat,geom="histogram",data=diamonds) 
+## differs from picture -- no breaks between bars?
+qplot(carat,geom="density",data=dsmall)
+qplot(carat,geom="density",data=diamonds)
+qplot(carat,geom="histogram",data=diamonds,binwidth=0.01)
+qplot(carat,geom="histogram",data=diamonds,colour=color,fill=color)                                
+## not quite identical: legend in opposite order, no breaks
+qplot(carat,geom="histogram",data=diamonds,fill=color)
+qplot(carat,geom="density",data=diamonds,colour=color)
+
+qplot(color,geom="bar",data=diamonds)
+data(mtcars)
+ggplot(mtcars,aes(x=wt,y=mpg,colour=cyl))
+                                
+p. 23: putting in this "ggplot" statement gives an error
+assign it to a variable instead?
+                                
+g1 =  ggplot(mtcars,aes(x=wt,y=mpg,colour=cyl))
+qplot(                                
+ 
+
+p. 31 l. 2 " otherwise it omitted" -> "if"      
+
+data(mtcars)
+qplot(mpg,wt,data=mtcars)
+q1 = qplot(mpg,wt,data=mtcars,colour=factor(cyl))
+q1+geom_smooth()
+      
+qplot(mpg,wt,data=mtcars) + geom_point()
+
+## examples should be ggplot rather than qplot:
+      ## otherwise get
+      ##      Error in as.data.frame.default(x[[i]], optional = TRUE, stringsAsFactors = stringsAsFactors) : 
+##  cannot coerce class "uneval" into a data.frame
+
+ggplot(mtcars, aes(mpg, wt)) + geom_point()
+ggplot(mtcars, aes(mpg, wt, colour = factor(cyl))) +geom_point() + geom_smooth()
+
+p. 26/31 "you must have a default data [frame?]"
+
+3.4 example code doesn't illustrate %+%?
+
+## examples as shown (ggplot()) gives error --no data
+p <- ggplot(mtcars, aes(mpg,wt))
+p + geom_point(colour="darkblue")
+
+## this explains how to do all the stuff that
+## I couldn't do in the last chapter with I()?
+
+e.g.
+p = ggplot(dsmall,aes(x=carat,y=price,size=cut))
+p+geom_point(colour="red")
+p+geom_point(colour=alpha("black",1/8))
+## wacky?
+p+geom_point(aes(colour=alpha("black",1/8)))
+
+###
+library(nlme)
+data(Oxboys)
+ggplot(Oxboys,aes(x=age,y=height,group=Subject))+geom_line()+geom_smooth(aes(group=1))
+
+ggplot(Oxboys,aes(x=Occasion,y=height))+geom_boxplot(fill="blue",lwd=2,colour="red")
+      
+p. 35/41: "Oxboys"
+
+p. 35 "where we only really"
