@@ -1,32 +1,32 @@
 \input{_header.tex}
 
+% SET_DEFAULTS
+%   GG-WIDTH: 4  GG-HEIGHT: 4
+%   TEX-WIDTH: 0.5\textwidth
+%   INLINE: FALSE
+%   CACHE: TRUE
+% 
+
+% END
+
 \chapter{Mastering the grammar}
 \label{cha:mastery}
 
-% Introduction to the components of the grammar
-% Introduction to the data structure
-% Roadmap for next few chapters
+\section{Introduction}
 
-\section{Introduction}\label{sec:introduction}
+You can choose to use just \f{qplot}, without any understanding of the underlying grammar, but you will not be able to use the full power of ggplot.  By learning more about the grammar, and the components that make it up, you will be able to create a wider range of plots, as well as being able to combine multiple sources of data, and customise to your heart's content.  You may want to skip this chapter in a first reading of the book, coming back to it when you want a deeper understanding of how all the pieces fit together.
 
-You can choose to use just \f{qplot}, without any understanding of the underlying grammar, but you will not be able to use the full power of ggplot.  By learning more about the grammar, and the components that make it up, you will be able to create a wider range of plots, as well as being able to combine multiple sources of data, and customise to your heart's content.
+This chapter describes the theoretical basis of \ggplot: the layered grammar of graphics.  The layered grammar is based on Wilkinson's grammar of graphics \citep{wilkinson:2006}, but adds a number of enhancements that help it to be more expressive and fit smoothly into the R environment.  The differences between the layered grammar and Wilkinson's grammar are described fully in \citep{wickham:2008}, and a guide for converting between \sc{gpl} and \ggplot is included in Appendex~\ref{chp:translating}.  In this chapter you will learn a little bit about each component of the grammar and how they all fit together.  The next chapters discuss the components in more detail, and provide more examples of how you can use them in practice.
 
-This chapter describes the theoretical basis of \ggplot and introduces you to the components that make a \ggplot graphic:  .  The following chapters describe each part in more detail: layers (geoms and stats), scales, and positioning (coordinate systems, faceting and position adjustments), the layered grammar of graphics, a based based on Wilkinson's grammar of graphics \citep{wilkinson:2006}
-
-You may want to skip this chapter in a first reading of the book, and then come back to it when you want a deeper understanding of how all the pieces fit together.
-
-This chapter begins by describing in detail a simple plot is drawn.  We'll start with a simple scatterplot, and then grow progressively more complicated, by transforming the axes and adding a smooth line.
-
-This chapter also describes the R data structures that underlie \ggplot.  
-
-Important terms that are used throughout the book are emboldened.
+This chapter begins by describing in detail the process of drawing a simple plot.  Section~\ref{sec:simple-plot} start with a simple scatterplot, then in Section~\ref{sec:complex-plot} make it more complex by adding a smooth line and facetting.  While working through these examples you will be introduced to all six components of the grammar, which are then defined more precisely in Section~\ref{sec:components}.  The chapter concludes with Section~\ref{sec:data-structures}, which describes how the various components map to data structures in R.  
 
 \section{Building a scatterplot}
-\label{sec:building_a_plot}
+\label{sec:simple-plot}
 
-When creating a plot we start with data.  Consider the fuel economy dataset illustrated in Table~\ref{tbl:mpg}.  This is included in \ggplot and is called \code{mpg}.  It contains all models of car that have had a new model every year from 1999 to 2008, but just for 1999 and 2008. It contains 38 cars produced by 15 manufacturers, for a total of 234 cars.
+To create a plot we must first have data.  Consider the fuel economy dataset illustrated in Table~\ref{tbl:mpg}.  It records make, model, class, engine size, transmission and fuel economy for a selection of US cars in 1999 and 2008.  It contains the 38 models that had a new release every year, an indicator that the car was a popular model.  These models are the Audi A4, Audi A4 Quattro, Audi A6 Quattro, Chevrolet C1500 Suburban 2wd, Chevrolet Corvette, Chevrolet K1500 Tahoe 4wd, Chevrolet Malibu, Dodge Caravan 2wd, Dodge Dakota Pickup 4wd, Dodge Durango 4wd, Dodge Ram 1500 Pickup 4wd, Ford Expedition 2wd, Ford Explorer 4wd, Ford F150 Pickup 4wd, Ford Mustang, Honda Civic, Hyundai Sonata, Hyundai Tiburon, Jeep Grand Cherokee 4wd, Land Rover Range Rover, Lincoln Navigator 2wd, Mercury Mountaineer 4wd, Nissan Altima, Nissan Maxima, Nissan Pathfinder 4wd, Pontiac Grand Prix, Subaru Forester Awd, Subaru Impreza Awd, Toyota 4runner 4wd, Toyota Camry, Toyota Camry Solara, Toyota Corolla, Toyota Land Cruiser Wagon 4wd, Toyota Toyota Tacoma 4wd, Volkswagen Gti, Volkswagen Jetta, Volkswagen New Beetle, and Volkswagen Passat.  This data was collected from the EPA fuel economy website, \url{http://fueleconomy.gov}.
 
-% load("~/documents/ggplot/ggplot/data/mpg.rda")
+This dataset suggests many interesting questions.  How are engine size and fuel economy related?  Has fuel economy improved in the last ten years?  We will try to answer the first question and in the process learn more detail about how the scatterplot is created.
+
 % source("latex.r")
 % cat(tabulate(mpg[1:10, -6]))
 
@@ -50,7 +50,7 @@ When creating a plot we start with data.  Consider the fuel economy dataset illu
         \bottomrule
   \end{tabular}
   \end{center}
-  \caption{The first 10 cars in the \code{mpg} data set.}
+  \caption{The first 10 cars in the \code{mpg} data set, included in the \ggplot package.  \var{cty} and \var{hwy} record miles per gallon (mpg) for city and highway driving respectively.  }
   \label{tbl:mpg}
 \end{table}
 
@@ -62,12 +62,18 @@ When creating a plot we start with data.  Consider the fuel economy dataset illu
 %   factor governing fuel economy: engine size
 % 
 % qplot(displ, hwy, data=mpg, colour=factor(cyl))
+\input{_include/751256907d4aa28225721fc1ce762e6a.tex}
+% END
 
-Consider Figure~\ref{fig:mpg}.  It is a scatterplot of two continuous variables, with points coloured by a third variable.  From your experience in the previous chapter, you should have a pretty good feel for how to create this plot with \f{qplot}.  But what is going on underneath the surface?  How does \ggplot draw this plot?
+Consider Figure~\ref{fig:mpg}, one attempt to answer this question.  It is a scatterplot of two continuous variables, with points coloured by a third variable.  From your experience in the previous chapter, you should have a pretty good feel for how to create this plot with \f{qplot}.  But what is going on underneath the surface?  How does \ggplot draw this plot?
 
 \subsubsection{Mapping}
 
-We need to start by considering exactly what a scatterplot is. One way to describe it is has a point for each observation, positioned in a Cartesian coordinate system.  Each point has a horizontal and vertical position, a size and a colour.  We $x$-position, $y$-position, size and colour {\bf aesthetics}, things that can be perceived on the graphic.  For this plot \var{displ} is mapped to $x$-position, \var{hwy} to $y$-position and \var{cyl} to colour.  Size is not mapped to a variable and so is left at its default value.  
+What is a scatterplot?  Have seen many before.  The XXX defines a scatterplot as a `` ''.
+
+One way to describe it is has a point (•) for each observation, drawn in a Cartesian coordinate system.  Each point has a horizontal and vertical position, a size and a colour.  The $x$-position, $y$-position, size and colour are called {\bf aesthetics}, things that can be perceived on the graphic.  Each aesthetic can be mapped to a variable, or set to a constant value.  
+
+In this plot the aesthetic \var{displ} is mapped to $x$-position, \var{hwy} to $y$-position and \var{cyl} to colour.  Size is not mapped to a variable, but has a constant default value.  
 
 This information can be represented in a new dataset which reflects these mappings, and removes other variables not needed for this plot. This new dataset is shown in Table \ref{tbl:mapping}.
 
@@ -97,13 +103,55 @@ This information can be represented in a new dataset which reflects these mappin
   \label{tbl:mapping}
 \end{table}
 
-We can create many different types of plots using this data.  The scatterplot uses points, but we were instead to draw lines we would get a line plot.  If we used bars, we'd get a bar plot.  (Neither of those examples would make much sense here, but we could still draw them).  Bars, lines and points are all examples of geometric objects, or {\bf geom}s.  Geoms determine the ``type'' of plot.  Plots that use a single geom have common names like scatterplot, bar chart and line plot, but as we make more complex plots with combinations of multiple geoms we will soon produce plots that don't have a special name.  In fact, once you've mastered the grammar, I think you'll find that most of the plots that you produce a uniquely tailored to your problem and no longer have convenient names to call them by.
+We can create many different types of plots using this data.  The scatterplot uses points, but we were instead to draw lines we would get a line plot.  If we used bars, we'd get a bar plot.  Neither of those examples make sense for this data, but we could still draw them, as in Figure~\ref{fig:other-geoms}.  Much like in English, using \ggplot it is still possible grammatically valid plots that don't make any sense.
+
+% FIGURE
+%   LABEL: other-geoms
+%   CAPTION: Instead of using points to represent the data, we could use
+%   other geoms like \leftc lines or \rightc bars.  Neither of these geoms
+%   make much sense for this plot, but they are still valid graphics.
+% 
+% qplot(displ, hwy, data=mpg, colour=factor(cyl), geom="line")
+% qplot(displ, hwy, data=mpg, colour=factor(cyl), geom="bar", 
+%   stat="identity", position = "identity")
+
+Bars, lines and points are all examples of geometric objects, or {\bf geom}s. Geoms determine the ``type'' of the plot. Plots that use a single geom are often given a special name, as listed in Table~\ref{tbl:named-plots}. More complex plots with combinations of multiple geoms that don't have a special name, and we have to described them by hand. For example, Figure~\ref{fig:complex-plot} overlays a per group regression line on the existing plot. What would you call this plot? In fact, once you've mastered the grammar, I think you'll find that most of the plots that you produce a uniquely tailored to your problem and no longer have convenient names to call them by.
+
+\begin{table}
+  \begin{center}
+  \begin{tabular}{c}
+    \toprule 
+    Geom & Name of plot \\
+    \midrule
+    point & scatterplot \\
+    point & bubblechart \\ 
+    bar & barchart \\
+    boxplot & box and whiskers plot \\
+    line & line chart \\     
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \caption{caption}
+  \label{tbl:named-plots}
+\end{table}
+
+% FIGURE
+%   LABEL: complex-plot
+%   CAPTION: More complicated plots don't have their own names.  This plot
+%   takes Figure~\ref{fig:mpg} and adds a regression line to each group. 
+%   What would you call this plot?
+% 
+% qplot(displ, hwy, data=mpg, colour=factor(cyl)) + 
+% geom_smooth(data= subset(mpg, cyl != 5), method="lm")
+
 
 \subsubsection{Scaling} 
 
-The values in Table~\ref{tbl:mapping} have no meaning to the computer.  We need to convert them from data units (e.g.\ litres and miles per gallon) to physical units (e.g.\ pixels and colours), that the computer can display.  The way that these physical units can been specified in R is described in Appendix~\ref{chp:specification}.  This conversion process is called {\bf scaling} and performed by scales.  For position scales, we need an additional step which determines how the two positions (x and y) combine to form the final position on the plot.  This is done by the coordinate system, or {\bf coord}.
+The values in Table~\ref{tbl:mapping} have no meaning to the computer.  We need to convert them from data units (e.g.\ litres and miles per gallon) to physical units (e.g.\ pixels and colours) that the computer can display.  The way that these physical units can be specified in R is described in Appendix~\ref{chp:specification}.  This conversion process is called {\bf scaling} and performed by (surprise!) scales.  
 
-Scaling position is easy in this example because we are using the defaults: linear scales and a Cartesian coordinate system.  We just need a linear mapping from the range of the data to $[0, 1]$.  We use $[0, 1]$ instead of exact pixels because in practice the drawing system that \ggplot uses, \code{grid}, will takes care of that final conversion.  However, there actually two steps in this process, which we will only see in more complex cases - both the scale and the coordinate system do a separate transformation.
+For scales that control the horizontal and vertical position, we need an additional step which determines how the two positions (x and y) combine to form the final position on the plot.  This is done by the coordinate system, or {\bf coord}.
+
+Scaling position is easy in this example because we are using the default  linear scales and Cartesian coordinate system.  We just need a linear mapping from the range of the data to $[0, 1]$.  We use $[0, 1]$ instead of exact pixels because in practice the drawing system that \ggplot uses, \code{grid}, will takes care of that final conversion.  However, there actually two steps in this process, which we will only see in more complex cases - both the scale and the coordinate system do a separate transformation.
 
 It is the coordinate system that performs this mapping, and for other coordinate systems the mapping is more complex (and may depend on both x and y variables), but in all cases is mapped to $[0, 1]$.
 
@@ -125,6 +173,8 @@ The process for mapping the colour is a little more complicated, as we have a  n
   \caption{A colour wheel showing how the default colour scheme for discrete values is produced.}
   \label{fig:colour-wheel}
 \end{figure}
+
+% Colour the entries by their actual colour
 
 \begin{table}[ht]
   \begin{center}
@@ -165,7 +215,8 @@ Finally, we need to render this data to create the graphical objects that are di
   \label{fig:simple}
 \end{figure}
 
-\section{A more complicated plot}\label{sec:how_to_build_a_more_complicated_plot} 
+\section{A more complicated plot}
+\label{sec:complex-plot} 
 
 Now that you are acquainted with drawing a simple plot, we will create a more complicated plot.  The big difference with this plot is that we'll use faceting.  Faceting is also known as conditioning, trellising and latticing, and produces small multiples showing different subsets of the data.  If we facet the previous plot by $D$ we will get a plot that looks like Figure~\ref{fig:complex}, where each value of $D$ is displayed in a different panel.
 
@@ -238,6 +289,7 @@ The first steps of plot creation proceed as before, but new steps are necessary 
 \end{table}
 
 \section{Components of the layered grammar}
+\label{sec:components}
 
 In the examples above, we have seen some of the components that make up a plot:
 
@@ -423,11 +475,15 @@ These principles are encoded as data structures in a fairly straightforward way.
 
 There are two ways to create these plot objects: all at once with \f{qplot}, as shown in the previous chapter, or piece-by-piece with \f{ggplot} and layer functions, as described in the next chapter.
 
+Regardless of how you make the plot, you will always end up with a plot object.  This can be saved or displayed.
+
 One thing to note is that all ggplot2 objects (with the exception of the main plot object) are proto objects.  Proto is a package which implements the prototype-style of object-oriented programming.  There are some major differences between this and the typical S3 or S4 style of OO in R, but the good news is that you only need to worry about them if you want to develop your own extensions to ggplot2.  For everyday use, the proto objects are hidden behind a facade which makes them act like normal R objects.
 
-{  t str} to see full structure (it can be large!)
+{\tt str} to see full structure (it can be large!)
 
-{  t summary} briefly describes the structure of the plot
+{\tt summary} briefly describes the structure of the plot
+
+{\tt recreate} to see (one way) to recreate the plot with code 
 
 Data stored inside the plot - if you change the data outside of the plot, and then redraw a saved plot, it will not be updated.  Consequence of R copying semantics.
 
