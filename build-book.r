@@ -1,13 +1,23 @@
-l(plyr)
+library(plyr)
 l(decumar)
-tex <- c("grid", "introduction", "layers", "mastery", "position", "qplot", "scales", "specifications", "theming", "toolbox", "book-mine")
-r <- file.path("public", paste(tex, ".r", sep=""))
-pdf <- paste(tex, ".pdf", sep="")
+l(ggplot)
 
-l_ply(tex, overwrite_file)
-m_ply(cbind(tex, r), output_code)
+chapters <- c("introduction", "layers", "mastery", "position", "polishing", "qplot", "scales", "specifications", "toolbox", "book-mine")
 
-builders <- c("xelatex", "bibtex", "xelatex", "xelatex")
+tex <- paste(chapters, ".tex", sep="")
+r <-   file.path("public", paste(chapters, ".r", sep=""))
+pdf <- paste(chapters, ".pdf", sep="")
+
+l_ply(tex, function(path) {
+  cat(path, "\n")
+  overwrite_file(path)
+})
+m_ply(cbind(input = tex, output = r), function(input, output) {
+  cat(input, "\n")
+  output_code(input, output)
+})
+
+builders <- c("pdflatex", "bibtex", "pdflatex", "pdflatex")
 build_cmds <- paste(builders, rep(tex, each = length(builders)), "> /dev/null")
 
 l_ply(build_cmds, function(cmd) {
