@@ -19,7 +19,7 @@ qplot(clarity, data = diamonds, geom="line", colour = cut, stat="bin", group=cut
 ggsave(file = "_include/position-identity2.pdf", width = 6, height = 3)
 
 
-# Grouping vs faceting -------------------------------------------------------
+# Grouping vs facetting -------------------------------------------------------
 
 dplot <- ggplot(subset(diamonds, color %in% c("D","E","G","J")), aes(carat, price)) + scale_x_log10() + scale_y_log10() + scale_colour_hue(limits = levels(diamonds$color)) + opts(legend.position = "none")
 
