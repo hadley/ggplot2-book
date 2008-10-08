@@ -20,7 +20,7 @@
 
 Layering is the mechanism by which additional elements are added to a plot.  Each added element can come from a different dataset and have a different aesthetic mapping, allowing us to create plots that could not be generated using \f{qplot}, which permits only a single dataset and a single aesthetic mapping.
 
-Section~\ref{sec:ggplot} tells you how to initialize a plot object. The plot object is not yet ready to be displayed until at least one layer is added, as as described in Section~\ref{sec:layers}. Sections~\ref{sec:data} and \ref{sec:aes} describe the data and aesthetic mappings in more detail, including more information about how layer settings override the plot defaults, the difference between setting values and mapping aesthetics, and the important group aesthetic.  Sections~\ref{sec:geom} and \ref{sec:stat} list the geoms and stats available in \ggplot.  Section~\ref{sec:pull-together} concludes by introducing you to some plotting techniques that take advantage of what you have learned in this chapter.
+Section~\ref{sec:ggplot} taught you how to initialise a plot object. The plot object is not yet ready to be displayed until at least one layer is added, as as described in Section~\ref{sec:layers}. Sections~\ref{sec:data} and \ref{sec:aes} describe the data and aesthetic mappings in more detail, including more information about how layer settings override the plot defaults, the difference between setting values and mapping aesthetics, and the important group aesthetic.  Sections~\ref{sec:geom} and \ref{sec:stat} list the geoms and stats available in \ggplot.  Section~\ref{sec:pull-together} concludes by introducing you to some plotting techniques that take advantage of what you have learned in this chapter.
 
 This chapter is mainly a technical description of how layers, geoms and statistics work - how you call and customise them.  The next chapter, the \ggplot ``toolbox'', describes how you can use different geoms and stats to do data analysis. 
 % In practice, I'd recommend flicking between these two chapters so you can learn both how layers work, and how you can use them to achieve your goals.
@@ -154,7 +154,7 @@ If you want to update (or change) the data later on, you can replace the default
 \input{_include/c6437645230dbb93914a78989ca737c3.tex}
 % END
 
-\noindent Any change of values or dimensions is legitimate as long as the variables used in the plot are still part of the data, and the variable do not change from discrete to continuous or vice versa.  This facility can be useful if you need to produce the same plot for different datasets.  It's also an easy way to experiment with influential points or imputation schemes.
+\noindent Any change of values or dimensions is legitimate as long as the variables used in the plot are still part of the data, and the variables do not change from discrete to continuous or vice versa.  This facility can be useful if you need to produce the same plot for different datasets.  It's also an easy way to experiment with influential points or imputation schemes.
 
 % HERE dfs
 
@@ -201,7 +201,7 @@ We have seen several examples of using the default mapping when adding a layer t
 % 
 % p <- ggplot(mtcars, aes(x = mpg, y = wt))
 % p + geom_point()
-\input{_include/2b86f2d5c3888260bdc58bb3877fa1c8.tex}
+\input{_include/a4eed8ae4fb1d75b6328594b1e39dfed.tex}
 % END
 
 As these two examples show, the default mappings in the plot $p$ just defined  can be extended or overridden in added layers:
@@ -210,7 +210,7 @@ As these two examples show, the default mappings in the plot $p$ just defined  c
 % 
 % p + geom_point(aes(colour = factor(cyl)))
 % p + geom_point(aes(y = disp))
-\input{_include/82f957421bd38e4d5770ccc4712ce23f.tex}
+\input{_include/8b9c7e604635ca0aebaf81475770a316.tex}
 % END
 
 \noindent The rules are summarised in Table~\ref{tbl:aes-override}.  Note that you are overriding the aesthetics only in that layer.  Unless you specify otherwise, the axis and legend names, as well as mappings in subsequent layers, will use the default assignments. 
@@ -260,88 +260,87 @@ Chapter~\ref{cha:specifications} describes how values should be specified for th
 
 % FIGURE
 %   LABEL: qplot-setting
-%   CAPTION: The difference between \Leftc setting colour to \code{"darkblue"}
-%   and \Rightc mapping colour to \code{"darkblue"}.  When \code{"darkblue"}
+%   CAPTION: The difference between \leftc setting colour to \code{"darkblue"}
+%   and \rightc mapping colour to \code{"darkblue"}.  When \code{"darkblue"}
 %   is mapped to colour, it is treated as a regular value and scaled with
 %   the default colour scale.  This results in pinkish points and a legend.
 % 
 % qplot(mpg, wt, data=mtcars, colour = I("darkblue"))
 % qplot(mpg, wt, data=mtcars, colour = "darkblue")
-\input{_include/09f1f888aa8b0eb6452b3a733565c3ea.tex}
+\input{_include/fb05728d30f2f62b13d9e333bd0258c0.tex}
 % END
 
 \subsection{Grouping}
 \label{sub:grouping}
 
-% dfs: this facility should be motivated before its operation is explained.
+A number of geoms and stats work with multiple observations.  The line geom visually connects multiple observations, for example, in a medical experiment where measurements are taken on each subject at multiple times; and the boxplot geom summarises the distribution of a set of observations.  How do we control which observations go in which group?  This is the job of the {\tt group} aesthetic.
 
-The {\tt group} aesthetic partitions the the data set into discrete components. It is designed to be used with data comprised of multiple groups of linked records, especially longitudinal data; for example, a medical experiment in which measurements were taken on each subject at more than one time point.  The {\tt group} is used by the line geom to determine which observations to connect, by the boxplot geom to determine which points to summarise in each box, and by the smooth geom to determine which group of points should be included in the smooth. When one or more discrete variables are used in the plot, the default group aesthetic is their combination (formed by \f{interaction}); this often partitions the data correctly. When it does not, or when no discrete variable is used in the plot, the group needs to be explicitly defined. There are three common cases where this occurs, and we will consider each one separately in the following examples.  
+By default, the {\tt group} is set to the interaction of all discrete variables in the plot.  This often partitions the data correctly, but when it does not, or when no discrete variable is used in the plot, you will need to explicitly define the grouping structure.  There are three common cases where this occurs, and we will consider each one below.  In the following examples, we will use a simple longitudinal data set, \code{Oxboys}, from the \pkg{nlme} package.  It records the heights (\var{height}) and ages (\var{age}) of 26 boys (\var{Subject}), measured on nine occasions (\var{Occasion}). 
 
-In these examples, we will use a simple longitudinal data set, \code{Oxboys} from the \pkg{nlme} package.  It records the heights (\var{height}) and ages (\var{age}) of 26 boys (\var{Subject}), measured on nine occasions (\var{Occasion}). 
+\paragraph{Multiple groups, one aesthetic.} In many situations, you want to separate your data into groups, but render them in the same way: when looking at the data in aggregate you want to be able to distinguish individual subjects, but not identify them.  This is common in longitudinal studies with many subjects, where the plots are often descriptively called spaghetti plots.  
 
-{\bf Multiple groups, one aesthetic}: In many situations, you want to separate your data into groups but render them with the same aesthetic.  This is common in longitudinal studies with many subjects.  When looking at the data in aggregate you want to be able to distinguish individual subjects, but you don't need to identify them.
-
-The first plot in Figure~\ref{fig:group-lines} shows a set of time series plots, one for each boy.  It was generated generated as follows:
+The first plot in Figure~\ref{fig:group-lines} shows a set of time series plots, one for each boy. You can see the separate growth trajectories for each boy, but there is no way to see which boy belongs to which trajectory.  This plot was generated with:
 
 % LISTING
 %
-% p <- ggplot(Oxboys, aes(x=age, y=height)) + 
-%   geom_line(aes(group=Subject))
+% p <- ggplot(Oxboys, aes(age, height, group = Subject)) + 
+%   geom_line()
 % p
-\input{_include/7fa5582d9d15c8cb1177bb6ae90f748a.tex}
+\input{_include/21e500936c8408724433c01b810fa611.tex}
 % END
 
-\noindent We specified the Subject as the grouping variable to create a partition for each boy. The second plot in Figure~\ref{fig:group-lines} shows the result of omitting the group; plots with an incorrect group aesthetic often look something like this.
+\noindent We specified the \var{Subject} as the grouping variable to get a line for each boy. The second plot in the figure shows the result of leaving this out: we get a single line which passes through all points.  This is not very useful! Plots with an incorrect grouping specification often look something like this.
 
 % FIGURE
 %   LABEL: group-lines
-%   CAPTION: \Leftc Correctly specifying {\tt group = Subject} produces
-%   one line per subject.  \Rightc This pattern is characteristic of an 
-%   incorrect grouping aesthetic.
+%   CAPTION: \Leftc correctly specifying {\tt group = Subject} produces
+%   one line per subject.  \Rightc a single line connects all observations. 
+%   This pattern is characteristic of an incorrect grouping aesthetic, and is
+%   what we see if the group aesthetic is omitted.
 % 
 % data(Oxboys, package="nlme")
 % qplot(age, height, data=Oxboys, group = Subject, geom="line")
 % qplot(age, height, data=Oxboys, geom="line")
-\input{_include/3215bbb99676e6f24a7f4135d9f3646a.tex}
+\input{_include/bef234767ad2d5f6aceb7b4e878a8f79.tex}
 % END
 
-{\bf Different groupings in the same plot}:  Sometimes we want to plot summaries based on different levels of aggregation of the data. Here, different layers might have different grouping aesthetics, so that some display the full data while others display summaries of larger groups.
+\paragraph{Different groupings on different layers.}  Sometimes we want to plot summaries based on different levels of aggregation of the data. Different layers might have different grouping aesthetics, so that some display the full data while others display summaries of larger groups.
 
-Building on the current example, suppose we want to add a single smooth line to the plot just created, based on the ages and heights of {\em all} the boys.  If we use the same grouping for the smooth that we used for the line, we get the first plot in Figure~\ref{fig:group-smooths}.  
+Building on the previous example, suppose we want to add a single smooth line to the plot just created, based on the ages and heights of {\em all} the boys.  If we use the same grouping for the smooth that we used for the line, we get the first plot in Figure~\ref{fig:group-smooths}.  
 
 % LISTING
 % 
-% p + geom_smooth(aes(group=Subject), method="lm")
-\input{_include/1e5fa0347a65789ec1d36abb29a2d304.tex}
+% p + geom_smooth(aes(group = Subject), method="lm")
+\input{_include/dd83b38c6f5d8c4e979f97d26d258e74.tex}
 % END
 
 This is not what we wanted; we have inadvertently added a smoothed line for each boy. This new layer needs a different group aesthetic, so that the new smoothed line will be based on all the data, as shown in the second plot in the figure:
 
 % LISTING
 % 
-% p + geom_smooth(aes(group=1), method="lm")
-\input{_include/c8c064cef56463d259b092f976d6bb52.tex}
+% p + geom_smooth(aes(group = 1), method="lm", size = 2)
+\input{_include/741de8ed2e8ced007afd5bfca54780d5.tex}
 % END
 
 % FIGURE
 %   LABEL: group-smooths
-%   CAPTION: Adding smooths to the Oxboys data.  \Leftc Using the 
+%   CAPTION: Adding smooths to the Oxboys data.  \Leftc using the 
 %   same grouping as the lines results in a line of best fit for 
-%   each boy.  \Rightc Using {\tt aes(group = 1)} in the smooth layer
+%   each boy.  \Rightc using {\tt aes(group = 1)} in the smooth layer
 %   fits a single line of best fit across all boys.
 % 
 % qplot(age, height, data=Oxboys, group = Subject, geom="line") +
 %   geom_smooth(method="lm")
 % qplot(age, height, data=Oxboys, group = Subject, geom="line") +
-%   geom_smooth(aes(group = 1), method="lm")
-\input{_include/03202b0dc258519c49ccdadb592427fc.tex}
+%   geom_smooth(aes(group = 1), method="lm", size = 2)
+\input{_include/580e339d53808c12d94eae87feb1f513.tex}
 % END
  
-Note because the first plot was stored in the variable p, we could experiment with the code to generate the added layer without having to re-enter any of the code for the first layer.
+Note that because the first plot was stored in the variable {\tt p}, we can experiment with the code to generate the second layer without having to re-enter any of the code for the first layer.  This is a useful technique.
 
-{\bf Using the default group aesthetic}:  In this case, the plot has a discrete scale but you want to draw lines that connect {\em across} groups.  This is the strategy used in interaction plots, profile plots, and parallel coordinate plots, among others.
-  
-We start with boxplots of height at each occasion of measurement, as shown in the first figure in Figure~\ref{fig:group-boxplots}, created this way:
+\paragraph{Using the default group aesthetic.}  In this case, the plot has a discrete scale but you want to draw lines that connect {\em across} groups.  This is the strategy used in interaction plots, profile plots, and parallel coordinate plots, among others.  
+
+We start with boxplots of height at each occasion of measurement, as shown in the first figure in Figure~\ref{fig:group-boxplots}, created with:
 
 % LISTING
 % 
@@ -349,7 +348,7 @@ We start with boxplots of height at each occasion of measurement, as shown in th
 \input{_include/c6048499b550ccc8624a6f72003e78e4.tex}
 % END
 
-\noindent There is no need to specify the group aesthetic here; the default grouping works here because occasion is a discrete variable.  To overlay individual trajectories we again need to override the default grouping for that layer with {\tt aes(group = Subject)}, as shown in the second plot in the figure.
+\noindent There is no need to specify the group aesthetic here; the default grouping works here because occasion is a discrete variable.  To overlay individual trajectories we again need to override the default grouping for that layer with {\tt aes(group = Subject)}, as shown in the second plot in the figure.  The {\tt interaction()} function is useful if a single pre-existing variable doesn't cleanly separate groups, but a combination does.
 
 % LISTING
 % 
@@ -359,7 +358,7 @@ We start with boxplots of height at each occasion of measurement, as shown in th
 \input{_include/06d86d0bfee0f3355fd083009702e98d.tex}
 % END
 
-There's another difference in the second plot.  The boxplots are drawn in thick blue lines so that they will still be visible once the line segments for each subject have been added. Note that the color and size in the boxplots in the second plots are settings rather than mappings, as discussed earlier in this chapter.  They are rendering attributes, but they have no correspondance to variables in the data.
+We change the line colour in the second layer to make them distinct from the boxes.  This is an example of setting an aesthetic to a fixed value.  The colour is a rendering attribute, which has no corresponding variable in the data.
 
 % FIGURE
 %   LABEL: group-boxplots
@@ -372,23 +371,51 @@ There's another difference in the second plot.  The boxplots are drawn in thick 
 % qplot(Occasion, height, data=Oxboys, geom="boxplot")
 % qplot(Occasion, height, data=Oxboys, geom="boxplot") +
 %  geom_line(aes(group = Subject), colour="#3366FF")
-\input{_include/50de44db20f46100cb3cc7ae1ab9a0c2.tex}
+\input{_include/315233b21075adb70186ba258c0ec6b7.tex}
 % END
-
-The {\tt interaction()} function is particularly useful if there isn't a pre-existing variable that separates the groups you are interested in, but a combination of variables does.
 
 \subsection{Matching aesthetics to graphic objects}
 \label{sub:matching}
 
-In ggplot2, geoms can be roughly divided into individual and collective geoms.  An individual geom has a distinctive graphical object for each row in the data frame.  For example, the point geom has a single point for each  .  On the other, collective geoms represent multiple observations.  This maybe a result of a statistical summary, or may be fundamental to the display of the geom, as with polygons.  Lines and paths fall somewhere in between - each overall line is composed of a set of straight segments, but each segment represents two points (compare this with \code{geom_segment} where each segment represents a single row).  What happens when the aesthetic attributes of the points are different?
+In ggplot2, geoms can be roughly divided into individual and collective geoms.  An individual geom has a distinctive graphical object for each row in the data frame.  For example, the point geom has a single point for each observation.  On the other hand, collective geoms represent multiple observations.  This maybe a result of a statistical summary, or may be fundamental to the display of the geom, as with polygons.  Lines and paths fall somewhere in between:  each overall line is composed of a set of straight segments, but each segment represents two points.  This is different to \code{geom_segment} where each segment represents a single row.  What happens when the aesthetic attributes of the observations are different?
 
 % Need example of each: point, line, polygon
 
 For individual geoms, this isn't a problem at the drawing level, but still may be a problem at the perceptual level - overplotting means that you can't distinguish between individual points and in some sense the point geom becomes a collective geom.
 
-For lines and paths, operates on an off by one principle.  Blending too complicated in general (how would you blend from green dotted lines to red dashed lines?).  Rules for colour and line type (due to technical limitations in R).
+Lines and paths, operate on an off by one principle: there is one more observation than line segment.   The aesthetic for the first observation is used for the first segment, and the aesthetic for the last observation is not used, as shown in Figure~\ref{matching-lines}.  There is an additional limitation that line type must be constant over each individual line.
 
-% Need point + line example
+% FIGURE
+%   LABEL: matching-lines
+%   GG-HEIGHT: 3
+%   CAPTION: For lines and paths, the aesthetics of the line segment are
+%   determined by the aesthetic of the beginning observation.  \Leftc, 
+%   if colour is categorical, there is no meaningful way to interpolate
+%   between adjacent colours, \rightc, for continuous variables there is
+%   but this is not done by default.
+% 
+% df <- data.frame(x = 1:3, y = 1:3, colour = c(1,3,5))
+% qplot(x, y, data=df, colour=factor(colour), size = I(5)) + 
+%   geom_line(aes(group = 1), size = 2)
+% qplot(x, y, data=df, colour=colour, size = I(5)) + geom_line(size = 2)
+\input{_include/a4f549b00beb10bfbea208c4348f1c9b.tex}
+% END
+
+You could imagine a more complicated system where segments smoothly blend from one aesthetic to another.  This would work for continuous variables like size or colour, but not for line type, and so is not used in \ggplot.  If this is the behaviour you want, you'll need to perform the linear interpolation yourself, as shown below.  
+
+% INTERWEAVE
+%   GG-HEIGHT: 3
+% 
+% xgrid <- with(df, seq(min(x), max(x), length = 50))
+% interp <- data.frame(
+%   x = xgrid,
+%   y = approx(df$x, df$y, xout = xgrid)$y,
+%   colour = approx(df$x, df$colour, xout = xgrid)$y  
+% )
+% qplot(x, y, data = df, colour = colour, size = I(5)) + 
+%   geom_line(data = interp, size = 2)
+\input{_include/b4a4dc8cd6a72eaf960c0c6b8da1e9ce.tex}
+% END
 
 For all other collective geoms, all aesthetic attributes must be the same, or the default value will be used.  This makes sense for fill as it is a property of the entire object - it doesn't make sense to think about having a different fill for each point on the border.
 
@@ -493,7 +520,7 @@ These generated variables can be used instead of the variables present in the or
 %   TEX-WIDTH: \textwidth
 % 
 % ggplot(diamonds, aes(x=carat)) + geom_histogram(aes(y=..density..), binwidth=.1)
-\input{_include/a9271292a35655b27cec76c3450c69c2.tex}
+\input{_include/ea29a89f62f55e59015d8f825294384b.tex}
 % END
 
 The names of generated variables must be surrounded with {\tt ..} when used.  This prevents confusion in case the original data set includes a variable with the same name as a generated variable, and it makes it clear to any later reader of the code that this variable was generated by a stat.
@@ -533,6 +560,7 @@ By connecting geoms with different statistics, you can easily create new graphic
 
 % dfs: I can't see any difference whether you use scale_area or not, or scale_y_continous or not,
 % so I would like to leave them out, since they haven't yet been introduced.
+% hw: I agree
 
 (The use of xlim in ggplot will be discussed in \ref{cha:scales}, in the presentation of the use of scales and axes, but any R user can already guess that it is used here to fix the limits of the horizontal axis.)
 
@@ -547,7 +575,7 @@ By connecting geoms with different statistics, you can easily create new graphic
 % d + stat_bin(aes(ymax = ..count..), binwidth = 0.1, geom = "area")
 % d + stat_bin(aes(size = ..density..), binwidth = 0.1, geom = "point", position="identity")
 % d + stat_bin(aes(y=1, fill = ..count..), binwidth = 0.1, geom = "tile", position="identity") + scale_y_continuous("")
-\input{_include/9a0382999c5512a16a72fa4bf99df4b8.tex}
+\input{_include/0cc61a0af40b6bd2e31fdc453c3c5be6.tex}
 % END
 
 A number of the geoms available in ggplot were derived from other geoms in a process like the one just described, by starting with an existing geom and making a few changes in the default aesthetics or stat.  For example, the jitter geom is simply the point geom with the default position reset from NULL to jitter.  Once it becomes clear that a particular variant is going to be used a lot or used in a very different context, it makes sense to create a new geom. Table~\ref{tbl:aliased-geoms} lists these ``aliased'' geoms.
@@ -606,7 +634,7 @@ Once we have the predictions we can display them along with the original data.  
 % INTERWEAVE
 % 
 % oplot + geom_line(data = preds, colour = "#3366FF", size= 0.4)
-\input{_include/893383bc2bb53908eb31e9a7d83fa90c.tex}
+\input{_include/b6b2b24700818d7bad6023ecf56ad23b.tex}
 % END
 
 It seems that the model does a good job of capturing the high-level structure of the data, but it's hard to see the details ~--~ plots of longitudinal data are often called spaghetti plots, and with good reason.  Another way to compare the model to the data is to look at residuals, so let's do that.  We add the predictions from the model to the original data (\var{fitted}), calculate residuals (\var{resid}), and add the residuals as well.  The next plot is a little more complicated: We update the plot dataset (recall the use of \code{\%+\%} to update the default data), change the default y aesthetic to \var{resid}, and add a smooth line for all observations.
@@ -617,7 +645,7 @@ It seems that the model does a good job of capturing the high-level structure of
 % Oxboys$resid <- with(Oxboys, fitted - height)
 % 
 % oplot %+% Oxboys + aes(y = resid) + geom_smooth(aes(group=1))
-\input{_include/cbd11372334fef42f3410bacd1c09dc2.tex}
+\input{_include/b2185a0fdcf9af980bf5c70020f1ce50.tex}
 % END
 
 The smooth line makes it evident that the residuals are not random, showing a deficiency in the model.  We add a quadratic term, refit the model, recalculate predictions and residuals, and replot.  There now much less evidence of model inadequacy.
@@ -629,7 +657,7 @@ The smooth line makes it evident that the residuals are not random, showing a de
 % Oxboys$resid2 <- with(Oxboys, fitted2 - height)
 % 
 % oplot %+% Oxboys + aes(y = resid2) + geom_smooth(aes(group=1))
-\input{_include/163324fe91e0dd22c502533e30033a67.tex}
+\input{_include/5c71ccbb984268459afbd5458f7b0dba.tex}
 % END
 
 Notice how easily we were able to modify the plot object.  We updated the data and replotted twice without needing to reinitialize oplot.  Layering in ggplot is designed to work well with the iterative nature of fitting and evaluating models.
