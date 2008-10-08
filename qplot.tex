@@ -75,7 +75,7 @@ Here is a simple example of the use of \f{qplot}.  It produces a scatterplot sho
 % INTERWEAVE
 % 
 % qplot(carat, price, data=dsmall)
-\input{_include/4a6b6172f427f18165504173bb6e9adc.tex}
+\input{_include/d3aed250031793f82adcf9d66069f2dc.tex}
 % END
 
 The plot shows a strong correlation with notable outliers and some interesting vertical striation.  The relationship looks exponential, though, so the first thing we'd like to do is to transform the variables.  Because \f{qplot} accepts functions of variables as arguments, we plot log(price) vs.\ log(carat):
@@ -83,7 +83,7 @@ The plot shows a strong correlation with notable outliers and some interesting v
 % INTERWEAVE
 % 
 % qplot(log(carat), log(price), data=dsmall)
-\input{_include/ce6107772a330bd50964b471087b499d.tex}
+\input{_include/85907b54290a0c7d87931a21c21b7ea2.tex}
 % END
 
 \noindent The relationship now looks linear.  With this much overplotting, though, we need to be cautious about drawing firm conclusions.
@@ -93,7 +93,7 @@ Arguments can also be combinations of existing variables, so, if we are curious 
 % INTERWEAVE
 % 
 % qplot(carat, x * y * z, data=dsmall)
-\input{_include/b7fc06f70b360a1ab8bc1ec48c541cf8.tex}
+\input{_include/de24b352b3723c5593283f95280ccdc3.tex}
 % END
 
 We would expect the density of diamonds to be constant, and thus to see a linear relationship between volume and weight. The majority of diamonds do seem to fall along a line, but there are some large outliers.
@@ -115,7 +115,7 @@ In the next example, we augment the plot of carat and price with information abo
 % qplot(carat, price, data=dsmall, colour=cut)
 % qplot(carat, price, data=dsmall, size=cut)
 % qplot(carat, price, data=dsmall, shape=cut)
-\input{_include/307a8e65ac81433e4c8d23513e85c503.tex}
+\input{_include/bf6316bd7c6faec00f1794b6a554d7c3.tex}
 % END
 
 Colour, size and shape are all examples of aesthetic attributes, visual properties that affect the way observations are displayed.  For every aesthetic attribute, there is a function, called a \emph{scale}, which maps data values to valid values for that aesthetic.  It is this scale that controls how the points appear.  For example, in the above plots, the colour scale maps J to purple and F to green. (Note that while I use British spelling throughout this book, the software also accepts American spellings.)
@@ -165,9 +165,10 @@ For 1d distributions, your choice of geoms is guided by the variable type:
 If you have a scatterplot with many data points, it can be hard to see exactly what trend is shown by the data.  In this case you may want to add a smoothed line to the plot.  This is easily done using the {\tt smooth} geom:
 
 % INTERWEAVE
+%  FILETYPE: png
 % 
 % qplot(carat, price, data=dsmall, geom=c("smooth", "point"))
-\input{_include/dfd17c36a82b46dc51507f5c7a2e9f10.tex}
+\input{_include/3e97903121c98dcfe77985aeebb80475.tex}
 % END
 
 Despite overplotting, our impression of a exponential relationship between price and carat was correct, but we'll have to do something about that influential outlier.  
@@ -180,18 +181,20 @@ There are many different smoothers you can choose using the {\tt method} argumen
 	\item {\tt method=``loess''}, the default, uses a smooth local regression.  More details about the algorithm used can be found in {\tt ?loess}.  The wiggliness of the line is controlled by the span parameter, which ranges from 0 (exceeding wiggly) to 1 (not so wiggly), as shown in Figure~\ref{fig:smooth-loess}.  Loess does not work well for large datasets (it's $O(n^2)$ in memory), so you'll need to use one of the other methods listed below.
 
   % FIGURE
+  %  FILETYPE: png
   %  LABEL: smooth-loess
   %  CAPTION: The effect of the span parameter.  (Left) \code{span = 0.1}, 
   %  and (right) \code{span = 1}
   % 
   % qplot(carat, price, data=dsmall, geom=c("point", "smooth"), span=0.1)
   % qplot(carat, price, data=dsmall, geom=c("point", "smooth"), span=1)
-  \input{_include/2ea9bc1c5fd3ad2063df7b5a3748b6c3.tex}  
+  \input{_include/3b1e067ac44ab20b0a03c92cf08de070.tex}  
   % END
 
 	\item {\tt method=``lm''} fits a linear model.  The default will fit a straight line to your data, or you can specify {\tt formula = y $\sim$ poly(x, 2)} to specify a degree 2 polynomial, or better, load the {\tt splines} library and use a natural spline: {\tt formula = y $\sim$ ns(x, 2)}. The second parameter is the degrees of freedom: a higher number will create a wigglier curve. You are free to specify any formula involving $x$ and $y$.  
 
   % FIGURE
+  %   FILETYPE: png
   %   LABEL: smooth-lm
   %   CAPTION: The effect of the formula parameter, using a linear model
   %   as a smoother.  (Left) \code{formula = y ~ x}, the default; (Right)
@@ -200,7 +203,7 @@ There are many different smoothers you can choose using the {\tt method} argumen
   % library(splines)
   % qplot(carat, price, data=dsmall, geom=c("point", "smooth"), method="lm")
   % qplot(carat, price, data=dsmall, geom=c("point", "smooth"), method="lm", formula=y ~ ns(x,3))
-  \input{_include/73fec007c2a1a5841ab364a492d842f0.tex}  
+  \input{_include/7f65d43df5076586f0e5dfce11de6c3d.tex}  
   % END
 
 	\item {\tt method=``rlm''} works like {\tt lm}, but uses a robust fitting algorithm so that outliers don't affect the fit as much.  It's part of the {\tt MASS} package, so remember to load that first.
@@ -209,6 +212,7 @@ There are many different smoothers you can choose using the {\tt method} argumen
 to using a spline with {\tt lm}, but the degree of smoothness is estimated from the data.  For large data, use the formula {\tt y $\sim$ s(x, bs="cr")}
  
   % FIGURE
+  %  FILETYPE: png
   %  LABEL: smooth-gam
   %  CAPTION: The effect of the formula parameter, using a linear model
   %   as a smoother.  (Left) \code{formula = y ~ s(x)}, the default; (Right)
@@ -217,7 +221,7 @@ to using a spline with {\tt lm}, but the degree of smoothness is estimated from 
   % library(mgcv)
   % qplot(carat, price, data=dsmall, geom=c("point", "smooth"), method="gam", formula= y ~ s(x))
   % qplot(carat, price, data=dsmall, geom=c("point", "smooth"), method="gam", formula= y ~ s(x, bs="cr"))
-  \input{_include/869b1c117488adbd8307f953103621e2.tex}  
+  \input{_include/47e88a3137bf27cc0ee3e249ec73d1b0.tex}  
   % END
 
 
@@ -231,10 +235,11 @@ We have just seen one example of the use of {\tt qplot} to enhance plots of raw 
 For this example we will zoom in on a small range of diamond weights to look more closely at the distribution of price vs.\ carat.
 
 % INTERWEAVE
+%  FILETYPE: png
 % 
 % dlittle <- subset(dsmall, carat < 2)
 % qplot(carat, price, data=dlittle, geom=c("point", "quantile"))
-\input{_include/37daf53959432e9e00ebf52197a7c03d.tex}
+\input{_include/4a471d07dbef9e15a2ac145d8de613ff.tex}
 % END
 
 The relationship between x and y is assumed by default to be linear, as shown in the above plot, but we can adjust the relationship using the {\tt formula} argument, as we did for smoothing. Figure~\ref{fig:quantile-formula} shows a natural spline at left and a linear model with fixed break points at right.  By default only the median and upper and lower quartiles are shown.
@@ -242,6 +247,7 @@ The relationship between x and y is assumed by default to be linear, as shown in
 In Figure~\ref{fig:quantile-quantiles}, we have added 5\%, 15\%, ..., 95\% quantiles using the argument {\tt quantiles = seq(0.05, 0.95, 0.1)}.
 
 % FIGURE
+%   FILETYPE: png
 %   LABEL: quantile-formula
 %   CAPTION: The \code{formula} 
 %    argument is used to control the functional form of the relation.  
@@ -252,16 +258,17 @@ In Figure~\ref{fig:quantile-quantiles}, we have added 5\%, 15\%, ..., 95\% quant
 % 
 % qplot(carat, price, data=dlittle, geom=c("point", "quantile"), formula=y~ns(x, 5))
 % qplot(carat, price, data=dlittle, geom=c("point", "quantile"), formula=y~ x + I(x > 0.5) + I(x > 1) + I(x > 1.5))
-\input{_include/5f500d946697bdc57870593cf3e7f428.tex}
+\input{_include/b96854223c7345430f205d401b8a0bfb.tex}
 % END
 
 % FIGURE
+%   FILETYPE: png
 %   LABEL: quantile-quantiles
 %   CAPTION: Showing 5\%, 15\%, ..., 95\% quantiles with 
 %   {\tt quantiles = seq(0.05, 0.95, 0.1)}
 % 
 % qplot(carat, price, data=dlittle, geom=c("point", "quantile"), quantiles=seq(0.05,0.95, 0.1))
-\input{_include/afd5769284bd56f0571fb9edb25aed73.tex}
+\input{_include/8a9e5701439c6d8354cfaa7847114a5d.tex}
 % END
 
 \subsection{Two-dimensional density contours}
@@ -277,7 +284,7 @@ When a scatterplot suffers from overplotting, it is hard to judge the relative d
 %    diamonds are small and cheap.
 % 
 % qplot(carat, price, data=diamonds, geom=c("point","density2d"))
-\input{_include/ecd9943379f88837a6a3db784b1b47cf.tex}
+\input{_include/defb4bf8df6ffaf4219380f2ad8a16db.tex}
 % END
 
 The density estimation is carried out by \f{kde2d}, which is described in more detail in its documentation.
@@ -297,7 +304,7 @@ When a set of data includes a categorical variable and one or more continuous va
 % 
 % qplot(color, price/carat, data=diamonds, geom="jitter")
 % qplot(color, price/carat, data=diamonds, geom="boxplot")
-\input{_include/af8b4c377447cd77e2e8a0a2b7f61002.tex}
+\input{_include/27f9a0b51f93a5944a1fbfa8352ab978.tex}
 % END
 
 Each method has its strengths and weaknesses.  Boxplots summarise the bulk of the distribution with only five numbers, while jittered plots can suffer from overplotting.  In the example here, both plots show the dependency of the spread of price per carat on diamond colour, but the boxplots are more informative, indicating that there is very little change in the median and adjacent quartiles.
@@ -319,7 +326,7 @@ The overplotting seen in the plot of jittered values can be alleviated somewhat 
 % qplot(color, price/carat, data=diamonds, geom="jitter", colour=I(alpha("black", 1/5)))
 % qplot(color, price/carat, data=diamonds, geom="jitter", colour=I(alpha("black", 1/50)))
 % qplot(color, price/carat, data=diamonds, geom="jitter", colour=I(alpha("black", 1/200)))
-\input{_include/e50dbe1e0d3e347e6d941b8a1fb803a2.tex}
+\input{_include/86708c902490455a9d36051452f6ccd1.tex}
 % END
 
 % Both boxplots and jittered points will try to guess which orientation they should lie, and while most of the time they will get it right, sometimes you will need to say exactly what you want.  For the boxplot, use {\tt orientation="horizontal"} or {\tt orientation="vertical"}, and for the jittered points, use {\tt xjitter} and {\tt yjitter} to specify the amount of jittering to use. 
@@ -339,7 +346,7 @@ Histogram and density plots show the distribution of a single variable.  They pr
 % 
 % qplot(carat, data=diamonds, geom="histogram")
 % qplot(carat, data=diamonds, geom="density")
-\input{_include/4835b3e9e21af690cf1669775e789179.tex}
+\input{_include/ea17e897c58ba2540422d0f4098924a6.tex}
 % END
 
 For the density plot, the {\tt adjust} argument controls the bandwidth of the smoother (high values of {\tt adjust} produce smoother plots). For the histogram, the {\tt binwidth} argument controls the amount of smoothing by setting the bin size.  (Break points can also be specified explicitly, using the {\tt breaks} argument.) It is {\bf very important} to experiment with the level of smoothing.  With a histogram you should try many bin widths: You may find that gross features of the data show up well at a large bin width, while finer features require a very narrow width.
@@ -359,7 +366,7 @@ In Figure~\ref{fig:hist-binwidth}, we experiment with three values of {\tt binwi
 % qplot(carat, data=diamonds, geom="histogram", binwidth=1, xlim=c(0,3))
 % qplot(carat, data=diamonds, geom="histogram", binwidth=0.1, xlim=c(0,3))
 % qplot(carat, data=diamonds, geom="histogram", binwidth=0.01, xlim=c(0,3))
-\input{_include/91f86549ebe943819d34440ffa7120ba.tex}
+\input{_include/7d2968a1435e99be612f7fccbe6d15b9.tex}
 % END
 
 To compare the distributions of different subgroups, just add an aesthetic mapping, as follows:
@@ -382,7 +389,7 @@ The density plot is more appealing at first because it seems easy to read and co
 % 
 % qplot(carat, data=diamonds, geom="density", colour=color, size = I(1.5))
 % qplot(carat, data=diamonds, geom="histogram", fill=color)
-\input{_include/511a90fb242035d7d573311e83141141.tex}
+\input{_include/0762b691ee9f45d4e2d6d8578d5f3ea3.tex}
 % END
 
 \subsection{Bar charts}
@@ -402,7 +409,7 @@ The discrete analogue of histogram is the bar chart,~\code{geom = ``bar''}.  The
 % 
 % qplot(color, data=diamonds, geom="bar")
 % qplot(color, data=diamonds, geom="bar", weight = carat) + scale_y_continuous("carat")
-\input{_include/88fbcc175d640825f9482e777cd58e70.tex}
+\input{_include/6723ee464d095ad67b3c2d5f73089259.tex}
 % END
 
 \subsection{Time series with line and path plots}
@@ -420,7 +427,7 @@ Because there is no time variable in the diamonds data, we use the {\tt economic
 % 
 % qplot(date, unemploy/pop, data=economics, geom="line")
 % qplot(date, uempmed, data=economics, geom="line")
-\input{_include/68dd35162ff0781c7f4ed2c70d05bf09.tex}
+\input{_include/fd3ac64d20963d12988119343da91d7f.tex}
 % END
 
 To examine this relationship in greater detail, we would like to draw both time series on the same plot.  We could draw a scatterplot of unemployment rate vs.\ length of unemployment, but then we could no longer see the evolution over time.  The solution is to join points adjacent in time with line segments, forming a \emph{path} plot.
@@ -438,7 +445,7 @@ We can see that percent unemployed and length of unemployment is highly correlat
 % year <- function(x) as.POSIXlt(x)$year + 1900
 % qplot(unemploy/pop, uempmed, data=economics, geom="path")
 % qplot(unemploy/pop, uempmed, data=economics, geom="path", size=year(date))
-\input{_include/f36ee0027d66edad3f8abc1e2226333a.tex}
+\input{_include/699598e7b77126208c4e14370dce6abc.tex}
 % END
 
 With longitudinal data, you often want to display multiple time series on each plot, each series representing one individual.  To do this with \f{qplot}, you need to map the \code{group} aesthetic to a variable encoding the group membership of each observation. This is explained in more depth in Section~\ref{sub:grouping}.
@@ -477,7 +484,7 @@ The second set of histograms shows proportions, making it easier to compare dist
 % 
 % qplot(carat, data=diamonds, facets=color ~ ., geom="histogram", binwidth=0.1, xlim=c(0, 3))
 % qplot(carat, ..density.., data=diamonds, facets=color ~ ., geom="histogram", binwidth=0.1, xlim=c(0, 3))
-\input{_include/1dec8ac5a399f9549f4f62a76dd03383.tex}
+\input{_include/c6a1883d8ad8a78c9ef7d3b7d2e42eda.tex}
 % END
 
 \section{Other options}\label{sec:other_options}
@@ -508,7 +515,7 @@ The following examples show the options in action.
 %    xlim = c(.2,1)
 % )
 % qplot(carat, price, data=dsmall, log="xy")
-\input{_include/f2abe7a72fae06af8b19c809bd2bfcef.tex}
+\input{_include/b94a138cb46ca29cb5e7c2ec8ab69a84.tex}
 % END
 
 \section{Differences from plot}
