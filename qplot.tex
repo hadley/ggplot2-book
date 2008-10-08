@@ -120,7 +120,7 @@ In the next example, we augment the plot of carat and price with information abo
 
 Colour, size and shape are all examples of aesthetic attributes, visual properties that affect the way observations are displayed.  For every aesthetic attribute, there is a function, called a \emph{scale}, which maps data values to valid values for that aesthetic.  It is this scale that controls how the points appear.  For example, in the above plots, the colour scale maps J to purple and F to green. (Note that while I use British spelling throughout this book, the software also accepts American spellings.)
 
-You can also manually set the aesthetics using \f{I}.  For example, \code{colour = I("red")} or \code{size = I(2)}.  This is different from mapping and is explained in more detail in Section~\ref{sec:mapping-vs-setting}.  For large data sets, like the diamonds data, semi-transparent points are often useful to alleviate some of the overplotting.  To make a semi-transparent colour you can use \code{alpha(colour, transparency)}, where \code{colour} is an R colour (described in Appendix~\ref{cha:specifications}) and transparency is a value between 0 (completely transparent) and 1 (complete opaque).  It's often useful to specify the transparency as a fraction, e.g. \code{1/10} or \code{1/20}, as the denominator specifies the number of points that must overplot to get a completely opaque colour.
+You can also manually set the aesthetics using \f{I}.  For example, \code{colour = I("red")} or \code{size = I(2)}.  This is different from mapping and is explained in more detail in Section~\ref{sub:setting-mapping}.  For large data sets, like the diamonds data, semi-transparent points are often useful to alleviate some of the overplotting.  To make a semi-transparent colour you can use \code{alpha(colour, transparency)}, where \code{colour} is an R colour (described in Appendix~\ref{cha:specifications}) and transparency is a value between 0 (completely transparent) and 1 (complete opaque).  It's often useful to specify the transparency as a fraction, e.g. \code{1/10} or \code{1/20}, as the denominator specifies the number of points that must overplot to get a completely opaque colour.
 
 Scales are the essential difference between setting and mapping - mapping uses a scale, setting does not.
 
@@ -151,7 +151,7 @@ Different types of aesthetic attributes work better with different types of vari
 For 1d distributions, your choice of geoms is guided by the variable type:
 
 \begin{itemize}
-	\item For continuous variables, {\tt geom="histogram"} draws a histogram and {\tt geom="density"} creates a density plot, \secref{sub:histogram}.
+	\item For continuous variables, {\tt geom="histogram"} draws a histogram and {\tt geom="density"} creates a density plot, \secref{sub:distribution}.
 
   \item For discrete variables, {\tt geom="bar"} makes a barchart, \secref{sub:bar}.
 
@@ -274,7 +274,7 @@ In Figure~\ref{fig:quantile-quantiles}, we have added 5\%, 15\%, ..., 95\% quant
 \subsection{Two-dimensional density contours}
 \label{sub:density2d}
 
-When a scatterplot suffers from overplotting, it is hard to judge the relative density of points.  This can happen even when the number of points is not large, as with the scatterplot of price vs.\ carat for a subset of the data.  One solution is to supplement the plot with contour lines from a 2d density estimate, using {\tt geom=c(``point'', ``density2d'')}.  Figure~\ref{fig:density} shows the resulting plot for all the diamonds and makes it clear that most of them are relatively small and inexpensive.
+When a scatterplot suffers from overplotting, it is hard to judge the relative density of points.  This can happen even when the number of points is not large, as with the scatterplot of price vs.\ carat for a subset of the data.  One solution is to supplement the plot with contour lines from a 2d density estimate, using {\tt geom=c(``point'', ``density2d'')}.  Figure~\ref{fig:density2d} shows the resulting plot for all the diamonds and makes it clear that most of them are relatively small and inexpensive.
 
 % FIGURE
 %  LABEL: density2d
@@ -335,7 +335,7 @@ For jittered points, {\tt qplot} offers the same control over aesthetics as it d
 
 Another way to look at conditional distributions is to use faceting to plot a separate histogram or density plot for each value of the categorical variable.  This is demonstrated in Section~\ref{sec:faceting}.
 
-\subsection{Histogram and density plots}\label{sub:density}
+\subsection{Histogram and density plots}\label{sub:distribution}
 
 Histogram and density plots show the distribution of a single variable.  They provide more information about the distribution of a single group than boxplots do, but it is harder to compare many groups (although we will look at one way to do so).  Figure~\ref{fig:dist} shows the distribution of carats with a histogram and a density plot.
 
@@ -395,7 +395,7 @@ The density plot is more appealing at first because it seems easy to read and co
 \subsection{Bar charts}
 \label{sub:bar}
 
-The discrete analogue of histogram is the bar chart,~\code{geom = ``bar''}.  The bar geom counts the number of instances of each class so that you don't need to tabulate your values beforehand with \code{barchart} in base R.  If the data has already been tabulated or if you'd like to tabulate class members in some other way, such as by summing up a continuous variable, you can use the \code{weight} geom. This is illustrated in Figure~\ref{dist-bar}.  The first plot is a simple bar chart of diamond colour, and the second is a bar chart of diamond colour weighted by carat:
+The discrete analogue of histogram is the bar chart,~\code{geom = ``bar''}.  The bar geom counts the number of instances of each class so that you don't need to tabulate your values beforehand with \code{barchart} in base R.  If the data has already been tabulated or if you'd like to tabulate class members in some other way, such as by summing up a continuous variable, you can use the \code{weight} geom. This is illustrated in Figure~\ref{fig:dist-bar}.  The first plot is a simple bar chart of diamond colour, and the second is a bar chart of diamond colour weighted by carat:
 
 % {\tt qplot(color, data=diamonds, geom="bar", weight = carat) + scale_y_continuous("carat")}
 % %
@@ -528,7 +528,7 @@ There are a few important differences between {\tt plot} and {\tt qplot}:
   
   \item {\tt qplot} is not generic: you can not pass any type of R object to qplot and expect to get some kind of default plot.  Note, however, that {\tt ggplot()} is generic, and may provide a starting point for producing visualisations of arbitrary R objects.
   
-  \item Values passed to the aesthetic attributes are mapped to values by scales.  If you want the values to be interpreted directly, surround use {\tt I()}: {\tt colour = I("red")}.  See also {\tt scale\_manual}, Page~\pageref{sec:scale_special}.        % dfs: could you expand this?  I didn't quite get it.
+  \item Values passed to the aesthetic attributes are mapped to values by scales.  If you want the values to be interpreted directly, use {\tt I()}: {\tt colour = I("red")}.  See also setting vs mapping, Page~\pageref{sub:setting-mapping} and {\tt scale\_manual}, Page~\pageref{sec:scale_special}.        % dfs: could you expand this?  I didn't quite get it.
   
   \item While you can continue to use the base R aesthetic names ({\tt col},  {\tt pch}, {\tt cex}, etc.), it's a good idea to switch to the more descriptive ggplot2 aesthetic names ({\tt colour}, {\tt shape}, and {\tt size}).
 
