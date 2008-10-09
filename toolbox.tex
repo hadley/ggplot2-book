@@ -115,7 +115,7 @@ Each of these geoms is two dimensional and requires both \code{x} and \code{y} a
 % p + geom_text() + opts(title = "geom_text")
 % p + geom_tile() + opts(title = "geom_tile")
 % p + geom_polygon() + opts(title = "geom_polygon")
-\input{_include/72b362ec03da30c5f1525e8fabc4acec.tex}
+\input{_include/d50170ac7e7e26494578fee05c0ab10b.tex}
 % END
 
 % Pie charts.
@@ -135,7 +135,7 @@ For 1d continuous distributions the important geom is the histogram.  Figure~\re
 % 
 % qplot(depth, data=diamonds, geom="histogram")
 % qplot(depth, data=diamonds, geom="histogram", xlim=c(55, 70), binwidth=0.1)
-\input{_include/fd641be1ab194a5da74118ae078e5fcd.tex}
+\input{_include/dd46f46b262b8701b3e71314f485813f.tex}
 % END
 
 % INTERWEAVE
@@ -149,7 +149,7 @@ For 1d continuous distributions the important geom is the histogram.  Figure~\re
 %   colour = I(NA))
 % qplot(depth, ..density.., data = diamonds, geom = "freqpoly", 
 %   xlim = c(58, 68), binwidth = 0.1, colour = cut)
-\input{_include/9a0806a954a34acb7e4069b092f53620.tex}
+\input{_include/8fd96c4ee622ff3d6dcff766f2d80352.tex}
 % END
 
 Many of the distribution related geoms come in geom/stat pairs.  Most of these geoms are aliases: a basic geom is combined with a stat to produce the desired plot.  The boxplot may appear to be an exception to this rule, but behind the scenes \code{geom_boxplot} uses a combination of the basic bars, lines and points.
@@ -166,8 +166,8 @@ Many of the distribution related geoms come in geom/stat pairs.  Most of these g
   % 
   % qplot(cut, depth, data=diamonds, geom="boxplot")
   % qplot(carat, depth, data=diamonds, geom="boxplot", group=round_any(carat, 0.1), xlim=c(0, 3))
- \input{_include/34c8833767028b4076b92a24f4a670c7.tex} 
- % END
+  \input{_include/c363ea7222cd838ce489fb5cc7a68d6e.tex}  
+  % END
   
   \item \code{geom_jitter} = \code{position_jitter} + \code{geom_point}: a crude way of looking at discrete distributions.
   
@@ -181,8 +181,8 @@ Many of the distribution related geoms come in geom/stat pairs.  Most of these g
   % 
   % qplot(class, cty, data=mpg, geom="jitter")
   % qplot(class, drv, data=mpg, geom="jitter")
- \input{_include/6a89c9c887ff67774a6909454f7a6eb7.tex} 
- % END
+  \input{_include/f3d0bb68f16313ba76f8c4df6b5a255f.tex}  
+  % END
   
   \item \code{geom_quantile} = \code{stat_quantile} + \code{geom_line}: quantiles, for a continuous variable conditional on another continuous variable.  This is a continuous analogue of the boxplot. 
   
@@ -196,8 +196,8 @@ Many of the distribution related geoms come in geom/stat pairs.  Most of these g
   % qplot(carat, depth, data=diamonds, geom="quantile", 
   %   xlim=c(0, 3), quantiles = c(0.05, 0.25, 0.5, 0.75, 0.95))
   % qplot(carat, depth, data=diamonds, geom="quantile", xlim=c(0, 3), formula = y ~ factor(round_any(x, 0.5)))
- \input{_include/229fd1a992d3df297f57c502168ff41e.tex} 
- % END
+  \input{_include/d316545a1380e0583c762615ffe0aef3.tex}  
+  % END
   
   \item \code{geom_density} = \code{stat_density} + \code{geom_area}: a smoothed density.  Also described in Section~\ref{sub:distribution}.  Don't use a density plot unless you know that the underlying density is continuous and unbounded, otherwise you'll get some strange artefacts. You can use the \code{adjust} parameter to make the density more or less smooth.
   
@@ -211,8 +211,8 @@ Many of the distribution related geoms come in geom/stat pairs.  Most of these g
   % qplot(depth, data=diamonds, geom="density", xlim = c(54, 70))
   % qplot(depth, data=diamonds, geom="density", xlim = c(54, 70), 
   %   fill = cut) + scale_fill_hue(alpha = 0.2)
- \input{_include/88afb2e9d029c2f8373e6975fa0792f1.tex} 
- % END
+  \input{_include/1033074334b3a03488cd4000bda85e72.tex}  
+  % END
 
   \item \code{geom_histogram} = \code{stat_bin} + \code{geom_bar}.  When you use a histogram, make sure to experiment with various bin widths.  Remember to try very small bin widths, right down to the resolution of the data.  
   
@@ -221,48 +221,97 @@ Many of the distribution related geoms come in geom/stat pairs.  Most of these g
 
 \code{stat_qq} can be used to compare two distributions.  A plot matrix with qq plots can be used to see all pairwise comparisons of variable distributions in a dataset.
 
-Recommendations:   
-
-% (Ask Heike about this)
-% 
-% We have a number of plots available to investigate distributions, depending on the number of variables, and whether we are interested in the conditional or joint distribution.
-% 
-% \begin{Verbatim}
-%   
-% Single variable
-% + cont: histogram, density plot, boxplot
-% + cat:  barchart
-% 
-% Two variables: conditional
-% + cat  | cat:  mosaic plot
-% + cat  | cont: ?
-% + cont | cont: quantiles
-% + cat  | cont: boxplot
-% 
-% Two variables: joint
-% + cat  * cat:  fluctuation diagram
-% + cat  * cont: boxplots?
-% + cont * cont: bagplot, geom\_2ddensity
-% \end{Verbatim}
+Visualising a joint 2d continuous distribution is described in the next section.
 
 \section{Dealing with overplotting}
 \label{sec:overplotting}
 
-The simplest way to deal with overplotting is to bin the plot into small squares and count the number of points that lies in each square, much like a 2D histogram.  This count can then be visualised as the third variable on a plot.  However, breaking the plot into many small squares produces distracting visual artefacts.  Carr \citep{carr:1987} suggests using hexagons instead, and this is implemented with \code{geom_hexagon}, using the capabilities of the {\tt hexbin package}.
-
-A continuous analogue of this is to compute a 2D density function and then visualise this as coloured tiles or contour lines.  This can be done with \code{geom_2ddensity}.
-
-Another approach to dealing with overplotting is to add supplemental information to help guide the eye to the true shape of or pattern within the data:
+The scatterplot is a very important tool for assessing the relationship between a pair of continuous variables.  However, when the data is large, often points will be plotted on top of each other, obscuring the true relationship.  In extreme cases, you will only be able to see the extent of the data, and any conclusions drawn from the graphic will be suspect.  This problem is called overplotting and there are a number of ways to deal with it:
 
 \begin{itemize}
-  \item \code{geom_smooth} add a smooth line showing the mean.
-  \item \code{geom_quantile} add a smooth line showing any quantile you are interested in.
+  \item Small amounts of overplotting can sometimes be alleviated by making the points smaller, or using hollow glyphs:.
+
+  % INTERWEAVE
+  % 
+  % df <- data.frame(x = rnorm(2000), y = rnorm(2000))
+  % norm <- ggplot(df, aes(x, y))
+  % norm + geom_point()
+  % norm + geom_point(size = 0.5) # 1/2 mm 
+  % norm + geom_point(shape = ".") # Pixel sized
+  % norm + geom_point(shape = 1)
+  \input{_include/db7308abb957681b4ecbca666e304b95.tex}  
+  % END
+  
+  \item For larger datasets with more overplotting, you can use alpha blending to make the points transparent.  If you specify alpha as a ratio, the denominator gives the number of points that must be overplotted to give a solid colour.  In R, the lowest amount of transparency you can use is 1/256, so it will not be effective for heavily overplotting.
+
+  % INTERWEAVE
+  % 
+  % norm + geom_point()
+  % norm + geom_point(colour = alpha("black", 1/2))
+  % norm + geom_point(colour = alpha("black", 1/5))
+  % norm + geom_point(colour = alpha("black", 1/10))
+  % 
+  % # If you don't like the rings around the transparent points:
+  % norm + geom_point(shape = 21, fill = alpha("black", 1/2), colour=NA)
+  \input{_include/94ed0f28ed1e78cd4a59804a99b266d3.tex}  
+  % END
+
+  \item If there is some discreteness in the data, you can randomly jitter the points to alleviate overlaps.  This is particularly useful in conjunction with transparency.  In the example below, most of the points are rounded to the nearest 0.1, so we set a jitter width of half of that.
+  
+  % INTERWEAVE
+  %   FILETYPE: png
+  % 
+  % td <- ggplot(diamonds, aes(table, depth)) + xlim(50, 70) + ylim(50, 70)
+  % td + geom_point()
+  % td + geom_jitter()
+  % td + geom_jitter(position=position_jitter(width = 0.05))
+  % td + geom_jitter(position=position_jitter(width = 0.05), 
+  %   colour = alpha("black", 1/50))
+  % td + geom_jitter(position=position_jitter(width = 0.05), 
+  %   colour = alpha("black", 1/200))  
+  \input{_include/c4474baf86f3144886fbcf934edfd11b.tex}  
+  % END
+  
 \end{itemize}
+
+Alternatively, we can think overplotting as a 2d density estimation problem, which gives rise to two more approaches:
+  
+\begin{itemize}
+  \item bin the points and count the number in each bin, then visualise that count in some way (the 2d generalisation of the histogram).  Breaking the plot into many small squares can produce distracting visual artefacts.  Carr \citep{carr:1987} suggests using hexagons instead, and this is implemented with \code{geom_hexagon}, using the capabilities of the {\tt hexbin} \cite{hexbin} package.
+  
+  % INTERWEAVE
+  %   FILETYPE: png
+  % 
+  % d <- ggplot(diamonds, aes(carat, price)) + xlim(1,3)
+  % d + stat_bin2d()
+  % d + stat_bin2d(binwidth=c(0.02, 200))
+  % d + geom_hexbin(binwidth=c(0.02, 200))
+  \input{_include/85d87e5517cd1a05f44cb1f47ce8b13e.tex}  
+  % END
+  
+  \item A continuous analogue of this is to compute a 2d density function, with \code{stat_density2d}, and overlay contours from this distribution on the scatterplot, or display the density by itself as coloured tiles, or points with size proportional to density.
+  
+  % INTERWEAVE
+  %   FILETYPE: png
+  % 
+  % d <- ggplot(diamonds, aes(carat, price)) + xlim(1,3)
+  % d + geom_point() + geom_density2d()
+  % d + stat_density2d(geom="tile", aes(fill = ..density..), contour = FALSE)
+  % last_plot() + scale_fill_gradient(limits=c(1e-5,8e-4))
+  % d + stat_density2d(geom="point", aes(size = ..density..), contour = FALSE)
+  \input{_include/a815a4df8cebb9f3b084a0bd403c7fd3.tex}  
+  % END
+  
+  \item If you are interested in the conditional distribution of y given x, then the techniques of Section~\ref{sec:distribution} will also be useful.
+  
+\end{itemize}
+
+Another approach to dealing with overplotting is to add supplemental summaries to help guide the eye to the true shape of or pattern within the data.  For examples, add a smooth line showing the mean with \code{geom_smooth}, or display quantiles of the distribution with \code{geom_quantile}.  See Sections~\ref{sec:summary} for more ideas.
 
 \section{Surface plots}
 \label{sec:surface}
 
-\ggplot currently does not support true 3D plots.  However, it does offer two tools for producing pseudo-3d plots, the image/level plot and the contour plot.  
+\ggplot currently does not support true 3d surfaces.  However, it does offer support the common tools for representing 3d surfaces in 2d: contours, coloured tiles, and points with varying sizes.  These were all illustrated in the previous section.
 
 \begin{itemize}
   \item \code{geom_tile}: map z variable to fill colour
@@ -270,10 +319,12 @@ Another approach to dealing with overplotting is to add supplemental information
   \item \code{geom_point}: can map abs(z) variable to size and sign(z) to colour
 \end{itemize}
 
-These are often better than ``true'' 3d for static plots anyway, because many perceptual cues necessary for accurate depth perception (eg. occlusion, parallax, motion) are not present in static plots.  You can also manually project data points in a higher dimensional space by multiplying by a projection matrix.  However, correctly representing occlusion or generating correct perspective effects will require considerably more effort.  You may want to look at RGL (\url{http://www.rgl.com}) and rggobi (\url{http://www.ggobi.org/ggobi}) for other solutions.
+You may want to look at RGL, \url{http://www.rgl.com}, for interactive 3d plots, including surfaces.
 
 \section{Statistical summaries}
 \label{sec:summary}
+
+
 
 \begin{itemize}
   \item \code{stat_smooth}
@@ -288,14 +339,46 @@ Doing it yourself.
 
 General class of geoms for displaying not points, but intervals.  
 
-If you have information about the uncertainty present in your data, possibly from a model or distributional assumptions, it is often useful to visualise.  There are two geoms that allow you to do this depending on whether you have point or functional confidence intervals:
+If you have information about the uncertainty present in your data, possibly from a model or distributional assumptions, it is often useful to visualise.  There are two geoms that allow you to do this depending on whether you have point or functional confidence intervals.  \ggplot does not provide any tools for calculating the uncertainty in your estimates; you are expected to have done this yourself using other tools in R.  The effects package, \citep{effects}, is particularly useful for extracting these values from models.
+
+Note, when captioning such figures, you need to carefully describe the nature of the confidence intervals, and whether or not it is meaningful to look at the overlap.  
+
+% INTERWEAVE
+% 
+% d <- subset(diamonds, carat < 2.5 & rbinom(nrow(diamonds), 1, 0.2) == 1)
+% mod <- lm(log(price) ~ log(carat) * color, data = d)
+%
+% library(effects)
+% color <- as.data.frame(effect("color", mod))
+% carat <- as.data.frame(effect("log(carat)", mod, default.levels = 50))
+% both1 <-  as.data.frame(effect("log(carat):color", mod))
+% both2 <-  as.data.frame(effect("log(carat):color", mod, default.levels=5))
+% 
+% fplot <- ggplot(mapping = aes(y = fit, ymin = lower, ymax = upper))
+% fplot %+% color + aes(x = color) + geom_errorbar()
+% fplot %+% carat + aes(x = carat) + geom_smooth()
+% 
+% fplot %+% both1 + aes(x = carat, colour = color) + geom_smooth()
+% fplot %+% both2 + 
+%   aes(x = color, colour = carat, group = interaction(color, carat)) +
+%   geom_errorbar() + geom_line(aes(group=carat)) +
+%   scale_colour_gradient(low=muted("red"), high=muted("blue"))
+\input{_include/fd8b9f0ea80402e51cd0d11a94279a6c.tex}
+% END
+
 
 \begin{itemize}
   \item \code{geom_errorbar}: for pointwise confidence intervals
+
   \item \code{geom_linerange}, \code{geom_pointrange}, \code{geom_crossbar}
+
   \item \code{geom_ribbon}: ribbons of variable width, useful for displaying confidence intervals around functions, \code{geom_smooth}
+
   \item \code{geom_point} with size aesthetic.  Mapping size to uncertainty may be ok, but will make most uncertain points have the most visual impact
+
 \end{itemize}
+
+All these geoms use the aesthetics \code{ymin} and \code{ymax} to determine the y range.
 
 \begin{table}
   \begin{center}
@@ -310,7 +393,7 @@ If you have information about the uncertainty present in your data, possibly fro
   \end{tabular}
   \end{center}
   \caption{caption}
-  \label{label}
+  \label{tbl:interval}
 \end{table}
 
 There are two ways to display standard errors with {\tt ggplot}.  For point standard errors, you can use the {\tt errorbar} geom.  For continuous or functional standard errors, you can use the {\tt ribbon} grob.  We've have already seen an example of this: the {\tt ribbon} grob is used inside {\tt smooth} to display the standard errors of the smooth.  Because there are so many different ways to calculate standard errors, the calculation is up to you.  {\tt ggplot} only provides facilities for displaying them once you have them.
@@ -380,7 +463,7 @@ There are few different things we might want to weight by:
 % qplot(percwhite, percbelowpoverty, data=midwest)
 % qplot(percwhite, percbelowpoverty, data=midwest, size=poptotal) + scale_area()
 % qplot(percwhite, percbelowpoverty, data=midwest, size=area) + scale_area()
-\input{_include/86e903c5b5dca9079a484eb761f989ee.tex}
+\input{_include/dd7962eb88069659239fd4c79fcbe3cc.tex}
 % END
 
 For more complicated grobs which involve some statistical transformation, we specify weights with the {\tt weight} aesthetic.  These weights will be passed on to the statistical summary function.  Weights are supported for every case where it makes sense: smoothers, quantile regressions, box plots, histograms, and density plots.  You can't see this weighting variable directly, and it doesn't produce a legend, but it will change the results of the statistical summary.  Figure~\ref{weight-lm} shows how weighting by population density effects the relationship between percent white and percent below the poverty line.
@@ -394,7 +477,7 @@ For more complicated grobs which involve some statistical transformation, we spe
 % qplot(percwhite, percbelowpoverty, data = midwest) + lm_smooth 
 % qplot(percwhite, percbelowpoverty, data = midwest, 
 %   weight = popdensity, size = popdensity) + lm_smooth
-\input{_include/68ba7c2c8207e89861d999ccb0d383d1.tex}
+\input{_include/6870a2a4ac5ac0e366117ee7181977c9.tex}
 % END
 
 When we weight a histogram or density plot by total population, we change from looking at the distribution of the number of counties, to the distribution of the number of people.  Figure~\ref{fig:weight-hist} shows the difference this makes for a histogram of the percentage below the poverty line.
@@ -407,7 +490,7 @@ When we weight a histogram or density plot by total population, we change from l
 %
 % qplot(percbelowpoverty, data=midwest, geom="histogram", binwidth=1)
 % qplot(percbelowpoverty, data=midwest, geom="histogram", weight=poptotal, binwidth=1) + scale_y_continuous("population")
-\input{_include/297bc0527a32d14d7a5cf98848e0a10e.tex}
+\input{_include/8a9b1f1e64af6ac73f24a2d86d29017d.tex}
 % END
 
 \input{_footer.tex}
