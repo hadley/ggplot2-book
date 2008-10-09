@@ -70,31 +70,28 @@ In general, there are three purposes for a layer:
 
 \end{itemize}
 
-Keep these distinctions in mind as you learn about the graphical tools in \ggplot.  
-
 
 \section{Basic plot types}\label{sec:basics}
 
-These geoms are the basic geoms used to build up many of the other geoms.  Most of these geoms are associated with a named plot: when that geom is used by itself in a plot, that plot has a special name.
+These geoms are the basic geoms used to build up many of the other geoms.  Most of these geoms are associated with a named plot: when that geom is used by itself in a plot, that plot has a special name.  These geoms are illustrated in Figure~\ref{fig:geom-basic} and described below.
 
 Each of these geoms is two dimensional and requires both \code{x} and \code{y} aesthetics.  All understand \code{colour} and \code{size} aesthetics, and the filled geoms also understand \code{fill}.  The point geom uses \code{shape} and line and path geoms understand \code{linetype}. The geoms are used for displaying data, summaries computed elsewhere, and metadata.
 
 \begin{itemize}
-  \item \code{geom_point} produces a scatterplot.
-
-  \item \code{geom_line} makes a line plot.  The \code{group} aesthetic determine which observations are connected.
-
   \item \code{geom_area} draws an area plot, which is a line plot filled to the y-axis (filled lines).  Multiple groups will be stacked on top of each other.
-
-  \item \code{geom_path} is similar to a line plot, but lines are connected in the order they appear in the data, not from left to right.  
-
+  
+  \item \code{geom_bar(stat = "identity")} makes a barchart.  By default, the bar geom automatically counts values (so is essentially a 1d geom, see \secref{sec:distributions}), so to make it use y values instead of counts, we have to specify the identity stat.  By default, multiple groups will be stacked.
+  
+  \item \code{geom_line} makes a line plot.  The \code{group} aesthetic determine which observations are connected, see Section~\ref{sub:grouping} for more details. \code{geom_path} is similar to a \code{geom_line}, but lines are connected in the order they appear in the data, not from left to right.  
+  
+  \item \code{geom_point} produces a scatterplot.
+  
   \item \code{geom_polygon} draws polygons, which are filled paths.
+  
+  \item \code{geom_text} adds labels at the specified points.  This is the only geom in this group that requires another aesthetic: \code{label}.  It also has optional aesthetics \code{hjust} and \code{vjust} that control the horizontal and vertical position of the text; and \code{angle} which controls the rotation of the text.
+  
+  \item \code{geom_tile} makes a image plot or level plot.  The tiles form a regular tessellation of the plane and are typically have fill aesthetic mapped to another variable.
 
-  \item \code{geom_bar(stat = "identity")} makes a barchart).  By default, the bar geom automatically counts values (so is essentially a 1d geom, see \secref{sec:distributions}), so to make it use y values instead of counts, we have to specify the identity stat.  By default, multiple groups will be stacked 
-
-  \item \code{geom_text} adds labels at the specified points.  This is the only geom in this group that requires another aesthetic: \code{label}.
-
-  \item \code{geom_tile}: (the image plot or level plot), tiles, rectangles which form a regular tessellation of the plane.  Typically, tiles are given a fill aesthetic mapped to a third variable.
 \end{itemize}
 
 % FIGURE
@@ -118,16 +115,16 @@ Each of these geoms is two dimensional and requires both \code{x} and \code{y} a
 % p + geom_text() + opts(title = "geom_text")
 % p + geom_tile() + opts(title = "geom_tile")
 % p + geom_polygon() + opts(title = "geom_polygon")
-\input{_include/757b776419e2d0c387e0c080775625e0.tex}
+\input{_include/72b362ec03da30c5f1525e8fabc4acec.tex}
 % END
 
-Pie charts.
+% Pie charts.
 
 \section{Displaying distributions}\label{sec:distributions}
 
-There are a number of geoms can be used to display distributions, depending on the dimensionality of the distribution, whether it is continuous or discrete, and whether you are interested in conditional or joint distributions.  
+There are a number of geoms can be used to display distributions, depending on the dimensionality of the distribution, whether it is continuous or discrete, and whether you are interested in conditional or joint distributions.
 
-For 1d continuous distributions the important geom is the histogram.  Figure~\ref{geom-1d-con} uses the histogram to display the distribution of diamond \var{depth}.  It is important to customise the parameters to find a revealing view.  If you are interested in the distribution of a continuous variable conditioned on a discrete variable, there are a few things that you can try: you could create small multiples of the histogram, {\tt facets = . ~ var} with facetting; use a frequency polygon, {\tt geom="freqpoly"}; or create a conditional density plot, {\tt position = "fill"}.  For the first two options, it may be desirable to use {\tt y = ..density..} to focus on the relative shape of the distributions, rather than there size. 
+For 1d continuous distributions the important geom is the histogram.  Figure~\ref{geom-1d-con} uses the histogram to display the distribution of diamond \var{depth}.  It is important to customise the parameters to find a revealing view.  If you are interested in the distribution of a continuous variable conditioned on a discrete variable, there are a few things that you can try: you could create small multiples of the histogram, \code{facets = . ~ var} with facetting; use a frequency polygon, {\tt geom = "freqpoly"}; or create a conditional density plot, {\tt position = "fill"}.  For the first two options, it may be desirable to use {\tt y = ..density..} to focus on the relative shape of the distributions, rather than there size. 
 
 % FIGURE
 %   LABEL: geom-1d-con
@@ -138,7 +135,7 @@ For 1d continuous distributions the important geom is the histogram.  Figure~\re
 % 
 % qplot(depth, data=diamonds, geom="histogram")
 % qplot(depth, data=diamonds, geom="histogram", xlim=c(55, 70), binwidth=0.1)
-\input{_include/190533de1afcf87c9a707600e055fb40.tex}
+\input{_include/fd641be1ab194a5da74118ae078e5fcd.tex}
 % END
 
 % INTERWEAVE
@@ -146,43 +143,85 @@ For 1d continuous distributions the important geom is the histogram.  Figure~\re
 %   TEX-WIDTH: \textwidth
 % 
 % qplot(depth, ..density.., data = diamonds, geom = "histogram", 
-%   xlim = c(55, 70), binwidth = 0.1, facets = cut ~ .)
+%   xlim = c(58, 68), binwidth = 0.1, facets = cut ~ ., fill = cut)
 % qplot(depth, data = diamonds, geom = "histogram", 
 %   xlim = c(58, 68), binwidth = 0.1, fill = cut, position = "fill", 
 %   colour = I(NA))
 % qplot(depth, ..density.., data = diamonds, geom = "freqpoly", 
-%   xlim = c(55, 70), binwidth = 0.1, colour = cut)
-\input{_include/d7ef76873cf356b6f494819ffdb007f8.tex}
+%   xlim = c(58, 68), binwidth = 0.1, colour = cut)
+\input{_include/9a0806a954a34acb7e4069b092f53620.tex}
 % END
 
-
-Many of these come in geom/stat pairs.  Most of these geoms are aliases: a basic geom is combined with a stat to produce the desired plot.  It looks like the boxplot is an exception to this, but behind the scenes it is using a combination of bars, lines and points.
-
-\begin{itemize}
-	\item \code{geom_boxplot} = = \code{stat_boxplot} + \code{geom_boxplot}: box and whisker plot, for a continuous variable possibly conditioned by a categorical variable
-	\item \code{geom_jitter} = \code{position_jitter} + \code{geom_point}: a crude way of investigating densities
-	\item \code{geom_quantile} = \code{stat_quantile} + \code{geom_line}: quantiles, for a continuous variable conditional on another continuous variable.
-	\item \code{geom_density} = \code{stat_density} + \code{geom_area}: a density
-	\item \code{geom_histogram} = \code{stat_bin} + \code{geom_bar}: 
-	\item \code{geom_freqpoly} = \code{stat_bin} + \code{geom_line}:
-	\item \code{geom_2ddensity} = \code{stat_density2d} + \code{geom_contour}: for displaying the density of points on the plot surface.
-\end{itemize}
-
-The density geom is particularly flexible and creative use can allow it to ...: 
+Many of the distribution related geoms come in geom/stat pairs.  Most of these geoms are aliases: a basic geom is combined with a stat to produce the desired plot.  The boxplot may appear to be an exception to this rule, but behind the scenes \code{geom_boxplot} uses a combination of the basic bars, lines and points.
 
 \begin{itemize}
-  \item \code{fill = NA}, colour mapped to another variable, allows you to superimpose the densities of multiple groups on a single plot.  Combined with facetting, this can allow the display of many densities on a single plot.
-  
-  \item \code{position = "stack"}
+	\item \code{geom_boxplot} = \code{stat_boxplot} + \code{geom_boxplot}: box and whisker plot, for a continuous variable conditioned by a categorical variable.  This is a useful display when the categorical variable has many distinct values, but for a few values, the techniques described above give a better view of the shape of the distribution.
+	
+	% FIGURE
+	%   LABEL: geom-boxplot
+	%   CAPTION: The boxplot geom can be use to see the distribution of a 
+	%   continuous variable conditional on a, \leftc discrete varable, or
+	%   right continuous variable.  If the number of boxplots is small, 
+	%   faceted histograms will reveal finer details of the distribution.
+	% 
+	% qplot(cut, depth, data=diamonds, geom="boxplot")
+	% qplot(carat, depth, data=diamonds, geom="boxplot", group=round_any(carat, 0.1), xlim=c(0, 3))
+ \input{_include/34c8833767028b4076b92a24f4a670c7.tex} 
+ % END
+	
+	\item \code{geom_jitter} = \code{position_jitter} + \code{geom_point}: a crude way of looking at discrete distributions.
+	
+	% FIGURE
+	%   LABEL: geom-jitter
+	%   COL: 1 GG-WIDTH: 8 TEX-WIDTH: 0.8 \textwidth
+	%   CAPTION: The jitter geom can give a crude visualisation of 2d 
+	%   distributions with a discrete component.  Generally this works better
+	%   for smaller datasets.  Car class vs \leftc, city mpg (continuous) and
+	%   \rightc drive train (discrete).
+	% 
+	% qplot(class, cty, data=mpg, geom="jitter")
+	% qplot(class, drv, data=mpg, geom="jitter")
+ \input{_include/6a89c9c887ff67774a6909454f7a6eb7.tex} 
+ % END
+	
+	\item \code{geom_quantile} = \code{stat_quantile} + \code{geom_line}: quantiles, for a continuous variable conditional on another continuous variable.  This is a continuous analogue of the boxplot. 
+	
+	% FIGURE
+	%   LABEL: geom-quantile
+	%   CAPTION: The boxplot geom can be use to see the distribution of a 
+	%   continuous variable conditional on a, \leftc discrete varable, or
+	%   right continuous variable.  If the number of boxplots is small, 
+	%   faceted histograms will reveal finer details of the distribution.
+	% 
+	% qplot(carat, depth, data=diamonds, geom="quantile", 
+	%   xlim=c(0, 3), quantiles = c(0.05, 0.25, 0.5, 0.75, 0.95))
+	% qplot(carat, depth, data=diamonds, geom="quantile", xlim=c(0, 3), formula = y ~ factor(round_any(x, 0.5)))
+ \input{_include/229fd1a992d3df297f57c502168ff41e.tex} 
+ % END
+	
+	\item \code{geom_density} = \code{stat_density} + \code{geom_area}: a smoothed density.  Also described in Section~\ref{sub:distribution}.  Don't use a density plot unless you know that the underlying density is continuous and unbounded, otherwise you'll get some strange artefacts. You can use the \code{adjust} parameter to make the density more or less smooth.
+	
+	% FIGURE
+	%   LABEL: geom-density
+	%   CAPTION: The density plot is a smoothed version of the histogram.  
+	%   It has desirable theoretical properties, but is more difficult to 
+	%   relate directly back to the data.  \Leftc a density plot of depth, 
+	%   and \rightc facetted by cut.
+	% 
+	% qplot(depth, data=diamonds, geom="density", xlim = c(54, 70))
+	% qplot(depth, data=diamonds, geom="density", xlim = c(54, 70), 
+	%   fill = cut) + scale_fill_hue(alpha = 0.2)
+ \input{_include/88afb2e9d029c2f8373e6975fa0792f1.tex} 
+ % END
 
-  \item \code{position = "fill"}: conditional density estimates.
+	\item \code{geom_histogram} = \code{stat_bin} + \code{geom_bar}.  When you use a histogram, make sure to experiment with various bin widths.  Remember to try very small bin widths, right down to the resolution of the data.  
+	
+	\item \code{geom_freqpoly} = \code{stat_bin} + \code{geom_line}.  
 \end{itemize}
-
-A frequency polygon uses the same underlying stat as the histogram, but a different geom.  \code{stat_bin(geom = "area")} or \code{geom_area(stat = "bin")}
 
 \code{stat_qq} can be used to compare two distributions.  A plot matrix with qq plots can be used to see all pairwise comparisons of variable distributions in a dataset.
 
-Recommendations:  don't use a density plot until you're sure that the underlying density is continuous and unbounded.  If not, you will get some strange artefacts.  When you use a histogram, make sure to experiment with various bin widths.  Remember to try very small bin widths, right down to the resolution of the data.  
+Recommendations:   
 
 % (Ask Heike about this)
 % 
@@ -341,7 +380,7 @@ There are few different things we might want to weight by:
 % qplot(percwhite, percbelowpoverty, data=midwest)
 % qplot(percwhite, percbelowpoverty, data=midwest, size=poptotal) + scale_area()
 % qplot(percwhite, percbelowpoverty, data=midwest, size=area) + scale_area()
-\input{_include/dd7962eb88069659239fd4c79fcbe3cc.tex}
+\input{_include/86e903c5b5dca9079a484eb761f989ee.tex}
 % END
 
 For more complicated grobs which involve some statistical transformation, we specify weights with the {\tt weight} aesthetic.  These weights will be passed on to the statistical summary function.  Weights are supported for every case where it makes sense: smoothers, quantile regressions, box plots, histograms, and density plots.  You can't see this weighting variable directly, and it doesn't produce a legend, but it will change the results of the statistical summary.  Figure~\ref{weight-lm} shows how weighting by population density effects the relationship between percent white and percent below the poverty line.
@@ -355,7 +394,7 @@ For more complicated grobs which involve some statistical transformation, we spe
 % qplot(percwhite, percbelowpoverty, data = midwest) + lm_smooth 
 % qplot(percwhite, percbelowpoverty, data = midwest, 
 %   weight = popdensity, size = popdensity) + lm_smooth
-\input{_include/75333576417421d37fdde2962f06b517.tex}
+\input{_include/68ba7c2c8207e89861d999ccb0d383d1.tex}
 % END
 
 When we weight a histogram or density plot by total population, we change from looking at the distribution of the number of counties, to the distribution of the number of people.  Figure~\ref{fig:weight-hist} shows the difference this makes for a histogram of the percentage below the poverty line.
@@ -368,7 +407,7 @@ When we weight a histogram or density plot by total population, we change from l
 %
 % qplot(percbelowpoverty, data=midwest, geom="histogram", binwidth=1)
 % qplot(percbelowpoverty, data=midwest, geom="histogram", weight=poptotal, binwidth=1) + scale_y_continuous("population")
-\input{_include/8a9b1f1e64af6ac73f24a2d86d29017d.tex}
+\input{_include/297bc0527a32d14d7a5cf98848e0a10e.tex}
 % END
 
 \input{_footer.tex}
