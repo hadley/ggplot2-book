@@ -27,3 +27,12 @@ l_ply(build_cmds, function(cmd) {
 
 l_ply(paste("cp", pdf, "public"), system)
 system("mv public/book-mine.pdf public/ggplot2-book.pdf")
+
+
+cat("Remember to:
+  * Bump release number in header
+  * Change date on webpage
+  * Update changelog
+")
+
+# git log --date=short --abbrev-commit  --stat
