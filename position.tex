@@ -1,83 +1,36 @@
 \input{_header.tex}
+% SET_DEFAULTS
+%   GG-WIDTH: 4  GG-HEIGHT: 4
+%   TEX-WIDTH: 0.5\textwidth COL: 2
+%   INLINE: FALSE
+%   CACHE: TRUE
+% 
+
+% END
+
 \chapter{Positioning}
 \label{cha:position}
 
 \section{Introduction}
 
-This chapter introduces ways of adjusting how plots are laid out on page, and  how to manipulate the coordinate system within a plot
+This chapter introduces ways of adjusting how plots are laid out on page, and  how to manipulate the coordinate system within a plot.  There are four objects that control position.  You have already learned about two of them.  This chapter will describe the other two and show you how they all fit together:
 
-Facetting is a mechanism for automatically laying out multiple plots on a plot.  It splits the data into subsets, and then plots each subset on a different place on the page.  This is only one small type of plot layout that you might want to do.  Section~\ref{sec:grid_layout} shows how to use grid to layout any number of plots in any way that you want.
+\begin{itemize}
+  \item {\bf Position adjustment}s in the layer, previously described in Section~\ref{sec:position}, control how overlapping objects within a panel are adjusted.
 
-\section{Position adjustments}
-\label{sec:position}
+  \item {\bf Position scale}s, previously described in Section~\ref{sec:scale-position}, control how values in the data are mapped to positions on the plot.  This process is slightly different for continuous and discrete scales, but the majority of features are common to both.
 
-Position adjustments apply minor tweaks to the position of elements within a layer.  Figure~\ref{fig:position} lists all of the position adjustments available with in ggplot.  
+  \item {\bf Coordinate system}s, described in Section~\ref{sec:coord}, control how the two independent position scales are combined to create a 2d coordinate system.  The most common coordinate system is Cartesian, but other coordinate systems can be useful in special circumstances
 
-They are normally used with discrete data - continuous data typically doesn't overlap exactly, and when it does (because of high data density) minor adjustments are sufficient to fix the problem.
-
-\begin{table}
-  \begin{center}
-  \begin{tabular}{ll}
-    \toprule
-    Name      & Description  \\
-    \midrule
-    dodge    & Adjust position by dodging overlaps to the side \\
-    fill     & Stack overlapping objects on top of one another, and standardise have equal height\\
-    identity & Don't adjust position \\
-    jitter   & Jitter points to avoid overplotting \\
-    stack    & Stack overlapping objects on top of one another \\
-    \bottomrule
-  \end{tabular}
-  \end{center}
-  \caption{caption}
-  \label{fig:position}
-\end{table}
-
-Best illustrated with a bar chart.  Figure~\ref{fig:position-bar} shows stacking, filling and dodging.  Stacking puts bars on the same x on top of one-another; filling does the same, but normalises height to 1; and dodging places the bars side-by-side.  The identity adjustment (i.e.\ do nothing) doesn't make much sense for bars, but is shown in Figure~\ref{fig:position-identity} along with a line plot of the same data for reference.
-
-Filling makes a conditional display - removes the marginal effect of column total. 
-
-All geoms have a default position adjustment associated with them.  You can see by printing the geom.
-
-\begin{alltt}
-  > geom_point()
-  ...
-  position_identity: ()
-  ...
-  > geom_bar()
-  ...
-  position_stack: ()
-  ...
-\end{alltt}
-
-\begin{figure}[htbp]
-  \centering
-    \includegraphics[width = 0.5\textwidth]{position-stack}%
-    \includegraphics[width = 0.5\textwidth]{position-fill}
-  \caption{Position adjustments for a bar chart}
-  \label{fig:position-bar}
-\end{figure}
-
-\begin{figure}[htbp]
-  \centering
-    \includegraphics[width = 0.5\textwidth]{position-dodge}
-  \caption{Position adjustments for a bar chart}
-  \label{fig:position-dodge}
-\end{figure}
-
-\begin{figure}[htbp]
-  \centering
-    \includegraphics[width = 0.5\textwidth]{position-identity}%
-    \includegraphics[width = 0.5\textwidth]{position-identity2}
-  \caption{The identity position adjustment}
-  \label{fig:position-identity}
-\end{figure}
+  \item {\bf Facetting}, described in Section~\ref{sec:facetting}, is a mechanism for automatically laying out multiple plots on a page.  It splits the data into subsets, and then plots each subset into a different panel on the page.  Such plots are often called small multiples.  
+  
+\end{itemize}
 
 
 \section{Coordinate systems}
 \label{sec:coord}
 
-The position aesthetics are \code{x} and \code{y}, but they might be better named as position 1 and 2 because their meaning depends on the coordinate system used.  For example, with the Polar coordinate system they become radius and angle, and with maps they become latitude and longitude
+The position aesthetics are \code{x} and \code{y}, but they might be better named as position 1 and 2 because their meaning depends on the coordinate system used.  For example, with the polar coordinate system they become radius and angle, and with maps they become latitude and longitude
 
 99\% of the time we use a Cartesian coordinate system, where the 2d position of an element is made from the independent combination of the two.
 
@@ -91,8 +44,10 @@ All coordinate systems are two dimensional.  Maybe 3d graphics one day.
 
 Coordinate systems are the most complicated aspect of the grammar to get absolutely correct and many are still are work in progress.  However, do try them and out and report problems that you experience.
 
+Coordinate systems are responsible for drawing the guides within the plot (i.e.\ grid lines) and the axes.
 
-Coordinate systems are responsible for drawing the guides within the plot (i.e.\ grid lines) and 
+% source("latex.r")
+% describe(Coord)
 
 \begin{table}
   \begin{center}
@@ -116,51 +71,62 @@ Coordinate systems are responsible for drawing the guides within the plot (i.e.\
 
 As with the other components in ggplot2, you generate the R name by joining {\tt coord\_} and the name of the coordinate system.  For example, the default Cartesian coordinate system is {\tt coord\_cartesian}.
 
-Writing your own coordinate system is described in Section~\ref{sec:my_coord}.
-
-
 \section{Facetting}
 \label{sec:facetting}
 
-Facetting can be thought of a special type of coordinate system, which is hierarchical.  At the top level we have a coordinate system created by the categorical variables that we are facetting by, and then within each of these regions another coordinate system generated by the x and y position of each graphic.
+You first encountered facetting in Section~\ref{sec:qplot-facetting}, and you may already have been using it extensively in your plots.  Facetting generates small multiples of the same plot for different subsets of the data.  Small multiples are a powerful tool for exploratory data analysis: you can rapidly compare patterns in different sections of the data and see whether they are the same or different.  This section will discusses how you can fine tune facets, particularly how they interact with position scales, to optimise the appearance of your plot. 
 
-Facetting is discussed previous in XXX and XXX.  Here I will go into more detail, and provide more examples.  When specifying a facetting formula, you specify a grid of row and column variables.  Variables appearing on a row or column together, is like nesting, only combinations that appear in the data will appear in the plot.  If variables that are specified on rows and columns are crossed: all combinations will be shown, including those that didn't appear in the original data set.
+There are two types of facetting provide by ggplot: \code{facet_grid} and \code{facet_wrap}.  Facet grid produces a 2d grid of panels, and facet wrap produces 1d ribbon of panels that is wrapped around into 2d.  Facet grid is similar to the layout of \code{coplot} in base graphics, and facet wrap is similar to the layout of panels in \code{lattice}.
 
-Used to generate small multiples of the same plot for different subsets of the data.  Small multiples are a powerful tool for ...  
+Facetting can be thought of a special type of coordinate system, one that is hierarchical.  At the top level we have a coordinate system created by the categorical variables that we are facetting by, and then within each of these regions another coordinate system generated by the x and y position of each graphic.
 
 \subsection{Facet grid}
 
-You can also specify margins to display, by giving the names of the variables you want margins for.  
+When specifying a facetting formula, you specify a grid of row and column variables.  Variables appearing on a row or column together, is like nesting, only combinations that appear in the data will appear in the plot.   The grid facetter lays out plots in a 2d grid.  You specify which variable (or variables) you want laid out in the columns, and which in the rows with a facetting formula:
 
-% decumar<<< 
-% interweave({
-% str(smiths)
-% })
-% |||
-%>>>
+\begin{itemize}
+  \item \code{. ~ .}: The default, neither rows nor columns are facetted, so there is just a single panel.
 
-Currently, {\tt ggplot} doesn't make any distinction between structural and non-structural missings in the facets - you can't tell whether a combination did not appear in the original dataset, or if it had no data.  Dealing with this properly may require some extensions to R's missing value system.  
+  \item \code{. ~ a}: A single row with multiple columns.  This normally the most useful direction because computer screens are usually wider than they are long.  This direction of facetting facilitates comparisons of y position, because the scales are aligned.
+  
+  \item \code{b ~ .}: A single column with multiple rows.  This direction facilitates comparison of x position (because the x scales are all aligned), and so is particularly useful for comparing distributions visualised as histograms or density plots.  Figure~\ref{fig:facet-hist} on \pageref{fig:facet-hist} is a good example of this use.
+
+  \item \code{a ~ b}: Multiple rows and columns. 
+
+  \item \code{. ~ a + b} / \code{a + b ~ .} :  This is unlikely to be useful unless you have a very wide (or long) screen or the number of factor levels is small.  Or maybe you want to produce a very long, skinny poster.
+  
+\end{itemize}
+
+Because it is a grid, variables that are specified on rows and columns will be crossed: all combinations will be shown, including those that didn't appear in the original data set.
 
 
 \subsubsection{Margins}\label{sub:margins}
 
 Facetting a plot is like creating a contingency table.  In contingency tables it is often useful to display marginal totals (totals over a row or column) as well as the individual cells.  It is also useful to be able to do this with graphics.  We can produce graphical margins using the the {\tt margins} argument.  This allows you to compare the conditional patterns with the marginal patterns.
 
-You can either specify that all margins should be displayed, using {\tt margins = TRUE}, or by listing the names of the variables that you want margins for, {\tt margins = c("sex","age")}.  You can also use \verb|"grand_row"| or \verb|"grand_col"| to produce grand row and grand column margins respectively.
+You can either specify that all margins should be displayed, using {\tt margins = TRUE}, or by listing the names of the variables that you want margins for, {\tt margins = c("sex", "age")}.  You can also use \verb|"grand_row"| or \verb|"grand_col"| to produce grand row and grand column margins respectively.  The specification of margins matches that of reshape, so please consult the reshape document for more details.
 
-This example shows how the margins appear.  In the first plot, there are no margins, and we only see conditional plots.  In the second example, we see margins over columns, but not rows, and in the final example we see all possible margins.  The facet in the lower right corner displays all data points.
+The following example shows what margins look like.  The first plot shows what the data looks like without margins, and the second shows all margins.  The margin column shows all drive trains, the margin row shows all cylinders, and the bottom-right plot (the grand total) shows the full data set.  For this data we can see that as the number of cylinders increases, engine displacement increases and fuel economy decreases, and compared to front wheel drive, as a group four wheel drive vehicles have about the same displacement, but are less fuel efficient.
 
-% decumar<<< 
-% interweave({
-% qplot(price, data=diamonds, facets= cut~ ., geom="histogram")
-% })
-% |||
-\begin{alltt}
+% INTERWEAVE
+% 
+% mpg2 <- subset(mpg, cyl != 5 & drv %in% c("4", "f"))
+% p <- qplot(displ, hwy, data=mpg2) + geom_smooth(method="lm")
+% p + facet_grid(cyl ~ drv) 
+% p + facet_grid(cyl ~ drv, margins = T)
+\input{_include/877952bba53b82786cedd948f6512a5d.tex}
+% END
 
-\end{alltt}
-% >>>
+Groups in the margins are controlled in the same way as groups in all other panels, with the interaction of all categorical variables present in the panel:
 
-Plots with many facets and margins may be more appropriate for printing, rather than on screen display, as the higher resolution allows you to compare many more subsets.
+% INTERWEAVE
+% 
+% qplot(displ, hwy, data=mpg2) + geom_smooth(aes(colour = drv), method="lm") + 
+%   facet_grid(cyl ~ drv, margins = T) 
+\input{_include/ca8bb6c54cb7cedef6d4b0d56d605a2f.tex}
+% END
+
+Plots with many facets and margins may be more appropriate for printing, rather than on screen display, as the higher resolution of print (600 dpi vs 72 dpi) allows you to compare many more subsets.
 
 \subsection{Facet wrap}
 \label{sub:facet_wrap}
@@ -169,7 +135,7 @@ An alternative is facet wrap.  Instead of having a 2d grid generate by the combi
 
 This is useful if you have a single variable that with many levels and want to arrange the plots in a more space efficient manner.
 
-This is very similar to how trellising in lattice works.
+This is basically the same way that trellising in lattice works.
 
 \subsection{Controlling scales}
 \label{sub:controlling_scales}
@@ -208,52 +174,106 @@ If the new dataset contains all of the facetting columns then each facet will ha
 
 Facetting is an alternative to using aesthetics (like colour, shape or size) to distinguish different groups.  Each has strengths and weaknesses, centred around the distance between the groups.
 
-With facetting, each group is quite far apart, in its own panel - there is no overlap between the groups.  This is good if the groups overlap a lot, but it does make small differences harder to see.  The groups are in the same panel when using aesthetics, so may overlap, but otherwise small differences are easier to see.  Illustrated in Figure~\ref{fig:facet-vs-groups}
+With facetting, each group is quite far apart, in its own panel - there is no overlap between the groups.  This is good if the groups overlap a lot, but it does make small differences harder to see.  The groups are in the same panel when using aesthetics, so may overlap, but otherwise small differences are easier to see.  Illustrated in Figure~\ref{fig:group-vs-facet}
 
-Facetting will also work with much larger number of groups, and because you can split in two dimensions, you can compare two variables simultaneously more easily than using two different aesthetics (conjunctions are not preattentive).
+Facetting will also work with much larger number of groups, and because you can split in two dimensions, you can compare two variables simultaneously more easily than using two different aesthetics (conjunctions are not preattentive).  The other advantage of facetting is that the scales can vary across 
 
-\begin{figure}[htbp]
-  \centering
-    \includegraphics[width=0.2\textwidth]{position-fvg-1}%
-    \includegraphics[width=0.8\textwidth]{position-fvg-2}
-
-    \includegraphics[width=0.2\textwidth]{position-fvg-3}%
-    \includegraphics[width=0.8\textwidth]{position-fvg-4}
-  \caption{caption}
-  \label{fig:facet-vs-groups}
-\end{figure}
-
+% FIGURE
+%   LABEL: group-vs-facet
+%   CAPTION: Facetting vs grouping.
+%   FILETYPE: png
+% 
+% xmajor <- c(0.1, 0.3, 0.5, 1,3, 5)
+% xminor <- as.vector(outer(1:10, 10^c(-1, 0)))
+% ymajor <- c(500, 1000, 5000, 10000)
+% yminor <- as.vector(outer(1:10, 10^c(2,3,4)))
+% dplot <- ggplot(subset(diamonds, color %in% c("D","E","G","J")), 
+%   aes(carat, price, colour = color)) + 
+%   scale_x_log10(breaks = xmajor, labels = xmajor, minor = xminor) + 
+%   scale_y_log10(breaks = ymajor, labels = ymajor, minor = yminor) + 
+%   scale_colour_hue(limits = levels(diamonds$color)) + 
+%   opts(legend.position = "none")
+%
+% dplot + geom_point()
+% dplot + geom_point() + facet_grid(. ~ color)
+% 
+% dplot + geom_smooth(method = lm, se=FALSE)
+% dplot + geom_smooth(method = lm, se=FALSE) + facet_grid(. ~ color)
+\input{_include/6acb7634b542c22a7a14515a2489c827.tex}
+% END
 
 \subsection{Dodging vs facetting}
-\label{sub:dodging_vs_facetting}
+\label{sub:dodge-vs-facet}
 
+Facetting can achieve similar effects to dodging.  Figure~\ref{fig:fvd-crossed} shows how dodging and facetting can create plots that look remarkably similar.  The main difference is the labelling - the facetted plot has colour labelled above and cut below; and the dodged below colour below and cut is not explicitly labelled.  Here example the labels in the facetted plot are excessive and very cramped.  
 
+% FIGURE
+%   LABEL: fvd-crossed
+%   COL: 1 GG-WIDTH: 10 TEX-WIDTH: 0.8 \textwidth
+%   CAPTION: Dodging (top) vs faceting (bottom) for a completely crossed
+%   pair of variables.
+% 
+% qplot(color, data=diamonds, geom="bar", fill=cut, position="dodge")
+% qplot(cut,   data=diamonds, geom="bar", fill=cut, position="dodge", 
+%   facets = . ~ color)
+\input{_include/a090f67c72941508ba6a6005a3d72927.tex}
+% END
 
-% \subsection{Continuous variables}\label{sub:continuous_variables}
+Apart from labelling, the main differences between dodging and facetting when the two variables are not completely crossed, but there are some combinations that do not occur.  In this case, dodging becomes less useful because it only splits up the bar locally, and there are no labels.  Facetting is more useful as we can control the whether the splitting is local (\code{scales = "free_x"}, \code{space = "free"}) or global (\code{scales = "fixed"}).  Figure~\ref{fig:fvd-nested} compares facetting and dodging for two nested variables from the \code{mpg} dataset: model and manufacturer.
+
+In summary, the choice between facetting and dodging depends on the relatshion between the two variables:
+
+\begin{itemize}
+  \item Completely crossed: facetting and dodging and basically equivalent.
+
+  \item Almost crossed: facetting with shared scales ensures that all combinations are visible, even if empty.
+
+  \item Nested: facetting with free scales and space allocates just enough space for each higher level group, and labels each item individually.
+\end{itemize}
+
+% FIGURE
+%   LABEL: fvd-nested
+%   COL: 1 GG-WIDTH: 10 TEX-WIDTH: 0.8 \textwidth
+%   CAPTION: For nested data, there is a clear advantage to facetting (top
+%   and middle) compared to dodging (bottom), because it is possible to 
+%   carefully control and label the facets.  For this example, the middle
+%   plot is not useful, but it will be useful in situations where the data
+%   is almost crossed, i.e.\ where a single combination is missing.
 % 
-% To use continuous variables as facetting variables, you will first need to convert them to categorical.  Also, as the facetting formula currently does not support calculated variables, so you will need to save them in the data frame first.
-% 
-% {\tt ggplot} provides a convenient function for converting a continuous variable to a categorical variable: {\tt chop}.  Chop takes the following arguments:
-% 
-% \begin{itemize}
-%   \item {\tt x}: vector of numbers to chop up into categorical variable
-%   \item {\tt n}: number of bins to cut the variable into
-%   \item {\tt method}: method to use, equal ranges, equal numbers in each range or pretty ranges
-% \end{itemize}
-% 
-% The following examples shows the use of chop to explore the earthquakes data set.
-% 
-% % decumar<<< 
-% % ggopt(aspect.ratio = 1)
-% % interweave({
-% % quakes$depthc <- chop(quakes$depth)
-% % qplot(long, lat, . ~ depthc, data=quakes)
-% % quakes$magc <- chop(quakes$mag, n=6, method="pretty")
-% % qplot(long, lat, . ~ magc, data=quakes)
-% % })
-% % |||
-% % >>>
-% 
-% Breaking by quantiles, so that each facet has approximately the same number of points, is usually the best choice as it is easier to compare the facets because you know the same number of points are in each, even in the presences of overplotting.
+% mpg2 <- subset(mpg, manufacturer %in% c("audi", "volkswagen", "jeep"))
+% qplot(model, data=mpg2, fill=model, geom="bar") + 
+%   facet_grid(. ~ manufacturer) + opts(legend.position = "none")
+% last_plot() + 
+%   facet_grid(. ~ manufacturer, scales = "free_x", space = "free")
+% qplot(manufacturer, data=mpg2, fill=model, geom="bar", position="dodge")
+\input{_include/c0a31bf93a73d42ea1275b4663a9e1fe.tex}
+% END
+
+\subsection{Continuous variables}\label{sub:continuous_variables}
+
+To use continuous variables as facetting variables, you will first need to convert them to categorical.  Also, as the facetting formula currently does not support calculated variables, so you will need to save them in the data frame first.
+
+{\tt ggplot} provides a convenient function for converting a continuous variable to a categorical variable: {\tt chop}.  Chop takes the following arguments:
+
+\begin{itemize}
+  \item {\tt x}: vector of numbers to chop up into categorical variable
+  \item {\tt n}: number of bins to cut the variable into
+  \item {\tt method}: method to use, equal ranges, equal numbers in each range or pretty ranges
+\end{itemize}
+
+The following examples shows the use of chop to explore the earthquakes data set.
+
+% decumar<<< 
+% ggopt(aspect.ratio = 1)
+% interweave({
+% quakes$depthc <- chop(quakes$depth)
+% qplot(long, lat, . ~ depthc, data=quakes)
+% quakes$magc <- chop(quakes$mag, n=6, method="pretty")
+% qplot(long, lat, . ~ magc, data=quakes)
+% })
+% |||
+% >>>
+
+Breaking by quantiles, so that each facet has approximately the same number of points, is usually the best choice as it is easier to compare the facets because you know the same number of points are in each, even in the presences of overplotting.
 
 \input{_footer.tex}
