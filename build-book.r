@@ -2,6 +2,8 @@ library(plyr)
 l(decumar)
 l(ggplot)
 
+# Need to clean out include directory
+
 chapters <- c("introduction", "layers", "mastery", "position", "polishing", "qplot", "scales", "specifications", "toolbox", "book-mine")
 
 tex <- paste(chapters, ".tex", sep="")
