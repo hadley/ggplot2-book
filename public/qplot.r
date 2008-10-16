@@ -52,7 +52,7 @@ qplot(carat, price, data=dlittle, geom=c("point", "quantile"), quantiles=seq(0.0
 
 # Scatterplot of price vs.\ carat supplemented with contours of a 2d
 # density estimate ({\tt geom=c(``point'', ``density2d'')}).  Most
-# diamonds are small and cheap.
+# diamonds are small and inexpensive.
 qplot(carat, price, data=diamonds, geom=c("point","density2d"))
 
 # Using jittering (left) and boxplots (right) to investigate the
