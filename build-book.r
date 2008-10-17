@@ -12,7 +12,7 @@ pdf <- paste(chapters, ".pdf", sep="")
 
 l_ply(tex, function(path) {
   cat(path, "\n")
-  overwrite_file(path, T)
+  overwrite_file(path)
 })
 m_ply(cbind(input = tex, output = r), function(input, output) {
   cat(input, "\n")
