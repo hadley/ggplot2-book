@@ -2,110 +2,95 @@
 
 \chapter{Writing your own}
 
-\section{Introduction to proto} % (fold)
-\label{sec:introduction_to_proto}
+\section{Introduction}
+
+As you use \ggplot more, you may discover some of the limitations of the built in geom, stats and scales need to write your own.  This chapter provides a detailed description of how these objects work, including an introduction to \code{proto}, the object-oriented system that underlies \ggplot.
+
+To get started, the first thing you should do is download a copy of the source code.  You can get this from CRAN: \url{http://cran.r-project.org/web/packages/ggplot2}.  Unpack it and familiarise yourself with the contents.  Each geom, stat and scale lives in it's own file, named the same way as the function.  
+
+\section{Prototype based OO} % (fold)
+\label{sec:proto}
 
 References.
 Prototype based inheritance.  IO, Javascript
 
 \section{Registration and documentation}
-\label{sec:registration_and_documentation}
 
-Each \ggplot object is associated with a number of shortcut methods.  For example, \code{ScaleHue} has user level functions \f{scale_colour_hue} and \f{scale_fill_hue}.  To create these extra functions you need to run and then copy and paste the results into your code.  You can also write them by hand, but since most of the arguments are the same, there's not much point.
+\section{Geoms}
+\label{sec:own-geom}
 
-\section{Geoms}\label{sec:writing_your_own}
+\ggplot uses grid graphics, so to be able to create new geom functions you will need some familiarity with basic grid functions.  I'd recommend that you have a copy of Paul Murrell's ``R Graphics'' on hand, so that you can answer any question you have about the grid system.
 
-\subsection{The basics}
-\label{sub:the_basics}
+The most important feature of the geom subclasses is the \f{draw} method.  This takes a dataset and some parameters, and produces a grid grob for rendering on the plot.  Everything else is documentation and defaults.  The listing below shows a slightly simplify version of the \f{draw} method from \code{geom_point}.  It's basically a thin wrapper around the grid method \f{pointsGrob}, mapping the aesthetics to the appropriate parameters.
 
-If a geom function (or a combination of geoms) does not meet your needs, it may be necessary to create your own geom function.  
+% LISTING
+% 
+% draw <- function(., data, scales, coordinates, ...) {    
+%   with(data, pointsGrob(
+%       x, y, size = unit(size, "mm"), pch = shape, 
+%       gp = gpar(col = colour, fill = fill, fontsize = size * .pt))
+%   )
+% }
 
-As you use {\tt geom\_plot} more, you may discover some of the limitations of the included geom functions and want to write your own.  (Although I'm very open to suggestions and if you develop a useful geom function I will be happy to include in the main package).  This document will discuss in detail how geom functions work and what you need to do to build your own.  As an example I will work through the process of creating a geom function that produces a 1d density plot with jittered rug plot, not unlike that created by {\tt densityplot} in {\tt lattice}.
+Grid uses points (a typographic unit of measure, there are 72 points to an inch) for font and line size, while \ggplot uses millimetres.  Multiplying the   measurement in mm by \code{.pt} converts it to points.  
 
-{\tt geom\_plot} uses grid graphics, so to be able to create new geom functions you will need some familiarity with basic grid functions.  This isn't too hard to acquire, and I suggest you look at the code for the basic geom functions (eg. {\tt geom\_points}, {\tt geom\_rect}) for some simple examples.
-
-There are three functions you will need to write when creating a new geom function:
+This simplified version neglects two extra features that you'll see if you look at the actual source code.  You can ignore both of these issues while you are experimenting and getting the geom to work, but if you want others to be able to use your geom in a wide range of situations you'll need to give them some though.  You also need to:
 
 \begin{itemize}
-  \item A convenient function for adding your geom function to a plot.  This is what the users uses to add the geom to the plot.  This provides a convenient place to modify other plot settings (eg. scales) that your geom might need.  See {\tt geom\_histogram} and {\tt geom\_point} for examples.
+  \item Transform the components of the geom so that it works in any coordinate system: \verb|coordinates$transform(data, scales)|.  A lot of the time you can avoid doing this work by calling basic geoms that already do this work.  For example, see \f{geom_boxplot} or \f{geom_smooth}.  This is an important pattern: many complex geoms are aggregates of simpler geoms.  This was discussed in depth in Section~\ref{sub:coord-transformation}.
 
-  \item The geom function.  This converts a list of aesthetics, plus some optional parameters to a gList of geoms.  This function is prefixed with {\tt geom\_}.  
+  \item Name the grid grob, so that it's possible to modify it after drawing.  This is sometimes necessary for advanced customisation, as discussed in Section~\ref{sec:grid-existing}.  You can use the \f{ggname} convenience function that gives the new grob a name consistent with the rest of \ggplot.
+\end{itemize}
+
+% draw <- function(., data, scales, coordinates, ...) {    
+%   with(coordinates$transform(data, scales), 
+%     ggname(.$my_name(), pointsGrob(x, y, size=unit(size, "mm"), pch=shape, 
+%     gp=gpar(col=colour, fill = fill, fontsize = size * .pt)))
+%   )
+% }
+
+\subsection{Dealing with coordinate systems}
+
+The most complicated 
+
+\subsection{Defaults}
+\label{sub:defaults}
+
+\begin{itemize}
+  \item \f{default_stat}, the default stat associated with the geom.
   
-  \item The preprocessor function (optional).  If your geom function creates new aesthetics (like the densityplot will, by creating a new y position aesthetic) you will need this preprocessing stage so that the new aesthetics are available for the scale functions.  This function is prefixed with {\tt pre\_}
+  \item \f{default_position}, the default position adjustment associated with the geom.
+
+  \item \f{default_aes}, default aesthetic values
+  
+  \item \code{required_aes}, a vector of aesthetic names that are required in addition to the defaults.  Most geoms require at least x and y aesthetics.
+  
 \end{itemize}
+% subsection defaults (end)
 
-In this example, we're going to develop a geom function to display a 1d density with jittered geom plot.  We first need to decide what aesthetics and what optional parameters this function will take.  We want to give the user some flexibility over the how the density is computed, and the appearance of the density plot.  So let's use the following option parameters:
+\subsection{The legend}
+\label{sub:the_legend}
 
-\begin{itemize}
-  \item adjust: adjustment to default bandwidth
-  \item kernel: type of kernel to use
-  \item colour: the colour of the density line
-\end{itemize}
+Each geom has a geom associated with it that is used for drawing the legend.  The name of this geom should be returned by the \f{guide_geom} method.  For example, the bar, tile and ribbon plots all use the same legend, which is provided by \code{geom_tile}.
 
-There is only one aesthetic we need: $x$.  From this we will compute the density and create a y aesthetic.  We do this in the {\tt pre\_density} function.  Remember that this function returns a data frame that will be used by scales, and then by {\tt geom\_density}
+The geom that draws the legend needs one additional method: \f{draw_legend}.  This method takes a data frame in same format as the draw method that contains a single observation and returns a grid grob representing the legend key for that element.  The grid grob should make no assumptions about the size of the space in which it will be drawn, and use the npc unit for positioning.
 
-\begin{verbatim}
-pre_density <- function(data, adjust=1, kernel="gaussian", ...) {
-   dens <- density(data$x, adjust=adjust, kernel=kernel)
-   dens$'.type' <- "density"
+The legends provided \code{geom_path}, \code{geom_point}, and \code{geom_tile} provide the majority of legends in \ggplot.  They are all good places to start.  For examples of a more complicated legends see \code{geom_boxplot} and \code{geom_smooth}.
 
-   rug <- data.frame(x = jitter(data$x), y=-0.5, .type="rug")
-   rbind(as.data.frame(dens[c("x","y",".type")]), rug)
-}
-\end{verbatim}
-
-We can only return one data frame, so we need to package up the data for both the density and rug somehow.  I've chosen to do this by adding an extra column to the data frame called {\tt .type} (so named to avoid conflict with user variables) that we will use to determine where the data should go.
-
-The next task is to write geom function to draw the density (with lines) and the jittered rug plot (if necessary).
-
-\begin{verbatim}
-geom_density <- function(aesthetics, colour="black", ...) {
-   aesthetics <- data.frame(aesthetics)
-   dens <- subset(aesthetics, .type == "density")
-   rug <- subset(aesthetics, .type == "rug")
-
-   dens$colour <- colour
-
-   gTree(children = gList(
-      geom_line(dens),
-      geom_rect(rug, colour="black")
-   ))
-
-}
-\end{verbatim}
-
-Finally, we write a convenience function to make it easy to for users.  This function also changes the y label to density, and sets up an appropriate scale.
-
-\begin{verbatim}
-geom_density <- function(plot = .PLOT, aesthetics=list(), ..., data=plot$data) {
-   plot$ylabel <- "Density"
-   plot <- pscontinuous(plot, "y", range=c(0,NA), expand=c(0.05,0))
-   geom__add("density", plot, aesthetics, ..., data=data)
-}  
-\end{verbatim}
-
-\subsection{Grouping}
-\label{sub:grouping}
-
-\subsection{Coordinate transforms}
-\label{sub:coordinate_transforms}
-
-\subsection{Documentation}
+\subsection{Documentation} 
 \label{sub:documentation}
+
+If you fill out these fields informatively, you can easily generate html or rdoc documentation with the methods \f{rdoc_page_create} and \f{html_page_create}.
+
+\subsection{Accessor methods}
 
 
 
 \section{Statistical transformations}
-\label{sec:statistical_transformations}
-
-\section{Position adjustments}
-\label{sec:position_adjustments}
+\label{sec:own-stat}
 
 \section{Scales}
-\label{sec:scales}
-
-\section{Coordinate systems}
-\label{sec:coordinate_systems}
+\label{sec:own-scale}
 
 
 
