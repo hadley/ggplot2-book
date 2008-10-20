@@ -14,7 +14,11 @@ To get started, the first thing you should do is download a copy of the source c
 References.
 Prototype based inheritance.  IO, Javascript
 
-\section{Registration and documentation}
+Equivalence between new call and defaults.
+
+Clone method to make behave like usual R objects.
+
+Objname.
 
 \section{Geoms}
 \label{sec:own-geom}
@@ -31,6 +35,15 @@ The most important feature of the geom subclasses is the \f{draw} method.  This 
 %       gp = gpar(col = colour, fill = fill, fontsize = size * .pt))
 %   )
 % }
+\begin{alltt}
+draw <- function(., data, scales, coordinates, ...) \verb|{|    
+  with(data, pointsGrob(
+      x, y, size = unit(size, "mm"), pch = shape, 
+      gp = gpar(col = colour, fill = fill, fontsize = size * .pt))
+  )
+\verb|}|\end{alltt}
+
+% END
 
 Grid uses points (a typographic unit of measure, there are 72 points to an inch) for font and line size, while \ggplot uses millimetres.  Multiplying the   measurement in mm by \code{.pt} converts it to points.  
 
@@ -42,16 +55,46 @@ This simplified version neglects two extra features that you'll see if you look 
   \item Name the grid grob, so that it's possible to modify it after drawing.  This is sometimes necessary for advanced customisation, as discussed in Section~\ref{sec:grid-existing}.  You can use the \f{ggname} convenience function that gives the new grob a name consistent with the rest of \ggplot.
 \end{itemize}
 
+% LISTING
+% 
 % draw <- function(., data, scales, coordinates, ...) {    
 %   with(coordinates$transform(data, scales), 
 %     ggname(.$my_name(), pointsGrob(x, y, size=unit(size, "mm"), pch=shape, 
 %     gp=gpar(col=colour, fill = fill, fontsize = size * .pt)))
 %   )
 % }
+\begin{alltt}
+draw <- function(., data, scales, coordinates, ...) \{    
+  with(coordinates\$transform(data, scales), 
+    ggname(.\$my\_name(), pointsGrob(x, y, size=unit(size, "mm"), pch=shape, 
+    gp=gpar(col=colour, fill = fill, fontsize = size * .pt)))
+  )
+\}\end{alltt}
+
+% END
+
+The draw method has arguments:
+
+\begin{itemize}
+  \item Data.  By this point in the plotting pipeline, 
+
+  \item Scales, a list with named components x and y, representing the position scales for the x and y axes.  It's unlikely you will need to use these, but it's useful if your geom needs to know exactly how big the plotting space is (e.g. abline, vline and hline).  These are explained in a little bit more detail below, but the method you are most likely to need is \f{output_set}, which gives the range of the output.
+
+  \item Coordinates.  You will always need to \f{transform} the data.
+
+  \item Any other parameters of the geom.  These aren't use very often.  For examples see geoms boxplot, step and crossbar.
+\end{itemize}
+
+Minimal complete example of GeomPoint.
+
 
 \subsection{Dealing with coordinate systems}
 
-The most complicated 
+The most complicated part of geoms is dealing with coordinate systems. If you are writing the geom for your own use, you can skip this section unless you are routinely using coordinate systems other than Cartesian.  You can also use the draw routines from other geoms (point, line and polygon) so that you don't need to worry about dealing with the coordinate system yourself.  If 
+
+\paragraph{Reparameterising.} For geoms with aesthetics that give dimensions (width and height), it is necessary to reparameterise into locations (xmin, xmax, ymin, ymax).  This is  also important for position scales, so that they can allocate the correct amount of space.
+
+\paragraph{Munching.} You can check if munching is necessary by looking at the boolean return value of \f{muncher}. 
 
 \subsection{Defaults}
 \label{sub:defaults}
@@ -77,11 +120,6 @@ The geom that draws the legend needs one additional method: \f{draw_legend}.  Th
 
 The legends provided \code{geom_path}, \code{geom_point}, and \code{geom_tile} provide the majority of legends in \ggplot.  They are all good places to start.  For examples of a more complicated legends see \code{geom_boxplot} and \code{geom_smooth}.
 
-\subsection{Documentation} 
-\label{sub:documentation}
-
-If you fill out these fields informatively, you can easily generate html or rdoc documentation with the methods \f{rdoc_page_create} and \f{html_page_create}.
-
 \subsection{Accessor methods}
 
 
@@ -89,9 +127,50 @@ If you fill out these fields informatively, you can easily generate html or rdoc
 \section{Statistical transformations}
 \label{sec:own-stat}
 
+Stat objects have a very similar structure to geoms, except here the main method is called \f{calculate}.  Most \f{calculate} methods are much more complicated than the \f{draw} methods.  This is because the transformations need to be able to work in a wide range of circumstances (necessitating checking for many special cases), and often have considerable logic for choosing good default parameter values.
+
+The arguments for the \f{calculate} are same as \f{draw}, but there are a few differences
+
+\begin{itemize}
+  \item Data. By this point in the pipeline, all discrete variables have been converted to integers, so use \f{is.integer} if it's important whether a variable is continuous or discrete
+  
+  \item Scales.  Useful if you want to ensure that all .  This is important for stats like bin and density, where the values need to line up.  It is also an option to geom smooth: by default the smooth will only interpolate within a single group, not cover the full range of the data.
+
+  \item Additional parameters are much more common in statistics than in geoms.
+\end{itemize}
+
 \section{Scales}
 \label{sec:own-scale}
 
+Continuous vs discrete.  
 
+You need to provide the conversion function, \f{map}, as well as methods to choose the 
+
+Lay out naming convention.
+
+% breaks_user
+% breaks_auto
+% labels_user
+% labels_auto ?
+
+\f{output_breaks}
+
+\f{labels}
+
+\section{Documentation}
+\label{sec:documentation}
+
+If you fill out these fields informatively, you can easily generate html or rdoc documentation with the methods \f{rdoc_page_create} and \f{html_page_create}.
+
+If you want to contribute your
+
+\begin{itemize}
+  \item \f{icon}
+  \item \f{desc}
+  \item \f{details}
+  \item \f{desc_params}
+  \item \f{desc_outputs}
+  \item \f{seealso}
+\end{itemize}
 
 \input{_footer.tex}
