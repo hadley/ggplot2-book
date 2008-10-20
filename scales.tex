@@ -6,7 +6,6 @@
 %   GG-WIDTH: 4  GG-HEIGHT: 4
 %   TEX-WIDTH: 0.33\textwidth COL: 3 
 %   INLINE: FALSE
-%   CACHE: TRUE
 % 
 
 % END
@@ -127,7 +126,6 @@ The following example shows the difference between the default discrete and cont
 \input{_include/99842d2d90997bbc5785f3f6090f4326.tex}
 % END
 
-
 The default colour scale for discrete values uses equally spaced hues, the default scale for continuous values uses a gradient of colours between blue and yellow, and there are a number of Brewer colour scales designed to work well in a variety of situations (see \url{http://colorbrewer.org} for more detail).
 
 As well as referring to scales explicitly by name, you can also refer to the default scales with the shorthand scale name {\tt discrete} or {\tt continuous}.  For example, the default discrete colour scale is \code{scale_colour_discrete}.  You can change the default scales with \code{set_default_scale(aesthetic, variable_type, scale_name, ...)}.  Extra arguments are passed to the scale constructor.  For example, if you wanted to set up default black and white colour scales you could execute:
@@ -157,7 +155,7 @@ As well as having a common naming scheme, all scales share a set of common argum
   \input{_include/19da2bba1759804ff8c1e077fc36c94d.tex}  
   % END
 
-  Because {\tt scale\_colour\_gradient()} is the default scale for the colour aesthetic and continuous data, the only variation we see in the the plots is the different labels on the legends ~--~ and the resulting change in the plot's aspect ratio, in the case of the middle plot.
+  Because {\tt scale\_colour\_gradient()} is the default scale for the colour aesthetic and continuous data, the only variation we see in the the plots is the different labels on the legends, and the resulting change in the plot's aspect ratio, in the case of the middle plot.
 
   % FIGURE
   %  LABEL: legend-names 
@@ -173,48 +171,34 @@ As well as having a common naming scheme, all scales share a set of common argum
   \input{_include/499b7d57df41c7186026311f5cb564dd.tex}  
   % END
 
-  \item {\bf limits}: fixes the domain of the scale.   Continuous scales take a numeric vector of length two; discrete scales take a character vector. If limits are set, no training of the data will be performed.  
+  \item {\bf limits}: fixes the domain of the scale.   Continuous scales take a numeric vector of length two; discrete scales take a character vector. If limits are set, no training of the data will be performed.  There are shortcut functions for setting the limits of x and y scales: \f{xlim} and \f{ylim}.  
   
-  There are shortcut functions for setting the limits of continuous x and y scales: \f{xlim} and \f{ylim}.  Each has two arguments specifying the endpoints of the new domain, and each creates a scale object.  
+  Limits are useful for zooming (i.e., setting limits that are smaller than the full range of data), and for ensuring that limits are consistent across multiple plots intended to be compared (i.e., setting limits that are larger or smaller than some of the default ranges).  
   
-  This is particularly useful for zooming (i.e., setting limits that are smaller than the full range of data), and for ensuring that limits are consistent across multiple plots intended to be compared (i.e., setting limits that are larger or smaller than some of the default ranges).  
-  
-  Any value not in the domain of the scale is not displayed; i.e., for an observation to be displayed it must be in the domain of every scale on the plot.
+  Any value not in the domain of the scale is discarded: for an observation to be included in the plot, each aesthetic must be in the domain each scale.  This occurs before statistics are calculated. See Section~\ref{sec:sub:cartesian} for purely visual zooming of the x and y axes.
 
   \item {\bf breaks} and {\bf labels}: {\bf breaks} controls which values appear on the axis or legend ~--~ e.g., at what values tick marks should appear on an axis or how a continuous scale is segmented in a legend.  {\bf labels} specifies the values that should appear at the breakpoints. (If {\tt labels} is set, you must also specify {\tt breaks}, so that the two can be matched up correctly.)  
 
-To distinguish breaks from limits, remember that breaks affect what appears on the guides, while limits affect what appears on the plot.  See by Figure~\ref{fig:breaks_vs_legends} for an illustration.  The first plot uses the default settings for both breaks and limits, which happen to be {\tt limits = c(4, 8)} and {\tt breaks = 4:8}.  In the second plot, the breaks have been reset: The plotted region is the same, but the tick positions and labels have shifted.  In the third plot, it is the limits which have been redefined, so much of the data now falls outside the plotting region. 
-  % Alternatively, both breaks and labels can be a function with a single  argument, range, that returns a numeric vector (for breaks) or a character vector (for labels) with desired break positions and labels.
+  To distinguish breaks from limits, remember that breaks affect what appears on the guides, while limits affect what appears on the plot.  See by Figure~\ref{fig:breaks_vs_limits} for an illustration.  The first plot uses the default settings for both breaks and limits, which happen to be {\tt limits = c(4, 8)} and {\tt breaks = 4:8}.  In the second plot, the breaks have been reset: The plotted region is the same, but the tick positions and labels have shifted.  In the third plot, it is the limits which have been redefined, so much of the data now falls outside the plotting region. 
+  
+  % FIGURE
+  %   LABEL: breaks_vs_limits
+  %   COL: 3 TEX-WIDTH: 0.33\textwidth
+  %   CAPTION: The difference between breaks and limits, demonstrated 
+  %   using the x axis of {\tt qplot(cyl, wt, data = mtcars)}.  (Left) 
+  %   default plot with {\tt limits = c(4, 8), breaks = 4:8}.  (Middle)  
+  %   {\tt breaks = c(5.5,6.5)} and (right) {\tt limits = c(5.5,6.5)}.
+  % 
+  % p <- qplot(cyl, wt, data = mtcars)
+  % p
+  % p + scale_x_continuous(limits = c(5.5, 6.5))
+  % p + scale_x_continuous(breaks = c(5.5, 6.5))
+
+  \item {\bf formatter}: if no labels are specified the formatter will be called on each break to produce the label.  Useful formatters for continuous scales are \f{comma}, \f{percent}, \f{dollar} and \f{scientific}, and for discrete scales is \f{abbreviate}.
 \end{itemize}
-
-\begin{figure}[htbp]
-  \centering
-    \includegraphics[width=0.33\textwidth]{scales-unlimited}%
-    \includegraphics[width=0.33\textwidth]{scales-breaks}%
-    \includegraphics[width=0.33\textwidth]{scales-limits}
-  \caption{The difference between breaks and limits.  (Left) default plot \code{limits = c(4, 8), breaks = 4:8}.  (Middle)  {\tt breaks = c(5.5,6.5)} and (right) {\tt limits = c(5.5,6.5)}.}
-  \label{fig:breaks_vs_legends}
-\end{figure}
-
-This code generates the plots in the figure:
-
-% LISTING
-% 
-% p <- qplot(cyl, wt, data=mtcars)
-% p
-% p + scale_x_continuous(breaks=c(5.5, 6.5))
-% p + scale_x_continuous(limits=c(5.5, 6.5))
-\input{_include/02035a1ee69230c7eea2c0d4bf857235.tex}
-% END
-
-\section{Transformations}
-\label{sec:trans}
-
-% Add details here!
 
 \section{More details}
 \label{sec:more-details}
-
 
 Scales can be divided roughly into four separate groups:
 
@@ -261,34 +245,28 @@ The most common continuous position scales are {\tt scale\_x\_continuous} and {\
   \label{tbl:common-trans}
 \end{table}
 
-Transformations are most often used to modify position scales, so there are shortcuts for x, y, and z scales: \verb|scale_x_log10()| is equivalent to \verb|scale_x_continuous(trans = "log10")|.
+Transformations are most often used to modify position scales, so there are shortcuts for x, y, and z scales: \verb|scale_x_log10()| is equivalent to \verb|scale_x_continuous(trans = "log10")|.  The \code{trans} argument works for any continuous scale, including the colour gradients described below, but the shortcuts only exist for position scales.
 
 Of course, you can also perform the transformation yourself.  For example instead of adding {\tt scale\_x\_log}, you could plot {\tt log(x)}.  That produces an identical result inside the plotting region, but the the axis and tick labels won't be the same.  If you use a transformed scale, the axes will be labelled in the original data space. In both cases, the transformation occurs before the statistical summary. Figure~\ref{fig:trans} illustrates this difference, and these commands produce the two plots in the figure:
 
-% dfs: Is one of these log base 10 and the other natural log?
-
 % LISTING
 % 
-% qplot(carat, price, data=diamonds) + scale_x_log10() + scale_y_log10()
 % qplot(log10(carat), log10(price), data=diamonds)
+% qplot(carat, price, data=diamonds) + scale_x_log10() + scale_y_log10()
 \input{_include/f3690019914297c3070eed0d28806753.tex}
 % END
 
-\begin{figure}[htbp]
-  \centering
-    \includegraphics[width=0.5\textwidth]{trans-scale}%
-    \includegraphics[width=0.5\textwidth]{trans-data}
-  \caption{A scatterplot of diamond price vs. carat illustrating the difference between log transforming the scale (left) and log transforming the data (right).  The plots are identical, but the axis labels are different.}
-  \label{fig:trans}
-\end{figure}
+% FIGURE
+%   LABEL: trans
+%   CAPTION: A scatterplot of diamond price vs. carat illustrating the
+%   difference between log transforming the scale (left) and log transforming
+%   the data (right).  The plots are identical, but the axis labels are
+%   different.
+% 
+% qplot(log10(carat), log10(price), data=diamonds)
+% qplot(carat, price, data=diamonds, log="xy")
 
-
-%%% dfs -- note that the word 'grob' suddenly appears here without
-%%% any definition or explanation.
-
-Transformers are also used in \verb|coord_trans|, where the transformation occurs after the statistic has been calculated, and affect the shape of the grob.  \verb|coord_trans| is described in more detail in Section XXX.
-
-The \code{trans} argument works for any continuous scale, including the colour gradients described below, but the shortcuts only exist for position scales.
+Transformers are also used in \f{coord_trans}, where the transformation occurs after the statistic has been calculated, and affect the shape of the graphical object drawn on the plot.  \f{coord_trans} is described in more detail in Section\ref{sub:cartesian}.
 
 \subsection{Colour gradients}
 \label{sub:scale-gradient}
@@ -306,49 +284,42 @@ Colour gradients are often used to show the height of a 2d surface.  In the foll
 
 Figure~\ref{fig:gradient} shows three gradients applied to this data.
 
-% p + scale_fill_gradient(limits=c(0, 0.04))
-% ggsave(file="_include/scale-gradient-1.pdf", width=6, height=6)
-% p + scale_fill_gradient(limits=c(0, 0.04), low="white", high="black") 
-% ggsave(file="_include/scale-gradient-2.pdf", width=6, height=6)
-% p + scale_fill_gradient2(limits=c(-0.04, 0.04), midpoint= median(df$density)) 
-% ggsave(file="_include/scale-gradient-3.pdf", width=6, height=6)
-
-\begin{figure}[htbp]
-  \centering
-    \includegraphics[width= 0.33 \textwidth]{scale-gradient-1}%
-    \includegraphics[width= 0.33 \textwidth]{scale-gradient-2}%
-    \includegraphics[width= 0.33 \textwidth]{scale-gradient-3}
-  \caption{Density of eruptions with three colour schemes.  (Left) default gradient colour scheme, (mid) customised gradient from white to black and (right) 3 point gradient with midpoint set to the median density.}
-  \label{fig:gradient}
-\end{figure}
+% FIGURE
+%   LABEL: gradient
+%   CAPTION: Density of eruptions with three colour schemes.  (Left) default
+%   gradient colour scheme, (mid) customised gradient from white to black and
+%   (right) 3 point gradient with midpoint set to the median density.
+% 
+% p + scale_fill_gradient(limits = c(0, 0.04))
+% p + scale_fill_gradient(limits = c(0, 0.04), low="white", high="black") 
+% p + scale_fill_gradient2(limits = c(-0.04, 0.04), 
+%   midpoint= median(df$density)) 
 
 % http://www.vendian.org/mncharity/dir3/blackbody/
 
-You can also create your own custom gradient with \f{scale_colour_custom}.  This is useful if you have colours that are meaningful for your data (e.g.\ black body colours or standard terrain colours), or you'd like to use a palette produced by another package.  Figure~\ref{fig:vcd} shows show palettes generates from routines in the \code{vcd} package.  The technical report \citet{zeileis:2007} that describes the philosophy behind these palettes is a good introduction to some of the complexities of creating good colour scales.
+You can also create your own custom gradient with \f{scale_colour_gradientn}.  This is useful if you have colours that are meaningful for your data (e.g.\ black body colours or standard terrain colours), or you'd like to use a palette produced by another package.  Figure~\ref{fig:vcd} shows show palettes generates from routines in the \code{vcd} package.  The technical report \citet{zeileis:2007} that describes the philosophy behind these palettes is a good introduction to some of the complexities of creating good colour scales.
 
+% FIGURE 
+%   LABEL: vcd
+%   CAPTION: Gradient colour scales using perceptually well-formed palettes
+%   produced by the \code{vcd} package.  From left to right: sequential,
+%   diverging and heat hcl palettes.  Each scale is produced with 
+%   \code{scale_fill_gradientn} with \code{values} set to 
+%   \code{sequential_hcl(7)}, \code{diverge_hcl(7)} and \code{heat_hcl(7)}.
+% 
 % library(vcd)
 % p + scale_fill_gradientn(colours = sequential_hcl(7), limits=c(0, 0.04))
-% ggsave(file="_include/scale-gradient-vcd-1.pdf", width=6, height=6)
 % p + scale_fill_gradientn(colours = diverge_hcl(7), limits=c(0, 0.04))
-% ggsave(file="_include/scale-gradient-vcd-2.pdf", width=6, height=6)
 % p + scale_fill_gradientn(colours = heat_hcl(7), limits=c(0, 0.04))
-% ggsave(file="_include/scale-gradient-vcd-3.pdf", width=6, height=6)
-
-\begin{figure}[htbp]
-  \centering
-    \includegraphics[width= 0.33 \textwidth]{scale-gradient-vcd-1}%
-    \includegraphics[width= 0.33 \textwidth]{scale-gradient-vcd-2}%
-    \includegraphics[width= 0.33 \textwidth]{scale-gradient-vcd-3}
-  \caption{Gradient colour scales using perceptually well-formed palettes produced by the \code{vcd} package.  From left to right: sequential, diverging and heat hcl palettes.}
-  \label{fig:vcd}
-\end{figure}
 
 \subsection{Discrete scales}
 \label{sub:scale-discrete}
 
-The discrete scales, \f{scale_linetype}, \f{scale_shape} and \f{scale_size_discrete} basically have no options (although for the shape scale you can choose whether points should be fixed or solid).  If you want to customise these scales, you need to create your own new scale with the manual scale.  It has one important argument, \verb|values| in which you specify the values that the scale should produce.  If this vector is named, it will match the values of the output to the values of the input, otherwise it will match in order of the levels of the discrete variable.  
+The discrete scales, \f{scale_linetype}, \f{scale_shape} and \f{scale_size_discrete} basically have no options (although for the shape scale you can choose whether points should be fixed or solid). Each has a list of values that are mapped to factor levels.
 
-This scale is particularly useful if you'd like to override the default shape, size or linetype scales.  You will need some knowledge of the valid aesthetic values, which are described in Appendix \ref{cha:specifications}.
+If you want to customise these scales, you need to create your own new scale with the manual scale: \f{scale_shape_manual}, \f{scale_linetype_manual}, \f{scale_colour_manual} etc..  It has one important argument, \verb|values| in which you specify the values that the scale should produce.  If this vector is named, it will match the values of the output to the values of the input, otherwise it will match in order of the levels of the discrete variable.   You will need some knowledge of the valid aesthetic values, which are described in Appendix \ref{cha:specifications}.
+
+% TODO: add an example here!
 
 \subsection{The identity scale}
 \label{sub:scale-identity}
@@ -357,12 +328,17 @@ The identity scale is used when your data is already in a form that the plotting
 
 Figure~\ref{fig:scale-identity} shows one sort of data where \code{scale_identity} is useful.  Here the data themselves are colours, and there's no way we could make a meaningful legend.  The identity scale can also be useful in the case where you have manually scaled the data to aesthetic values.  In that situation, you will have to figure out what breaks and labels make sense for your data.
 
-\begin{figure}[htbp]
-  \centering
-    \includegraphics[width=0.5\textwidth]{scale-identity}
-  \caption{A plot of R colours in Luv space.  A legend is unnecessary, because the colour of the points represents itself: the data and aesthetic spaces are the same.}
-  \label{fig:scale-identity}
-\end{figure}
+% FIGURE
+%   LABEL: scale-identity
+%   COL:1 TEX-WIDTH: 0.5\textwidth
+%   CAPTION: A plot of R colours in Luv space.  A legend is unnecessary,
+%   because the colour of the points represents itself: the data and aesthetic
+%   spaces are the same.
+% 
+% x <- colors()
+% luv <- as.data.frame(convertColor(t(col2rgb(x)), "sRGB", "Luv"))
+% qplot(u, v, data=luv, colour = x, size = I(3)) + scale_colour_identity() +
+%    coord_equal()
 
 \section{Legends and axes}
 \label{sec:guides}
@@ -383,23 +359,15 @@ In \ggplot, legends and axes are produced automatically based on the scales and 
 
 % In order for legends to be merged, they must have the same title.  For this reason, if you change the title of one of the merged legends you'll need to change it for all of them.
 
-
+% FIGURE
+%   TEX-WIDTH: 1in
+%   LABEL: legend-merge
+%   CAPTION: Colour legend, shape legend, colour + shape legend. 
+% 
 % p <- ggplot(diamonds[1:100, ], aes(x=price, y=carat)) + geom_point() + geom_point() + opts(keep = "legend_box")
 % p + aes(colour = cut)
-% ggsave(file="_include/lm-1.pdf", width=1.5, height=1.9)
 % p + aes(shape = cut)
-% ggsave(file="_include/lm-2.pdf", width=1.5, height=1.9)
 % p + aes(shape = cut, colour= cut)
-% ggsave(file="_include/lm-2.pdf", width=1.5, height=1.9)
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=1in]{lm-1}%
-  \includegraphics[width=1in]{lm-2}%
-  \includegraphics[width=1in]{lm-3}
-  
-  \caption{Colour legend, shape legend, colour + shape legend. }
-  \label{fig:legend-merge}
-\end{figure}
 
 \subsection{Customising appearance}
 
@@ -411,8 +379,6 @@ It is possible to customize both the contents of the legends and the way they ar
   \item The theme settings {\tt axis.*} and {\tt legend.*} control the visual appearance of axes and legends.  To learn how to manipulate these settings, see Section~\ref{sec:themes}.
 
   \item The internal grid lines are controlled by the breaks and minor breaks arguments.  By default minor grid lines are spaced evenly in the original data space: this gives the common behaviour of log-log plots where major grid lines are multiplicative and minor grid lines are additive.  You can override the minor grid lines with the {\tt minor\_breaks} argument.
-
-% dfs: what are npc coordinates?  
 
   \item Position and justification of legends.  Plot level option setting: {\tt legend.position}, can be right, left, top, bottom, none (no legend), or a numeric position.  The numeric position gives (in values between 0 and 1) the position of the corner given by {\tt legend.justification}.  
   
