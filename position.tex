@@ -164,7 +164,7 @@ Fixed scales allow you to compare subsets on an equal basis, seeing where each f
 \input{_include/5d4cee49ee3972b1c115fbf133ae972a.tex}
 % END
 
-There is an additional constraint on the scales of \code{facet_grid}: each columns must have the same x scale, and each row much have the same y scale.  For \code{facet_grid} there is an additional parameter called \code{space}, which takes values \code{"free"} or \code{"fixed"}.  When the space can vary freely, each column (or row) will have width (or height) proportional to the range of the data in that column (or row).  This makes the scales equal across all rows: 1 cm on each panel maps to the same range of data.  (This is somewhat analogous to the ``sliced'' axis limits of lattice).  This is most useful for categorical axes, as there are fewer examples of continuous axes where it makes sense..
+There is an additional constraint on the scales of \code{facet_grid}: all panels in a column must have the same x scale, and all panels in a row much have the same y scale.  For \code{facet_grid} there is an additional parameter called \code{space}, which takes values \code{"free"} or \code{"fixed"}.  When the space can vary freely, each column (or row) will have width (or height) proportional to the range of the data in that column (or row).  This makes the scales equal across all rows: 1 cm on each panel maps to the same range of data.  (This is somewhat analogous to the ``sliced'' axis limits of lattice).  This is most useful for categorical axes, where we can assign space proportionally based on the number of levels.
 
 % INTERWEAVE
 % 
@@ -185,7 +185,7 @@ Note the use of \f{reorder} to sort the factor levels in order of increasing ave
 \subsection{Missing facetting columns}
 \label{sub:missing_facetting_columns}
 
-If you facet on the original data set and add geom with a new dataset, \ggplot follows some simple heuristics to try and do what you want.  If you combine a facetted dataset with a dataset that lacks those facetting variables, the data will be repeated across the missing combinations. If you need precise control, just make sure that every additional dataset contains all the facetting columns used in the original dataset.
+If you facet on the original data set and add geom with a new dataset, \ggplot uses a simple heuristic to try and do what you want.  If you combine a facetted dataset with a dataset that lacks those facetting variables, the data will be repeated across the missing combinations. If you need precise control, just make sure that every additional dataset contains all the facetting columns used in the original dataset.
 
 This is usually used for adding annotations or meta data to the plot.  For example, if you're drawing a map in the background, you want that map to be same across all panels.  This is what happens by default.
 
@@ -207,11 +207,11 @@ This is usually used for adding annotations or meta data to the plot.  For examp
 \subsection{Grouping vs. facetting}
 \label{sub:group-vs-facet}
 
-Facetting is an alternative to using aesthetics (like colour, shape or size) to distinguish different groups.  Each has strengths and weaknesses, centred around the distance between the groups.
+Facetting is an alternative to using aesthetics (like colour, shape or size) to distinguish different groups.  Each techniques has strengths and weaknesses, centred around the distance between the groups.
 
-With facetting, each group is quite far apart, in its own panel - there is no overlap between the groups.  This is good if the groups overlap a lot, but it does make small differences harder to see.  The groups are in the same panel when using aesthetics, so may overlap, but otherwise small differences are easier to see.  Illustrated in Figure~\ref{fig:group-vs-facet}
+With facetting, each group is quite far apart in its own panel: there is no overlap between the groups.  This is good if the groups overlap a lot, but it does make small differences harder to see.  The groups are in the same panel when using aesthetics, so may overlap, but otherwise small differences are easier to see.  Illustrated in Figure~\ref{fig:group-vs-facet}
 
-Facetting will also work with much larger number of groups, and because you can split in two dimensions, you can compare two variables simultaneously more easily than using two different aesthetics (conjunctions are not preattentive).  The other advantage of facetting is that the scales can vary across 
+Facetting will also work with much larger number of groups, and because you can split in two dimensions, you can compare two variables simultaneously more easily than using two different aesthetics (conjunctions are not preattentive).  The other advantage of facetting is that the scales can vary across panels, which is useful if the subsets occupy very different ranges.
 
 % FIGURE
 %   LABEL: group-vs-facet
@@ -240,7 +240,7 @@ Facetting will also work with much larger number of groups, and because you can 
 \subsection{Dodging vs facetting}
 \label{sub:dodge-vs-facet}
 
-Facetting can achieve similar effects to dodging.  Figure~\ref{fig:fvd-crossed} shows how dodging and facetting can create plots that look remarkably similar.  The main difference is the labelling - the facetted plot has colour labelled above and cut below; and the dodged below colour below and cut is not explicitly labelled.  Here example the labels in the facetted plot are excessive and very cramped.  
+Facetting can achieve similar effects to dodging.  Figure~\ref{fig:fvd-crossed} shows how dodging and facetting can create plots that look remarkably similar.  The main difference is the labelling: the facetted plot has colour labelled above and cut below; and the dodged below colour below and cut is not explicitly labelled.  Here example the labels in the facetted plot are excessive and very cramped.  
 
 % FIGURE
 %   LABEL: fvd-crossed
@@ -256,7 +256,7 @@ Facetting can achieve similar effects to dodging.  Figure~\ref{fig:fvd-crossed} 
 
 Apart from labelling, the main differences between dodging and facetting when the two variables are not completely crossed, but there are some combinations that do not occur.  In this case, dodging becomes less useful because it only splits up the bar locally, and there are no labels.  Facetting is more useful as we can control the whether the splitting is local (\code{scales = "free_x"}, \code{space = "free"}) or global (\code{scales = "fixed"}).  Figure~\ref{fig:fvd-nested} compares facetting and dodging for two nested variables from the \code{mpg} dataset: model and manufacturer.
 
-In summary, the choice between facetting and dodging depends on the relatshion between the two variables:
+In summary, the choice between facetting and dodging depends on the relationship between the two variables:
 
 \begin{itemize}
   \item Completely crossed: facetting and dodging and basically equivalent.
@@ -318,18 +318,16 @@ The facetting formula only works with variables in the data set (not functions o
 \section{Coordinate systems}
 \label{sec:coord}
 
-It is the job of the coordinate system to:
+Coordinate systems tie together the position scales to produce a 2d location. Currently, \ggplot comes with six different coordinate systems, listed in Table~\ref{tbl:cord}.  All these coordinate systems are two dimensional, although one day I hope to add 3d graphics too. As with the other components in ggplot2, you generate the R name by joining \code{coord_} and the name of the coordinate system.  Most plots use the default Cartesian coordinate system, \f{coord_cartesian}, where the 2d position of an element is given by the combination of the x and y positions.  
+
+Coordinate systems have two main jobs: 
 
 \begin{itemize}
   \item Combine the two position aesthetics to produce a 2d position on the plot.  The position aesthetics are called \code{x} and \code{y}, but they might be better called position 1 and 2 because their meaning depends on the coordinate system used.  For example, with the polar coordinate system they become radius and angle, and with maps they become latitude and longitude
   
-  \item Draw the axes and plot background.  While the scales control the values that appear on the axes, and how they map from data to position, it is the coordinate system which actually draws them.  This is because their appearance depends on the coordinate system: an angle axis looks quite different to an x axis.
-
-  \item Transform data
+  \item In coordination with the facetter, draw axes and panel backgrounds.  While the scales control the values that appear on the axes, and how they map from data to position, it is the coordinate system which actually draws them.  This is because their appearance depends on the coordinate system: an angle axis looks quite different to an x axis.  The coordinate system must work together with the facetting system so that 
 
 \end{itemize}
-
-Currently, \ggplot comes with six different coordinate systems, listed in Table~\ref{tbl:cord}.  All these coordinate systems are two dimensional, although one day I hope to add 3d graphics too. As with the other components in ggplot2, you generate the R name by joining \code{coord_} and the name of the coordinate system.  Most plots use the default Cartesian coordinate system, \code{coord_cartesian}, where the 2d position of an element is made from the orthogonal combination of the two.  
 
 % source("latex.r")
 % describe(Coord)
@@ -367,19 +365,22 @@ Unlike transforming the data or transforming the scales, transforming the data w
 %   look like when displayed in a variety of coordinate systems.
 % 
 % rect <- data.frame(x = 0.5, y = 0.5)
-% line <- data.frame(x = c(0,1), y = c(1, 0))
-% base <- ggplot(mapping = aes(x=x,y=y)) + 
-%   geom_tile(data=rect, aes(width = 0.5, height = 0.5)) + 
-%   geom_line(data=line)
+% line <- data.frame(x = c(0,2), y = c(1, 0))
+% base <- ggplot(mapping = aes(x, y)) + 
+%   geom_tile(data = rect, aes(width = 0.5, height = 0.5)) + 
+%   geom_line(data = line)
 % base
+% base + coord_polar("x")
+% base + coord_polar("y")
+% base + coord_flip()
+% base + coord_transform(y = "log10")
+% base + coord_equal()
 \input{_include/18e8c24958f910178a29d15a76de131c.tex}
 % END
 
-This transformation takes part in two steps.  Firstly, dimensions are converted to locations.  For example, instead of parameterising a rectangle by the position of the centre and the length of the sides, it is converted to a polygon parameterised by the positions of the four corners.  This because dimension is difficult to interpret in non-Cartesian coordinate systems.  This allows all geoms to be converted to points, lines and polygons.  
+This transformation takes part in two steps.  Firstly, the parameterisation of each geom is changed purely location based, rather than location + dimension.  For example, a bar can be represented as an x position, a height and a width.  But how do we interpret height and width in a non-Cartesian coordinate system, where height and width may not be constant?  We solve the problem by using these measurements to give locations in Cartesian space, and then transforming these locations to new locations in the non-Cartesian space.  A rectangle is converted to a polygon parameterised by the positions of the four corners.  This because dimension is difficult to interpret in non-Cartesian coordinate systems.  This allows all geoms to be converted to points, lines and polygons.  
 
-The only thing that is invariant under transformation is a point.  Assumption that coordinate transformations are smooth in some sense, so that very short lines will still be lines in the new coordinate system.
-
-Figure~\ref{coord-trans} illustrates this procedure.  We start with a line determined by points, then break it done into multiple line segments.  Translate those points, and then connect them up again.  In the example, the number of line segments has been deliberately chosen to be too small, so you can see more easily how it works.  For real use, the number is much large so that the result looks smooth.
+The next step is munching.  The only shape that is invariant under transformation is a point.  How can we convert more complex geoms like lines and polygons?  The basic assumption is that all coordinate transformations are smooth, in the sense that all very short lines will still be linear in the new coordinate system.  This process is called munching: every straight line is munched up into many smaller straight lines.  Figure~\ref{coord-trans} illustrates this procedure.  We start with a line determined by points, then break it done into multiple line segments.  Those points are translated into the new coordinate system, and then connected up again.  In the example, the number of line segments is to be too small, so you can see more easily how it works.  For real use, the number is much large so that the result looks smooth.
 
 % FIGURE
 %   LABEL: coord-trans
@@ -408,19 +409,21 @@ Figure~\ref{coord-trans} illustrates this procedure.  We start with a line deter
 \input{_include/a916eb7b5fe67cb949efed7b0b5a04aa.tex}
 % END
 
-\subsection{Cartesian coordinate system}
+\subsection{Cartesian coordinate systems}
 \label{sub:cartesian}
 
-The Cartesian coordinate system has arguments \code{xlim} and \code{ylim}.  If you think back to the scales chapter, you might wonder why we need these.  Doesn't the limits argument of the scales already allow use to control what appears on the plot?  The key difference is how the limits work: when setting scale limits, any data outside the limits is thrown away; but when setting coordinate system limits we still use all the data, but we only display a small region of the plot.  Setting coordinate system limits is like looking at the plot under a magnifying glass.  Figures~\ref{fig:limits-smooth} and~\ref{fig:limits-bin} show an example of this.
+The four Cartesian based coordinate systems, \code{coord_cartesian}, \code{coord_equal}, \code{coord_flip} and \code{coord_trans} share a number of common features.  They are still essentially Cartesian because the x and y positions map orthogonally to x and y positions on the plot.  
+
+\paragraph{Setting limits.}  The Cartesian coordinate system has arguments \code{xlim} and \code{ylim}.  If you think back to the scales chapter, you might wonder why we need these.  Doesn't the limits argument of the scales already allow use to control what appears on the plot?  The key difference is how the limits work: when setting scale limits, any data outside the limits is thrown away; but when setting coordinate system limits we still use all the data, but we only display a small region of the plot.  Setting coordinate system limits is like looking at the plot under a magnifying glass.  Figures~\ref{fig:limits-smooth} and~\ref{fig:limits-bin} show an example of this.
 
 % FIGURE
 %   COL: 3 TEX-WIDTH: 0.33\textwidth
 %   LABEL: limits-smooth
 %   CAPTION: Setting limits on the coordinate system, vs setting limits
-%   on the scales.  Left, entire dataset; middle, x scale limits set; right, 
-%   coordinate system x limits set.  Scaling the coordinate limits performs
-%   a visual zoom, while setting the scale limits subsets the data and refits
-%   the smooth.
+%   on the scales.  Left, entire dataset; middle, x scale limits set to 
+%   (325, 500); right, coordinate system x limits set to (325, 500).  Scaling
+%   the coordinate limits performs a visual zoom, while setting the scale
+%   limits subsets the data and refits the smooth.
 % 
 % (p <- qplot(disp, wt, data=mtcars) + geom_smooth())
 % p + scale_x_continuous(limits = c(325, 500))
@@ -432,11 +435,12 @@ The Cartesian coordinate system has arguments \code{xlim} and \code{ylim}.  If y
 %   COL: 3 TEX-WIDTH: 0.33\textwidth
 %   LABEL: limits-bin
 %   CAPTION: Setting limits on the coordinate system, vs setting limits
-%   on the scales.  Left, entire dataset; middle, scale limits set; right, 
-%   coordinate limits set.  Compare the size of the bins: when you set the 
-%   scale limits, there is the same number of bins but they each cover a 
-%   a smaller region of the data; when you set the coordinate limits, there
-%   are fewer and they cover the same amount of data as the original.
+%   on the scales.  Left, entire dataset; middle, x scale limits set to 
+%   (0, 2); right, coordinate x limits set to (0, 2).  Compare the size of 
+%   the bins: when you set the scale limits, there is the same number of bins
+%   but they each cover a smaller region of the data; when you set the
+%   coordinate limits, there are fewer bins and they cover the same amount of
+%   data as the original.
 % 
 % (d <- ggplot(diamonds, aes(carat, price)) + 
 %   stat_bin2d(bins = 25, colour="grey50") + opts(legend.position = "none")) 
@@ -445,7 +449,22 @@ The Cartesian coordinate system has arguments \code{xlim} and \code{ylim}.  If y
 \input{_include/fe491db973f77458fd448aaba833f152.tex}
 % END
 
-\paragraph{Transformations.}  We can use scale transformations and coordinate transformations together.  We use the scale to transform the data, and the coordinate system to back transform the data to the original values.
+\paragraph{Flipping the axes.}  Most statistics and geoms assume you are interested in y values conditional on x values (e.g.\ smooth, summary, boxplot, line).  If you are interested in x condition on y (or you just want to rotate the plot 90 degrees), you can use \code{coord_flip} to exchange the x and y axes.  Compare this with just exchanging the variables mapped to x and y
+
+% FIGURE
+%   COL: 3 TEX-WIDTH: 0.33\textwidth
+%   LABEL: coord-trans
+%   CAPTION: Left, a scatterplot and smoother with highway mpg on x axis, and 
+%   city on y axis.  Middle, exchanging \var{cty} and \var{hwy} rotates the
+%   plot 90 degrees, but the smooth is fit to the rotated data.  Left, using 
+%   \code{coord_flip} fits the smooth to the original data, and then rotates
+%   the output.
+% 
+% qplot(hwy, cty, data = mpg) + geom_smooth()
+% qplot(cty, hwy, data = mpg) + geom_smooth()
+% qplot(hwy, cty, data = mpg) + geom_smooth() + coord_flip()
+
+\paragraph{Transformations.}  Like limits, we can also transform the data in two places: at the scale level or at the coordinate system level.  Transforming at the scale level occurs before statistics are computed and does not change the shape of the geom.  Transforming at the coordinate system level occurs after the statistics have been computed, and does affect the shape of the geom.  Using both together allows us to model the data on a transformed scale and then back transform it for interpretation: a common pattern in analysis.
 
 % INTERWEAVE
 %   FILETYPE: PNG
@@ -456,8 +475,14 @@ The Cartesian coordinate system has arguments \code{xlim} and \code{ylim}.  If y
 \input{_include/7ffe994708722c39aab2577204a6b9d2.tex}
 % END
 
-\paragraph{Flipping the axes.}  Most statistics and geoms assume you are interested in y conditional on x (e.g.\ smooth, summary, boxplot, line).  If you are interested in x condition on y (or you just want to rotate the plot 90 degrees), you can use \code{coord_flip} to exchange the x and y axes.
+\paragraph{Equal scales.}  Use \code{coord_equal} to ensure that the x and y axes have equal scales: i.e.\ 1 cm along the x axis represents the same range in the data as 1 cm along the y axis.  By default it will assume that you want a one-to-one mapping, but you can change this with the \code{ratio} parameter.  The aspect ratio will also be set to ensure that the mapping is maintained regardless of the shape of the output device.
 
-\paragraph{Equal scales.}  Use \code{coord_equal} to ensure that the x and y axes have equal scales: i.e.\ 1 cm along the x axis represents the same range in the data as 1 cm along the y axis.
+\subsection{Non-Cartesian coordinate systems}
+
+There are two non-Cartesian coordinates systems: polar coordinates and map projections.  These coordinate systems are still somewhat experimental, and there are fewer standards for the layout of axes, so you may need to tweak them to meet your needs using the tools in Chapter~\ref{cha:grid}.
+
+\paragraph{Polar coordinates.}  Using polar coordinates gives rise to pie charts and wind roses (from bar geoms), and radar charts (from line geoms).  Polar coordinates are often used for circular data, particularly time or direction, but the perceptual properties are not good because the angle is harder perceive for small radii than it is for large radii.  The \code{theta} argument determines which position variable is mapped to angle (by default, x) and which to radius.  
+
+\paragraph{Map projections.}  Uses the \code{mapproj} package \citep{mapproj} and \f{coord_map} takes the same arguments as \f{mapproj} for controlling the projection.  See the documentation for more examples, and consult a cartographer for the most appropriate projection for your data.
 
 \input{_footer.tex}
