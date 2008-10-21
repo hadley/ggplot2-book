@@ -56,7 +56,7 @@ The \code{panels} viewport is contained inside the \code{background} viewport wh
 
 \begin{figure}[htbp]
   \centering
-    \includegraphics[width=\textwidth]{grid-viewports.pdf}
+    \includegraphics[width=\textwidth]{grid-viewports}
   \caption{Diagram showing the structure and names of viewports.}
   \label{fig:viewports}
 \end{figure}
@@ -131,9 +131,7 @@ If you want to write your own, you need to copy this basic idea: take position a
 \section{Editing existing objects on the plot}
 \label{sec:grid-existing}
 
-From time to time, the theming system will not give you enough control.  This may occur if you want to modify a single element of a 
-
-Where possible, using the theming system will be easier, because using grid will affect a component, but not the space saved for that element.
+From time to time, the theming system will not give you enough control.  This may occur if you want to modify a single element of a plot, like one grid line or a single label.  Where possible, using the theming system will be easier, because using grid will affect a component, but not the space saved for that element.
 
 Most of the difficulty in modifying elements of the plot is figuring out what the grob you want to modify is called.  Once you have that you can use {\tt grid.gedit}, to locate and then modify that grob. 
 
@@ -158,7 +156,6 @@ Modifying a grob requires some knowledge of the different parameters of the grob
   \caption{Common graphical parameters for grid grobs.  Note that point size is controlled separately.}
   \label{tbl:gpar}
 \end{table}
-
 
 In this example, we edit the font of all labels.
 
@@ -186,21 +183,21 @@ grid.gedit(gPath("yaxis", "labels"), gp=gpar(col="red"))
 
 You can use \f{grid.remove} to completely remove a grob.  However, the space it takes up will remain there:
 
-\begin{alltt}
-qplot(mpg, wt, data=mtcars, facets = . ~ cyl)
-grid.gremove(gPath("strip", "background"))
-grid.gremove(gPath("guide", "background"))
-grid.gremove("major")
-grid.gremove("axis")
-\end{alltt}
+% LISTING
+% 
+% qplot(mpg, wt, data=mtcars, facets = . ~ cyl)
+% grid.gremove(gPath("strip", "background"))
+% grid.gremove(gPath("guide", "background"))
+% grid.gremove("major")
+% grid.gremove("axis")
 
 You can use an alternative method to remove top level viewports.  There are plot-level options \code{keep} and \code{drop}, which specify which viewports to keep or drop respectively.  For example:
 
-\begin{lstlisting}
-p <- qplot(mpg, wt, data=mtcars, main = "My plot")
-p + opts(keep = "panel")
-p + opts(ignore = c("xlabel", "ylabel"))
-\end{lstlisting}
+% LISTING
+% 
+% p <- qplot(mpg, wt, data=mtcars, main = "My plot")
+% p + opts(keep = "panel")
+% p + opts(ignore = c("xlabel", "ylabel"))
 
 \section{Adding annotations}\label{sec:adding_annotation}
 \label{sec:grid-new}
@@ -209,67 +206,66 @@ Many annotations can be done with {\tt geom\_text}, {\tt geom\_abline}, {\tt geo
 
 To add annotations to a plot you have to specify the viewport when you add extra grobs.  For example:
 
-\begin{lstlisting}[language = R]
-qplot(wt, mpg, data=mtcars, colour=cyl)
-grid.circle(vp="layout::panel_1_1")
-\end{lstlisting}
+% LISTING
+% 
+% qplot(wt, mpg, data=mtcars, colour=cyl)
+% grid.circle(vp="layout::panel_1_1")
 
 Panel viewports will have a coordinate system set up for points, while x- and y- axes will only have one dimension defined.  For example, on the x-axis there will be native coordinates for the x-dimension, but not the y-dimension.
 
-\begin{lstlisting}[language = R]
-qplot(wt, mpg, data=mtcars, colour=cyl)
-grid.lines(x=unit(c(0,1), "npc"), y=unit(23, "native"), vp="layout::panel_1_1")
-grid.lines(x=unit(c(0,1), "npc"), y=unit(23, "native"), vp="layout::axis_v_1_1")
-\end{lstlisting}
-
-
+% LISTING 
+% 
+% qplot(wt, mpg, data=mtcars, colour=cyl)
+% grid.lines(x = unit(c(0,1), "npc"), y = unit(23, "native"),
+%    vp = "layout::panel_1_1")
+% grid.lines(x = unit(c(0,1), "npc"), y = unit(23, "native"),
+%    vp = "layout::axis_v_1_1")
 
 \section{Customising layout}
 \label{sec:grid-layout}
 
-By default, showing a {\tt ggplot} object at the R command prompt will display to the screen.  To exercise more control, you can call {\tt print} explicitly.  This section describes some of the things you can do.  For more details see {\tt ?print.ggplot} and {\tt ?ggplot\_print}.
+By default, showing a {\tt ggplot} object at the R command prompt will display to the screen.  To exercise more control, there are two options you can set: \code{keep} and \code{drop}.  If you just want the plot (no labels, titles or legends) you can use \code{opts(keep = "panels")}:
 
-If you just want the plot (no labels, titles or legends) you can use {\tt pretty = FALSE}
-
-\begin{lstlisting}[language = R]
-p <- qplot(wt, mpg, data=mtcars, colour=cyl)
-print(p, pretty = FALSE)
-\end{lstlisting}
+% INTERWEAVE
+% 
+% p <- qplot(wt, mpg, data=mtcars, colour=cyl)
+% p + opts(keep = "panels")
 
 By default, {\tt ggplot} always clears the screen and draws to the entire device.  You customise this in two ways. One way is to setup a viewport and push it on to the display, then draw the plot with {\tt newpage=FALSE}. {\tt pushViewport} adds the viewport to the list of viewports on the display.   Afterwards, {\tt upViewport} returns you to the viewport for the entire page, preparing you for the next set of output.
 
-\begin{lstlisting}[language = R]
-p <- qplot(wt, mpg, data=mtcars, colour=cyl)
-grid.newpage()
-pushViewport(viewport(height=0.4, width=0.4, x=0.4, y=0.8))
-print(p, newpage=FALSE, pretty=FALSE)
-upViewport()
-\end{lstlisting}
+% LISTING
+% 
+% p <- qplot(wt, mpg, data=mtcars, colour=cyl)
+% grid.newpage()
+% pushViewport(viewport(height=0.4, width=0.4, x=0.4, y=0.8))
+% print(p, newpage=FALSE, pretty=FALSE)
+% upViewport()
 
 Alternatively, you can set up your own set of viewports, and then specify which one the plot should be drawn to.  Here we use {\tt upViewport} before displaying the plot so we are in the top level viewport before we start plotting.
 
-\begin{lstlisting}[language = R]
-grid.newpage()
-pushViewport(viewport(height=0.5, width=0.5, x=0.5, y=0.5, 
-  name="small", angle=40))
-upViewport()
-print(p, vp="small")
-\end{lstlisting}
+% LISTING
+% 
+% grid.newpage()
+% pushViewport(viewport(height = 0.5, width = 0.5, x = 0.5, y = 0.5, 
+%   name="small", angle=40))
+% upViewport()
+% print(p, vp="small")
 
 Obviously, this is very useful if you want to layout plots in a complicated grid.  In this case, {\tt grid.layout} is very useful, as it allows you to set up a grid of viewports with arbitrary heights and widths.  You still need to create each viewport, but instead of explicitly specifying the position and size, you can specify the row and column of the layout.
 
-\begin{lstlisting}[language = R]
-p <- qplot(wt, mpg, data=mtcars, colour=cyl)
-
-vplayout <- function(x, y) viewport(layout.pos.row=x, layout.pos.col=y)
-grid.newpage()
-pushViewport(viewport(layout=grid.layout(3,3)))
-
-print(p, vp=vplayout(1,1))
-print(p, vp=vplayout(2:3,2:3))
-print(p, vp=vplayout(1, 2:3))
-print(p, vp=vplayout(2:3, 1))
-\end{lstlisting}
+% LISTING
+% 
+% p <- qplot(wt, mpg, data = mtcars, colour = cyl)
+% 
+% vplayout <- function(x, y) 
+%   viewport(layout.pos.row = x, layout.pos.col = y)
+% grid.newpage()
+% pushViewport(viewport(layout = grid.layout(3,3)))
+% 
+% print(p, vp=vplayout(1,1))
+% print(p, vp=vplayout(2:3,2:3))
+% print(p, vp=vplayout(1, 2:3))
+% print(p, vp=vplayout(2:3, 1))
 
 This is useful for arranging plots in a wider range of ways than what you can do with facetting.   You should be careful to ensure that scales are consistent over the different plots.  There is currently no easy way to do this, except to keep track of the maximum and minimum yourself, and then manually set the scales of the plot.
 
@@ -278,16 +274,16 @@ This is useful for arranging plots in a wider range of ways than what you can do
 
 Using \f{grid.gedit} works fine if you are editing the plot on screen, but if you want to save it to disk you need take some extra steps, or you will end up with multiple pages of output, each showing one change.  The key is not to modify the plot on screen, but to modify the plot grob, and then draw it once you have made all the changes.  
 
-\begin{lstlisting}[language = R]
-p <- qplot(wt, mpg, data=mtcars, colour=cyl)
-# Get the plot grob
-grob <- ggplotGrob(p)
-# Modify in place
-grob <- geditGrob(grob, gPath("strip","label"), gp=gpar(fontface="bold"))
-
-# Draw it
-grid.newpage()
-grid.draw(grob)
-\end{lstlisting}
+% LISTING
+% 
+% p <- qplot(wt, mpg, data=mtcars, colour=cyl)
+% # Get the plot grob
+% grob <- ggplotGrob(p)
+% # Modify in place
+% grob <- geditGrob(grob, gPath("strip","label"), gp=gpar(fontface="bold"))
+% 
+% # Draw it
+% grid.newpage()
+% grid.draw(grob)
 
 \input{_footer.tex}
