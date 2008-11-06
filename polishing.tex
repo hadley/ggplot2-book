@@ -14,9 +14,7 @@
 
 In this chapter you will learn how to prepare polished plots for publication.  Most of this chapter focusses on the theming capability of \ggplot which allows you to control many non-data aspects of plot appearance, but you will also learn how to adjust geom, stat and scale defaults, and the best way to save plots for inclusion into other software packages.  Together with the next chapter, manipulating plot rendering with \code{grid}, you will learn how to control every visual aspect of the plot to get exactly the appearance that you want.
 
-The visual appearance of the plot is determined by both data and non-data related components.  Section~\ref{sec:themes} introduces the theme system which controls all aspects of non-data display.
-
-By now you should be familiar with the many ways that you can alter the data related components of the plot---layers and scales---to visualise your data and change the appearance of the plot.  In Section~\ref{sec:theme-scale-geom} you will learn how you can change the defaults for these, so that you do not need to repeat the same parameters again and again.
+The visual appearance of the plot is determined by both data and non-data related components.  Section~\ref{sec:themes} introduces the theme system which controls all aspects of non-data display.  By now you should be familiar with the many ways that you can alter the data related components of the plot---layers and scales---to visualise your data and change the appearance of the plot.  In Section~\ref{sec:theme-scale-geom} you will learn how you can change the defaults for these, so that you do not need to repeat the same parameters again and again.
 
 Finally, Section~\ref{sec:saving} concludes the chapter with a discussion about how to get your graphics out of R and into \LaTeX, Word or other presentation or word-processing software.
 
@@ -272,8 +270,6 @@ Table~\ref{tbl:geom-defaults} lists all of the common aesthetic defaults.  If yo
 \section{Saving your output}
 \label{sec:saving}
 
-For interactive use, \f{ggsave} will use the size of the current graphics device (useful for ensuring a good aspect ratio), but when creating final versions it's recommended to set width and height so that all graphics for a document are the same size.
-
 You have two basic choices of output: raster or vector.  Vector graphics are procedural.  This means that they are essentially ``infinitely'' zoomable; there is no loss of detail.  Raster graphics are stored as an array of pixels.  Fixed resolution.  Generally, vector output is more desirable, but for complex graphics containing thousands of graphical objects it can be slow to render.  In this case, it may be better to switch to raster output.  For printed use, a high-resolution (e.g. 600 dpi) graphic may be an acceptable compromise, but can be large.  See \url{http://www.lanceknadle.com/images/raster_vector.pdf} for some more examples.
 
 \begin{figure}[htbp]
@@ -283,11 +279,32 @@ You have two basic choices of output: raster or vector.  Vector graphics are pro
   \label{fig:vector-raster}
 \end{figure}
 
-Table~\ref{tbl:graphic-recommendation} lists recommended graphic formats for various tasks.  R output generally works best as part of a *nix development tool chain: using png or pdf output in \LaTeX{} documents.  With Microsoft Office things are little more complicated.  You have two choices of vector output neither of which are perfect.  The first option is to use Windows meta files (\code{wmf}), which are supported natively by Office but do not support transparency.  {\sc pdf}s do support transparency, but when included into a Office document.
+To save your output, you can use the typical R way, which works for all packages or a special function from \ggplot that saves the current plot: \f{ggsave}. \f{ggsave} is optimised for interactive used and has the following important arguments:
 
-If you are using \LaTeX, I recommend including \verb|\DeclareGraphicsExtensions{.png, .pdf}| in the preamble.  Then you don't need to specify the file extension in \verb|includegraphics| commands, but \LaTeX{} will pick png files in preference to pdf.  I choose this order because you can produce all your files in pdf, and then go back and re-render any big ones as pngs.  This is what I did for this book.
+\begin{itemize}
+  \item The \code{path} specifies the path where the image should be saved.  The file extension will be used to automatically select the correct graphics device.
+  
+  \item Three arguments control output size.  If left blank, the size of the current on-screen graphics device will be used.  \code{width} and \code{height} can be used to specify the absolute size, or \code{scale} to specify the size of the plot relative to the on-screen display.  When creating the final versions it's a good idea to set \code{width} and \code{height} so that all graphics for a document are the same size.
 
-What about OpenOffice?
+  \item For raster graphics, the \code{dpi} argument controls the resolution of the plot.  It defaults to 300, which is appropriate for most printers, but you may want to use 600 for particularly high-resolution output, or 72 for on-screen display.
+  
+\end{itemize}
+
+The following code shows these two methods. If you want to save multiple plots to a single file, you need to use the traditional graphics device mechanism of doing so.  
+
+% LISTING
+% 
+% qplot(mpg, wt, data = mtcars)
+% ggsave(file = "output.pdf")
+% 
+% pdf(filename = "output.pdf", width = 6, height = 6)
+% # If inside a script, you will need to explicitly print()
+% qplot(mpg, wt, data = mtcars)
+% dev.off()
+
+Table~\ref{tbl:graphic-recommendation} lists recommended graphic formats for various tasks.  R output generally works best as part of a *nix development tool chain: using png or pdf output in \LaTeX{} documents.  With Microsoft Office it is easiest to use a high-resolution (\code{dpi = 600}) png file.  You can use vector output, but neither of wmf or postscript are particularly appealing: Windows meta files (\code{wmf}) do not support transparency, and postscript prints fine, but is only visible if you add a preview in another software package.  The same advice holds for OpenOffice.
+
+If you are using \LaTeX, I recommend including \verb|\DeclareGraphicsExtensions{.png, .pdf}| in the preamble.  Then you don't need to specify the file extension in \verb|includegraphics| commands, but \LaTeX{} will pick png files in preference to pdf.  I choose this order because you can produce all your files in pdf, and then go back and re-render any big ones as pngs.  Another useful command is \verb|\graphicspath{{include/}}| which specifies a path for latex to search for graphics in, allowing you to keep graphics in a separate directory to the rest of the text.
 
 \begin{table}
   \begin{center}
@@ -297,14 +314,15 @@ What about OpenOffice?
     \midrule
     pdf   & vector & pdflatex\\
     ps    & vector & latex \\
-    wmf   & vector & MS office \\
-    png   & raster & web, pdflatex \\
-    tiff  & raster & some publishers \\
+    % wmf   & vector & MS office \\
+    png   & raster & web, MS office, pdflatex \\
+    tiff  & raster & publishers who ask for it \\
     \bottomrule 
   \end{tabular}
   \end{center}
   \caption{Recommended graphic output for different purposes.}
   \label{tbl:graphic-recommendation}
 \end{table}
+
 
 \input{_footer.tex}
