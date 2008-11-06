@@ -36,7 +36,7 @@ This chapter is broken up into the following sections, each of which deals with 
 
   \item Revealing uncertainty and showing intervals, \secref{sec:uncertainty}.
 
-  \item Connecting related observations, \secref{sec:connecting}.
+  % \item Connecting related observations, \secref{sec:connecting}.
 
   \item Annotating a plot, \secref{sec:annotating}.
 
@@ -126,14 +126,18 @@ Each of these geoms is two dimensional and requires both \code{x} and \code{y} a
 
 There are a number of geoms can be used to display distributions, depending on the dimensionality of the distribution, whether it is continuous or discrete, and whether you are interested in conditional or joint distributions.
 
-For 1d continuous distributions the important geom is the histogram.  Figure~\ref{geom-1d-con} uses the histogram to display the distribution of diamond \var{depth}.  It is important to customise the parameters to find a revealing view.  If you are interested in the distribution of a continuous variable conditioned on a discrete variable, there are a few things that you can try: you could create small multiples of the histogram, \code{facets = . ~ var} with facetting; use a frequency polygon, {\tt geom = "freqpoly"}; or create a conditional density plot, {\tt position = "fill"}.  For the first two options, it may be desirable to use {\tt y = ..density..} to focus on the relative shape of the distributions, rather than there size. 
+For 1d continuous distributions the most important geom is the histogram.  Figure~\ref{geom-1d-con} uses the histogram to display the distribution of diamond \var{depth}.  It is important to customise the parameters to find a revealing view.  If you are interested in the distribution of a continuous variable conditioned on a discrete variable, there are a few things that you can try: you could create small multiples of the histogram, \code{facets = . ~ var} with facetting; use a frequency polygon, {\tt geom = "freqpoly"}; or create a conditional density plot, {\tt position = "fill"}.  
+
+Both the histogram and frequency polygon geom use \code{stat_bin}.  This statistic produces two output variables \code{count} and \code{density}.  The count is the default as it is most interpretable.  The density is basically the count divided by the total count, and is useful when you want to compare the shape of the distributions, not the overall size.  You will often prefer this when comparing the distribution of subsets that different sizes.
 
 % FIGURE
 %   LABEL: geom-1d-con
 %   CAPTION: \Leftc, never rely on the default parameters to get a revealing
 %   view of the distribution.  \Rightc, zooming in on the x axis and selecting
-%   a smaller bin width reveal far more detail, {\tt xlim = c(55, 70), 
-%   binwidth = 0.1}.
+%   a smaller bin width reveals far more detail, {\tt xlim = c(55, 70), 
+%   binwidth = 0.1}.  We can see that the distribution is slightly skew-right.  
+%   Don't forget to include information about important parameters (like bin
+%   width) in the caption.
 % 
 % qplot(depth, data=diamonds, geom="histogram")
 % qplot(depth, data=diamonds, geom="histogram", xlim=c(55, 70), binwidth=0.1)
@@ -157,17 +161,20 @@ For 1d continuous distributions the important geom is the histogram.  Figure~\re
 Many of the distribution related geoms come in geom/stat pairs.  Most of these geoms are aliases: a basic geom is combined with a stat to produce the desired plot.  The boxplot may appear to be an exception to this rule, but behind the scenes \code{geom_boxplot} uses a combination of the basic bars, lines and points.
 
 \begin{itemize}
-  \item \code{geom_boxplot} = \code{stat_boxplot} + \code{geom_boxplot}: box and whisker plot, for a continuous variable conditioned by a categorical variable.  This is a useful display when the categorical variable has many distinct values, but for a few values, the techniques described above give a better view of the shape of the distribution.
+  \item \code{geom_boxplot} = \code{stat_boxplot} + \code{geom_boxplot}: box and whisker plot, for a continuous variable conditioned by a categorical variable.  This is a useful display when the categorical variable has many distinct values, but for a few values, the techniques described above give a better view of the shape of the distribution.  This technique can also be used for continuous variables, is they are first finely binned.   Figure~\ref{geom-boxplot} shows boxplots conditioned on both categorical and continuous variables.
   
   % FIGURE
   %   LABEL: geom-boxplot
   %   CAPTION: The boxplot geom can be use to see the distribution of a 
-  %   continuous variable conditional on a, \leftc discrete varable, or
-  %   right continuous variable.  If the number of boxplots is small, 
-  %   faceted histograms will reveal finer details of the distribution.
+  %   continuous variable conditional on a discrete varable like cut, \leftc,
+  %   or continuous variable like carat, \rightc.  For continuous variables,
+  %   the group aesthetic must be set to get multiple boxplots.  Here 
+  %   {\tt group = round_any(carat, 0.1, floor)} is used to get a boxplot for
+  %   each 0.1 carat bin.
   % 
   % qplot(cut, depth, data=diamonds, geom="boxplot")
-  % qplot(carat, depth, data=diamonds, geom="boxplot", group=round_any(carat, 0.1), xlim=c(0, 3))
+  % qplot(carat, depth, data=diamonds, geom="boxplot", 
+  %   group = round_any(carat, 0.1, floor), xlim = c(0, 3))
   \input{_include/54d3e19c581ffe3181c63891150e026a.tex}  
   % END
   
@@ -186,20 +193,20 @@ Many of the distribution related geoms come in geom/stat pairs.  Most of these g
   \input{_include/bc44afa44a4766a9159bec0931af6540.tex}  
   % END
   
-  \item \code{geom_quantile} = \code{stat_quantile} + \code{geom_line}: quantiles, for a continuous variable conditional on another continuous variable.  This is a continuous analogue of the boxplot. 
-  
-  % FIGURE
-  %   LABEL: geom-quantile
-  %   CAPTION: The boxplot geom can be use to see the distribution of a 
-  %   continuous variable conditional on a, \leftc discrete varable, or
-  %   right continuous variable.  If the number of boxplots is small, 
-  %   faceted histograms will reveal finer details of the distribution.
+  % \item \code{geom_quantile} = \code{stat_quantile} + \code{geom_line}: quantiles, for a continuous variable conditional on another continuous variable.  This is a continuous analogue of the boxplot. 
   % 
-  % qplot(carat, depth, data=diamonds, geom="quantile", 
-  %   xlim=c(0, 3), quantiles = c(0.05, 0.25, 0.5, 0.75, 0.95))
-  % qplot(carat, depth, data=diamonds, geom="quantile", xlim=c(0, 3), formula = y ~ factor(round_any(x, 0.5)))
-  \input{_include/7db633f75339218b80ca99f601d3132c.tex}  
-  % END
+  % % FIGURE
+  % %   LABEL: geom-quantile
+  % %   CAPTION: The boxplot geom can be use to see the distribution of a 
+  % %   continuous variable conditional on a, \leftc discrete varable, or
+  % %   right continuous variable.  If the number of boxplots is small, 
+  % %   faceted histograms will reveal finer details of the distribution.
+  % % 
+  % % qplot(carat, depth, data=diamonds, geom="quantile", 
+  % %   xlim=c(0, 3), quantiles = c(0.05, 0.25, 0.5, 0.75, 0.95))
+  % % qplot(carat, depth, data=diamonds, geom="quantile", xlim=c(0, 3), formula = y ~ factor(round_any(x, 0.5)))
+  % \input{_include/7db633f75339218b80ca99f601d3132c.tex}  
+  % % END
   
   \item \code{geom_density} = \code{stat_density} + \code{geom_area}: a smoothed density.  Also described in Section~\ref{sub:distribution}.  Don't use a density plot unless you know that the underlying density is continuous and unbounded, otherwise you'll get some strange artefacts. You can use the \code{adjust} parameter to make the density more or less smooth.
   
@@ -218,7 +225,7 @@ Many of the distribution related geoms come in geom/stat pairs.  Most of these g
 
   \item \code{geom_histogram} = \code{stat_bin} + \code{geom_bar}.  When you use a histogram, make sure to experiment with various bin widths.  Remember to try very small bin widths, right down to the resolution of the data.  
   
-  \item \code{geom_freqpoly} = \code{stat_bin} + \code{geom_line}.  
+  \item \code{geom_freqpoly} = \code{stat_bin} + \code{geom_line}.  A frequency polygon is a histogram drawn with lines instead of bars.  Lines make it possible to display distribution of multiple subsets on the same plot.
 \end{itemize}
 
 \code{stat_qq} can be used to compare two distributions.  A plot matrix with qq plots can be used to see all pairwise comparisons of variable distributions in a dataset.
@@ -231,7 +238,7 @@ Visualising a joint 2d continuous distribution is described in the next section.
 The scatterplot is a very important tool for assessing the relationship between a pair of continuous variables.  However, when the data is large, often points will be plotted on top of each other, obscuring the true relationship.  In extreme cases, you will only be able to see the extent of the data, and any conclusions drawn from the graphic will be suspect.  This problem is called overplotting and there are a number of ways to deal with it:
 
 \begin{itemize}
-  \item Small amounts of overplotting can sometimes be alleviated by making the points smaller, or using hollow glyphs, as shown in Figure~\ref{fig:overp-glyph}.  The data is 2000 points sampled from two independent normals.
+  \item Small amounts of overplotting can sometimes be alleviated by making the points smaller, or using hollow glyphs, as shown in Figure~\ref{fig:overp-glyph}.  The data is 2000 points sampled from two independent normal distributions.
 
   % FIGURE
   %   FILETYPE: png
@@ -267,7 +274,7 @@ The scatterplot is a very important tool for assessing the relationship between 
   \input{_include/90bc98a59d13dada8f15bf1d33697494.tex}  
   % END
 
-  \item If there is some discreteness in the data, you can randomly jitter the points to alleviate overlaps.  This is particularly useful in conjunction with transparency.  The amount of jitter added by default is 40\% of the resolution of the data, which leaves a small gap between adjacent regions. In Figure~\ref{fig:overp-jitter}, most of the points are rounded to the nearest 1, so we set a jitter width of half of that.
+  \item If there is some discreteness in the data, you can randomly jitter the points to alleviate overlaps.  This is particularly useful in conjunction with transparency.  By default, the amount of jitter added is 40\% of the resolution of the data, which leaves a small gap between adjacent regions. In Figure~\ref{fig:overp-jitter}, most of the points are rounded to the nearest 1, so we set a jitter width of half of that.
   
   % FIGURE
   %   FILETYPE: png
@@ -361,26 +368,46 @@ You may want to look at RGL, \url{http://www.rgl.com}, for interactive 3d plots,
 
 For continuous x, \code{stat_smooth} displays the smoothed and \code{stat_quantile} displays a smoothed set of quantiles from the distribution.  You've seen these already in Sections~\ref{sec:sub:quantile} and~\ref{sub:smooth}.  Displaying the quantiles is advantageous because you can see much more about the shape of the distribution can just the mean.  However, it needs much more data and the functional relationship between x and y is much more limited.  The smooth geom can use any modelling method that works like \f{lm}.  This includes: generalised linear models (\f{glm}), loess (\f{lm}), generalise additive models (\f{gam}) and robust linear models (\f{rlm}), to name just a few of the many.  
 
-For discrete x, \code{stat_summary} provides a convenient way of summarising the y values at each unique value of x.  You can use any univariate summary function, e.g. \f{mean}, \f{median}, \f{min}, \f{max}, \f{sd}, \f{var}, \f{mad}, or one of the summary functions from \code{Hmisc} described in Table~\ref{tbl:hmisc}.  These statistics work best in concert with the interval geoms, described in Section~\ref{sec:uncertainty}.
+For discrete x, \code{stat_summary} provides a convenient way of summarising the y values at each unique value of x.  You can use any univariate summary function, e.g. \f{mean}, \f{median}, \f{sd}, \f{var}, \f{mad}, or one of the summary functions from \code{Hmisc} described in Table~\ref{tbl:hmisc}.  These statistics work best in concert with the interval geoms, described in Section~\ref{sec:uncertainty}.  Figure~\ref{fig:stat-summary} illustrates a range of summary statistics and geoms for continuous and discrete x.
 
-You can of course also write your own summary function.  There are two ways to do this.  If you just want to produce a single output y value, your function should have argument \code{x} and return a single value.  If you want to produce y, ymin and ymax values, your function should have argument \code{data} and return a data frame with the appropriate columns.
+% FIGURE
+%   COL: 4 TEX-WIDTH: 0.25\textwidth
+%   LABEL: stat-summary
+%   CAPTION: Examples of \code{stat_summary} in use.  Top, continuous
+%   x with, from left to right, median and line, \f{median_hilow} and smooth, 
+%   mean and line, and \f{mean_cl_boot} and smooth.  Bottom, discrete x, 
+%   with, from left to right, \f{mean} and point, \f{mean_cl_normal} and 
+%   error bar, \f{median_hilow} and point range, and \f{median_hilow} and 
+%   crossbar.  Note that by default \ggplot displays the full range of the 
+%   data, not just the results of the summary statistics.
+% 
+% m <- ggplot(movies, aes(year, rating))
+% m + stat_summary(fun = "median", geom="line")
+% m + stat_summary(fun = "median_hilow", geom="smooth")
+% m + stat_summary(fun = "mean", geom="line")
+% m + stat_summary(fun = "mean_cl_boot", geom="smooth")
+% m2 <- ggplot(movies, aes(round(rating), log10(votes)))
+% m2 + stat_summary(fun = "mean", geom="point")
+% m2 + stat_summary(fun = "mean_cl_normal", geom="errorbar")
+% m2 + stat_summary(fun = "median_hilow", geom="pointrange")
+% m2 + stat_summary(fun = "median_hilow", geom="crossbar")
 
 \begin{table}
   \begin{center}
-  \begin{tabular}{llp{2in}}
+  \begin{tabular}{lllp{2in}}
     \toprule
-    Function & Hmisc original & Description \\
+    Function & Hmisc original & Middle & Range \\
     \midrule 
     \f{mean_cl_normal} & \f{smean.cl.boot} & 
-      Mean, and standard errors generate by normal approximation \\
+      Mean & Standard error from normal approximation \\
     \f{mean_cl_boot} & \f{smean.cl.boot} & 
-      Mean, and standard error estimated with bootstrap \\
+      Mean & Standard error from bootstrap \\
     \f{mean_sdl} & \f{smean.sdl} & 
-      Mean, and range generate by multiple of standard deviation  \\
+      Mean & Multiple of standard deviation  \\
     \f{median_hilow} & \f{smedian.hilow}  & 
-      Median and outer quantiles with equal tail areas \\
+      Median & Outer quantiles with equal tail areas \\
     \f{range} & --- & 
-      Range of the data\\
+      --- & Range of the data\\
     \bottomrule
   \end{tabular}
   \end{center}
@@ -388,6 +415,23 @@ You can of course also write your own summary function.  There are two ways to d
   \label{tbl:hmisc}
 \end{table}
 
+You can of course also write your own summary function.  There are two ways to do this.  If you just want to produce a single output y value, your function should have argument \code{x} and return a single value.  If you want to produce y, ymin and ymax values, your function should have argument \code{data} and return a data frame with the appropriate columns.  The following example illustrates these two options:
+
+% INTERWEAVE
+% 
+% iqr <- function(data, ...) {
+%   data.frame(
+%     ymin = quantile(data$y, 1/4), 
+%     ymax = quantile(data$y, 3/4)
+%   )  
+% }
+% m + stat_summary(fun = "iqr", geom="ribbon")
+% 
+% midm <- function(x) mean(x, trim = 0.5)
+% m2 + 
+%   stat_summary(aes(colour = "trimmed"), fun = midm, geom="point") +
+%   stat_summary(aes(colour = "raw"), fun = mean, geom="point") + 
+%   scale_colour_hue("Mean")
 
 \section{Revealing uncertainty}
 \label{sec:uncertainty}
@@ -447,12 +491,13 @@ Because there are so many different ways to calculate standard errors, the calcu
 
 % FIGURE
 %   LABEL: model-cat
-%   CAPTION: Displaying uncertaintly in model estimates for  .  Left, 
-%   marginal effect of colour, and right, conditional effects of carat for
-%   fixed levels of carat.
+%   CAPTION: Displaying uncertaintly in model estimates for colour.  Left, 
+%   marginal effect of colour, and right, conditional effects of colour for
+%   different levels of carat.  Error bars show 95\% pointwise confidence 
+%   intervals.
 % 
 % fplot <- ggplot(mapping = aes(y = fit, ymin = lower, ymax = upper))
-% fplot %+% color + aes(x = color) + geom_errorbar()
+% fplot %+% color + aes(x = color) + geom_point() + geom_errorbar()
 % fplot %+% both2 + 
 %   aes(x = color, colour = lcarat, group = interaction(color, lcarat)) +
 %   geom_errorbar() + geom_line(aes(group=lcarat)) +
@@ -462,9 +507,10 @@ Because there are so many different ways to calculate standard errors, the calcu
 
 % FIGURE
 %   LABEL: model-cont
-%   CAPTION: Displaying uncertaintly in model estimates for  .  Left, 
+%   CAPTION: Displaying uncertaintly in model estimates for carat.  Left, 
 %   marginal effect of carat, and right, conditional effects of carat for
-%   fixed levels of colour.
+%   different levels of colour.  Bands show 95\% point-wise confidence
+%   intervals
 % 
 % fplot %+% carat + aes(x = lcarat) + geom_smooth(stat="identity")
 % 
@@ -478,34 +524,57 @@ Because there are so many different ways to calculate standard errors, the calcu
 
 Note, when captioning such figures, you need to carefully describe the nature of the confidence intervals, and whether or not it is meaningful to look at the overlap.  
 
-
-
-\section{Connecting related observations}
-\label{sec:connecting}
-
-\begin{itemize}
-  \item \code{geom_line}
-  \item \code{geom_path}
-  \item \code{geom_segment}
-\end{itemize}
+% \section{Connecting related observations}
+% \label{sec:connecting}
+% 
+% It is often useful to connect related observations explicitly with a line.  This is the basis of the parallel coordinates plot \citep{inselberg:1985,wegman:1990}, the m-n plot \citep{diaconis:1983}, time series plots, and profile plots.  
+%
+% Grouping particularly important.  Revisit Section~\ref{sub:grouping}
 
 \section{Annotating a plot}
 \label{sec:annotating}
 
-Any of the basic geoms can be used to annotate a plot with additional output, for example, adding text with \code{geom_text}, or a point illustrating the mean with \code{geom_point}.  Additionally, there are several geoms whose use is almost entirely for annotation.  These are:
+When annotating your plot with additional labels, the important thing to remember is that these annotations are just extra data.  There are two basic ways to add annotations: one at a time, or many at once.
+
+Adding one at a time works best for small numbers of annotations with varying aesthetics.  You just set all the values to the give the desired properties.  If you have multiple annotations with similar properties, it may make sense to put them all in a data frame and add them at once.  The example below demonstrates both approaches by adding information about presidents to economic data.
+
+% INTERWEAVE
+% 
+% (unemp <- qplot(date, unemploy, data=economics, geom="line"))
+% 
+% load("~/documents/data/08-presidents/presidents.rdata")
+% presidents <- presidents[-(1:3), ]
+% 
+% yrng <- range(economics$unemploy)
+% xrng <- range(economics$date)
+% unemp + geom_vline(aes(intercept = start), data = presidents)
+% unemp + geom_rect(aes(xmin = start, xmax = end, y = NULL, x = NULL, 
+%   fill = party), ymin = rng[1], ymax = rng[2], data=presidents) +
+%   scale_fill_manual(values = alpha(c("blue", "red"), 0.2))
+% last_plot() + geom_text(aes(x = start, y = rng[1], label = name), 
+%   data = presidents, size = 3, hjust = 0, vjust = 0)
+% caption <- paste(strwrap("Unemployment rates in the US have varied a 
+%   lot over the years", 40), collapse="\n")
+% last_plot() + geom_text(aes(x = xrng[2], y = yrng[2], label = caption), 
+%   data=data.frame(), hjust = 1, vjust = 1, size = 4)
+% 
+% highest <- subset(economics, unemploy == max(unemploy))
+% unemp + geom_point(colour = alpha("red", 0.5), data = highest, size = 3)
 
 \begin{itemize}
+  \item \code{geom_text} for adding textual annotations.  Most plots will not benefit from adding text to every single observation on the plot.  However, pulling out just a few observations (using subset) can be very useful.  Typically you will want to label outliers or other important points.
+  
   \item \code{geom_vline}, \code{geom_hline}: add vertical or horizontal lines to a plot
+  
   \item \code{geom_abline}: add lines with arbitrary slope and intercept to a plot
-  \item \code{geom_rect}
+  
+  \item \code{geom_rect} for highlighting interesting regions of the plot.  \code{geom_rect} has aesthetics xmin, xmax, ymin and ymax.
+  
+  \item \code{geom_line}, \code{geom_path} and \code{geom_segment} for adding lines.  All these geoms have an \code{arrow} parameter, which allows you to place an arrow head on the line.  You create arrowheads with the \f{arrow} function, which has arguments \code{angle}, \code{length}, \code{ends} and \code{type}.
+  
 \end{itemize}
 
 See also Section~\ref{sec:adding_annotation} for ways to add more general types of annotation using grid graphics.
-
-Most plots will not benefit from adding text to every single observation on the plot.  However, pulling out just a few observations (using subset) can be very useful.  Typically you will want to label outliers.
-
-% qplot(vore, sleep_cycle, data=msleep)
-
 
 \section{Weighted data}
 \label{sec:weighting}

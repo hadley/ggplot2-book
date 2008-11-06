@@ -200,6 +200,27 @@ aspect -> opts(aspect.ratio = 1)
 axs = i
 
 
+From Jim Holtman:
+
+require(reshape)
+cases.melt <- melt(cases[, -ncol(cases)])
+
+# plot cases/store/day on a box plot
+boxplot(value ~ X2, data=cases.melt, main="Cases Per Day Per Store")
+
+-----------------------------------------------------------------------------------------
+
+# partition by section and show the number of picks from each location
+x.m <- melt(table(Aisle, Quad, Section))
+
+# add in the counts for each section
+col.l <- colorRampPalette(c('white', 'green', 'red'))(100)
+require(lattice)
+x.m$counts <- paste(x.m$Section, " (", ave(x.m$value, x.m$Section,
+FUN=sum), ")", sep="")
+print(levelplot(value ~ Aisle + Quad | counts, x.m, col.regions=col.l,
+   main="Visits Per Section Per Pick Slot (6 Days of Orders)"))
+
 \section{Wilkinson's grammar of graphics}
 
 The biggest difference between Lee's grammar and mine is how the grammar is written; the syntax of the grammars are quite different.  The Grammar of Graphics uses two specifications.  A concise format is used to caption figures, and a more detailed xml format stored on disk.  The following example of the concise format is adapted from \citet[][Figure 1.5, page 13]{wilkinson:2006}.
