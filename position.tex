@@ -18,7 +18,7 @@ This chapter discusses position, particularly how panels are laid out on a page,
 \begin{itemize}
   \item {\bf Position adjustment}s in the layer, previously described in Section~\ref{sec:position}, control how overlapping objects within a panel are adjusted.
 
-  \item {\bf Position scale}s, previously described in Section~\ref{sec:scale-position}, control how values in the data are mapped to positions on the plot.  This process is slightly different for continuous and discrete scales, but the majority of features are common to both.
+  \item {\bf Position scale}s, previously described in Section~\ref{sub:scale-position}, control how values in the data are mapped to positions on the plot.  This process is slightly different for continuous and discrete scales, but the majority of features are common to both.
 
   \item {\bf Coordinate system}s, described in Section~\ref{sec:coord}, control how the two independent position scales are combined to create a 2d coordinate system.  The most common coordinate system is Cartesian, but other coordinate systems can be useful in special circumstances
 
@@ -318,7 +318,7 @@ The faceting formula only works with variables in the data set (not functions of
 \section{Coordinate systems}
 \label{sec:coord}
 
-Coordinate systems tie together the position scales to produce a 2d location. Currently, \ggplot comes with six different coordinate systems, listed in Table~\ref{tbl:cord}.  All these coordinate systems are two dimensional, although one day I hope to add 3d graphics too. As with the other components in ggplot2, you generate the R name by joining \code{coord_} and the name of the coordinate system.  Most plots use the default Cartesian coordinate system, \f{coord_cartesian}, where the 2d position of an element is given by the combination of the x and y positions.  
+Coordinate systems tie together the position scales to produce a 2d location. Currently, \ggplot comes with six different coordinate systems, listed in Table~\ref{tbl:coord}.  All these coordinate systems are two dimensional, although one day I hope to add 3d graphics too. As with the other components in ggplot2, you generate the R name by joining \code{coord_} and the name of the coordinate system.  Most plots use the default Cartesian coordinate system, \f{coord_cartesian}, where the 2d position of an element is given by the combination of the x and y positions.  
 
 Coordinate systems have two main jobs: 
 
@@ -380,7 +380,7 @@ Unlike transforming the data or transforming the scales, transforming the data w
 
 This transformation takes part in two steps.  Firstly, the parameterisation of each geom is changed purely location based, rather than location + dimension.  For example, a bar can be represented as an x position, a height and a width.  But how do we interpret height and width in a non-Cartesian coordinate system, where height and width may not be constant?  We solve the problem by using these measurements to give locations in Cartesian space, and then transforming these locations to new locations in the non-Cartesian space.  A rectangle is converted to a polygon parameterised by the positions of the four corners.  This because dimension is difficult to interpret in non-Cartesian coordinate systems.  This allows all geoms to be converted to points, lines and polygons.  
 
-The next step is munching.  The only shape that is invariant under transformation is a point.  How can we convert more complex geoms like lines and polygons?  The basic assumption is that all coordinate transformations are smooth, in the sense that all very short lines will still be linear in the new coordinate system.  This process is called munching: every straight line is munched up into many smaller straight lines.  Figure~\ref{coord-trans} illustrates this procedure.  We start with a line determined by points, then break it done into multiple line segments.  Those points are translated into the new coordinate system, and then connected up again.  In the example, the number of line segments is to be too small, so you can see more easily how it works.  For real use, the number is much large so that the result looks smooth.
+The next step is munching.  The only shape that is invariant under transformation is a point.  How can we convert more complex geoms like lines and polygons?  The basic assumption is that all coordinate transformations are smooth, in the sense that all very short lines will still be linear in the new coordinate system.  This process is called munching: every straight line is munched up into many smaller straight lines.  Figure~\ref{fig:coord-trans} illustrates this procedure.  We start with a line determined by points, then break it done into multiple line segments.  Those points are translated into the new coordinate system, and then connected up again.  In the example, the number of line segments is to be too small, so you can see more easily how it works.  For real use, the number is much large so that the result looks smooth.
 
 % FIGURE
 %   LABEL: coord-trans
