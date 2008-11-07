@@ -1,5 +1,14 @@
 \input{_header.tex}
 
+% SET_DEFAULTS
+%   GG-WIDTH: 4  GG-HEIGHT: 4
+%   TEX-WIDTH: 0.5\textwidth
+%   INLINE: FALSE
+% 
+
+% END
+
+
 \chapter{Manipulating plot rendering with \code{grid}}
 \label{cha:grid}
 
@@ -7,7 +16,7 @@
 
 % The are two ways to do this: common options are exposed by the {\tt ggopt} function, or you can use the grid package to modify the graphical output of ggplot.  The few options provided by {\tt ggopt} allow you to easily modify the most commonly tweaked parts of ggplot graphics, but for more control you can use the power of grid to delve into the dark depths of {\tt ggplot} and tweak to your heart's content.
 
-% MORE BACKGROUND!
+% TODO: MORE BACKGROUND!
 
 What is \pkg{grid}?  It's the graphics engine that powers ggplot.  It is responsible for drawing the graphic object onto the screen or saving it to a graphics file.  It provides a system of viewports, which define regions on the plot, and a comprehensive set of units for describing size and position. This chapter can not hope to provide a comprehensive introduction to grid, but should hopefully provide enough examples to get you going.   I highly recommend the book ``R Graphics'' \citep{murrell:2005}, by the author of grid,  as a companion to this chapter.  If you can't get the book, at least read Chapter 5, ``The grid graphics model'', which is available online for free at  \url{http://www.stat.auckland.ac.nz/~paul/RGraphics/chapter5.pdf}.
 
@@ -160,23 +169,25 @@ Modifying a grob requires some knowledge of the different parameters of the grob
 In this example, we edit the font of all labels.
 
 \begin{alltt}
-qplot(mpg, wt, data=mtcars, facets = . ~ cyl)
-\includegraphics[width=0.5\textwidth]{grid1}
-grid.gedit("label", gp=gpar(fontsize=14, col="red"))
-\includegraphics[width=0.5\textwidth]{grid2}
+qplot(mpg, wt, data = mtcars, facets = . ~ cyl)
+\includegraphics[width=0.75\textwidth]{grid1}
+grid.gedit("text", gp = gpar(fontsize=14, col="red"))
+\includegraphics[width=0.75\textwidth]{grid2}
 \end{alltt}
-% dev.save("_include/grid1.pdf")
-% dev.save("_include/grid2.pdf")
+% dev.copy2pdf(file = "grid1.pdf", width = 6, height = 3)
+% dev.copy2pdf(file = "grid2.pdf", width = 6, height = 3)
 
 To edit just one type of label, we need to use the hierarchy of grobs and the {\tt gPath} function:
 
 \begin{alltt}
-qplot(mpg, wt, data=mtcars, facets = . ~ cyl)
-grid.gedit(gPath("strip","label"), gp=gpar(fontface="bold"))
-\includegraphics[width=0.5\textwidth]{grid3}
-grid.gedit(gPath("yaxis", "labels"), gp=gpar(col="red"))
-\includegraphics[width=0.5\textwidth]{grid4}
+qplot(mpg, wt, data = mtcars, facets = . ~ cyl)
+grid.gedit(gPath("strip","text"), gp = gpar(fontface="bold"))
+\includegraphics[width=0.75\textwidth]{grid3}
+grid.gedit(gPath("axis_h", "text"), gp = gpar(col="red"))
+\includegraphics[width=0.75\textwidth]{grid4}
 \end{alltt}
+% dev.copy2pdf(file = "grid3.pdf", width = 6, height = 3)
+% dev.copy2pdf(file = "grid4.pdf", width = 6, height = 3)
 
 \section{Removing grobs}
 \label{sec:grid-delete}
@@ -190,6 +201,8 @@ You can use \f{grid.remove} to completely remove a grob.  However, the space it 
 % grid.gremove(gPath("guide", "background"))
 % grid.gremove("major")
 % grid.gremove("axis")
+\input{_include/b54778cc72cb3335dd92934f5c2f506b.tex}
+% END
 
 You can use an alternative method to remove top level viewports.  There are plot-level options \code{keep} and \code{drop}, which specify which viewports to keep or drop respectively.  For example:
 
@@ -198,6 +211,8 @@ You can use an alternative method to remove top level viewports.  There are plot
 % p <- qplot(mpg, wt, data=mtcars, main = "My plot")
 % p + opts(keep = "panel")
 % p + opts(ignore = c("xlabel", "ylabel"))
+\input{_include/bb6c56f6f3628cff036ae7f3f5055cbb.tex}
+% END
 
 \section{Adding annotations}\label{sec:adding_annotation}
 \label{sec:grid-new}
@@ -210,6 +225,8 @@ To add annotations to a plot you have to specify the viewport when you add extra
 % 
 % qplot(wt, mpg, data=mtcars, colour=cyl)
 % grid.circle(vp="layout::panel_1_1")
+\input{_include/ea53669e9afc6f1641fff6e020ae7105.tex}
+% END
 
 Panel viewports will have a coordinate system set up for points, while x- and y- axes will only have one dimension defined.  For example, on the x-axis there will be native coordinates for the x-dimension, but not the y-dimension.
 
@@ -220,6 +237,8 @@ Panel viewports will have a coordinate system set up for points, while x- and y-
 %    vp = "layout::panel_1_1")
 % grid.lines(x = unit(c(0,1), "npc"), y = unit(23, "native"),
 %    vp = "layout::axis_v_1_1")
+\input{_include/59a12cde48d774fb117f3e7318006b19.tex}
+% END
 
 \section{Customising layout}
 \label{sec:grid-layout}
@@ -230,6 +249,8 @@ By default, showing a {\tt ggplot} object at the R command prompt will display t
 % 
 % p <- qplot(wt, mpg, data=mtcars, colour=cyl)
 % p + opts(keep = "panels")
+\input{_include/4b19280eab34f9514ea704d296bd7466.tex}
+% END
 
 By default, {\tt ggplot} always clears the screen and draws to the entire device.  You customise this in two ways. One way is to setup a viewport and push it on to the display, then draw the plot with {\tt newpage=FALSE}. {\tt pushViewport} adds the viewport to the list of viewports on the display.   Afterwards, {\tt upViewport} returns you to the viewport for the entire page, preparing you for the next set of output.
 
@@ -240,6 +261,8 @@ By default, {\tt ggplot} always clears the screen and draws to the entire device
 % pushViewport(viewport(height=0.4, width=0.4, x=0.4, y=0.8))
 % print(p, newpage=FALSE, pretty=FALSE)
 % upViewport()
+\input{_include/896b229f927422d070198f97adefeaa2.tex}
+% END
 
 Alternatively, you can set up your own set of viewports, and then specify which one the plot should be drawn to.  Here we use {\tt upViewport} before displaying the plot so we are in the top level viewport before we start plotting.
 
@@ -250,6 +273,8 @@ Alternatively, you can set up your own set of viewports, and then specify which 
 %   name="small", angle=40))
 % upViewport()
 % print(p, vp="small")
+\input{_include/b7306e00b4d5e12d9578c2d50f8d5537.tex}
+% END
 
 Obviously, this is very useful if you want to layout plots in a complicated grid.  In this case, {\tt grid.layout} is very useful, as it allows you to set up a grid of viewports with arbitrary heights and widths.  You still need to create each viewport, but instead of explicitly specifying the position and size, you can specify the row and column of the layout.
 
@@ -266,6 +291,8 @@ Obviously, this is very useful if you want to layout plots in a complicated grid
 % print(p, vp=vplayout(2:3,2:3))
 % print(p, vp=vplayout(1, 2:3))
 % print(p, vp=vplayout(2:3, 1))
+\input{_include/4f19e0618407a42a5fa71eb184d43db3.tex}
+% END
 
 This is useful for arranging plots in a wider range of ways than what you can do with faceting.   You should be careful to ensure that scales are consistent over the different plots.  There is currently no easy way to do this, except to keep track of the maximum and minimum yourself, and then manually set the scales of the plot.
 
@@ -285,5 +312,9 @@ Using \f{grid.gedit} works fine if you are editing the plot on screen, but if yo
 % # Draw it
 % grid.newpage()
 % grid.draw(grob)
+\input{_include/65cedb19a8e6185946376cdd40cc7311.tex}
+% END
+
+An alternative is make all of the changes on screen, and then use \f{dev.copy2pdf} to copy the final version to disk.
 
 \input{_footer.tex}
