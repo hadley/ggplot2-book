@@ -5,225 +5,280 @@
 
 \section{Introduction}
 
+\ggplot does not exist in isolation, but is part of long history of graphical tools in R and elsewhere.  This chapter describes how to convert between \ggplot commands and other plotting systems:
 
-Each section gives general outlines on how to convert between the difference syntaxes, followed by examples of common plot types
+\begin{itemize}
+  \item Within \ggplot, between the \f{qplot} and \f{ggplot} syntaxes, \secref{sec:qplot-ggplot}
+  
+  \item From base graphics, \secref{translate-base}.
 
+  \item From lattice graphics, \secref{translate-lattice}.
+  
+  \item From \sc{gpl}, \secref{translate-gpl}.
+\end{itemize} 
+
+Each section gives a general outline on how to convert between the difference types, followed by a number of examples.
 
 \section{Translating between qplot and ggplot}
 \label{sec:qplot-ggplot}
 
+Within \ggplot, there are two basic methods to create plots, with \f{qplot} and \f{ggplot}.  \f{qplot} is designed primarily for interactive use: it makes a number of assumptions that speed most cases, but when designing multi-layered plots with different data sources it can get in the way.  This section describes what those defaults are, and how they map to the fuller 
+\f{ggplot} syntax.  
 
-To clarify the role of each of these elements, here are a couple of simple examples, taken from Chapter 2.  First, we'll start with a bubble chart of price by carat, with size proportional to the clarity of the diamond.
-
-% decumar<<< 
-% interweave({
-% qplot(carat, price, data=dsmall, size=clarity)
-% })
-
-This plot has one layer, three scales and a cartesian coordinate system.  To make these parts more clear, we can instead create the plot using these commands:
+By default, \f{qplot} assumes that you want a scatterplot, i.e.\ you want to use \f{geom_point}.
 
 \begin{alltt}
-ggplot() + 
-layer(
-  data = diamonds, aes(x = carat, y = price, size = clarity),
-  geom = "point", stat = "identity"
-)
+qplot(x, y, data = data)
+ggplot(data, aes(x, y)) + geom_point()
 \end{alltt}
 
-This makes the single layer obvious, it uses a point geom and the identity transformation, but where are the definitions of the scales and the coordinate system?  By default, ggplot automatically adds sensible scales and the default coordinate system, however, we can be more explicit and add them ourselves:
+\subsection{Aesthetics}
+
+If you map additional aesthetics, these will be added to the defaults.  With \f{qplot} there is no way to use different aesthetic mappings (or data) in different layers.
 
 \begin{alltt}
-ggplot() + 
-layer(
-  data = diamonds, mapping = aes(x = carat, y = price, colour = clarity),
-  geom = "point", stat = "identity"
-) + 
-scale_size() + 
-scale_y_continuous() + 
-scale_x_continuous() + 
-coord_cartesian()
+qplot(x, y, data = data, shape = shape, colour = colour)
+ggplot(data, aes(x, y, shape = shape, colour = colour)) + geom_point()
 \end{alltt}
 
-Compared to the initial qplot example, this is extremely verbose, but perfectly explicit.  We  can clearly see the single layer, the three scales (x position, y position and size) and the coordinate system.  
-
-The next example includes multiple layers, and demonstrates the effect of modifying the scale parameters.  This is another example from chapter two: a scatterplot of price vs carat, with logged axes and a linear smooth layered on top.  The qplot code is shown below.
-
-% decumar<<< 
-% interweave({
-% qplot(carat, price, data=dsmall, geom=c("smooth", "point"), method="lm", log="xy")
-% })
-% |||
-\begin{alltt}
-> qplot(carat, price, data = dsmall, geom = c("smooth", "point"), 
-+     method = "lm", log = "xy")
-
-\end{alltt}
-% >>>
-
-Here we have two layers, two scales and the same Cartesian coordinate system:
+Aesthetic parameters in \f{qplot} always try and map the aesthetic to a variable.  If the argument is not a variable but a value, effectively a new column is added to the original dataset with that value.  To set an aesthetic to a value and override the default appearance, you surround the value with \f{I} in \f{qplot}, or pass it as a parameter to the layer.  Section~\ref{sec:setting-mapping} expands on the differences between setting and mapping.
 
 \begin{alltt}
-ggplot() + 
-layer(
-  data = diamonds, mapping = aes(x = carat, y = price),
-  geom = "point", stat = "identity"
-) + 
-layer(
-  data = diamonds, mapping = aes(x = carat, y = price),
-  geom = "smooth", stat = "smooth", method = "lm"
-  
-) + 
-scale_y_log10() + 
-scale_x_log10() + 
-coord_cartesian()
+qplot(x, y, data = data, colour = I("red"))
+ggplot(data, aes(x, y)) + geom_point(colour = "red")
 \end{alltt}
 
-There is some duplication in this example, which we can reduce by using plot defaults.
+\subsection{Layers}
+
+Changing the geom parameter changes the geom added to the plot:
 
 \begin{alltt}
-ggplot(data = diamonds, mapping = aes(x = carat, y = price)) + 
-layer(geom = "point", stat = "identity") + 
-layer(geom = "smooth", stat = "smooth", method = "lm") + 
-scale_y_log10() + 
-scale_x_log10() + 
-coord_cartesian()
-\end{alltt}x
-
-The following chapters describe each piece in more detail, and provide suggestions as to how to use them in a data analysis.
-
-
-\begin{alltt}
-qplot(x, y, data, shape=shape, colour = colour)
-ggplot(data, aes(x, y, shape=shape, colour = colour)) + geom_point()
+qplot(x, y, data = data, geom = "line")
+ggplot(data, aes(x, y)) + geom_line()
 \end{alltt}
 
-\begin{alltt}
-qplot(x, y, data, shape=shape, colour = I("red"))
-ggplot(data, aes(x, y, shape=shape)) + geom_point(colour="red")
-\end{alltt}
-
-The differences between setting and mapping are described in more detail in Section~\ref{sec:setting-mapping}.
+If a vector of multiple geom names is supplied to the geom argument, each geom will be added in turn:
 
 \begin{alltt}
-qplot(x, y, data, geom=c("line", "smooth"))
-ggplot(data, aes(x, y)) + geom_line() + geom_smooth()
+qplot(x, y, data = data, geom = c("point", "smooth"))
+ggplot(data, aes(x, y)) + geom_point() + geom_smooth()
 \end{alltt}
+
+Unlike the rest of \ggplot, stats and geoms are independent:
 
 \begin{alltt}
-qplot(x, y, data, geom=c("line", "smooth"), method="lm")
-ggplot(data, aes(x, y)) + geom_line() + geom_smooth(method="lm")
+qplot(x, y, data = data, stat = "bin")
+ggplot(data, aes(x, y)) + geom_point(stat = "bin")  
 \end{alltt}
 
+Any layer parameters will be passed on to all layers.  Most layers will ignore parameters that they don't need.
 
 \begin{alltt}
-qplot(x, y, data, log="xy")
-ggplot(data, aes(x, y)) + scale_x_log10() + scale_y_log10()
+qplot(x, y, data = data, geom = c("point", "smooth"), method = "lm")
+ggplot(data, aes(x, y)) + 
+  geom_point(method = "lm") + geom_smooth(method = "lm")
 \end{alltt}
 
-Section~\ref{sec:transformers} describes more possible transformations of the x and y scales.
+\subsection{Scales and axes}
+
+You can control basic properties of the x and y scales with the \code{xlim}, \code{ylim}, \code{xlab} and \code{ylab} arguments:
 
 \begin{alltt}
-qplot(x, y, data, main="title", asp = 1)
-ggplot(data, aes(x, y)) + opts(title = "title", aspect.ratio = 1)
+qplot(x, y, data = data, xlim = c(1, 5), xlab = "my label")
+ggplot(data, aes(x, y)) + geom_point() + 
+  scale_x_continuous("my label", limits = c(1, 5))
+
+qplot(x, y, data = data, xlim = c(1, 5), ylim = c(10, 20))
+ggplot(data, aes(x, y)) + geom_point() + 
+  scale_x_continuous(limits = c(1, 5))
+  scale_y_continuous(limits = c(10, 20))
 \end{alltt}
 
-Section~\ref{sec:plot_options} lists all possible plot options and their effects.
+Like \f{plot}, \f{qplot} has a convenient way of log transforming the axes.  There are many other possible transformations that are not accessible from within \f{qplot}, see Section~\ref{sec:transformers} for more details.
 
+\begin{alltt}
+qplot(x, y, data = data, log="xy")
+ggplot(data, aes(x, y)) + geom_point() + scale_x_log10() + scale_y_log10()
+\end{alltt}
+
+\subsection{Plot options}
+
+\f{qplot} recognise the same options as plot does, and converts them to their \ggplot equivalents.  Section~\ref{sec:plot_options} lists all possible plot options and their effects.
+
+\begin{alltt}
+qplot(x, y, data = data, main="title", asp = 1)
+ggplot(data, aes(x, y)) + geom_point() + 
+  opts(title = "title", aspect.ratio = 1)
+\end{alltt}
 
 \section{Base graphics}
-\label{sec:base_graphics}
+\label{sec:translate-base}
 
-Use qplot.
+There are two types of graphics functions in base graphics, those that draw complete graphics and those that add to existing graphics.  
+
+\subsection{High-level plotting commands}
+
+\f{qplot} has been designed to mimic \f{plot}, and can do the job of all other high-level plotting commands.  There are only two graph types from base graphics that can not be replicated with \ggplot: \f{filled.countour} and \f{persp}
+
+\begin{alltt}
+plot(x, y);  dotchart(x, y); stripchart(x, y)
+qplot(x, y)
+
+plot(x, y, type = "l")
+qplot(x, y, geom = "line")
+
+plot(x, y, type = "s")
+qplot(x, y, geom = "step")
+
+plot(x, y, type = "b")
+qplot(x, y, geom = c("point", "line"))
+
+boxplot(x, y)
+qplot(x, y, geom = "boxplot")
+
+hist(x)
+qplot(x, geom = "histogram")
+
+cdplot(x, y)
+qplot(x, fill = y, geom = "density", position = "fill")
+
+coplot(y ~ x | a + b)
+qplot(x, y, facets = a ~ b)
+\end{alltt}
+
+Many of the geoms are parameterised differently to base graphics.  For example, \f{hist} is parameterised in terms of the number of bins, while \f{geom_histogram} is parmeterised in terms of the width of each bin.  
+
+\begin{alltt}
+hist(x, bins = 100)
+qplot(x, geom = "histogram", binwidth = 1)
+\end{alltt}
+
+\f{qplot} often requires data in a slightly different format to the base graphics functions.  For example, the bar geom works with untabulated data, not tabulated data like \f{barplot}; the tile and contour geoms expect data in a data frame, not a matrix like \f{image} and \f{contour}.
+
+\begin{alltt}
+barplot(table(x))
+qplot(x, geom = "bar")
+
+barplot(x)
+qplot(names(x), x, geom = "bar", stat = "identity")
+
+image(x)
+qplot(X1, X2, data = melt(x), geom = "tile", fill = value)
+
+contour(x)
+qplot(X1, X2, data = melt(x), geom = "contour", fill = value)
+\end{alltt}
+
+% fourfoldplot -> geom_bar(width=1) + coord_polar()
+% pie -> geom_bar(width = 1) + coord_polar()
+% stars -> geom_polygon() + coord_polar()
+
+Generally, the base graphics function work with individual vectors, not data frames like \ggplot.  \f{qplot} will try and construct a data frame if one is not specified, but it is not always possible.  If you get strange errors, you may need to create the data frame yourself.
+
+\begin{alltt}
+with(df, plot(x, y))
+qplot(x, y, data = df)
+\end{alltt}
+
+By default, \f{qplot} map values to aesthetics with a scale.  To override this behaviour and set aesthetics, overriding the defaults, you need to use \f{I}.
+
+\begin{alltt}
+plot(x, y, col = "red", cex = 1)
+qplot(x, y, colour = I("red"), size = I(1))
+\end{alltt}
 
 matplot and groups
 
+\subsection{Low-level drawing}
+
+% lines -> geom_line
+% rect -> geom_rect()
+% rug -> geom_rug()
+% points -> geom_point()
+% polygon -> geom_polygon()
+% segments -> geom_segment()
+% text -> geom_text()
+% lines(loess(x, y))  -> + geom_smooth()
+% abline(lm(y ~ x)) -> + geom_smooth(method = "lm")
+% lines(density(x))  -> + geom_density()
+% curve -> geom_curve
+
+\subsection{Legends, axes and grid lines} 
+
+In \ggplot, the appearance of legends and axes are controlled by the scales.  In base graphics, legends are never displayed automatically, and gain more control over axes you typically do \code{xaxs = F} in the main plot call, and then add the axes yourself with \f{axis} or \f{Axis}.
+
 \begin{itemize}
-  \item plot
-  \item points, lines, vline/hline/abline
-  \item loess, abline(lm())
-  \item hist
-  \item coplot
-  \item plot(lm)
+  \item \code{limits} controls the range of the axis or legend.
+  \item \code{breaks} controls which labels appear on the axis or legend.
+  \item \code{labels} controls the text of each label.
+  \item \code{name} controls the axis or legend title.
 \end{itemize}
 
-Legend, axis/Axis
-box -> opts(panel.border)
-grid -> opts(grid.major, grid.minor) + x & y scales
-title -> opts(title = "")
+Because the legend is derived automatically from the plot, there is much less you can do to control it than in base graphics.  Many of the aspects of its appearance can be changed with plot themes, Section~\ref{sec:themes}, while what is displayed in the legend is controlled by the scales, Section~\ref{sec:guides}.
 
-barplot -> geom_bar(stat="identity")
-boxplot -> geom_boxplot()
-contour -> geom_contour
-cdplot -> geom_density(position = "fill")
-dotchart -> geom_point() with discrete x
-filled.countour -> not available
-curve -> geom_curve
-fourfoldplot -> geom_bar(width=1) + coord_polar()
-image -> geom_tile
-lines -> geom_line
-pie -> geom_bar(width = 1) + coord_polar()
-points -> geom_point()
-polygon -> geom_polygon()
-rect -> geom_rect()
-rug -> geom_segment()
-segments -> geom_segment()
-stars -> geom_polygon() + coord_polar()
-stripchart -> geom_point()
-text -> geom_text()
+The appearance of grid lines are controlled by the \code{grid.major} and \code{grid.minor} options, and there position by the breaks of the x and y scales.
 
-rainbow -> scale_hue
-grays -> scale_grey
+\subsection{Colour palettes}
 
-persp -> no equivalent
+% rainbow -> scale_hue
+% grays -> scale_grey
 
-mtext -> grid
-matplot -> melt
-identify, locator -> no equivalent yet
-coplot -> facet_grid
+\subsection{Graphical parameters}
 
-par
-axs = i = 
+The majority of \code{par} settings have some analogue within the theme system, or in the defaults of the geoms and scales.  The appearance plot border drawn by \f{box} can be controlled in a similar way by the \code{panel.background} and \code{plot.background} theme elements.  Instead of using \f{title}, the plot title is set with the \code{title} option.
 
-Changing titles: plot title, legend title, axis title
+
+\subsection{Specialised graphics} 
+
+Unlike \f{plot}, \f{qplot} doesn't know how to plot anything other than data frames: there is no equivalent to \code{plot(lm)}.  This is a deliberate design decision, to better force the separation between the functions that extract useful data from objects and the functions that plot that data.
+
+% 
+% mtext -> grid
+% matplot -> melt
+% identify, locator -> no equivalent yet
+% coplot -> facet_grid
+% 
+% Changing titles: plot title, legend title, axis title
 
 \section{Lattice graphics}
-\label{sec:lattice_graphics}
+\label{sec:translate-lattice}
+% 
+% group -> categorical value on any aesthetic, or if no styling desired, group
+% x | g1 * g2 -> facet_wrap(~ g1 + g2)
+% scales = list(log = T) -> scale_x_log(), scale_y_log()
+% scales = list(relation = "free") -> facet_grid()
+% shingle -> no equivalent
+% y1 + y2 -> melt
+% panel -> + geom_point() + geom_line() ...
+% aspect -> opts(aspect.ratio = 1)
+% axs = i
+% 
+% 
+% From Jim Holtman:
+% 
+% require(reshape)
+% cases.melt <- melt(cases[, -ncol(cases)])
+% 
+% # plot cases/store/day on a box plot
+% boxplot(value ~ X2, data=cases.melt, main="Cases Per Day Per Store")
+% 
+% -----------------------------------------------------------------------------------------
+% 
+% # partition by section and show the number of picks from each location
+% x.m <- melt(table(Aisle, Quad, Section))
+% 
+% # add in the counts for each section
+% col.l <- colorRampPalette(c('white', 'green', 'red'))(100)
+% require(lattice)
+% x.m$counts <- paste(x.m$Section, " (", ave(x.m$value, x.m$Section,
+% FUN=sum), ")", sep="")
+% print(levelplot(value ~ Aisle + Quad | counts, x.m, col.regions=col.l,
+%    main="Visits Per Section Per Pick Slot (6 Days of Orders)"))
 
-group -> categorical value on any aesthetic, or if no styling desired, group
-x | g1 * g2 -> facet_wrap(~ g1 + g2)
-scales = list(log = T) -> scale_x_log(), scale_y_log()
-scales = list(relation = "free") -> facet_grid()
-shingle -> no equivalent
-y1 + y2 -> melt
-panel -> + geom_point() + geom_line() ...
-aspect -> opts(aspect.ratio = 1)
-axs = i
+\section{GPL}
+\label{sec:translate-gpl}
 
-
-From Jim Holtman:
-
-require(reshape)
-cases.melt <- melt(cases[, -ncol(cases)])
-
-# plot cases/store/day on a box plot
-boxplot(value ~ X2, data=cases.melt, main="Cases Per Day Per Store")
-
------------------------------------------------------------------------------------------
-
-# partition by section and show the number of picks from each location
-x.m <- melt(table(Aisle, Quad, Section))
-
-# add in the counts for each section
-col.l <- colorRampPalette(c('white', 'green', 'red'))(100)
-require(lattice)
-x.m$counts <- paste(x.m$Section, " (", ave(x.m$value, x.m$Section,
-FUN=sum), ")", sep="")
-print(levelplot(value ~ Aisle + Quad | counts, x.m, col.regions=col.l,
-   main="Visits Per Section Per Pick Slot (6 Days of Orders)"))
-
-\section{Wilkinson's grammar of graphics}
-
-The biggest difference between Lee's grammar and mine is how the grammar is written; the syntax of the grammars are quite different.  The Grammar of Graphics uses two specifications.  A concise format is used to caption figures, and a more detailed xml format stored on disk.  The following example of the concise format is adapted from \citet[][Figure 1.5, page 13]{wilkinson:2006}.
+The Grammar of Graphics uses two specifications.  A concise format is used to caption figures, and a more detailed xml format stored on disk.  The following example of the concise format is adapted from \citet[][Figure 1.5, page 13]{wilkinson:2006}.
 
 \begin{verbatim}
 DATA: source("demographics")

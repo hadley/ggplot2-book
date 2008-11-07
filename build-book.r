@@ -4,7 +4,7 @@ l(ggplot)
 
 # Need to clean out include directory
 
-chapters <- c("introduction", "layers", "mastery", "position", "polishing", "qplot", "scales", "specifications", "toolbox", "book-mine", "writing-your-own")
+chapters <- c("introduction", "layers", "mastery", "position", "polishing", "qplot", "scales", "specifications", "toolbox", "translating",  "writing-your-own", "book-mine")
 
 tex <- paste(chapters, ".tex", sep="")
 r <-   file.path("public", paste(chapters, ".r", sep=""))
