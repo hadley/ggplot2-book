@@ -191,17 +191,44 @@ matplot and groups
 
 \subsection{Low-level drawing}
 
-% lines -> geom_line
-% rect -> geom_rect()
-% rug -> geom_rug()
-% points -> geom_point()
-% polygon -> geom_polygon()
-% segments -> geom_segment()
-% text -> geom_text()
-% lines(loess(x, y))  -> + geom_smooth()
-% abline(lm(y ~ x)) -> + geom_smooth(method = "lm")
-% lines(density(x))  -> + geom_density()
-% curve -> geom_curve
+The low level drawing functions which add on to existing plot are equivalent to adding a new layer in \ggplot, described in Table~\ref{tbl:base-equiv}.
+
+\begin{table}
+  \begin{center}
+    \begin{tabular}{ll}
+      \toprule
+      Base function & \ggplot layer \\
+      \midrule
+      \f{curve}    & \f{geom_curve}      \\
+      \f{hline}    & \f{geom_hline}      \\
+      \f{lines}    & \f{geom_line}       \\
+      \f{points}   & \f{geom_point}      \\
+      \f{polygon}  & \f{geom_polygon}    \\
+      \f{rect}     & \f{geom_rect}       \\
+      \f{rug}      & \f{geom_rug}        \\
+      \f{segments} & \f{geom_segment}    \\
+      \f{text}     & \f{geom_text}       \\
+      \f{vline}    & \f{geom_vline}      \\
+      \code{abline(lm(y ~ x))}  & \code{geom_smooth(method = "lm")}  \\
+      \code{lines(density(x))}  & \f{geom_density}                   \\
+      \code{lines(loess(x, y))} & \f{geom_smooth}                    \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \caption{Equivalence between base graphics methods that add on to an existing plot, and layers in \ggplot.}
+  \label{tbl:base-equiv}
+\end{table}
+
+\begin{alltt}
+plot(x, y)
+lines(x, y)
+
+qplot(x, y) + geom_line()
+
+# Or, building up piece-meal
+qplot(x, y)
+last_plot() + geom_line()
+\end{alltt}
 
 \subsection{Legends, axes and grid lines} 
 
@@ -220,13 +247,28 @@ The appearance of grid lines are controlled by the \code{grid.major} and \code{g
 
 \subsection{Colour palettes}
 
-% rainbow -> scale_hue
-% grays -> scale_grey
+Instead of global colour palettes, \ggplot has scales for individual plots.  Much of the time you can rely on the default colour scale (which has somewhat better perceptual properties), but if you want to reuse an existing colour palette, you can use \f{scale_colour_manual}.  You will need to make sure that the colour is a factor for this to work.
+
+\begin{alltt}
+palette(rainbow(5))
+plot(1:5, 1:5, col = 1:5, pch = 19, cex = 4)
+
+qplot(1:5, 1:5, col = factor(1:5), size = I(4))
+last_plot() + scale_colour_manual(values = rainbow(5))
+\end{alltt}
+
+In \ggplot, you can also use palettes with continuous values, with intermediate values being linearly interpolated.
+
+\begin{alltt}
+qplot(0:100, 0:100, col = 0:100, size = I(4)) +
+  scale_colour_gradientn(colours = rainbow(7))
+last_plot() +
+  scale_colour_gradientn(colours = terrain.colors(7))
+\end{alltt}
 
 \subsection{Graphical parameters}
 
 The majority of \code{par} settings have some analogue within the theme system, or in the defaults of the geoms and scales.  The appearance plot border drawn by \f{box} can be controlled in a similar way by the \code{panel.background} and \code{plot.background} theme elements.  Instead of using \f{title}, the plot title is set with the \code{title} option.
-
 
 \subsection{Specialised graphics} 
 
@@ -242,17 +284,81 @@ Unlike \f{plot}, \f{qplot} doesn't know how to plot anything other than data fra
 
 \section{Lattice graphics}
 \label{sec:translate-lattice}
+
+The major difference between lattice and \ggplot is that lattice uses a formula based interface.  \ggplot does not because the formula does not generalise well to more complicated situations.
+
+\begin{alltt}
+xyplot(rating ~ year, data=movies)
+qplot(year, rating, data=movies)
+
+xyplot(rating ~ year | Comedy + Action, data = movies)
+qplot(year, rating, data = movies, facets = ~ Comedy + Action)
+# Or maybe
+qplot(year, rating, data = movies, facets = Comedy ~ Action)
+\end{alltt}
+
+While lattice has many different functions to produce different types of graphics (which are all basically equivalent to setting the panel argument), \ggplot has \f{qplot}.
+
+\begin{alltt}
+stripplot(~ rating, data = movies, jitter.data = TRUE)
+qplot(rating, 1, data = movies, geom = "jitter")
+
+histogram(~ rating, data = movies)
+qplot(rating, data = movies, geom = "histogram")
+
+bwplot(Comedy ~ rating ,data = movies)
+qplot(factor(Comedy), rating, data = movies, type = "boxplot")
+
+xyplot(wt ~ mpg, mtcars, type = c("p","smooth"))
+qplot(mpg, wt, data = mtcars, geom = c("point","smooth"))
+
+xyplot(wt ~ mpg, mtcars, type = c("p","r"))
+qplot(mpg, wt, data = mtcars, geom = c("point","smooth"), method = "lm")
+\end{alltt}
+
+The capabilities for scale manipulations are similar in both \ggplot and lattice, although the syntax is a little different.
+
+\begin{alltt}
+xyplot(wt ~ mpg | cyl, mtcars, scales = list(y = list(relation = "free")))
+qplot(mpg, wt, data = mtcars) + facet_wrap(~ cyl, scales = "free")
+
+xyplot(wt ~ mpg | cyl, mtcars, scales = list(log = 10))
+qplot(mpg, wt, data = mtcars, log = "xy") 
+
+xyplot(wt ~ mpg | cyl, mtcars, scales = list(log = 2))
+qplot(mpg, wt, data = mtcars) + 
+  scale_x_log2() + scale_y_log2()
+
+xyplot(wt ~ mpg, mtcars, group = cyl, auto.key = TRUE)
+# Map directly to an aesthetic like colour, size, or shape.
+qplot(mpg, wt, data = mtcars, colour = cyl)
+
+xyplot(wt ~ mpg, mtcars, xlim = c(20,30))
+# Works like lattice, except you can't specify a different limit 
+# for each panel/facet
+qplot(mpg, wt, data = mtcars, xlim = c(20,30))
+\end{alltt}
+
+Both lattice and \ggplot have similar options for controlling labels on the plot.
+
+\begin{alltt}
+xyplot(wt ~ mpg, mtcars, 
+  xlab = "Miles per gallon", ylab = "Weight", 
+  main = "Weight-efficiency tradeoff")
+qplot(mpg, wt, data = mtcars, 
+  xlab = "Miles per gallon", ylab = "Weight", 
+  main = "Weight-efficiency tradeoff")
+
+xyplot(wt ~ mpg, mtcars, aspect = 1) 
+qplot(mpg, wt, data = mtcars, asp = 1)
+\end{alltt}
+
+\f{par.settings} is equivalent to \code{+ opts()} and \f{trellis.options.set} and \f{trellis.par.get} to \f{theme_set} and \f{theme_get}.
+
 % 
 % group -> categorical value on any aesthetic, or if no styling desired, group
-% x | g1 * g2 -> facet_wrap(~ g1 + g2)
-% scales = list(log = T) -> scale_x_log(), scale_y_log()
-% scales = list(relation = "free") -> facet_grid()
 % shingle -> no equivalent
 % y1 + y2 -> melt
-% panel -> + geom_point() + geom_line() ...
-% aspect -> opts(aspect.ratio = 1)
-% axs = i
-% 
 % 
 % From Jim Holtman:
 % 
