@@ -51,7 +51,7 @@ ctyhwy + geom_point(data=extreme[, 1:2], colour = "red")
 # Show extremes for each facet (keep cyl column)
 ctyhwy + geom_point(data=extreme, colour = "red")
 
-# Facetting vs grouping.
+# Faceting vs grouping.
 xmajor <- c(0.1, 0.3, 0.5, 1,3, 5)
 xminor <- as.vector(outer(1:10, 10^c(-1, 0)))
 ymajor <- c(500, 1000, 5000, 10000)
@@ -75,7 +75,7 @@ qplot(color, data=diamonds, geom="bar", fill=cut, position="dodge")
 qplot(cut,   data=diamonds, geom="bar", fill=cut, position="dodge", 
   facets = . ~ color)
 
-# For nested data, there is a clear advantage to facetting (top and
+# For nested data, there is a clear advantage to faceting (top and
 # middle) compared to dodging (bottom), because it is possible to
 # carefully control and label the facets.  For this example, the middle
 # plot is not useful, but it will be useful in situations where the

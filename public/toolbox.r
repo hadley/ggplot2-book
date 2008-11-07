@@ -56,7 +56,7 @@ qplot(carat, depth, data=diamonds, geom="quantile", xlim=c(0, 3), formula = y ~ 
 # The density plot is a smoothed version of the histogram.  It has
 # desirable theoretical properties, but is more difficult to relate
 # directly back to the data.  \Leftc a density plot of depth, and
-# \rightc facetted by cut.
+# \rightc faceted by cut.
 qplot(depth, data=diamonds, geom="density", xlim = c(54, 70))
 qplot(depth, data=diamonds, geom="density", xlim = c(54, 70), 
   fill = cut) + scale_fill_hue(alpha = 0.2)
