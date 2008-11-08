@@ -11,7 +11,7 @@ shapes <- data.frame(
 )
 qplot(x, y, data=shapes, shape=shape, size=I(5), fill=I("blue")) + scale_shape_identity() + scale_x_continuous("", breaks = NA, limits=c(0, 4.4)) + yquiet + geom_text(aes(x = x + 0.2, label=shape), hjust=0) + opts(background.fill = "grey90")
 
-ggsave(file = "_include/spec-shape.pdf", width=4, height=4)
+ggsave(file = "spec-shape.pdf", width=4, height=4)
 
 # Line types -----------------------------------------------------------------
 
@@ -24,7 +24,7 @@ linetypes <- data.frame(
 
 qplot(0, y, data=linetypes, xend = 5, yend=y, geom="segment", linetype=lty) + xquiet + yquiet + scale_linetype_identity() + geom_text(aes(x = 0, y = y + 0.2, label = lty), hjust = 0) + opts(background.fill = "grey90")
 
-ggsave(file = "_include/spec-linetype.pdf", width=4, height=4)
+ggsave(file = "spec-linetype.pdf", width=4, height=4)
 
 
 # Justification --------------------------------------------------------------
@@ -35,9 +35,9 @@ draw.text <- function(just, i, j) {
            gp=gpar(col="grey30", fontsize=8, fontface="bold"))
 }
 
-pdf("_include/spec-justification.pdf", width=4, height=4)
+pdf("spec-justification.pdf", width=4, height=4)
 grid.newpage()
-grid.rect(gp= gpar(fill=ggopt()$grid.fill, col=NA))
+grid.rect(gp= gpar(fill="grey90", col=NA))
 pos <- c(0.2, 0.5, 0.8)
 x <- unit(pos, "npc")
 y <- unit(pos, "npc")
@@ -54,3 +54,9 @@ draw.text(c(0,   1), 1, 3)
 draw.text(c(0.5, 1), 2, 3)
 draw.text(c(1,   1), 3, 3)
 dev.off()
+
+# Colour ---------------------------------------------------------------------
+source("colour-wheel.r")
+
+qplot(x, y, data=hcl, colour=colour) + scale_colour_identity() + opts(aspect.ratio=1) + scale_x_continuous("", breaks=NA) + scale_y_continuous("", breaks=NA)
+ggsave(file = "spec-colour.png", width = 6, height = 6)

@@ -17,7 +17,7 @@ hcl$colour <- hcl(hcl$h, hcl$c, hcl$l)
 rgb_vals <- expand.grid(r = seq(0, 1, length = 10), g = seq(0, 1, length=10), b = 0.5)
 rgb_vals$colour <- do.call(rgb, rgb_vals)
 
-with(rgb_vals, plot(r, g, col=colour, pch=20, cex=5))
+# with(rgb_vals, plot(r, g, col=colour, pch=20, cex=5))
 
 # qplot(x, y, data=hcl, colour=colour) + scale_colour_identity() + coord_equal() + scale_x_continuous("", breaks=NA) + scale_y_continuous("", breaks=NA) + geom_point(aes(colour = NULL), selected, size = 5, shape = 1)
 # ggsave(file = "colour-wheel.pdf", width = 6, height = 6)
