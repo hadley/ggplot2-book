@@ -1,37 +1,72 @@
 \input{_header.tex}
 
 \chapter{Strategies for using ggplot2 effectively}
+
 \section{Introduction}
 
+An important component of doing a data analysis is flexibility.  If the data changes, or you discover something that makes you rethink your basic assumptions, you need to be able to easily change all of the plots that you have produced.  \ggplot has been designed with this flexibility in mind, and this section discusses some of the ways you can use \ggplot to be as flexible as possible.
 
-How to structure plot objects so that you can change them as flexibly as possible.
+One of the main components that inhibits flexibility is duplication. If you have the same basic plot components repeated over and over again, you have to make the same change in many different places.  Just the thought of having to do that can be prohibitive!  In programming practice this is codified as {\bf Do not repeat yourself}: whenever, possible avoid duplication.
 
-\section{Plot templates}
-\label{sec:templates}
-
-An important component of doing a data analysis is flexibility.  If the data changes, or you discover something that makes you rethink your basic assumptions, you need to be able to easily change all of the plots that you have produced.  ggplot2 has been designed with this flexibility in mind, and this section discusses some of the ways you can use ggplot2 to be as flexible as possible.
-
-One of the main components that inhibits flexibility is duplication. If you have the same basic plot components repeated over and over again, you have to make the same change in many different places.  Just the thought of having to do that can be prohibitive!
-
-Do no repeat yourself.
-
-This section discusses three strategies for avoiding duplication:
+This section discusses the following strategies that will speed up your use of \ggplot:
 
 \begin{itemize}
-  \item Modifying the ``last'' plot
+  \item Building plots iteratively by modifying the ``last'' plot.
 
-  \item Creating ``templates'' with lists of ggplot objects
+  \item Creating ``templates'' with lists of ggplot objects, \secref{sub:plot_templates}.
 
-  \item Writing functions that build plots (or modifying existing plots)
+  \item Writing functions that build plots or modify existing plots.
 
-  \item Writing aesthetic mappings programmatically with {\tt aes\_string()}.
+  \item Generating aesthetic mappings programmatically with \f{aes_string}.
+
+  \item New \f{ggplot} methods
+
 \end{itemize}
 
+\subsection{Plot templates}
+\label{sub:plot_templates}
 
-\section{Split-apply-combine: Mapping numeric summaries to plots}
-\label{sec:split_apply_combine}
+Each component of a \ggplot plot is its own object and can be created, stored and applied independently of a plot.  This makes it easy to create reusable components that can automate common tasks.
 
-With faceting, ggplot2 makes it very easy to identical plots for different subsets of your data.  It may not be quite so easy to do the same with your numerical analysis tool, so this sections discusses one strategy to make this possible.  
+In \ggplot, function names tend to be long but explicit.  The amount of typing that this creates can be offset by the ease of creating aliases.
+
+The following example creates two continuous scales that can be used to turn off the display of axis labels and ticks.  You only need to create these objects once and you can apply them to many different plots.
+
+% LISTING
+% 
+% xquiet <- scale_x_continuous("", breaks = NA)
+% yquiet <- scale_y_continuous("", breaks = NA)
+% quiet <- list(xquiet, yquiet)
+
+You can combine multiple plot component into a list.  Adding the list to a plot is equivalent to adding each component of the list to the plot in turn.
+
+Similarly, because all of the object are created by functions, you can easily wrap these functions within other functions that change the defaults.  For example, if you wanted to create a function that added linear models to a plot, you could create a function like the one below.
+
+% INTERWEAVE
+% 
+% geom_lm <- function(formula, se = TRUE, ...) {
+%   geom_smooth(formula = formula, se = se, ...)
+% }
+% qplot(mpg, wt, data = mtcars) + geom_lm(y ~ x)
+% qplot(mpg, wt, data = mtcars) + geom_lm(y ~ ns(x, 3))
+
+The next session discuss some of the issues that you might encounter when writing functions that create entire plots, not just components.
+
+\subsection{Functions that create plots}
+
+
+\subsection{\f{ggplot} methods}
+\label{sub:ggplot_methods}
+
+\f{ggplot} plot is a generic function, with dispatch on the data argument.  You can use this to enhance \f{ggplot} to work with other types of R objects apart from data frames.  This section outlines an approach you can use to create plot methods that are aligned with the rest of \ggplot philosophy.
+
+The fundamental idea that underlies much of \ggplot is that data transformation and display should be kept as separate as possible.  This maximises reusability, as you are no longer trapped into the single display that the author envisaged.  Take the \f{plot} method for \code{lm} objects as an example.  There are many cases where you would like to take these plots as a starting point for your own work, but there is no way to reuse the function because data transformation and display are inextricably entangled.
+
+A \ggplot version of that function might look something like this:
+
+% Set of functions that each pull out the data in way that each 
+% case of plot.lm does.  Some way of producing the default plots, but
+% also being able to turn them off so you can just use the data.
 
 
 \input{_footer.tex}

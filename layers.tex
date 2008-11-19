@@ -13,20 +13,30 @@
 
 \section{Introduction}
 
-% This is not really true: layering was barely mentioned in the 
-% previous chapter, so it needs to be defined here.
-% As described in the previous chapter, layers can use different data sets and aesthetic mappings.  When creating a plot with \f{qplot}, you can't access these differences - all layers use the same default dataset and aesthetic mappings.  This means that you can't create certain more complex plots with \f{qplot}.  This chapter outlines an alternative method: building up the plot layer by layer.  
-
 Layering is the mechanism by which additional elements are added to a plot.  Each added element can come from a different dataset and have a different aesthetic mapping, allowing us to create plots that could not be generated using \f{qplot}, which permits only a single dataset and a single aesthetic mapping.
 
-Section~\ref{sec:ggplot} taught you how to initialise a plot object. The plot object is not yet ready to be displayed until at least one layer is added, as as described in Section~\ref{sec:layers}. Sections~\ref{sec:data} and \ref{sec:aes} describe the data and aesthetic mappings in more detail, including more information about how layer settings override the plot defaults, the difference between setting values and mapping aesthetics, and the important group aesthetic.  Sections~\ref{sec:geom} and \ref{sec:stat} list the geoms and stats available in \ggplot.  Section~\ref{sec:pull-together} concludes by introducing you to some plotting techniques that take advantage of what you have learned in this chapter.
+This chapter is mainly a technical description of how layers, geoms and statistics work: how you call and customise them.  The next chapter, the \ggplot ``toolbox'', describes how you can use different geoms and stats to solve particular visualisation problems.  These two chapters are companions, with this one explaining how layers work and the next one how you can use layers to achieve your graphical goals.
 
-This chapter is mainly a technical description of how layers, geoms and statistics work: how you call and customise them.  The next chapter, the \ggplot ``toolbox'', describes how you can use different geoms and stats to do data analysis. 
-% In practice, I'd recommend flicking between these two chapters so you can learn both how layers work, and how you can use them to achieve your goals.
-% dfs: This isn't a very appealing instruction, because it doesn't
-% give you user a workable reading strategy.  I'll make a note here and 
-% plan to revisit this later.
-These two chapters are companions, with this one explaining how layers work and the next one how you can use layers to achieve your graphical goals.
+Section~\ref{sec:ggplot} will teach you how to initialise a plot object. 
+
+The plot object is not yet ready to be displayed until at least one layer is added, as as described in Section~\ref{sec:layers}.  You will first learn about the complete layer specification which helps you see exactly how the components of the grammar are realised in R code, and then learn about the shortcuts which will save you a lot of typing.
+
+There are five components of a layer:
+
+\begin{itemize}
+  \item Data, \secref{sec:data}.
+
+  \item Aesthetic mappings, \secref{sec:aes}.  Including more information about how layer settings override the plot defaults, the difference between setting values and mapping aesthetics, and the important group aesthetic.  
+
+  \item Geometric object, \secref{sec:geom} describes geoms in a little more detail and lists all of the available geoms. 
+
+  \item Statistical transformation, \secref{sec:stat}.
+
+  \item Position adjustment, \secref{sec:position}.
+\end{itemize}
+
+Section~\ref{sec:pull-together} concludes by introducing you to some plotting techniques that take advantage of what you have learned in this chapter.
+
 
 \section{Creating a plot}
 \label{sec:ggplot}
@@ -41,16 +51,16 @@ To build up a plot layer by layer, we start by creating a plot object. When disc
 
 These arguments set up defaults for the plot and can be omitted if you specify data and aesthetics when adding each layer. 
 
-This initial plot object can not be rendered until we add at least one layer.
+This plot object can not be rendered until we add a layer - there is nothing to see yet!
 
 \section{Layers}
 \label{sec:layers}
 
-A minimal layer may do nothing more than specify a {\bf geom}, a way of visually representing the data.  The plot object we just initialized can be rendered after this addition, specifying a scatterplot:
+A minimal layer may do nothing more than specify a {\bf geom}, a way of visually representing the data.  The plot object we just created can be rendered after this addition, specifying a scatterplot:
 
 % LISTING
 % 
-% p <- p + layer(geom = ""point"")  
+% p <- p + layer(geom = "point")  
 \input{_include/a43ca887828cec506e7bcfb85ab71230.tex}
 % END
 
@@ -100,9 +110,11 @@ A minimal layer may do nothing more than specify a {\bf geom}, a way of visually
 
   \item {\bf data} (optional): A data set which overrides the default plot data set.  It is most commonly omitted, in which case the layer will use the default plot data.
   
-  \item {\bf ...}: Parameters for the geom or stat, such as bin width in the histogram or bandwidth for a loess smoother.  Any aesthetic that the geom recognises can also be specified as a parameter to the layer.  See Section~\ref{sub:setting-mapping}.
+  \item {\bf ...}: Parameters for the geom or stat, such as bin width in the histogram or bandwidth for a loess smoother.  Any aesthetic that the geom uses can also be specified as a parameter to the layer.  See Section~\ref{sub:setting-mapping}.
   
   \item {\bf geom} or {\bf stat} (optional):  You can override the default {\tt stat} for a {\tt geom}, or the default {\tt geom} for a {\tt stat}.  This is a text string containing the name of the geom to use.  Using the default will give you a standard plot; overriding the defaults allows you to achieve something more exotic, as described in Section~\ref{sub:new_plot_types}.
+
+  \item {\bf position} (optional): Choose a method for adjusting overlapping objects, as described in Section~\ref{sec:position}.
   
 \end{itemize}
 
@@ -127,7 +139,12 @@ You've seen that plot objects can be stored as variables. The summary function c
 \input{_include/2d835056505a754c93732e6e4bfd4b0a.tex}
 % END
 
-Layers can also be stored as variables, so that it is easy to write clean code that generates a family of related plots.  For example, a set of plots can be initialised using different data then enhanced identically with carefully constructed layers.
+Layers are regularly R objects and so can stored as variables, making it easy to write clean code that generates a family of related plots.  For example, a set of plots can be initialised using different data then enhanced identically with carefully constructed layers.
+
+% LISTING
+% 
+% bestfit <- geom_smooth(method = "lm")
+% qplot(mpg, wt, data = mctcars) + bestfit
 
 Note that the order of \code{data} and \code{mapping} arguments is switched between {\tt ggplot()} and the layer functions.  This should improve ease of use, because you almost always specify data for the plot, and almost always specify aesthetics ~--~ but {\em not} data ~--~ for the layers.  However, I suggest explicitly naming other arguments rather than relying on positional matching.  This makes the code more readable and it is the style followed in this book.
 
@@ -136,7 +153,7 @@ The following sections describe the data and aesthetic mappings in more detail, 
 \section{Data}
 \label{sec:data}
 
-The restriction on the data is simple: It must be a data frame.  It is not necessary to specify a default dataset except when using faceting; faceting is a global operation (i.e., it works on all layers) and it needs to have some a dataset to add in any missing columns.  See Section~\ref{sub:missing_faceting_columns} for more details.  If the dataset is omitted, every layer must supply its own data.
+The restriction on the data is simple: It must be a data frame.  It is not necessary to specify a default dataset except when using faceting; faceting is a global operation (i.e., it works on all layers) and it needs to have some a dataset to add in any missing columns.  See Section~\ref{sub:missing_faceting_columns} for more details.  If the deafult dataset is omitted, every layer must supply its own data.
 
 It is important to remember that the data is stored in the plot object as a copy, not a reference.  This is important because ggplot2 objects are entirely self-contained.  You can save one to disk and later plot it without needing anything else from that session.
 
@@ -155,7 +172,7 @@ If you want to update (or change) the data later on, you can replace the default
 
 % HERE dfs
 
-\section{Aesthetic mapping}
+\section{Aesthetic mappings}
 \label{sec:aes}
 
 To describe the way that variables in the data are mapped to things that we can perceive on the plot (the ``aesthetics''), we use the {\tt aes} function.  The {\tt aes} function takes a list of aesthetic-variable pairs like these:
@@ -180,7 +197,7 @@ Any variable in an \f{aes} specification must be contained inside the plot or la
 \subsection{Plots and layers}
 \label{sub:plots_and_layers}
 
-When the aesthetic mappings are part of the plot defaults, they can be set when the plot is initialized or added later using \code{+}, as in this example:
+When the aesthetic mappings are part of the plot defaults, they can be set when the plot is initialised or added later using \code{+}, as in this example:
 
 % INTERWEAVE
 % 
