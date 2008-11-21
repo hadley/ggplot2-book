@@ -37,7 +37,7 @@ This separation into data and non-data components is quite different to base and
 % 
 % qplot(rating, data=movies, geom="histogram", binwidth=1)
 % last_plot() + theme_bw()
-\input{_include/0efe40c55f50a89fe60be08bc8bc63be.tex}
+\input{_include/05b09bc182c237cbe4af3534ece4a693.tex}
 % END
 
 Like many other areas of \ggplot, themes can be controlled on multiple levels from the very coarse to the very fine:
@@ -82,15 +82,15 @@ You can apply themes in two ways:
 % # Themes affect the plot when they are drawn, not when they are created
 % histogram
 % 
-% # Override the theme for a single plot by adding it on
-% histogram + theme_bw(30)
+% # Override the theme for a single plot by adding it
+% histogram + theme_bw()
 % 
 % # Apply the original theme to a single plot
 % histogram + previous_theme
 % 
 % # Permanently restore the original theme
 % theme_set(previous_theme)
-\input{_include/bd681f092938cec98ff3a7a5ed166915.tex}
+\input{_include/bf037a7563e575c8db8a344a002eb093.tex}
 % END
 
 \subsection{Theme elements}
@@ -106,25 +106,28 @@ There are three elements that have individual \code{x} and \code{y} settings: \c
     \toprule
     Theme element              & Type     & Description  \\
     \midrule                              
-    \texttt{axis.line}         & segment  & Line along axis  \\
+    \texttt{axis.line}         & segment  & line along axis  \\
     \texttt{axis.text.x}       & text     & x axis label  \\
     \texttt{axis.text.y}       & text     & y axis label  \\
     \texttt{axis.ticks}        & segment  & axis tick marks  \\
     \texttt{axis.ticks.y}      & segment  & axis tick marks  \\
     \texttt{axis.title.x}      & text     & horizontal tick labels  \\
     \texttt{axis.title.y}      & text     & vertical tick labels  \\[0.5em]
+
     \texttt{legend.background} & rect     & background of legend  \\
     \texttt{legend.key}        & rect     & background underneath legend keys \\
     \texttt{legend.text}       & text     & legend labels  \\
     \texttt{legend.title}      & text     & legend name  \\[0.5em]
-    \texttt{panel.background}  & rect     &   \\
-    \texttt{panel.border}      & rect     &   \\
+
+    \texttt{panel.background}  & rect     & background of panel  \\
+    \texttt{panel.border}      & rect     & border around panel  \\
     \texttt{panel.grid.major}  & line     & major grid lines \\
-    \texttt{panel.grid.minor}  & line     & minor grid lines \\[0.5em]
-    \texttt{panel.empty}       & rect     & panel with no data   \\
+    \texttt{panel.grid.minor}  & line     & minor grid lines \\
+    \texttt{panel.margin}      & unit     & width of gap between panels \\[0.5em]
     \texttt{plot.background}   & rect     & background of the entire plot \\
     \texttt{plot.title}        & text     & plot title   \\[0.5em]
-    \texttt{strip.background}  & rect     &   \\
+
+    \texttt{strip.background}  & rect     & background of facet labels   \\
     \texttt{strip.text.x}      & text     & text for horizontal strips  \\
     \texttt{strip.text.y}      & text     & text for vertical strips  \\
     \bottomrule                           
@@ -151,7 +154,7 @@ There are four basic types of built-in element functions: text, lines and segmen
 
 \end{itemize}
 
-You can see the settings for the current theme with \f{theme_get}.  I haven't included the output here because it takes up several pages.  (Debby: do you think I should include it regardless?  In an appendix?).  You can modify the elements locally for a single plot with \f{opts}, or globally for all future plots with \f{theme_update}.  The following examples shows how you can use these functions.  It's a good idea to look at an existing theme for details about setting the correct angles and justifications for text elements.
+You can see the settings for the current theme with \f{theme_get}.  I haven't included the output here because it takes up several pages.  You can modify the elements locally for a single plot with \f{opts}, or globally for all future plots with \f{theme_update}.  The following examples shows how you can use these functions.  It's a good idea to look at an existing theme for details about setting the correct angles and justifications for text elements.
 
 % INTERWEAVE
 % 
@@ -167,10 +170,10 @@ You can see the settings for the current theme with \f{theme_get}.  I haven't in
 % )
 % p
 % theme_set(old_theme)
-\input{_include/ae8e2b86ee0ee5c70d65b27e921da56a.tex}
+\input{_include/450c69e20b3b04494923347adc599115.tex}
 % END
 
-There is some duplication in this example because we have to specify the x and y elements separately.  This is a necessary evil so that you can have total control over the appearance of the elements.
+There is some duplication in this example because we have to specify the x and y elements separately.  This is a necessary evil so that you can have total control over the appearance of the elements.  If you are writing your own theme, you would probably want to write a function to minimise this repetition.
 
 In the following example we use \f{theme_blank} to progressively suppress the appearance of elements we're not interested in.   Notice how the plot automatically reclaims the space previously used by these elements: if you don't want this to happen (perhaps because they need to line up with other plots on the page), use \code{colour = NA, fill = NA} as parameter to create invisible elements that still take up space.
 
@@ -183,7 +186,7 @@ In the following example we use \f{theme_blank} to progressively suppress the ap
 % last_plot() + opts(axis.title.x = theme_blank())
 % last_plot() + opts(axis.title.y = theme_blank())
 % last_plot() + opts(axis.line = theme_segment())
-\input{_include/0063954034b61ffea33ea25b818a2975.tex}
+\input{_include/babed0dbca6456ee00465f58452443b9.tex}
 % END
 
 \subsection{More advanced control}
@@ -217,7 +220,16 @@ To change the default scale associated with an aesthetic, use \f{set_default_sca
 
 You can customise geoms and stats in a similar way with \f{update_geom_defaults} and \f{update_stat_defaults}.  Unlike the other theme settings these will only affect plots \emph{created} after the setting has been changed, not all plots drawn after the setting has been changed.  The following example demonstrates changing the default point colour and changing the default histogram to a density (``true'') histogram.  
 
-Table~\ref{tbl:geom-defaults} lists all of the common aesthetic defaults.  If you change one, it's a good idea to change all the other that you use to ensure that your plots look consistent.  See Appendex~\ref{cha:specifications} for how the values are interpreted by R.
+% LISTING
+% 
+% update_geom_defaults("point", aes(colour = "darkblue"))
+% qplot(mpg, wt, data=mtcars)
+% update_stat_defaults("bin", aes(y = ..density..))
+% qplot(rating, data = movies, geom = "histogram", binwidth = 1)
+\input{_include/7c277a593d53b9b625e2837e5dedbe95.tex}
+% END
+
+Table~\ref{tbl:geom-defaults} lists all of the common aesthetic defaults.  If you change the defaults for one geom, it's a good idea to change all the defaults for all the other geoms that you commonly use so that your plots look consistent.  If you are unsure on what makes for a valid colour, line type, shape or size in R, Appendix~\ref{cha:specifications} gives the details.
 
 % aes_value <- function(x) paste(names(x), x, sep =": ")
 % 
@@ -244,7 +256,7 @@ Table~\ref{tbl:geom-defaults} lists all of the common aesthetic defaults.  If yo
     \code{colour}   & \code{darkblue} & \code{jitter}, \code{point}                                                                                                                                                                                                                                                                                                                                                                       \\
     \code{colour}   & \code{grey60}   & \code{boxplot}, \code{ribbon}                                                                                                                                                                                                                                                                                                                                                                     \\
     \code{fill}     & \code{NA}       & \code{crossbar}, \code{density}, \code{jitter}, \code{point}, \code{pointrange}                                                                                                                                                                                                                                                                                                                \\
-    \code{fill}     & \code{grey60}   & \code{area}, \code{bar}, \code{histogram}, \code{polygon}, \code{rect}, \code{ribbon}, \code{smooth}, \code{tile}                                                                                                                                                                                                                                                                           \\
+    \code{fill}     & \code{grey20}   & \code{area}, \code{bar}, \code{histogram}, \code{polygon}, \code{rect}, \code{ribbon}, \code{tile}                                                                                                                                                                                                                                                                           \\
     \code{linetype} & \code{1}        & \code{abline}, \code{area}, \code{bar}, \code{contour}, \code{crossbar}, \code{density}, \code{density2d}, \code{errorbar}, \code{histogram}, \code{hline}, \code{line}, \code{linerange}, \code{path}, \code{pointrange}, \code{polygon}, \code{quantile}, \code{rect}, \code{ribbon}, \code{rug}, \code{segment}, \code{smooth}, \code{step}, \code{tile}, \code{vline}   \\
     \code{shape}    & \code{19}       & \code{jitter}, \code{point}, \code{pointrange}                                                                                                                                                                                                                                                                                                                                                   \\
     \code{size}     & \code{0.5}      & \code{abline}, \code{area}, \code{bar}, \code{boxplot}, \code{contour}, \code{crossbar}, \code{density}, \code{density2d}, \code{errorbar}, \code{histogram}, \code{hline}, \code{line}, \code{linerange}, \code{path}, \code{pointrange}, \code{polygon}, \code{quantile}, \code{rect}, \code{ribbon}, \code{rug}, \code{segment}, \code{smooth}, \code{step}, \code{vline}\\
@@ -257,40 +269,30 @@ Table~\ref{tbl:geom-defaults} lists all of the common aesthetic defaults.  If yo
   \label{tbl:geom-defaults}
 \end{table}
 
-
-% LISTING
-% 
-% update_geom_defaults("point", aes(colour = "darkblue"))
-% qplot(mpg, wt, data=mtcars)
-% # update_stat_defaults("bin", aes(y = ..density..), binwidth = 1)
-% qplot(rating, data=movies, geom="histogram", binwidth=1)
-\input{_include/86d713f0ee2ab216db6cb131a333699a.tex}
-% END
-
 \section{Saving your output}
 \label{sec:saving}
 
-You have two basic choices of output: raster or vector.  Vector graphics are procedural.  This means that they are essentially ``infinitely'' zoomable; there is no loss of detail.  Raster graphics are stored as an array of pixels.  Fixed resolution.  Generally, vector output is more desirable, but for complex graphics containing thousands of graphical objects it can be slow to render.  In this case, it may be better to switch to raster output.  For printed use, a high-resolution (e.g. 600 dpi) graphic may be an acceptable compromise, but can be large.  See \url{http://www.lanceknadle.com/images/raster_vector.pdf} for some more examples.
+You have two basic choices of output: raster or vector.  Vector graphics are procedural.  This means that they are essentially ``infinitely'' zoomable; there is no loss of detail.  Raster graphics are stored as an array of pixels.  Fixed resolution.  Generally, vector output is more desirable, but for complex graphics containing thousands of graphical objects it can be slow to render.  In this case, it may be better to switch to raster output.  For printed use, a high-resolution (e.g.\ 600 dpi) graphic may be an acceptable compromise, but may be large.  See \url{http://www.lanceknadle.com/images/raster_vector.pdf} for some more examples.
 
 \begin{figure}[htbp]
   \centering
     \includegraphics[width= 0.5\linewidth]{vector-raster}
-  \caption{The difference between raster, {\it left}, and vector, {\it right}, graphics. }
+  \caption{The schematic difference between raster, {\it left}, and vector, {\it right}, graphics. }
   \label{fig:vector-raster}
 \end{figure}
 
-To save your output, you can use the typical R way, which works for all packages or a special function from \ggplot that saves the current plot: \f{ggsave}. \f{ggsave} is optimised for interactive used and has the following important arguments:
+To save your output, you can use the typical R way with disk-based graphics devices, which works for all packages, or a special function from \ggplot that saves the current plot: \f{ggsave}. \f{ggsave} is optimised for interactive use and has the following important arguments:
 
 \begin{itemize}
   \item The \code{path} specifies the path where the image should be saved.  The file extension will be used to automatically select the correct graphics device.
   
-  \item Three arguments control output size.  If left blank, the size of the current on-screen graphics device will be used.  \code{width} and \code{height} can be used to specify the absolute size, or \code{scale} to specify the size of the plot relative to the on-screen display.  When creating the final versions it's a good idea to set \code{width} and \code{height} so that all graphics for a document are the same size.
+  \item Three arguments control output size.  If left blank, the size of the current on-screen graphics device will be used.  \code{width} and \code{height} can be used to specify the absolute size, or \code{scale} to specify the size of the plot relative to the on-screen display.  When creating the final versions of graphics it's a good idea to set \code{width} and \code{height} so you know exactly what size output you're going to get.
 
-  \item For raster graphics, the \code{dpi} argument controls the resolution of the plot.  It defaults to 300, which is appropriate for most printers, but you may want to use 600 for particularly high-resolution output, or 72 for on-screen display.
+  \item For raster graphics, the \code{dpi} argument controls the resolution of the plot. It defaults to 300, which is appropriate for most printers, but you may want to use 600 for particularly high-resolution output, or 72 for on-screen (e.g.\ web) display.
   
 \end{itemize}
 
-The following code shows these two methods. If you want to save multiple plots to a single file, you need to use the traditional graphics device mechanism of doing so.  
+The following code shows these two methods. If you want to save multiple plots to a single file, you will need to use the open a disk based graphics device, print the plots and then close it.
 
 % LISTING
 % 
@@ -298,27 +300,29 @@ The following code shows these two methods. If you want to save multiple plots t
 % ggsave(file = "output.pdf")
 % 
 % pdf(filename = "output.pdf", width = 6, height = 6)
-% # If inside a script, you will need to explicitly print()
+% # If inside a script, you will need to explicitly print() plots
 % qplot(mpg, wt, data = mtcars)
+% qplot(wt, mpg, data = mtcars)
 % dev.off()
-\input{_include/5358c0ba5ca07b59d4238f11d2ba45e8.tex}
+\input{_include/5bc1444dd8aaa56e4cce7102f62e846d.tex}
 % END
 
-Table~\ref{tbl:graphic-recommendation} lists recommended graphic formats for various tasks.  R output generally works best as part of a *nix development tool chain: using png or pdf output in \LaTeX{} documents.  With Microsoft Office it is easiest to use a high-resolution (\code{dpi = 600}) png file.  You can use vector output, but neither of wmf or postscript are particularly appealing: Windows meta files (\code{wmf}) do not support transparency, and postscript prints fine, but is only visible if you add a preview in another software package.  The same advice holds for OpenOffice.
+Table~\ref{tbl:graphic-recommendation} lists recommended graphic formats for various tasks.  R output generally works best as part of a *nix development tool chain: using png or pdf output in \LaTeX{} documents.  With Microsoft Office it is easiest to use a high-resolution (\code{dpi = 600}) png file.  You can use vector output, but neither Windows meta files nor postscript supports transparency, and while postscript prints fine, it is only shown on screen if you add a preview in another software package.  The same advice holds for OpenOffice.
 
-If you are using \LaTeX, I recommend including \verb|\DeclareGraphicsExtensions{.png, .pdf}| in the preamble.  Then you don't need to specify the file extension in \verb|includegraphics| commands, but \LaTeX{} will pick png files in preference to pdf.  I choose this order because you can produce all your files in pdf, and then go back and re-render any big ones as pngs.  Another useful command is \verb|\graphicspath{{include/}}| which specifies a path for latex to search for graphics in, allowing you to keep graphics in a separate directory to the rest of the text.
+If you are using \LaTeX, I recommend including \verb|\DeclareGraphicsExtensions{.png, .pdf}| in the preamble.  Then you don't need to specify the file extension in \verb|includegraphics| commands, but \LaTeX{} will pick png files in preference to pdf.  I choose this order because you can produce all your files in pdf, and then go back and re-render any big ones as png.  Another useful command is \verb|\graphicspath{{include/}}| which specifies a path in which to look for graphics, allowing you to keep graphics in a separate directory to the text.
 
 \begin{table}
   \begin{center}
   \begin{tabular}{lll}
     \toprule
-    Graphics device & Type & Recommended for \\
+    Software & Recommended graphics device \\
     \midrule
-    pdf   & vector & pdflatex\\
-    ps    & vector & latex \\
-    % wmf   & vector & MS office \\
-    png   & raster & web, MS office, pdflatex \\
-    tiff  & raster & publishers who ask for it \\
+    Illustrator & svg \\
+    latex & ps \\
+    MS Office & png (600 dpi) \\
+    Open Office & png (600 dpi) \\
+    pdflatex & pdf, png (600 dpi) \\
+    web & png (72 dpi) \\
     \bottomrule 
   \end{tabular}
   \end{center}
