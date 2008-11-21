@@ -53,3 +53,11 @@ update_geom_defaults("point", aes(colour = "darkblue"))
 qplot(mpg, wt, data=mtcars)
 # update_stat_defaults("bin", aes(y = ..density..), binwidth = 1)
 qplot(rating, data=movies, geom="histogram", binwidth=1)
+
+qplot(mpg, wt, data = mtcars)
+ggsave(file = "output.pdf")
+
+pdf(filename = "output.pdf", width = 6, height = 6)
+# If inside a script, you will need to explicitly print()
+qplot(mpg, wt, data = mtcars)
+dev.off()

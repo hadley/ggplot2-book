@@ -1,15 +1,15 @@
 
 p <- ggplot(mtcars, aes(x = wt, y = mpg, colour = cyl))
 
-p <- p + layer(geom = ``point'')  
+p <- p + layer(geom = "point")  
 
 layer(geom, geom_params, stat, stat_params, data, mapping, position)
 
 p <- ggplot(mtcars, aes(x = mpg))
 p <- p + layer(
-  geom = ``histogram'', 
+  geom = "histogram", 
   geom_params = list(fill = "steelblue"),
-  stat = ``bin'',
+  stat = "bin",
   stat_params = list(binwidth = 2)
 )
 p
@@ -27,6 +27,9 @@ summary(p)
 
 p <- p + geom_point()
 summary(p)
+
+bestfit <- geom_smooth(method = "lm")
+qplot(mpg, wt, data = mctcars) + bestfit
 
 p <- ggplot(mtcars, aes(mpg, wt, colour = cyl)) + geom_point()
 p
@@ -123,7 +126,7 @@ qplot(x, y, data = df, colour = colour, size = I(5)) +
 
 ggplot(diamonds, aes(x=carat)) + geom_histogram(aes(y=..density..), binwidth=.1)
 
-qplot(carat, ..density.., data = diamonds, geom="histogram", binwidth = .1)
+qplot(carat, ..density.., data = diamonds, geom="histogram", binwidth = 0.1)
 
 # Three position adjustments applied to a bar chart.  From left to
 # right, stacking, filling and dodging.

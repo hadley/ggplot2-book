@@ -23,3 +23,26 @@ geom_smooth(data= subset(mpg, cyl != 5), method="lm")
 
 # A more complex plot with facets and multiple layers.
 qplot(displ, hwy, data=mpg, facets = . ~ year) + geom_smooth()
+
+# Examples of four scales from \ggplot.  From left to right: continuous
+# variable mapped to size and colour, discrete variable mapped to shape
+# and colour.  The ordering of scales seems upside-down, but this
+# matches the labelling of the $y$-axis: small values occur at the
+# bottom.
+x <- 1:10
+y <- factor(letters[1:5])
+qplot(x, x, size = x) + opts(keep = "legend_box")
+qplot(x, x, 1:10, colour = x) + opts(keep = "legend_box")
+qplot(y, y, 1:10, shape = y) + opts(keep = "legend_box")
+qplot(y, y, 1:10, colour = y) + opts(keep = "legend_box")
+
+# Examples of axes and grid lines for three coordinate systems:
+# Cartesian, semi-log and polar. The polar coordinate system
+# illustrates the difficulties associated with non-Cartesian
+# coordinates: it is hard to draw the axes well.
+x1 <- c(1,10)
+y1 <- c(1, 5)
+p <- qplot(x1, y1, geom="blank", xlab=NULL, ylab=NULL) + theme_bw()
+p 
+p + coord_trans(y="log10")
+p + coord_polar()

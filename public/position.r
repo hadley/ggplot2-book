@@ -10,7 +10,7 @@ qplot(cty, data = mpg2, geom="histogram", binwidth = 2) +
 
 qplot(cty, hwy, data = mpg2) + facet_grid(drv ~ cyl)
 
-qplot(cty, hwy, data = mpg2) + facet_grid( ~ cyl + drv)
+qplot(cty, hwy, data = mpg2) + facet_grid(. ~ cyl + drv)
 
 p <- qplot(displ, hwy, data=mpg2) + geom_smooth(method="lm")
 p + facet_grid(cyl ~ drv) 
@@ -103,11 +103,16 @@ qplot(cty, hwy, data = mpg, facets =  ~ disp_r)
 # A set of examples illustrating what a line and rectangle look like
 # when displayed in a variety of coordinate systems.
 rect <- data.frame(x = 0.5, y = 0.5)
-line <- data.frame(x = c(0,1), y = c(1, 0))
-base <- ggplot(mapping = aes(x=x,y=y)) + 
-  geom_tile(data=rect, aes(width = 0.5, height = 0.5)) + 
-  geom_line(data=line)
+line <- data.frame(x = c(0,2), y = c(1, 0.01))
+base <- ggplot(mapping = aes(x, y)) + 
+  geom_tile(data = rect, aes(width = 0.5, height = 0.5)) + 
+  geom_line(data = line)
 base
+base + coord_polar("x")
+base + coord_polar("y")
+base + coord_flip()
+base + coord_trans(y = "log10")
+base + coord_equal()
 
 # How coordinate transformations work: converting a line in Cartesian
 # coordinates to a line in polar coordinates.
@@ -131,25 +136,34 @@ polar + geom_point() + geom_path()
 polar + geom_point(data=extents, colour = "red", size = 2) + geom_path() 
 
 # Setting limits on the coordinate system, vs setting limits on the
-# scales.  Left, entire dataset; middle, x scale limits set; right,
-# coordinate system x limits set.  Scaling the coordinate limits
-# performs a visual zoom, while setting the scale limits subsets the
-# data and refits the smooth.
+# scales.  Left, entire dataset; middle, x scale limits set to (325,
+# 500); right, coordinate system x limits set to (325, 500).  Scaling
+# the coordinate limits performs a visual zoom, while setting the scale
+# limits subsets the data and refits the smooth.
 (p <- qplot(disp, wt, data=mtcars) + geom_smooth())
 p + scale_x_continuous(limits = c(325, 500))
 p + coord_cartesian(xlim = c(325, 500))
 
 # Setting limits on the coordinate system, vs setting limits on the
-# scales.  Left, entire dataset; middle, scale limits set; right,
-# coordinate limits set.  Compare the size of the bins: when you set
-# the scale limits, there is the same number of bins but they each
-# cover a a smaller region of the data; when you set the coordinate
-# limits, there are fewer and they cover the same amount of data as the
-# original.
+# scales.  Left, entire dataset; middle, x scale limits set to (0, 2);
+# right, coordinate x limits set to (0, 2).  Compare the size of the
+# bins: when you set the scale limits, there is the same number of bins
+# but they each cover a smaller region of the data; when you set the
+# coordinate limits, there are fewer bins and they cover the same
+# amount of data as the original.
 (d <- ggplot(diamonds, aes(carat, price)) + 
   stat_bin2d(bins = 25, colour="grey50") + opts(legend.position = "none")) 
 d + scale_x_continuous(limits = c(0, 2))
 d + coord_cartesian(xlim = c(0, 2))
+
+# Left, a scatterplot and smoother with highway mpg on x axis, and city
+# on y axis.  Middle, exchanging \var{cty} and \var{hwy} rotates the
+# plot 90 degrees, but the smooth is fit to the rotated data.  Left,
+# using \code{coord_flip} fits the smooth to the original data, and
+# then rotates the output.
+qplot(hwy, cty, data = mpg) + geom_smooth()
+qplot(cty, hwy, data = mpg) + geom_smooth()
+qplot(hwy, cty, data = mpg) + geom_smooth() + coord_flip()
 
 qplot(carat, price, data = diamonds, log = "xy") + 
   geom_smooth(method = "lm")

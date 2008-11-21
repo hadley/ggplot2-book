@@ -39,10 +39,10 @@ dlittle <- subset(dsmall, carat < 2)
 qplot(carat, price, data=dlittle, geom=c("point", "quantile"))
 
 # The \code{formula} argument is used to control the functional form of
-# the relation.  ({\sc left}) A natural spline with five degrees of
-# freedom, \code{formula = y ~ ns(x, 5)} and ({\sc right}) a linear
-# model with break points at 0.5, 1, and 1.5 carats, \code{formula = y
-# ~ x + I(x > 0.5) + I(x > 1) + I(x > 1.5))}
+# the relation.  Left, a natural spline with five degrees of freedom,
+# \code{formula = y ~ ns(x, 5)} and right, a linear model with break
+# points at 0.5, 1, and 1.5 carats, \code{formula = y ~ x + I(x > 0.5)
+# + I(x > 1) + I(x > 1.5))}
 qplot(carat, price, data=dlittle, geom=c("point", "quantile"), formula=y~ns(x, 5))
 qplot(carat, price, data=dlittle, geom=c("point", "quantile"), formula=y~ x + I(x > 0.5) + I(x > 1) + I(x > 1.5))
 
@@ -51,8 +51,8 @@ qplot(carat, price, data=dlittle, geom=c("point", "quantile"), formula=y~ x + I(
 qplot(carat, price, data=dlittle, geom=c("point", "quantile"), quantiles=seq(0.05,0.95, 0.1))
 
 # Scatterplot of price vs.\ carat supplemented with contours of a 2d
-# density estimate ({\tt geom=c(``point'', ``density2d'')}).  Most
-# diamonds are small and inexpensive.
+# density estimate ({\tt geom=c("point", "density2d")}).  Most diamonds
+# are small and inexpensive.
 qplot(carat, price, data=diamonds, geom=c("point","density2d"))
 
 # Using jittering (left) and boxplots (right) to investigate the
