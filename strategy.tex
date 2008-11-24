@@ -11,24 +11,27 @@ One of the main components that inhibits flexibility is duplication. If you have
 This section discusses the following strategies that will speed up your use of \ggplot:
 
 \begin{itemize}
-  \item Building plots iteratively by modifying the ``last'' plot.
+  \item Building plots iteratively by modifying the ``last'' plot, \secref{sec:iteration}.
 
-  \item Creating ``templates'' with lists of ggplot objects, \secref{sub:plot_templates}.
+  \item Creating ``templates'' with lists of ggplot objects, \secref{sec:templates}.
 
-  \item Writing functions that build plots or modify existing plots.
+  \item Writing functions that build plots or modify existing plots, \secref{sec:functions}.
 
-  \item Generating aesthetic mappings programmatically with \f{aes_string}.
-
-  \item New \f{ggplot} methods
+  \item Writing \f{ggplot} methods for objects other than data frames, \secref{sec:methods}.
 
 \end{itemize}
 
-\subsection{Plot templates}
-\label{sub:plot_templates}
+\section{Iteration}
+\label{sec:iteration}
 
-Each component of a \ggplot plot is its own object and can be created, stored and applied independently of a plot.  This makes it easy to create reusable components that can automate common tasks.
+Whenever you create or modify a plot, \ggplot saves a copy of the result so you can refer to it in later expressions.  You can access this plot with \f{last_plot()}.  This is useful for interactive use as you can start with a basic plot and then iteratively add layers, improving it as you go.
 
-In \ggplot, function names tend to be long but explicit.  The amount of typing that this creates can be offset by the ease of creating aliases.
+This is most useful for tweaking the scales or coordinate systems, as you can only add new layers, not remove existing layers, or modify their parameters.  For example, if you are experimenting with what x and y axis limits give the best view of your data, using \f{last_plot} in conjunction with \f{xlim} and \f{ylim} (Section~\ref{sec:position_scales}) can save you a lot of typing.  
+
+\section{Plot templates}
+\label{sec:templates}
+
+Each component of a \ggplot plot is its own object and can be created, stored and applied independently of a plot.  This makes it easy to create reusable components that can automate common tasks.  This helps to offset the long functions names tend to be long but explicit.  The amount of typing that this creates can be offset by the ease of creating aliases.
 
 The following example creates two continuous scales that can be used to turn off the display of axis labels and ticks.  You only need to create these objects once and you can apply them to many different plots.
 
@@ -50,13 +53,25 @@ Similarly, because all of the object are created by functions, you can easily wr
 % qplot(mpg, wt, data = mtcars) + geom_lm(y ~ x)
 % qplot(mpg, wt, data = mtcars) + geom_lm(y ~ ns(x, 3))
 
-The next session discuss some of the issues that you might encounter when writing functions that create entire plots, not just components.
+The next section discuss some of the issues that you might encounter when writing functions that create entire plots, not just components.
 
-\subsection{Functions that create plots}
+\section{Functions that create plots}
+\label{sec:functions}
 
+Sometimes you can't achieve the desired degree of control just by adding predefined layers.  Maybe you need to perform some data restructuring or transformation, or need to combine the data with a predefined model.  In that case you will need to write a function that produces \ggplot plots.  This section offers some advice on how to construct such a function in a way that is consistent with the philosophy of \ggplot, and ensures that it can be used flexibly and creatively.
 
-\subsection{\f{ggplot} methods}
-\label{sub:ggplot_methods}
+Need to make some decisions.  How much flexibility does the function require.  This depends a lot on your audience - if it's just for you then you can make relatively inflexible and then just add capabilities as you need them, but if it's for a wider audience, more thought at the start will save time in the long run.
+
+What parameters should your function take?
+
+Format of the data.
+
+Generating aesthetic mappings programmatically with \f{aes_string}, and combining with user supplied aesthetics.
+
+Use example from one of the built in templates.  Maybe parallel coordinates.
+
+\section{\f{ggplot} methods}
+\label{sec:methods}
 
 \f{ggplot} plot is a generic function, with dispatch on the data argument.  You can use this to enhance \f{ggplot} to work with other types of R objects apart from data frames.  This section outlines an approach you can use to create plot methods that are aligned with the rest of \ggplot philosophy.
 
