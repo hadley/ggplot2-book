@@ -156,17 +156,11 @@ The following sections describe the data and aesthetic mappings in more detail, 
 \section{Data}
 \label{sec:data}
 
-The restriction on the data is simple: It must be a data frame.  It is not necessary to specify a default dataset except when using faceting; faceting is a global operation (i.e., it works on all layers) and it needs to have some a dataset to add in any missing columns.  See Section~\ref{sub:missing_faceting_columns} for more details.  If the default dataset is omitted, every layer must supply its own data.
+The restriction on the data is simple: It must be a data frame.  Unlike other graphics packages in R, \ggplot provides very few ways to get your data in.  For example, lattice functions can take an optional data frame or use vectors directly from the global environment.  Base methods often work with vectors, data frames or other R objects.  \f{ggplot} only works with data in a data frame.  Section \ref{sec:methods} discusses this philosophy in more depth. While \f{qplot} does work with vectors in your workspace, it has to use some heuristics and it doesn't always get it right.  This means that is usually best to explicitly arrange your data in the format that \ggplot uses.  
 
-Unlike other graphics packages in R, {\tt ggplot} provides very few ways to get your data in.  For example, lattice functions can take an optional data frame or use vectors direct from the environment.  {\tt ggplot} only works with data in the form of a data frame (although qplot provides a convenient way of creating a data frame from vectors that exist in your data space).  This means that you have to explicitly arrange your data in the format that ggplot uses.  This makes it a little bit more verbose, but you can be more sure about exactly what is going on with your data.  It also allows a cleaner separation of concerns so that the graphics package deals only with plotting data, not wrangling it into different forms as well.
+This can make the plot specification more verbose, but you can be more sure about exactly what is going on with your data.  Your data is very important, and it's better to be explicit about exactly what is done with it.  It also allows a cleaner separation of concerns so that the \ggplot deals only with plotting data, not wrangling it into different forms, for which you might find the \code{plyr} or \code{reshape} packages helpful. 
 
-This makes it very easy to produce the same plot for different data sets.  A single data.frame is also easier to save than a multitude of vectors, which means it's easier to reproduce your results later or send them to someone else.  
-
-The most important thing is that everything should be explicit.  Your data is the most important thing, and if it gets corrupted or arranged in an inappropriate manner everything based on that data will be compromised.  For this reason, you need to do everything yourself.
-
-It is important to remember that the data is stored in the plot object as a copy, not a reference.  This is important because ggplot2 objects are entirely self-contained.  You can save one to disk and later plot it without needing anything else from that session.
-
-If you want to update (or change) the data later on, you can replace the default dataset with \code{\%+\%}:
+The positive consequence of this decision is that its very easy to produce the same plot for different data sets.  If you want to change (or update) the data in a plot, you can replace the default dataset with \code{\%+\%}, as shown in the following example.  This is an easy way to experiment with imputation schemes or model fits, as shown in Section~\ref{sub:different_aesthetics}. A single data frame is also easier to save than a multitude of vectors, which means it's easier to reproduce your results or send your data to someone else.  
 
 % LISTING
 % 
@@ -177,9 +171,11 @@ If you want to update (or change) the data later on, you can replace the default
 \input{_include/c6437645230dbb93914a78989ca737c3.tex}
 % END
 
-\noindent Any change of values or dimensions is legitimate as long as the variables used in the plot are still part of the data, and the variables do not change from discrete to continuous or vice versa.  This facility can be useful if you need to produce the same plot for different datasets.  It's also an easy way to experiment with influential points or imputation schemes.
+\noindent Any change of values or dimensions is legitimate.  However, if a variable changes from discrete to continuous (or vice versa), you will need to update the default scales, as described in Section~\ref{sec:scale-usage}.  
 
-% HERE dfs
+It is not necessary to specify a default dataset except when using faceting; faceting is a global operation (i.e., it works on all layers) and it needs to have a base dataset which defines the set of facets for all datasets.  See Section~\ref{sub:missing_faceting_columns} for more details.  If the default dataset is omitted, every layer must supply its own data.
+
+The data is stored in the plot object as a copy, not a reference.  This has two important consequences: if your data changes, the plot will not; and \ggplot objects are entirely self-contained so that they can be \f{save}d to disk and later \f{load}ed and plotted without needing anything else from that session.
 
 \section{Aesthetic mappings}
 \label{sec:aes}
@@ -201,7 +197,7 @@ Here we are mapping x-position to weight, y-position to height and colour to age
 % END
 \noindent Note that functions of variables can be used.
 
-Any variable in an \f{aes} specification must be contained inside the plot or layer data.  This is one of the ways in which ggplot2 objects are guaranteed to be entirely self-contained, so that they can be stored and re-used.
+Any variable in an \f{aes} specification must be contained inside the plot or layer data.  This is one of the ways in which \ggplot objects are guaranteed to be entirely self-contained, so that they can be stored and re-used.
 
 \subsection{Plots and layers}
 \label{sub:plots_and_layers}
@@ -218,7 +214,7 @@ When the aesthetic mappings are part of the plot defaults, they can be set when 
 \input{_include/65f1f4b8c6c8db2adbbd01f0474b70a9.tex}
 % END
 
-We have seen several examples of using the default mapping when adding a layer to a plot:
+One reason you might want to do this is shown in Section~\ref{sub:different_aesthetics}.  We have seen several examples of using the default mapping when adding a layer to a plot:
 
 % INTERWEAVE
 % 
