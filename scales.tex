@@ -68,7 +68,18 @@ We have left a few stages out of this description of the process for simplicity.
 
 Every aesthetic has a default scale that is added to the plot whenever you use that aesthetic in a layer.  These are listed in Table~\ref{tbl:default-scales}.   To add a different scale or to modify some features of the default scale, you must first construct a new scale and then add it to the plot (using \code{+}). 
 
+Default scales are added when you initialise the plot and when you add new layers.  This means it is possible to get a mismatch between the variable type and the scale type.  When this happens you need to add the correct scale yourself.
+
 All scale constructors have a common naming scheme.  They start with \code{scale_}, followed by the name of the aesthetic (e.g., \code{colour_}, \code{shape_}, or \code{x_}), and finally by the name of the scale (e.g., \code{gradient}, \code{hue}, or \code{discrete}). For example, the name of the default scale for the colour aesthetic based on discrete data is {\tt scale\_colour\_hue()}, and the name of the Brewer colour scale for filled points is {\tt scale\_fill\_brewer()}.
+
+Discrete variables include:
+
+\begin{itemize}
+  \item factors
+  \item logical
+  \item character
+\end{itemize}
+
 
 \begin{table}
   \begin{center}
@@ -240,6 +251,13 @@ Of course, you can also perform the transformation yourself.  For example instea
 
 Transformers are also used in \f{coord_trans}, where the transformation occurs after the statistic has been calculated, and affect the shape of the graphical object drawn on the plot.  \f{coord_trans} is described in more detail in Section\ref{sub:cartesian}.
 
+\subsection{Position scales}
+\label{sub:position_scales}
+
+
+\f{xlim} and \f{ylim}.  continuous, reverse and discrete.
+
+
 \subsection{Colour gradients}
 \label{sub:scale-gradient}
 
@@ -294,6 +312,37 @@ You can also create your own custom gradient with \f{scale_colour_gradientn}.  T
 The discrete scales, \f{scale_linetype}, \f{scale_shape} and \f{scale_size_discrete} basically have no options (although for the shape scale you can choose whether points should be fixed or solid). Each has a list of values that are mapped to factor levels.
 
 If you want to customise these scales, you need to create your own new scale with the manual scale: \f{scale_shape_manual}, \f{scale_linetype_manual}, \f{scale_colour_manual} etc..  It has one important argument, \verb|values| in which you specify the values that the scale should produce.  If this vector is named, it will match the values of the output to the values of the input, otherwise it will match in order of the levels of the discrete variable.   You will need some knowledge of the valid aesthetic values, which are described in Appendix \ref{cha:specifications}.
+
+Legends always come from the scales, so you need to set up the plot in such a away that the scales know what you want. Here's a plot that captures the essence of your problem:
+
+% INTERWEAVE  
+% 
+% huron <- data.frame(year = 1875:1972, level = as.vector(LakeHuron))
+% ggplot(huron, aes(year)) +
+%   geom_line(aes(y = level - 5), colour = "blue") + 
+%   geom_line(aes(y = level + 5), colour = "red")
+
+You have two lines from the same dataset that you want to colour differently, and include them in the legend.  In most other plotting systems, you'd just colour the lines as above, and then add a legend that describes which colour maps to which variable.  That doesn't work in ggplot2 because it's the scales that are responsible for drawing legends (the colour scale in this case), and they don't know about the values the lines should take.
+
+What you need to do is tell the colour the scale about the two different lines by creating a mapping from the data to the colour aesthetic.  There's no variable present in the data, so you'll have to create one:
+
+% INTERWEAVE  
+% 
+% ggplot(huron, aes(year)) +
+%   geom_line(aes(y = level - 5, colour = "below")) + 
+%   geom_line(aes(y = level + 5, colour = "above"))
+
+This gets us basically what we want, but the legend isn't labelled correctly, and has the wrong colours.  That can be fixed with scale_colour_manual:
+
+% INTERWEAVE  
+% 
+% ggplot(huron, aes(year)) +
+%   geom_line(aes(y = level - 5, colour = "below")) + 
+%   geom_line(aes(y = level + 5, colour = "above")) + 
+%   scale_colour_manual("Direction", c("below" = "blue", "above" = "red"))
+
+In your original example, this is equivalent to operating on the molten data and using geom_line(aes(colour = variable), data = molten)
+
 
 % TODO: add an example here!
 
