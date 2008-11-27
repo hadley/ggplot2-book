@@ -4,43 +4,30 @@
 
 \section{Introduction}
 
-What is \ggplot? 
+\ggplot is an R package for producing statistical, or data, graphics, but it is unlike most other graphics packages because it has a deep underlying grammar. This grammar, based on the Grammar of Graphics \citep{wilkinson:2006}, is composed of a set of independent components that can be composed in many different ways.  This makes \ggplot very powerful, because you are not limited to a set of pre-specified graphics, but you can create new graphics that are precisely tailored for your problem. This may sound overwhelming, but because there are simple set of core principles and very few special cases, \ggplot is also easy to learn (although it may take a little time to forget your preconceptions from other graphics tools).
 
-\begin{itemize}
-  \item An R package for producing statistical graphics.  
+Practically, \ggplot provides beautiful, hassle-free plots, that take care of fiddly details like drawing legends.  The plots can be built up iteratively and edited later.  A carefully chosen set of defaults means that most of the time you can toss-off a publication-quality graphic in seconds, but you if do have special formatting requirements, a comprehensive theming system makes it easy to do what you want. Instead of spending time making your graph look pretty, you can focus on creating a graph that bests reveals the messages in your data.
 
-  \item A language, based on the Grammar of Graphics \citep{wilkinson:2006},  for describing and creating plots. 
+This book provides a hands on introduction to \ggplot with lots of example code and graphics. It also explains the grammar on which \ggplot is based. Like other formal systems, \ggplot is useful even when you don't understand the underlying model. However, the more you learn about the it, the more effectively you'll be able to use \ggplot.  This book assumes basic some familiarity with R, to the level described in the first chapter of Dalgaard’s ``Introductory Statistics with R''. You should know how to get your data into R and how to do basic data manipulations.  If you don't, you might want to get a copy of Phil Spector's ``Data manipulation with R''.  
 
-  \item A set of independent components that minimise the code needed to produce complex graphics.
-
-  \item Plots that can be built up iteratively and edited later.
-
-  \item Hassle free plotting that takes care of fiddly details like legends, displaying subsets simultaneously.
-
-  \item Designed to make use of colour
-
-\end{itemize} 
-
-This book provides a practical introduction to \ggplot with lots of example code and graphics. It also explains the grammar on which \ggplot is based. Like other formal systems, \ggplot is useful even when you don't understand the underlying model. However, the more you learn about the it, the more effectively you'll be able to use \ggplot. 
-
-This book assumes basic some familiarity with R, to the level described in the first chapter of Dalgaard’s ``Introductory Statistics with R''. You should know how to get your data into R and how to do basic data manipulations.  If you don't, you might want to get a copy of Phil Spector's ``Data manipulation with R''.  
-
-This book will introduce you to \ggplot as a novice, unfamiliar with the grammar, and turn you into an expert who can build new components to extend the grammar.
+This book will introduce you to \ggplot as a novice, unfamiliar with the grammar; teach you the basics so that you can recreate plots you are already familiar with; show you how the to use grammar to create new types of graphics; and even turn you into an expert who can build new components to extend the grammar.
 
 \section{Other resources}
 \label{sec:other_resources}
 
 This book does not cover every possible use of \ggplot. It does not document every function in detail and it does not describe every possible plot you could make. What it does do, however, is teach you what all the pieces are and how they fit together. By the end of reading this book, you should be able to build new and unique plots specifically tailored to your needs.
 
-However, you still need to be able to get precise details of individual components. The best resource for this will always be the built-in documentation. This is accessible online, \url{http://had.co.nz/ggplot2}, and from within R using the usual help syntax. The website also lists talks and papers related to \ggplot, and training opportunities if you'd like some hands on practice. The {\sc cran} website, \url{http://cran.r-project.org/web/packages/ggplot2/}, is another useful resource. This page links to what is new and different in each release.
+However, you still need to be able to get precise details of individual components. The best resource for this will always be the built-in documentation. This is accessible online, \url{http://had.co.nz/ggplot2}, and from within R using the usual help syntax. The advantage of the online documentation is that you can see all the example plots, and navigate between topics more easily. 
 
-The book website, \url{http://had.co.nz/ggplot2/book}, provides updates to this book, as well as pdfs containing all graphics used in the book, with the code and data needed to reproduce them.
+The website also lists talks and papers related to \ggplot, and training opportunities if you'd like some hands on practice. The {\sc cran} website, \url{http://cran.r-project.org/web/packages/ggplot2/}, is another useful resource. This page links to what is new and different in each release.  If you use \ggplot regularly, it's a good idea to sign up for the ggplot2 mailing list.  The list has relatively low traffic (one or two emails a day), and very friendly to new users.
+
+Finally, the book website, \url{http://had.co.nz/ggplot2/book}, provides updates to this book, as well as pdfs containing all graphics used in the book, with the code and data needed to reproduce them.  
 
 % There is also a gallery of \ggplot graphics used in real life.  If you would like your graphics to be included in the gallery, please send me reproducible code and a paragraph or two describing your plot.
 
 \section{What is the grammar of graphics?}
 
-\citet{wilkinson:2006} created the grammar of graphics to describe the deep features that underlie all statistical graphics.  The grammar of graphics is an answer to a question: what is a statistical graphic?  The layered grammar of graphics \citep{wickham:2007d} builds on Wilkinson's grammar, focussing on the primacy of layers and adapting it for embedding within R.  In brief, the grammar tells us that a graphic is a mapping from data to  aesthetic attributes (colour, shape, size) of geometric objects (points, lines, bars).  The plot may also contain statistical transformations of the data, and is drawn on a specific  coordinate system.  Faceting can be used to generate the same plot for different subsets of the dataset.  It is the combination of these independent components that make up a graphic.  
+\citet{wilkinson:2006} created the grammar of graphics to describe the deep features that underlie all statistical graphics.  The grammar of graphics is an answer to a question: what is a statistical graphic?  The layered grammar of graphics \citep{wickham:2007d} builds on Wilkinson's grammar, focussing on the primacy of layers and adapting it for embedding within R.  In brief, the grammar tells us that a statistical graphic is a mapping from data to  aesthetic attributes (colour, shape, size) of geometric objects (points, lines, bars).  The plot may also contain statistical transformations of the data, and is drawn on a specific coordinate system.  Faceting can be used to generate the same plot for different subsets of the dataset.  It is the combination of these independent components that make up a graphic.  
 
 As the book progresses, the formal grammar will be explained in increasing detail. The first description of the components follows below. It introduces some of the terminology that will be used throughout the book, and outlines the basic responsibilities of each component.  Don't worry if it doesn't all make sense right away: you will have many more opportunities to learn about al of the pieces and how they fit together.
 
@@ -70,23 +57,18 @@ It is also important to talk about what the grammar doesn't do:
 
 \end{itemize}
 
-
 \section{How does the grammar help you?}
 
-ggplot is designed to work in a layered fashion, so that the raw data is one layer and statistical summaries are a layer and so on.  It allows an analyst to produce graphics using the same structured thinking that s/he uses to design an analysis.  In that way, it's especially helpful for students who have not yet developed the structured approach to analysis used by experts.
+\ggplot is designed to work in a layered fashion, starting with a layer showing the raw data then adding layers of annotations and statistical summaries.  It allows you to produce graphics using the same structured thinking that you uses to design an analysis, and reducing the distance between a plot in your head, and one on the page.  It is especially helpful for students who have not yet developed the structured approach to analysis used by experts.  
 
-Learning the grammar will help you not only create graphics that you know about now, but will also help you to think about new graphics that would be even better
-
-there was no underlying theory to existing graphics software - just a big collection of special cases  yeah, that's it. just a list -- one of these, and one of those, and one of the other. 
-
-makes teaching and learning easier.
+Learning the grammar will help you not only create graphics that you know about now, but will also help you to think about new graphics that would be even better.  Without the grammar, there is no underlying theory and existing graphics packages are just a big collection of special cases. Creating new types of graphics is difficult, and requires specialist knowledge.
 
 \section{How does \ggplot fit in with other R graphics?}
 
 There are a number of other graphics systems available in R: base graphics, grid graphics and trellis/lattice graphics.  How does \ggplot differ from them?
 
 \begin{itemize} 
-  \item Base graphics were ``hacked'' together by Ross Ihaka based on experience implementing S graphics driver and partly looking at \cite{chambers:1983}.  Base graphics basically has a pen on paper model: you can only draw on top of the plot, you can not modify or delete existing content.  There is no (user accessible) representation of the graphics, apart from their appearance on the screen. Base graphics includes both tools for drawing primitives and entire plots.  Base graphics functions are generally fast, but have limited scope. When you create a single scatterplot, or histogram, or a set of boxplots, you're probably using base graphics.
+  \item Base graphics were ``hacked'' together by Ross Ihaka based on experience implementing S graphics driver and partly looking at \cite{chambers:1983}.  Base graphics has a pen on paper model: you can only draw on top of the plot, you can not modify or delete existing content.  There is no (user accessible) representation of the graphics, apart from their appearance on the screen. Base graphics includes both tools for drawing primitives and entire plots.  Base graphics functions are generally fast, but have limited scope. When you've created a single scatterplot, or histogram, or a set of boxplots in the past, you've probably used base graphics.
 
   \item The development of \pkg{grid} graphics, a much richer system of graphical primitives, started in 2000.  Grid is developed by Paul Murrell, growing out of his PhD work \citep{murrell:1998}. Grid grobs (graphical objects) can be represented independently of the plot and modified later. A system of viewports (each containing its own coordinate system) makes it easier to layout complex graphics. Grid provides drawing primitives, but no tools for producing statistical graphics.  
 
@@ -108,17 +90,15 @@ Understanding how scales works is crucial for fine tuning the perceptual propert
 
 Coordinate systems and faceting control the position of elements of the plot.  These are described in Chapter~\ref{cha:position}.  Faceting is a very powerful graphical tool as it allows you to rapidly compare different subsets of your data.  Different coordinate systems are less commonly needed, but are very important for certain types of data.
 
-% Chapter Seven introduces my philosophy of data.  This chapter isn't crucial, but will help you understand the type of data \ggplot expects, and how to transform your data into that format.  It also discusses faceting in more detail, and discusses some ideas for combining modelling and graphics.
-
 To fine tune your plots for publication, you will need to learn about the tools described in Chapter~\ref{cha:polishing}.  There you will learn about how to control the theming system of \ggplot, how to change the defaults for geoms, stats and scales, and how to save plots to disk.  Sometimes you need more control over the output than \ggplot provides.  In this case, you will need to modify the low level grid output used to draw the graphics.  In Chapter~\ref{cha:grid}, you will learn how this output is constructed, how to control and modify it, and how to add additional annotations to the plot.  This chapter also teaches you how to lay out multiple plots on a page.
 
-To go beyond the built-in components, you will need to write your own. Chapter~\ref{cha:writing-your-own} describes the internal structure of \ggplot objects and how you can create to new ones.
+Chapter~\ref{cha:strategy} describes strategies to automate the production of \ggplot graphics, and to reduce the amount of duplication in your code.  To go beyond the built-in components, you will need to write your own. Chapter~\ref{cha:writing-your-own} describes the internal structure of \ggplot objects and how you can create to new ones.
 
-Two appendices provide additional useful information.  Appendix~\ref{cha:specifications} describes how colours, shapes, line types and sizes can be specified by hand, and Appendix~\ref{cha:translating} shows how to translate from base graphics, lattice graphics, and Wilkinson's {\sc gpl} to \ggplot syntax.
+Two appendices provide additional useful information.  Appendix~\ref{cha:specifications} describes how colours, shapes, line types and sizes can be specified by hand, and Appendix~\ref{cha:translating} shows how to translate to syntax of base graphics, lattice graphics, and Wilkinson's {\sc gpl} to \ggplot syntax.
 
 \section{Installation}\label{sub:installation}
 
-To use \ggplot, you must first install it. Make sure you have a recent version of R (at least version 2.7) from \url{http://r-project.org}, and then run the following line of code to download and install the \ggplot package.  
+To use \ggplot, you must first install it. Make sure you have a recent version of R (at least version 2.8) from \url{http://r-project.org}, and then run the following line of code to download and install the \ggplot package.  
 
 \begin{verbatim}
 install.packages("ggplot2")
@@ -140,6 +120,6 @@ install.packages("ggplot2")
 
 \section{Acknowledgements}\label{sec:acknolwedgements}
 
-Many people have contributed to this book with high-level structural insights, spelling and grammar corrections and bug reports.  In particular, I would to thank: Lee Wilkinson, for discussions that cemented my understanding of the grammar; Gabor Grothendieck, for early helpful comments; Heike Hofmann and Di Cook, for being great major professors; Charlotte Wickham; the students of stat480 and stat503 at ISU, for using it; Debby Swayne, for masses of helpful feedback and advice; Bob Muenchen, Reinhold Kleigl, Philipp Pagel, Richard Stahlhut, and the many others who have read draft versions of the book and given me feedback; the members of R-help, for providing the many interesting and challenging graphics problems that have helped motivate this book.
+Many people have contributed to this book with high-level structural insights, spelling and grammar corrections and bug reports.  In particular, I would to thank: Lee Wilkinson, for discussions that cemented my understanding of the grammar; Gabor Grothendieck, for early helpful comments; Heike Hofmann and Di Cook, for being great major professors; Charlotte Wickham; the students of stat480 and stat503 at ISU, for trying it one when it was very young; Debby Swayne, for masses of helpful feedback and advice; Bob Muenchen, Reinhold Kleigl, Philipp Pagel, Richard Stahlhut, and the many others who have read draft versions of the book and given me feedback; the members of R-help, for providing the many interesting and challenging graphics problems that have helped motivate this book.
 
 \input{_footer.tex}
