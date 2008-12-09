@@ -399,6 +399,20 @@ We change the line colour in the second layer to make them distinct from the box
 \input{_include/0c7a7c24d490e728fd88f74ee040afed.tex}
 % END
 
+% The reason is simple, but fairly subtle - it's because of the default
+% grouping behaviour.  By default ggplot splits up the data according to
+% the combination of levels of all the categorical variables on the plot
+% - so in your case you get a dataset for each bar, and so the density
+% is just n / n = 1.  The way to get around this is to override the
+% default grouping so that there is a single group for the whole
+% dataset:
+
+% INTERWEAVE
+% 
+% qplot(cut, data = diamonds, geom = "bar")
+% qplot(cut, ..density.., data = diamonds, geom = "bar")
+% qplot(cut, ..density.., data = diamonds, geom = "bar", group = 1)
+
 \subsection{Matching aesthetics to graphic objects}
 \label{sub:matching}
 
@@ -729,6 +743,13 @@ A number of the geoms available in \ggplot were derived from other geoms in a pr
   \caption{Geoms that were created by modifying the defaults of another geom.}
   \label{tbl:aliased-geoms}
 \end{table}
+
+\subsection{Displaying precomputed statistics} 
+\label{sub:precomputed}
+
+If you have data which has already been summarised, and you just want to use it, you'll need to use \f{stat_identity}, which leaves the data unchanged, and then map the appropriate variables to the appropriate aesthetics.
+
+Examples:  bar chart, box plot, smooth.
 
 \subsection{Varying aesthetics and data}
 \label{sub:different_aesthetics}
