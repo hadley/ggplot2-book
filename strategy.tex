@@ -341,10 +341,10 @@ One way is to build up the plot with a different layer for each variable.   Howe
 There is a problem with these plots: the two variables have radically different scales, and so the series for \code{unempmed} appears as a flat line.  There is no way to produce a plot with two axis in \ggplot (as I believe that this type of plot is fundamentally misleading).  There are two alternatives: rescale the variables to share common ranges, or facet with free scales.  These alternatives are created with the code below and are shown in Figure~\ref{fig:series-scaling}
 
 % FIGLISTING
-%   LABEL: series-methods 
+%   LABEL: series-scaling 
 %   GG-HEIGHT: 3 GG-WIDTH: 6
 %   CAPTION: When the series have very different scales we have two 
-%   alternatives: top, rescale the variables to a common scale, or bottom,
+%   alternatives: left, rescale the variables to a common scale, or right,
 %   display the variables on separate facets and using free scales.
 % 
 % range01 <- function(x) {
@@ -356,7 +356,7 @@ There is a problem with these plots: the two variables have radically different 
 %   colour = variable, linetype = variable)
 % qplot(date, value, data = emp, geom = "line") + 
 %   facet_grid(variable ~ ., scales = "free_y")
-\input{_include/4efb9b4a55236b8700fe44a5f868ad83.tex}
+\input{_include/8466a7b1e583155b0ebf75c7742c7353.tex}
 % END
 
 \subsection{Parallel coordinates plot} 
@@ -375,7 +375,7 @@ In a similar manner, we can use molten data to create a parallel coordinates plo
 % 
 % pcp <- ggplot(scaled, aes(variable, value, group = .row)) + geom_line()
 % pcp
-\input{_include/4c0d8867704c23f45cd63e0b5b97fe3f.tex}
+\input{_include/b5843a67cc57ae5b9d5f66b65aa6b9d2.tex}
 % END
 
 Dealing with missing values in parallel coordinates plots is a little tricky.  One way is just to set missing values to a number outside of the usual range:
@@ -384,6 +384,8 @@ Dealing with missing values in parallel coordinates plots is a little tricky.  O
 % 
 % scaled$value[is.na(molten$value)] <- -0.2
 % pcp %+% scaled
+\input{_include/ae6bdd763b60552a2385d43c2d99e374.tex}
+% END
 
 Because we have total control of the data transformation, it is easy to experiment with variations on the parallel coordinate plot.  We could use different types of rescaling, like standardising to mean 0 and standard deviation 1, or calculating ranks (this is sometimes called a bump chart).  Or we could use different geoms, like boxplots, to display the data.  Instead of converting categorical variables to numeric, we can treat them as id variable, and then assign them to aesthetics, or facet by them.
 
@@ -399,85 +401,153 @@ Because we have total control of the data transformation, it is easy to experime
 % pcp %+% missing %+% 
 %   geom_boxplot(aes(group = variable), fill = alpha("white", 0.75), 
 %    colour = alpha("#3366CC", 0.75), data = scaled)
-
-
+\input{_include/5abc3ae04344f538257e7afdd9c15fbe.tex}
+% END
 
 \section{\f{ggplot} methods}
 \label{sec:methods}
 
-\f{ggplot} is a generic function, with different methods for different types of data.  The most common, and what we have used until now, are data frames.  However, \ggplot can be extended to deal with other classes of objects, using the \f{fortify} method. If the data is not a data frame, \ggplot will attempt to convert it to a data frame with the \f{fortify} method.  The \f{fortify} fortifies a model with the original data and provides a way to simultaneously visualise the model and the data.  Currently, \ggplot provides only one fortify method, for linear models, but add on packages provide methods for other types of models.
+\f{ggplot} is a generic function, with different methods for different types of data.  The most common, and what we have used until now, are data frames. However, like base and lattice graphics, it is possible to extend \f{ggplot} to work with other types of data.  However, the way this works is fundamentally different: \ggplot will not give you a complete plot, but instead will give you the tools to make the plot.
+
+This process is mediated by the \f{fortify} method, which takes an object, and optional data frame, and creates a version of the object in a form suitable for plotting with \ggplot, i.e.\ as a data frame.  The name fortify comes from thinking about combining a model with its data: the model fortifies the data, and the data fortifies the model, and the result can be used to  simultaneously visualise the model and the data.  An example will make this concrete, and below we describe the fortify method for linear models.
 
 This section describes how the \f{fortify} method works, and how you can create new methods that are aligned with the \ggplot philosophy.  The most important philosophical consideration is that data transformation and display should be kept as separate as possible.  This maximises reusability, as you are no longer trapped into the single display that the author envisaged.  
 
-Take the \f{plot} method for \code{lm} objects as an example.  There are many cases where you would like to take these plots as a starting point for your own work, but there is no way to reuse the function because data transformation and display are inextricably entangled.
+These different types of input also work with \f{qplot}: remember that \f{qplot} is just a thin wrapper around \f{ggplot}
 
-At time of printing, \f{fortify} adds the following variables to the original dataset.  These variables have a leading \code{.} in their names, so there is little risk that they will clobber variables already in the dataset.  
+\subsection{Linear models}
 
-\begin{itemize}
-  \item \code{.hat} Diagonal of the hat matrix
-  \item \code{.sigma} Estimate of residual standard deviation when corresponding observation is dropped from model
-  \item \code{.cooksd} Cooks distance
-  \item \code{.fitted} Fitted values of model
-  \item \code{.resid} Residual
-  \item \code{.stdresid} Standardised residuals
-\end{itemize}
+Currently, \ggplot provides only one fortify method, for linear models.  Here we'll show how this method works, and how you can use it to create tailored plots for better understanding your data and models.  Figure~\ref{fig:plot-lm} shows the output of \f{plot.lm} for a simple model.  The graphics produces a set of pre-chosen model summary plots.  These are useful for particular problems, but are completely inflexible: there is no way to modify them apart from opening up the source code for \f{plot.lm} and modifying it.  The code is difficult to understand between data transformation and display are inextricably entangled.
 
-You may notice some similarity between this approach and the transformations performed by stats.  The major difference is that \f{fortify} is global, while statistical transformations are local to the facet and group.
+% mod <- lm(cty ~ displ, data = mpg)
+% pdf("strategy-plot-lm.pdf", width = 8, height = 8)
+% par(mfrow = c(2, 2))
+% plot.lm(mod)
+% dev.off()
 
-With a fortified data set in hand we can easily recreate the plots produced by \f{plot.lm}, and even better, we can adapt them to our needs.  The example below shows how we can recreate and then extend the first plot produced by \f{plot.lm}.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\linewidth]{strategy-plot-lm}
+  \caption{The output from \f{plot.lm} for a simple model.  }
+  \label{fig:plot-lm}
+\end{figure}
 
-% INTERWEAVE
+The \ggplot approach completely separates data transformation and display.  The \f{fortify} method does the transformation, and then we use \ggplot as usual to create the display that we want.  At the time of printing, \f{fortify} adds the variables in Table~\ref{tbl:fortify-vars} to the original dataset.  These are basically all the variables that \f{plot.lm} collects in order to create its summary plots.  The variables have a leading \code{.} in their names, so there is little risk that they will clobber variables already in the dataset.  
+
+\begin{table}
+  \centering
+  \begin{tabular}{lp{2.5in}}
+    \toprule
+    Variable & Description \\
+    \midrule
+    \code{.cooksd}   & Cook's distances \\
+    \code{.fitted}   & Fitted values \\
+    \code{.hat}      & Diagonal of the hat matrix \\
+    \code{.resid}    & Residuals \\
+    \code{.sigma}    & Estimate of residual standard deviation when corresponding observation is dropped from model \\
+    \code{.stdresid} & Standardised residuals \\
+    \bottomrule
+  \end{tabular}
+  \caption{The diagnostic variables that \f{fortify.lm} assembles and adds to the model data.}
+  \label{tbl:fortify-vars}
+\end{table}
+
+% If we just supply \f{fortify} with the model, it will add the diagnostic columns to the model data frame (which just contains the variables used in the model), or we can also supply the full original dataset.  
+
+To demonstrate these techniques, we're going to fit the very simple model shown below and visualised in Figure~\ref{fig:fortify-mod}.  This model clearly doesn't fit the model very well, so we should be able to use model diagnostics to figure out how to improve it.  A sample of the output from fortifying this model is shown in Table~\ref{tbl:fortify-out}.  Because we supply the original data frame it contains the two variables used in the model and the six diagnostic variables.  It's easy to see exactly what data out plot will be working with and we could easily add more variables if we wanted.
+
+% FIGLISTING
+%   LABEL: fortify-mod
+%   CAPTION: A simple linear model that doesn't fit the data very well.
 % 
 % qplot(displ, cty, data = mpg) + geom_smooth(method = "lm")
-% mod <- lm(cty ~ displ, data = mpg)
-% plot(mod, which = 1)
+% mpgmod <- lm(cty ~ displ, data = mpg)
+\input{_include/78b92590208723a3f50e5d210adabf74.tex}
+% END
+
+% library(xtable)
+% xtable(head(fortify(mpgmod)))
+
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{rrrrrrrrr}
+    \toprule
+    cty & displ & .hat & .sigma & .cooksd & .fitted & .resid & .stdresid \\
+    \midrule
+    18 & 1.80 & 0.01 & 2.56 & 0.01 & 21.26 & -3.26 & -1.28 \\
+    21 & 1.80 & 0.01 & 2.57 & 0.00 & 21.26 & -0.26 & -0.10 \\
+    20 & 2.00 & 0.01 & 2.57 & 0.00 & 20.73 & -0.73 & -0.29 \\
+    21 & 2.00 & 0.01 & 2.57 & 0.00 & 20.73 & 0.27 & 0.11 \\
+    16 & 2.80 & 0.01 & 2.57 & 0.00 & 18.63 & -2.63 & -1.03 \\
+    18 & 2.80 & 0.01 & 2.57 & 0.00 & 18.63 & -0.63 & -0.24 \\
+    \bottomrule
+  \end{tabular}
+  \caption{The output of \code{fortify(mpgmod)} contains the two variables used in the model (\var{cty} and \var{displ}), and the six diagnostic variables described above.}
+  \label{tbl:fortify-out}
+\end{table}
+
+% You may notice some similarity between this approach and the transformations performed by stats.  The major difference is that \f{fortify} is global, while statistical transformations are local to the facet and group.
+
+With a fortified data set in hand we can easily recreate the plots produced by \f{plot.lm}, and even better, we can adapt them to our needs.  The example below shows how we can recreate and then extend the first plot produced by \f{plot.lm}.  Once we have the basic plot we can easily enhance it: use standardised residuals instead of raw residuals, or make size proportional to Cook's distance.  The results are shown in Figure~\ref{fig:fortify-fr}
+
+% FIGLISTING
+%   COL: 3 TEX-WIDTH: 0.33\linewidth
+%   LABEL: fortify-fr
+%   CAPTION: Basic fitted values-residual plot, left.  With standardised
+%   residuals, centre.  With size proportional to Cook's distance, right.  It
+%   is easy to modify the basic plots when we have access to all of the data.
 % 
 % basic <- ggplot(mod, aes(.fitted, .resid)) +
 %   geom_hline(yintercept = 0, colour = "grey50", size = 0.5) + 
 %   geom_point() + 
 %   geom_smooth(size = 0.5, se = F)
 % basic
-\input{_include/1d5522493ec53d2fe478cce7791445aa.tex}
-% END
-
-We can easily enhance this plot: use standardised residuals instead of raw residuals, or make size proportional to Cook's distance.  
-
-% INTERWEAVE
-% 
 % basic + aes(y = .stdresid)
 % basic + aes(size = .cooksd) + scale_area("Cook's distance")
-\input{_include/6fe1837d050b43ffb3d4f8bef9e3124e.tex}
+\input{_include/efe92072668756b80df5f4ebc0afb31c.tex}
 % END
 
-Additionally, we can fortify the whole dataset and add to the plot variables that are in the original data but not in the model.  This helps us to understand what variables are useful to improve the model. 
+Additionally, we can fortify the whole dataset and add to the plot variables that are in the original data but not in the model.  This helps us to understand what variables are useful to improve the model.  Figure~\ref{fig:fortify-full} colours the residuals by the number of cylinders, and suggests that this variable would be good to add to the model: within each cylinder group, the pattern is linear.
 
-% INTERWEAVE
+% FIGLISTING
+%   LABEL: fortify-full
+%   CAPTION: Adding variables from the original data can be enlightening.  
+%   Here when we add the number of cylinders we see that instead of a 
+%   curvi-linear relationship between displacement and city mpg, it linear,
+%   conditional on the number of cylinders. 
 % 
-% moddf <- fortify(mod, mpg)
-% head(moddf)
-% ggplot(moddf, aes(.fitted, .resid, colour = factor(cyl))) +
-%   geom_hline(yintercept = 0, colour = "grey50", size = 0.5) + 
-%   geom_point() + 
-%   geom_smooth(size = 0.5, se = F)
-\input{_include/1be29596537f22d6c60ce083d386f76a.tex}
+% full <- basic %+% fortify(mod, mpg)
+% full + aes(colour = factor(cyl))
+% full + aes(displ, colour = factor(cyl))
+\input{_include/b18d75227e33ab6c9ac2eb1945af12f7.tex}
 % END
 
+\subsection{Writing your own}
 
-Ways we might modify them:
+If you are writing your own fortify method, you will need to think about what variables are most useful.  The method for linear models adds them on to the original data frame, but this might not be the best approach in other circumstances, and in fact you might want to return a list of data frames giving information at different levels of aggregation.
 
-\begin{itemize}
-  \item Draw lines between related observations.  Like oxboys.
+The following examples shows how we could write a \code{fortify} function to make it easier to add images as backgrounds to plots.
 
-  \item Use variables present in the original data, but not in the model, to see if we can explain model misspecification.
-  \item Modify the underlying data. Use other influence measures.  Might want to use cross-validation etc.
-\end{itemize}
+% LISTING
+% 
+% fortify.Image <- function(model, data, ...) {
+%   colours <- channel(model, "x11")[,,]
+%   colours <- colours[, rev(seq_len(ncol(colours)))]
+%   melt(colours, c("x", "y"))
+% }
+% 
+% library(EBImage)
+% img <- readImage("http://euclid.psych.yorku.ca/SCS/Gallery/images/Private/Langren/google-toledo-rome3.jpg", TrueColor)
+% qplot(x, y, data = img, fill = value, geom="tile") + 
+%   scale_fill_identity()
 
-If you are writing your own fortify method, you will need to think about what variables are most useful.  The linear model adds them on to the original data frame, but this might not be the best approach in other circumstances, and in fact you might want to return a list of data frames giving information at different levels of aggregation.
 
-The approach cleanly separates the display of the data from its production, and dramatically improves reuse.  
+The approach described in section cleanly separates the display of the data from its production, and dramatically improves reuse.  However, it does not provide any conveniently pre-packaged functions.  If you want to create a diagnostic plot for a linear model you have to assemble all the pieces yourself.  Once you have the basic structure in place, so that people can always dig back down and alter the individual pieces, you can write a function that joins all the components together in a useful way.
 
 \section{Functions that create plots}
 \label{sec:functions}
+
+Example: plot.lm again
 
 Look at the source code for \f{qplot}.
 
