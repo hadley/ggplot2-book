@@ -348,53 +348,85 @@ If you are using \LaTeX, I recommend including \verb|\DeclareGraphicsExtensions{
   \label{tbl:graphic-recommendation}
 \end{table}
 
-\section{Customising layout}
+\section{Multiple plots on the same page}
 \label{sec:grid-layout}
 
-By default, showing a {\tt ggplot} object at the R command prompt will display to the screen.  
+If you want to arrange multiple plots on a single page, you'll need to learn a little bit of grid, the underlying graphics system used by \ggplot.  The key concept you'll need to learn about is a viewport: a rectangular subregion of the display.  The default viewport takes up the entire plotting region, and by customising the viewport you can arrange a set of plots in any way you can imagine.
+
+To begin, lets create three plots that we can experiment with.  When arranging multiple plots on a page, it will usually be easiest to create them, save them to variables and then plot them.  That makes it easier to experiment with their placement independent on their content.  The plots created by the code below are shown in Figure~\ref{fig:layout}.
+
+% FIGLISTING
+%   LABEL: layout
+%   CAPTION: Three simple graphics we'll use to experiment with sophisticated
+%   plot layouts.
+% 
+% (a <- qplot(date, unemploy, data = economics, geom = "line"))
+% (b <- qplot(uempmed, unemploy, data = economics) + geom_smooth(se = F))
+% (c <- qplot(uempmed, unemploy, data = economics, geom="path"))
+
+\subsection{Subplots}
+
+One common layout is to have a small subplot embedded drawn on top of the main plot.  To achieve this affect, we first plot the main plot, and then draw the subplot in a smaller viewport.  Viewports are created with (surprise!) the \f{viewport} function, with parameters \code{x}, \code{y}, \code{width} and \code{height} to control the size and position of the viewport.  By default, the measurements are given in ``npc'' units, which range from 0 to 1. ``The origin of the viewport is (0, 0) and the viewport has a width and height of 1 unit. For example, (0.5, 0.5) is the centre of the viewport. '' If you want the subplot to be a particular size you can use \code{unit(2, "cm")} or \code{unit(1, "inch")}.
+
+To draw the plot in that viewport, we use the \code{vp} argument of the \f{print} method.  This method is normally called automatically whenever you evaluate something on the command line, but because we want to customise the viewport, we need to call it ourselves.  The result of this is shown in Figure~\ref{fig:subplot-1}.
+
+% LISTING 
+% 
+% pdf("polishing-subplot-1.pdf", width = 4, height = 4)
+% subvp <- viewport(width = 0.4, height = 0.4, x = 0.75, y = 0.35)
+% b
+% print(c, vp = subvp)
+% dev.off()
+
+This gives us what we want, but we need to make a few tweaks to the appearance: the text should be smaller, we want to remove the axis labels and shrink the plot margins.  The result is shown in Figure~\ref{fig:subplot-2}.
+
+% LISTING
+% 
+% csmall <- c + 
+%   theme_gray(9) + 
+%   labs(x = NULL, y = NULL) + 
+%   opts(plot.margin = unit(rep(0, 4), "lines"))
+% 
+% pdf("polishing-subplot-2.pdf", width = 4, height = 4)
+% b
+% print(csmall, vp = subvp)
+% dev.off()
+
+\begin{figure}[htbp]
+  \centering
+  \subfigure[Figure with subplot.]{
+    \includegraphics[width=0.5\textwidth]{polishing-subplot-1}
+    \label{fig:subplot-1}
+  }%
+  \subfigure[Subplot tweaked for better display.]{
+    \includegraphics[width=0.5\textwidth]{polishing-subplot-2}
+    \label{fig:subplot-2}
+  }
+  \caption{}
+  \label{fig:subplot}
+\end{figure}
 
 By default, {\tt ggplot} always clears the screen and draws to the entire device.  You customise this in two ways. One way is to setup a viewport and push it on to the display, then draw the plot with {\tt newpage=FALSE}. {\tt pushViewport} adds the viewport to the list of viewports on the display.   Afterwards, {\tt upViewport} returns you to the viewport for the entire page, preparing you for the next set of output.
 
-% LISTING
-% 
-% p <- qplot(wt, mpg, data=mtcars, colour=cyl)
-% grid.newpage()
-% pushViewport(viewport(height=0.4, width=0.4, x=0.4, y=0.8))
-% print(p, newpage=FALSE, pretty=FALSE)
-% upViewport()
-\input{_include/896b229f927422d070198f97adefeaa2.tex}
-% END
+\subsection{Rectangular grids} 
 
-Alternatively, you can set up your own set of viewports, and then specify which one the plot should be drawn to.  Here we use {\tt upViewport} before displaying the plot so we are in the top level viewport before we start plotting.
+A more complicated scenario is when you want to arrange a number of plots in a rectangular grid. Of course you could use the above technique to do so, but doing all the calculations by hand is cumbersome. The \f{grid.layout} function is a useful alternative, as it allows you to set up a regular grid of viewports with arbitrary heights and widths. You still need to create each viewport, but instead of explicitly specifying the position and size, you can specify the row and column of the layout.
 
 % LISTING
-% 
-% grid.newpage()
-% pushViewport(viewport(height = 0.5, width = 0.5, x = 0.5, y = 0.5, 
-%   name="small", angle=40))
-% upViewport()
-% print(p, vp="small")
-\input{_include/b7306e00b4d5e12d9578c2d50f8d5537.tex}
-% END
-
-Obviously, this is very useful if you want to layout plots in a complicated grid.  In this case, {\tt grid.layout} is very useful, as it allows you to set up a grid of viewports with arbitrary heights and widths.  You still need to create each viewport, but instead of explicitly specifying the position and size, you can specify the row and column of the layout.
-
-% LISTING
-% 
-% p <- qplot(wt, mpg, data = mtcars, colour = cyl)
 % 
 % vplayout <- function(x, y) 
 %   viewport(layout.pos.row = x, layout.pos.col = y)
 % grid.newpage()
-% pushViewport(viewport(layout = grid.layout(3,3)))
+% pushViewport(viewport(layout = grid.layout(2, 2)))
 % 
-% print(p, vp=vplayout(1,1))
-% print(p, vp=vplayout(2:3,2:3))
-% print(p, vp=vplayout(1, 2:3))
-% print(p, vp=vplayout(2:3, 1))
+% print(a, vp = vplayout(1, 1:2))
+% print(b, vp = vplayout(2, 1))
+% print(c, vp = vplayout(2, 2))
 \input{_include/4f19e0618407a42a5fa71eb184d43db3.tex}
 % END
 
-This is useful for arranging plots in a wider range of ways than what you can do with faceting.   You should be careful to ensure that scales are consistent over the different plots.  There is currently no easy way to do this, except to keep track of the maximum and minimum yourself, and then manually set the scales of the plot.
+By default \f{grid.layout} creates makes each cell the same size, but you can use the \code{widths} and \code{heights} arguments to make them different sizes.
+
+Note that since \f{ggsave} saves a single \ggplot plot to disk, it will not work with more complicated layouts.
 
 \input{_footer.tex}
