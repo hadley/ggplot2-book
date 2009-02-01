@@ -189,6 +189,24 @@ In the following example we use \f{theme_blank} to progressively suppress the ap
 \input{_include/babed0dbca6456ee00465f58452443b9.tex}
 % END
 
+\subsection{Custom element functions}
+\label{sub:custom-elements}
+
+To see how to write custom element functions, it's good to start by seeing how the built-in element functions work:
+
+% INTERWEAVE
+% 
+% str(args(theme_text()))
+% str(args(theme_rect()))
+% str(args(theme_line()))
+\input{_include/1d9a99fa7a894d2c4a76f7c03cb0fea2.tex}
+% END
+
+You'll notice that these are very similar to the arguments to \f{textGrob}, \f{rectGrob} and \f{polylineGrob} and these are exactly the functions that they are based on.  All that the element function do is set up some defaults.  
+
+If you want to write your own, you need to copy this basic idea: take position arguments, and return a grid grob.  For example, let's say we'd like to give the strips a 3d appearance.  We can do this by drawing a rectangle, and then drawing highlights on the top-right and low-lights (shadows) on the bottom-left.
+
+
 \subsection{More advanced control}
 \label{sub:more_advanced_control}
 
@@ -330,5 +348,53 @@ If you are using \LaTeX, I recommend including \verb|\DeclareGraphicsExtensions{
   \label{tbl:graphic-recommendation}
 \end{table}
 
+\section{Customising layout}
+\label{sec:grid-layout}
+
+By default, showing a {\tt ggplot} object at the R command prompt will display to the screen.  
+
+By default, {\tt ggplot} always clears the screen and draws to the entire device.  You customise this in two ways. One way is to setup a viewport and push it on to the display, then draw the plot with {\tt newpage=FALSE}. {\tt pushViewport} adds the viewport to the list of viewports on the display.   Afterwards, {\tt upViewport} returns you to the viewport for the entire page, preparing you for the next set of output.
+
+% LISTING
+% 
+% p <- qplot(wt, mpg, data=mtcars, colour=cyl)
+% grid.newpage()
+% pushViewport(viewport(height=0.4, width=0.4, x=0.4, y=0.8))
+% print(p, newpage=FALSE, pretty=FALSE)
+% upViewport()
+\input{_include/896b229f927422d070198f97adefeaa2.tex}
+% END
+
+Alternatively, you can set up your own set of viewports, and then specify which one the plot should be drawn to.  Here we use {\tt upViewport} before displaying the plot so we are in the top level viewport before we start plotting.
+
+% LISTING
+% 
+% grid.newpage()
+% pushViewport(viewport(height = 0.5, width = 0.5, x = 0.5, y = 0.5, 
+%   name="small", angle=40))
+% upViewport()
+% print(p, vp="small")
+\input{_include/b7306e00b4d5e12d9578c2d50f8d5537.tex}
+% END
+
+Obviously, this is very useful if you want to layout plots in a complicated grid.  In this case, {\tt grid.layout} is very useful, as it allows you to set up a grid of viewports with arbitrary heights and widths.  You still need to create each viewport, but instead of explicitly specifying the position and size, you can specify the row and column of the layout.
+
+% LISTING
+% 
+% p <- qplot(wt, mpg, data = mtcars, colour = cyl)
+% 
+% vplayout <- function(x, y) 
+%   viewport(layout.pos.row = x, layout.pos.col = y)
+% grid.newpage()
+% pushViewport(viewport(layout = grid.layout(3,3)))
+% 
+% print(p, vp=vplayout(1,1))
+% print(p, vp=vplayout(2:3,2:3))
+% print(p, vp=vplayout(1, 2:3))
+% print(p, vp=vplayout(2:3, 1))
+\input{_include/4f19e0618407a42a5fa71eb184d43db3.tex}
+% END
+
+This is useful for arranging plots in a wider range of ways than what you can do with faceting.   You should be careful to ensure that scales are consistent over the different plots.  There is currently no easy way to do this, except to keep track of the maximum and minimum yourself, and then manually set the scales of the plot.
 
 \input{_footer.tex}
