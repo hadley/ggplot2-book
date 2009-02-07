@@ -35,32 +35,30 @@ This separation of control into data and non-data parts is quite different to ba
 %  white theme with white background and grey gridlines.  Notice how the 
 %  bars, data elements, are identical in both plots.
 % 
-% qplot(rating, data=movies, geom="histogram", binwidth=1)
+% qplot(rating, data = movies, binwidth = 1)
 % last_plot() + theme_bw()
-\input{_include/05b09bc182c237cbe4af3534ece4a693.tex}
+\input{_include/d839e7bf9f0c0fdca4b3781fc65e1302.tex}
 % END
 
-Like many other areas of \ggplot, themes can be controlled on multiple levels from the very coarse to the very fine:
+Like many other areas of \ggplot, themes can be controlled on multiple levels from the coarse to fine.  You can:
 
 \begin{itemize}
-  \item Use a built-in theme.  This affects every element of the plot in a visually consistent manner.  The default theme uses a grey panel background with white gridlines, while the alternative theme uses a white background with grey gridlines.  \secref{sec:built_in}.
+  \item Use a built-in theme, as described in Section~\ref{sec:built_in}.  This affects every element of the plot in a visually consistent manner.  The default theme uses a grey panel background with white gridlines, while the alternative theme uses a white background with grey gridlines.
 
-  \item Modify a single element of a built-in themes. Each theme is made up of multiple elements. The theme system comes with a number of built-in element rendering functions with a limited set of parameters.  By adjusting these parameters you can control things like text size and colour, background and grid line colours and text orientation.  By combining multiple elements you can create your own theme.
+  \item Modify a single element of a built-in theme, as described in  Section~\ref{sec:theme_elements}. Each theme is made up of multiple elements. The theme system comes with a number of built-in element rendering functions with a limited set of parameters.  By adjusting these parameters you can control things like text size and colour, background and grid line colours and text orientation.  By combining multiple elements you can create your own theme.
   
-  \item Write a custom element function with grid.  This allows you to absolutely customise the appearance of every element: you are not restricted to a fixed set of drawing options.  \secref{sec:theme_elements}
+  % \item Write a custom element function with grid, as described in Section~\ref{sec:theme_elements}.  This allows you to completely customise the appearance of any element; you are not restricted to a fixed set of drawing options.  
 
-  \item Use grid to alter a single item on the plot.  Using grid, the underlying drawing system, gives you the ability to alter any element drawn on the plot.  However, it comes at a cost of requiring a much deeper understand of how the plot is drawn.  This is described in Chapter~\ref{cha:grid}.
-  
 \end{itemize}
 
-\noindent Generally each of these theme settings can be applied globally, to all plots, or locally to a single plot.  How to do this is described individually for each section.
+\noindent Generally each of these theme settings can be applied globally, to all plots, or locally to a single plot.  How to do this is described in each section.
 
 \subsection{Built-in themes}
 \label{sec:built_in}
 
 There are two built-in themes.  The default, \f{theme_gray}, uses a very light grey background with white gridlines.  This follows from the advice of \citet{tufte:2006,tufte:1990,tufte:2001,tufte:1997} and \citet{brewer:1994,carr:2002,carr:1994,carr:1999}. We can still see the gridlines to aid in the judgement of position \citep{cleveland:1993a}, but they have little visual impact and we can easily ``tune'' them out. The grey background gives the plot a similar colour (in a typographical sense) to the remainder of the text, ensuring that the graphics fit in with the flow of a text without jumping out with a bright white background. Finally, the grey background creates a continuous field of colour which ensures that the plot is perceived as a single visual entity. 
 
-The other built-in theme, \f{theme_bw}, has a more traditional white background with dark grey grid lines.  Figure~\ref{fig:themes} show some of the difference between these themes.
+The other built-in theme, \f{theme_bw}, has a more traditional white background with dark grey grid lines.  Figure~\ref{fig:themes} shows some of the difference between these themes.
 
 Both themes have a single parameter, \code{base_size}, which controls the base font size.  The base font size is the size that the axis titles use: the plot title is 20\% bigger, and the tick and strip labels are 20\% smaller.  If you want to control these sizes separately, you'll need to modify the individual elements as described in the following section.
 
@@ -76,29 +74,27 @@ You can apply themes in two ways:
 
 % INTERWEAVE
 % 
-% histogram <- qplot(rating, data=movies, geom="histogram", binwidth=1)
+% hgram <- qplot(rating, data = movies, binwidth = 1)
+% 
+% # Themes affect the plot when they are drawn, 
+% # not when they are created
+% hgram
 % previous_theme <- theme_set(theme_bw())
+% hgram
 % 
-% # Themes affect the plot when they are drawn, not when they are created
-% histogram
-% 
-% # Override the theme for a single plot by adding it
-% histogram + theme_bw()
-% 
-% # Apply the original theme to a single plot
-% histogram + previous_theme
+% # You can override the theme for a single plot by adding 
+% # the theme to the plot. Here we apply the original theme
+% hgram + previous_theme
 % 
 % # Permanently restore the original theme
 % theme_set(previous_theme)
-\input{_include/bf037a7563e575c8db8a344a002eb093.tex}
+\input{_include/df480cc510a32c5bfdb940d54b27d0d0.tex}
 % END
 
-\subsection{Theme elements}
+\subsection{Theme elements and element functions}
 \label{sec:theme_elements}
 
-A theme is made up of multiple \emph{elements} which control the appearance of a single item on the plot, as listed in Table~\ref{tbl:elements}.  The appearance of each element is controlled an \emph{element function}. There are four main types of elements: segments and lines, rectangles, and text.  Each of these elements has parameters that you can tune, as described in Section~\ref{sub:element-functions}, or you can write your own, as described in Section~\ref{sec:custom-elements}.
-
-There are three elements that have individual \code{x} and \code{y} settings: \code{axis.text}, \code{axis.title} and \code{strip.text}.  Having a different setting for the horizontal and vertical elements allows you to control how text should appear in different orientations.
+A theme is made up of multiple \emph{elements} which control the appearance of a single item on the plot, as listed in Table~\ref{tbl:elements}. There are three elements that have individual \code{x} and \code{y} settings: \code{axis.text}, \code{axis.title} and \code{strip.text}. Having a different setting for the horizontal and vertical elements allows you to control how text should appear in different orientations. The appearance of each element controlled by an \emph{element function}.
 
 \begin{table}
   \begin{center}
@@ -123,7 +119,6 @@ There are three elements that have individual \code{x} and \code{y} settings: \c
     \texttt{panel.border}      & rect     & border around panel  \\
     \texttt{panel.grid.major}  & line     & major grid lines \\
     \texttt{panel.grid.minor}  & line     & minor grid lines \\
-    \texttt{panel.margin}      & unit     & width of gap between panels \\[0.5em]
     \texttt{plot.background}   & rect     & background of the entire plot \\
     \texttt{plot.title}        & text     & plot title   \\[0.5em]
 
@@ -138,28 +133,88 @@ There are three elements that have individual \code{x} and \code{y} settings: \c
   \label{tbl:elements}
 \end{table}
 
-\subsection{Element functions}
-\label{sub:element-functions}
-
 There are four basic types of built-in element functions: text, lines and segments, rectangles and blank.  Each element function has a set of parameters that control the appearance as described below:
 
 \begin{itemize}
   \item \f{theme_text} draws labels and headings. You can control the font \code{family}, \code{face}, \code{colour}, \code{size}, \code{hjust}, \code{vjust}, \code{angle}, and \code{lineheight}.
+  
+  The following code shows the affect of changing these parameters on the plot title. The results are shown in Figure~\ref{fig:theme-text}. Changing the angle is probably more useful for tick labels.  When changing the angle you will probably also need to change \code{hjust} to 0 or 1.
+  
+  % FIGLISTING
+  %   COL: 3 TEX-WIDTH: 0.33\linewidth GG-WIDTH: 4 GG-HEIGHT: 4
+  %   LABEL: theme-text
+  %   CAPTION: Changing the appearance of the plot title.
+  % 
+  % hgramt <- hgram + 
+  %   opts(title = "This is a histogram")
+  % hgramt
+  % hgramt + opts(plot.title = theme_text(size = 20))
+  % hgramt + opts(plot.title = theme_text(size = 20, colour = "red"))
+  % hgramt + opts(plot.title = theme_text(size = 20, hjust = 0))
+  % hgramt + opts(plot.title = theme_text(size = 20, face = "bold"))
+  % hgramt + opts(plot.title = theme_text(size = 20, angle = 180))
+  \input{_include/2aacdf4c47f28b7e7b5a095c09d30488.tex}  
+  % END
 
-  \item \f{theme_line} and \f{theme_segment} draw lines and segments with the same options but in a slightly different way.  Make sure you match the appropriate type or you will get strange grid errors.  For these element functions you can control the \code{colour}, \code{size}, and \code{linetype}.
+  \item \f{theme_line} and \f{theme_segment} draw lines and segments with the same options but in a slightly different way.  Make sure you match the appropriate type or you will get strange grid errors.  For these element functions you can control the \code{colour}, \code{size}, and \code{linetype}.  These options are illustrated with the code and the results are shown in Figure~\ref{fig:theme-line}.
 
-  \item \f{theme_rect} draws rectangles, mostly used for backgrounds, you can control the \code{fill}, \code{colour}, \code{size}, and \code{linetype}.
+  % FIGLISTING
+  %   COL: 3 TEX-WIDTH: 0.33\linewidth GG-WIDTH: 4 GG-HEIGHT: 4
+  %   LABEL: theme-line
+  %   CAPTION: Changing the appearance of lines and segments in the plot.
+  % 
+  % hgram + opts(panel.grid.major = theme_line(colour = "red"))
+  % hgram + opts(panel.grid.major = theme_line(size = 2))
+  % hgram + opts(panel.grid.major = theme_line(linetype = "dotted"))
+  % hgram + opts(axis.line = theme_segment())
+  % hgram + opts(axis.line = theme_segment(colour = "red"))
+  % hgram + opts(axis.line = theme_segment(size = 0.5, linetype = "dashed"))
+  \input{_include/beb452f0e436a317f44920dcf43d385b.tex}  
+  % END
 
-  \item \code{theme_blank} draws nothing.  Use this element type if you don't want anything drawn, or any space allocated for that element.  
+  \item \f{theme_rect} draws rectangles, mostly used for backgrounds, you can control the \code{fill} colour and border \code{colour}, \code{size}, and \code{linetype}.  Again, examples 
+  
+  % FIGLISTING
+  %   COL: 3 TEX-WIDTH: 0.33\linewidth GG-WIDTH: 4 GG-HEIGHT: 4
+  %   LABEL: theme-line
+  %   CAPTION: Changing the appearance of the plot and panel background
+  % 
+  % hgram + opts(plot.background = theme_rect(fill = "grey80", colour = NA))
+  % hgram + opts(plot.background = theme_rect(size = 2))
+  % hgram + opts(plot.background = theme_rect(colour = "red"))
+  % hgram + opts(panel.background = theme_rect())
+  % hgram + opts(panel.background = theme_rect(colour = NA))
+  % hgram + opts(panel.background = theme_rect(linetype = "dotted"))
+  \input{_include/964dbb2b9b518ccc276b9f2856a94b41.tex}  
+  % END
+
+  \item \f{theme_blank} draws nothing.  Use this element type if you don't want anything drawn, and no space allocated for that element.  The following example uses \f{theme_blank} to progressively suppress the appearance of elements we're not interested in. The results are shown in Figure~\ref{fig:theme-blank}.  Notice how the plot automatically reclaims the space previously used by these elements: if you don't want this to happen (perhaps because they need to line up with other plots on the page), use \code{colour = NA, fill = NA} as parameter to create invisible elements that still take up space.
+
+  % FIGLISTING
+  %   COL: 3 TEX-WIDTH: 0.33\linewidth GG-WIDTH: 4 GG-HEIGHT: 4
+  %   LABEL: theme-blank
+  %   CAPTION: Progressively removing non-data elements from a plot with 
+  %   \f{theme_blank}
+  % 
+  % hgramt
+  % last_plot() + opts(panel.grid.minor = theme_blank())
+  % last_plot() + opts(panel.grid.major = theme_blank())
+  % last_plot() + opts(panel.background = theme_blank())
+  % last_plot() + 
+  %   opts(axis.title.x = theme_blank(), axis.title.y = theme_blank())
+  % last_plot() + opts(axis.line = theme_segment())
+  \input{_include/e79ca3b5a3d0582d68e1be879d0e58ed.tex}  
+  % END
 
 \end{itemize}
 
-You can see the settings for the current theme with \f{theme_get}.  I haven't included the output here because it takes up several pages.  You can modify the elements locally for a single plot with \f{opts}, or globally for all future plots with \f{theme_update}.  The following examples shows how you can use these functions.  It's a good idea to look at an existing theme for details about setting the correct angles and justifications for text elements.
+You can see the settings for the current theme with \f{theme_get}.  The output isn't included here because it takes up several pages.  You can modify the elements locally for a single plot with \f{opts} (as seen above), or globally for all future plots with \f{theme_update}.  Figure~\ref{fig:theme-update} shows the results of pulling together multiple theme settings with the following code.
 
-% INTERWEAVE
+% FIGLISTING
+%   LABEL: theme-update
+%   CAPTION: A barchart and scatterplot created after a new visually 
+%   consistent theme has been applied.
 % 
-% (p <- qplot(cut, data=diamonds, geom="bar"))
-% p + opts(axis.text.x = theme_text(angle = 45, hjust=1))
 % old_theme <- theme_update(
 %   plot.background = theme_rect(fill = "#3366FF"),
 %   panel.background = theme_rect(fill = "#003DF5"),
@@ -168,49 +223,30 @@ You can see the settings for the current theme with \f{theme_get}.  I haven't in
 %   axis.title.x = theme_text(colour = "#CCFF33", face = "bold"),
 %   axis.title.y = theme_text(colour = "#CCFF33", face = "bold", angle = 90)
 % )
-% p
+% qplot(cut, data = diamonds, geom="bar")
+% qplot(cty, hwy, data = mpg)
 % theme_set(old_theme)
-\input{_include/450c69e20b3b04494923347adc599115.tex}
+\input{_include/3957691a4305349420d401c5bb35e375.tex}
 % END
 
 There is some duplication in this example because we have to specify the x and y elements separately.  This is a necessary evil so that you can have total control over the appearance of the elements.  If you are writing your own theme, you would probably want to write a function to minimise this repetition.
 
-In the following example we use \f{theme_blank} to progressively suppress the appearance of elements we're not interested in.   Notice how the plot automatically reclaims the space previously used by these elements: if you don't want this to happen (perhaps because they need to line up with other plots on the page), use \code{colour = NA, fill = NA} as parameter to create invisible elements that still take up space.
-
-% INTERWEAVE
+% \subsection{Custom element functions}
+% \label{sub:custom-elements}
 % 
-% p
-% last_plot() + opts(panel.grid.minor = theme_blank())
-% last_plot() + opts(panel.grid.major = theme_blank())
-% last_plot() + opts(panel.background = theme_blank())
-% last_plot() + opts(axis.title.x = theme_blank())
-% last_plot() + opts(axis.title.y = theme_blank())
-% last_plot() + opts(axis.line = theme_segment())
-\input{_include/babed0dbca6456ee00465f58452443b9.tex}
-% END
-
-\subsection{Custom element functions}
-\label{sub:custom-elements}
-
-To see how to write custom element functions, it's good to start by seeing how the built-in element functions work:
-
-% INTERWEAVE
+% To see how to write custom element functions, it's good to start by seeing how the built-in element functions work:
 % 
-% str(args(theme_text()))
-% str(args(theme_rect()))
-% str(args(theme_line()))
-\input{_include/1d9a99fa7a894d2c4a76f7c03cb0fea2.tex}
-% END
-
-You'll notice that these are very similar to the arguments to \f{textGrob}, \f{rectGrob} and \f{polylineGrob} and these are exactly the functions that they are based on.  All that the element function do is set up some defaults.  
-
-If you want to write your own, you need to copy this basic idea: take position arguments, and return a grid grob.  For example, let's say we'd like to give the strips a 3d appearance.  We can do this by drawing a rectangle, and then drawing highlights on the top-right and low-lights (shadows) on the bottom-left.
-
-
-\subsection{More advanced control}
-\label{sub:more_advanced_control}
-
-You can also write your own custom element functions.  You'll need to know more about {\tt grid} to do this, so this is described in Section~\ref{sec:custom-elements}.
+% % INTERWEAVE
+% % 
+% % str(args(theme_text()))
+% % str(args(theme_rect()))
+% % str(args(theme_line()))
+% \input{_include/b9b6e26b5f4fc7e2bb7c9847fb6cd634.tex}
+% % END
+% 
+% You'll notice that these are very similar to the arguments to \f{textGrob}, \f{rectGrob} and \f{polylineGrob} and these are exactly the functions that they are based on.  All that the element function do is set up some defaults.  
+% 
+% If you want to write your own, you need to copy this basic idea: take position arguments, and return a grid grob.  For example, let's say we'd like to give the strips a 3d appearance.  We can do this by drawing a rectangle, and then drawing highlights on the top-right and low-lights (shadows) on the bottom-left.
 
 \section{Customising scales and geoms}
 \label{sec:theme-scale-geom}
@@ -230,7 +266,7 @@ To change the default scale associated with an aesthetic, use \f{set_default_sca
 %   low = "white", high = "black")
 % set_default_scale("fill", "continuous", "gradient", 
 %   low = "white", high = "black")
-\input{_include/9b4a0dbfcfa79dd1ebb61674db4b37b5.tex}
+\input{_include/ecb0a27ed25fd7ff67db18c3da8bb314.tex}
 % END
 
 \subsection{Geoms and stats}
@@ -244,10 +280,10 @@ You can customise geoms and stats in a similar way with \f{update_geom_defaults}
 % qplot(mpg, wt, data=mtcars)
 % update_stat_defaults("bin", aes(y = ..density..))
 % qplot(rating, data = movies, geom = "histogram", binwidth = 1)
-\input{_include/7c277a593d53b9b625e2837e5dedbe95.tex}
+\input{_include/7510dd49bc3b89dddb8452f6579264f4.tex}
 % END
 
-Table~\ref{tbl:geom-defaults} lists all of the common aesthetic defaults.  If you change the defaults for one geom, it's a good idea to change all the defaults for all the other geoms that you commonly use so that your plots look consistent.  If you are unsure on what makes for a valid colour, line type, shape or size in R, Appendix~\ref{cha:specifications} gives the details.
+Table~\ref{tbl:geom-defaults} lists all of the common aesthetic defaults.  If you change the defaults for one geom, it's a good idea to change all the defaults for all the other geoms that you commonly use so that your plots look consistent.  If you are unsure on what makes for a valid colour, line type, shape or size, Appendix~\ref{cha:specifications} gives the details.
 
 % aes_value <- function(x) paste(names(x), x, sep =": ")
 % 
@@ -290,7 +326,9 @@ Table~\ref{tbl:geom-defaults} lists all of the common aesthetic defaults.  If yo
 \section{Saving your output}
 \label{sec:saving}
 
-You have two basic choices of output: raster or vector.  Vector graphics are procedural.  This means that they are essentially ``infinitely'' zoomable; there is no loss of detail.  Raster graphics are stored as an array of pixels.  Fixed resolution.  Generally, vector output is more desirable, but for complex graphics containing thousands of graphical objects it can be slow to render.  In this case, it may be better to switch to raster output.  For printed use, a high-resolution (e.g.\ 600 dpi) graphic may be an acceptable compromise, but may be large.  See \url{http://www.lanceknadle.com/images/raster_vector.pdf} for some more examples.
+You have two basic choices of output: raster or vector.  Vector graphics are procedural.  This means that they are essentially ``infinitely'' zoomable; there is no loss of detail.  Raster graphics are stored as an array of pixels and have a fixed optimal viewing size.  Figure~\ref{fig:vector-raster} illustrates the basic differences for a basic circle.  A good description is available at \url{http://tinyurl.com/rstrvctr}.
+
+Generally, vector output is more desirable, but for complex graphics containing thousands of graphical objects it can be slow to render.  In this case, it may be better to switch to raster output.  For printed use, a high-resolution (e.g.\ 600 dpi) graphic may be an acceptable compromise, but may be large. 
 
 \begin{figure}[htbp]
   \centering
@@ -325,7 +363,7 @@ The following code shows these two methods. If you want to save multiple plots t
 \input{_include/5bc1444dd8aaa56e4cce7102f62e846d.tex}
 % END
 
-Table~\ref{tbl:graphic-recommendation} lists recommended graphic formats for various tasks.  R output generally works best as part of a *nix development tool chain: using png or pdf output in \LaTeX{} documents.  With Microsoft Office it is easiest to use a high-resolution (\code{dpi = 600}) png file.  You can use vector output, but neither Windows meta files nor postscript supports transparency, and while postscript prints fine, it is only shown on screen if you add a preview in another software package.  The same advice holds for OpenOffice.
+Table~\ref{tbl:graphic-recommendation} lists recommended graphic formats for various tasks.  R output generally works best as part of a linux development tool chain: using png or pdf output in \LaTeX{} documents.  With Microsoft Office it is easiest to use a high-resolution (\code{dpi = 600}) png file.  You can use vector output, but neither Windows meta files nor postscript supports transparency, and while postscript prints fine, it is only shown on screen if you add a preview in another software package. Transparency is used to show confidence intervals with the points showing through. If you copy and paste a graph into Word, and see that the confidence interval bands have vanished, that is the cause The same advice holds for OpenOffice.
 
 If you are using \LaTeX, I recommend including \verb|\DeclareGraphicsExtensions{.png, .pdf}| in the preamble.  Then you don't need to specify the file extension in \verb|includegraphics| commands, but \LaTeX{} will pick png files in preference to pdf.  I choose this order because you can produce all your files in pdf, and then go back and re-render any big ones as png.  Another useful command is \verb|\graphicspath{{include/}}| which specifies a path in which to look for graphics, allowing you to keep graphics in a separate directory to the text.
 
@@ -363,6 +401,8 @@ To begin, lets create three plots that we can experiment with.  When arranging m
 % (a <- qplot(date, unemploy, data = economics, geom = "line"))
 % (b <- qplot(uempmed, unemploy, data = economics) + geom_smooth(se = F))
 % (c <- qplot(uempmed, unemploy, data = economics, geom="path"))
+\input{_include/60f6182037b5f3c563697d1cb7a53ce4.tex}
+% END
 
 \subsection{Subplots}
 
@@ -377,6 +417,8 @@ To draw the plot in that viewport, we use the \code{vp} argument of the \f{print
 % b
 % print(c, vp = subvp)
 % dev.off()
+\input{_include/748ef3b908f3b3c9c3bb12cff552e776.tex}
+% END
 
 This gives us what we want, but we need to make a few tweaks to the appearance: the text should be smaller, we want to remove the axis labels and shrink the plot margins.  The result is shown in Figure~\ref{fig:subplot-2}.
 
@@ -391,6 +433,8 @@ This gives us what we want, but we need to make a few tweaks to the appearance: 
 % b
 % print(csmall, vp = subvp)
 % dev.off()
+\input{_include/efab9417c676c996c489ec9088c4f6e9.tex}
+% END
 
 \begin{figure}[htbp]
   \centering
@@ -422,7 +466,7 @@ A more complicated scenario is when you want to arrange a number of plots in a r
 % print(a, vp = vplayout(1, 1:2))
 % print(b, vp = vplayout(2, 1))
 % print(c, vp = vplayout(2, 2))
-\input{_include/4f19e0618407a42a5fa71eb184d43db3.tex}
+\input{_include/39720db87472ad6369ea76cd35ccac1b.tex}
 % END
 
 By default \f{grid.layout} creates makes each cell the same size, but you can use the \code{widths} and \code{heights} arguments to make them different sizes.
