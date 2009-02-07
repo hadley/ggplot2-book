@@ -389,9 +389,9 @@ If you are using \LaTeX, I recommend including \verb|\DeclareGraphicsExtensions{
 \section{Multiple plots on the same page}
 \label{sec:grid-layout}
 
-If you want to arrange multiple plots on a single page, you'll need to learn a little bit of grid, the underlying graphics system used by \ggplot.  The key concept you'll need to learn about is a viewport: a rectangular subregion of the display.  The default viewport takes up the entire plotting region, and by customising the viewport you can arrange a set of plots in any way you can imagine.
+If you want to arrange multiple plots on a single page, you'll need to learn a little bit of grid, the underlying graphics system used by \ggplot. The key concept you'll need to learn about is a viewport: a rectangular subregion of the display. The default viewport takes up the entire plotting region, and by customising the viewport you can arrange a set of plots in just about any way you can imagine.
 
-To begin, lets create three plots that we can experiment with.  When arranging multiple plots on a page, it will usually be easiest to create them, save them to variables and then plot them.  That makes it easier to experiment with their placement independent on their content.  The plots created by the code below are shown in Figure~\ref{fig:layout}.
+To begin, lets create three plots that we can experiment with. When arranging multiple plots on a page, it will usually be easiest to create them, assign them to variables and then plot them. This makes it easier to experiment with plot placement independent on content. The plots created by the code below are shown in Figure~\ref{fig:layout}.
 
 % FIGLISTING
 %   LABEL: layout
@@ -406,9 +406,32 @@ To begin, lets create three plots that we can experiment with.  When arranging m
 
 \subsection{Subplots}
 
-One common layout is to have a small subplot embedded drawn on top of the main plot.  To achieve this affect, we first plot the main plot, and then draw the subplot in a smaller viewport.  Viewports are created with (surprise!) the \f{viewport} function, with parameters \code{x}, \code{y}, \code{width} and \code{height} to control the size and position of the viewport.  By default, the measurements are given in ``npc'' units, which range from 0 to 1. ``The origin of the viewport is (0, 0) and the viewport has a width and height of 1 unit. For example, (0.5, 0.5) is the centre of the viewport. '' If you want the subplot to be a particular size you can use \code{unit(2, "cm")} or \code{unit(1, "inch")}.
+One common layout is to have a small subplot embedded drawn on top of the main plot.  To achieve this affect, we first plot the main plot, and then draw the subplot in a smaller viewport.  Viewports are created with (surprise!) the \f{viewport} function, with parameters \code{x}, \code{y}, \code{width} and \code{height} to control the size and position of the viewport. By default, the measurements are given in ``npc'' units, which range from 0 to 1. The location (0, 0) is the bottom-left, (1, 1) the top-right and (0.5, 0.5) the centre of viewport.  If these relative units don't work for your needs, you can also use absolute units, like \code{unit(2, "cm")} or \code{unit(1, "inch")}.
 
-To draw the plot in that viewport, we use the \code{vp} argument of the \f{print} method.  This method is normally called automatically whenever you evaluate something on the command line, but because we want to customise the viewport, we need to call it ourselves.  The result of this is shown in Figure~\ref{fig:subplot-1}.
+% LISTING 
+% 
+% # A viewport that takes up the entire plot device
+% vp1 <- viewport(width = 1, height = 1, x = 0.5, y = 0.5)
+% vp1 <- viewport()
+% 
+% # A viewport that takes up half the width and half the height, located
+% # in the middle of the plot.
+% vp2 <- viewport(width = 0.5, height = 0.5, x = 0.5, y = 0.5)
+% vp2 <- viewport(width = 0.5, height = 0.5)
+% 
+% # A viewport that is 2cm x 3cm located in the center
+% vp3 <- viewport(width = unit(2, "cm"), height = unit(3, "cm"))
+
+By default, the x and y parameters control the location of the centre of the viewport. When positioning the plot in other locations, you may need to use the \code{just} parameter to control which corner of the plot you are positioning.  The following code gives some examples.
+
+% LISTING
+% 
+% # A viewport in the top-right
+% vp4 <- viewport(x = 1, y = 1, justification = c("top", "right"))
+% # Bottom left
+% vp5 <- viewport(x = 0, y = 0, justificaiton = c("bottom", "right"))
+
+To draw the plot in our new viewport, we use the \code{vp} argument of the \code{ggplot} \f{print} method.  This method is normally called automatically whenever you evaluate something on the command line, but because we want to customise the viewport, we need to call it ourselves.  The result of this is shown in Figure~\ref{fig:subplot-1}.
 
 % LISTING 
 % 
@@ -450,27 +473,36 @@ This gives us what we want, but we need to make a few tweaks to the appearance: 
   \label{fig:subplot}
 \end{figure}
 
-By default, {\tt ggplot} always clears the screen and draws to the entire device.  You customise this in two ways. One way is to setup a viewport and push it on to the display, then draw the plot with {\tt newpage=FALSE}. {\tt pushViewport} adds the viewport to the list of viewports on the display.   Afterwards, {\tt upViewport} returns you to the viewport for the entire page, preparing you for the next set of output.
+Note we need to use \f{pdf} (or \f{png} etc) to save the plots to disk because \f{ggsave} only saves a single plot.
 
 \subsection{Rectangular grids} 
 
-A more complicated scenario is when you want to arrange a number of plots in a rectangular grid. Of course you could use the above technique to do so, but doing all the calculations by hand is cumbersome. The \f{grid.layout} function is a useful alternative, as it allows you to set up a regular grid of viewports with arbitrary heights and widths. You still need to create each viewport, but instead of explicitly specifying the position and size, you can specify the row and column of the layout.
+A more complicated scenario is when you want to arrange a number of plots in a rectangular grid. Of course you could create a series of viewport and use what you've learned above, but doing all the calculations by hand is cumbersome. A better approach is to use \f{grid.layout}, which sets up a regular grid of viewports with arbitrary heights and widths. You still need to create each viewport, but instead of explicitly specifying the position and size, you can specify the row and column of the layout.
+
+The following example shows how this work.  We first create the layout, here a 2\,$\times$\,2 grid, then assign it to a viewport and push that viewport on to the plotting device.  Now we are ready to draw each plot into its own position on the grid.  We create a small function to save some typing, and then draw each plot in the desired place on the grid.  You can supply a vector of rows or columns to span a plot over multiple cells.
 
 % LISTING
 % 
-% vplayout <- function(x, y) 
-%   viewport(layout.pos.row = x, layout.pos.col = y)
+% pdf("polishing-layout.pdf", width = 8, height = 6)
 % grid.newpage()
 % pushViewport(viewport(layout = grid.layout(2, 2)))
 % 
+% vplayout <- function(x, y) 
+%   viewport(layout.pos.row = x, layout.pos.col = y)
 % print(a, vp = vplayout(1, 1:2))
 % print(b, vp = vplayout(2, 1))
 % print(c, vp = vplayout(2, 2))
+% dev.off()
 \input{_include/39720db87472ad6369ea76cd35ccac1b.tex}
 % END
 
-By default \f{grid.layout} creates makes each cell the same size, but you can use the \code{widths} and \code{heights} arguments to make them different sizes.
+\begin{figure}[htbp]
+  \centering
+    \includegraphics[width=\linewidth]{polishing-layout}
+  \caption{Three plots laid out in a grid using \f{grid.layout}.}
+  \label{fig:layout}
+\end{figure}
 
-Note that since \f{ggsave} saves a single \ggplot plot to disk, it will not work with more complicated layouts.
+By default \f{grid.layout} creates makes each cell the same size, but you can use the \code{widths} and \code{heights} arguments to make them different sizes.  See the documentation for \f{grid.layout} for more examples.
 
 \input{_footer.tex}
