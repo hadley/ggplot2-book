@@ -39,6 +39,8 @@ This chapter is broken up into the following sections, each of which deals with 
 
   \item Statistical summaries, \secref{sec:summary}.
 
+  \item Drawing maps, \secref{sec:maps}.
+
   \item Revealing uncertainty and showing intervals, \secref{sec:uncertainty}.
 
   \item Annotating a plot, \secref{sec:annotating}.
@@ -345,6 +347,61 @@ Alternatively, we can think overplotting as a 2d density estimation problem, whi
 \end{itemize}
 
 Another approach to dealing with overplotting is to add supplemental summaries to help guide the eye to the true shape of or pattern within the data.  For examples, add a smooth line showing the mean with \code{geom_smooth}, or display quantiles of the distribution with \code{geom_quantile}.  See Sections~\ref{sec:summary} for more ideas.
+
+\section{Drawing maps}
+\label{sec:maps}
+
+The next example shows how we can use \f{fortify} to get map objects into form that's useful for \ggplot.   This is useful as base method to build more convenient functionality on top of, but it's not terrible appealing as a user interface: the user must know to supply \code{plot = F} and \code{fill = T} to the plot function, and must remember the appropriate mappings.  The results are shown in Figure~\ref{fig:fortify-map}.
+
+% FIGLISTING
+%   LABEL: fortify-map
+%   CAPTION: Left, a map of borders of the USA, and right, individual state
+%   borders.  Both of these were produced with data from the maps package, 
+%   fortified in to a form that works with \ggplot.
+% 
+% fortify.map <- function(model, data, ...) {
+%   df <- as.data.frame(model[c("x", "y")])
+%   df$group <- cumsum(is.na(df$x) & is.na(df$x)) + 1
+%   df$name <- model$names[df$group]
+%   df$region <- sapply(strsplit(model$names, ":"), "[", 1)[df$group]
+%   df[complete.cases(df), ]
+% }
+% 
+% qplot(x, y, data = map("usa", plot = F, fill = T), geom = "path", group = group)
+% qplot(x, y, data = map("state", plot = F, fill = T), geom = "path", group = group)
+\input{_include/772f155fca6d2efcaf34114ca0a179b7.tex}
+% END
+
+Lets make a function that makes it easier to add maps to existing plots.  In the previous section you saw the fortify method that will make a data frame we can plot, but let make the interface even easier: we want a function that will add a layer that draws a map of the specified region.  First, we need to identify the arguments to \f{map} that users will want to control: apart from  \code{database} and \code{regions} all of the arguments control the appearance of the plot, something we're not interested in.  (Again the combination of data manipulation and display code makes this function fiddly to reuse).  We will always use \code{geom_polygon} to draw the map, so don't need to make the geom a parameter, but will need to ensure that other arguments get passed on so that we can control the appearance.
+
+% INTERWEAVE
+% 
+% borders <- function(database = "world", regions = ".", fill = NA, colour = "grey50", ...) {
+%   df <- fortify(map(database, regions, plot = FALSE, fill = TRUE))
+%   geom_polygon(aes(x = x, y = y, group = group), data = df, fill = fill, colour = colour, ...)
+% }
+\input{_include/1de9016f85ba8503be1596b0e4268e97.tex}
+% END
+
+The code below shows how we can use this new function.  The results are illustrated in Figure~\ref{fig:borders}.
+
+% FIGLISTING
+%   LABEL: borders
+%   CAPTION: Example using the new borders function.  Left, all cities with
+%   population (as at January 2006) of greater than half a million, and right, 
+%   cities in Texas. 
+% 
+% data(us.cities)
+% big_cities <- subset(us.cities, pop > 500000)
+% qplot(long, lat, data = big_cities) + borders("state", size = 0.5)
+% 
+% tx_cities <- subset(us.cities, country.etc == "TX")
+% qplot(long, lat, data = tx_cities) + borders("state", "texas")
+\input{_include/102852db80a169eff06ec9faf1d5f8af.tex}
+% END
+
+Two ways to use a map: as outlines to give context, or to produce a choropleth map.  If using a choropleth map, will also want to supply the values to map to colour.  Need to think about whether or not these two uses are sufficiently separate that they should be their own functions.  
+
 
 \section{Surface plots}
 \label{sec:surface}

@@ -6,6 +6,7 @@
 %   CACHE: TRUE
 %   INLINE: FALSE
 % 
+% options(digits = 2)
 
 % END
 
@@ -14,21 +15,24 @@
 
 \section{Introduction}
 
-This chapter outlines some best practices for using \ggplot.  These all follow logically from the tools defined in previously chapter, but they are not immediately obvious.  This chapter covers how to reduce duplication in your code when performing a data analysis, how to get your data into a form that works best with \ggplot, and how to create functions built on top of \ggplot.
-This chapter is a bit like the toolbox chapter: there you learned how to combine geoms and stats to solve particularly graphical problems, and here you will learn how to combine all of the pieces of \ggplot to solve a broader range of problems.
+This chapter outlines some best practices for using \ggplot.  These are applications of the tools defined in previous chapters that are not immediately obvious, but are often useful.  
 
-An important features of a good data analysis is flexibility. If the data changes, or you discover something that makes you rethink your basic assumptions, you need to be able to easily change many plots at once.  The main inhibitor of flexibility is duplication. If you have the same basic plot components repeated over and over again, you have to make the same change in many different places.  Often just the thought of making all those changes can be exhausting!  
+In this chapter you will learn how to reduce duplication in your code when performing a data analysis, how to get your data into a form that works best with \ggplot, and how to create functions built on top of \ggplot.
 
-The first two sections of this chapter describe two keys ways of reducing duplication.  In Section~\ref{sec:iteration}, you will learn how to interactively modify the previous plot, so you can avoid reproducing the previous plot before modifying it.  Section~\ref{sec:templates} will show you how to produce plot ``templates'' that encapsulate repeated components that are defined once and used in many different places.
+This chapter is a bit like the toolbox chapter: there you learned how to combine geoms and stats to solve particular graphical problems, and here you will learn how to combine all of the pieces of \ggplot to solve a broader range of problems.
+
+An important features of a good data analysis is flexibility. If the data changes, or you discover something that makes you rethink your basic assumptions, you need to be able to easily change many plots at once. The main inhibitor of flexibility is duplication. If you have the same plotting statement repeated over and over again, you have to make the same change in many different places. Often just the thought of making all those changes is exhausting!
+
+The first two sections of this chapter describe two keys ways of reducing duplication.  In Section~\ref{sec:iteration}, you will learn how to iteratively modify the previous plot, building on top of your previous work.  Section~\ref{sec:templates} will show you how to produce plot ``templates'' that encapsulate repeated components that are defined once and used in many different places.
 
 The next two sections focus on data.  In Section~\ref{sec:plyr}, you will learn how to use the \pkg{plyr} package to reproduce the statistical transformations performed by the layers, and then in Section~\ref{sec:melting} you will learn a little about ``molten'' (or long) data, which is useful for time series and parallel coordinates plots, among others.  
 
-The final two sections conclude with two advanced topics.  Section~ \ref{sec:methods} shows you how to write methods that let you plot objects apart than data frames, and demonstrates how \ggplot can be used to recreate a more flexible version of the built in linear-model diagnostics.  Finally, \ref{sec:functions} describes how to create functions that create or modify plots. You will need to learn about this if you want to create user-friendly plotting solutions that wrap up many common tasks.
+The final two sections conclude with two advanced topics.  Section~\ref{sec:methods} shows you how to write methods that let you plot objects other than data frames, and demonstrates how \ggplot can be used to recreate a more flexible version of the built in linear-model diagnostics.  Finally, \ref{sec:functions} describes how to create functions that create or modify plots. You will need to learn about this if you want to create user-friendly plotting solutions that wrap up many common tasks.
 
 \section{Iteration}
 \label{sec:iteration}
 
-Whenever you create or modify a plot, \ggplot saves a copy of the result so you can refer to it in later expressions.  You can access this plot with \f{last_plot()}.  This is useful for interactive use as you can start with a basic plot and then iteratively add layers, and tweak the scales until you get to the final result.  The following code demonstrates iteratively zooming in on a plot to find a region of interest, and then adding a layer which highlights something interesting we have found: very few diamonds have equal x and y dimensions.  The plots are shown in Figure~\ref{fig:iterate-limits}.
+Whenever you create or modify a plot, \ggplot saves a copy of the result so you can refer to it in later expressions. You can access this plot with \f{last_plot}. This is useful in interactive work as you can start with a basic plot and then iteratively add layers, and tweak the scales until you get to the final result. The following code demonstrates iteratively zooming in on a plot to find a region of interest, and then adding a layer which highlights something interesting that we have found: very few diamonds have equal x and y dimensions. The plots are shown in Figure~\ref{fig:iterate-limits}.
 
 % FIGLISTING
 %   TEX-WIDTH: 0.33\linewidth COL: 3 FILETYPE: PNG
@@ -40,20 +44,19 @@ Whenever you create or modify a plot, \ggplot saves a copy of the result so you 
 % 
 % qplot(x, y, data = diamonds, na.rm = TRUE)
 % last_plot() + xlim(3, 11) + ylim(3, 11)
-% last_plot() + xlim(4, 10) + ylim(4, 10  )
+% last_plot() + xlim(4, 10) + ylim(4, 10)
 % last_plot() + xlim(4, 5) + ylim(4, 5)
 % last_plot() + xlim(4, 4.5) + ylim(4, 4.5)
 % last_plot() + geom_abline(colour = "red")
 \input{_include/ce4c0665bf1bef877ee2f43d69d82c5b.tex}
 % END
 
-This is most useful for tweaking the scales or coordinate systems, as you can only add new layers, not remove existing layers, or modify their parameters.  For example, if you are experimenting with what x and y axis limits give the best view of your data, using \f{last_plot} in conjunction with \f{xlim} and \f{ylim} (Section~\ref{sec:position_scales}) can save you a lot of typing.  
-
-Once you have tweaked the plot to your liking, it's a good idea to go back and create a single expression that generates your final plot.  This is important as when you come back to the plot, you'll be able to recreate the plot quickly, without having to step through your original process.  You many want to add a comment to your code to indicate exactly why you chose that final plot.  This is good practice in general for R code: after experimenting interactively, you always want to create a source file that recreates your analysis exactly.
+Once you have tweaked the plot to your liking, it's a good idea to go back and create a single expression that generates your final plot. This is important as when you come back to the plot, you'll be able to recreate the plot quickly, without having to step through your original process. You many want to add a comment to your code to indicate exactly why you chose that final plot. This is good practice in general for R code: after experimenting interactively, you always want to create a source file that recreates your analysis.  The following code shows the final result after our interactive modifications above.
 
 % LISTING
 % 
-% qplot(x, y, data = diamonds, na.rm = T) + geom_abline(colour = "red") +
+% qplot(x, y, data = diamonds, na.rm = T) + 
+%   geom_abline(colour = "red") +
 %   xlim(4, 4.5) + ylim(4, 4.5)
 \input{_include/947ef95589eb5f851db3fd165104af64.tex}
 % END
@@ -61,7 +64,7 @@ Once you have tweaked the plot to your liking, it's a good idea to go back and c
 \section{Plot templates}
 \label{sec:templates}
 
-Each component of a \ggplot plot is its own object and can be created, stored and applied independently to a plot.  This makes it easy to create reusable components that can automate common tasks and helps to offset the cost of typing the long function names.  The following example creates some colour scales and then applies them to plots, and the results are shown in Figure~\ref{fig:gradient-rb}
+Each component of a \ggplot plot is its own object and can be created, stored and applied independently to a plot. This makes it possible to create reusable components that can automate common tasks and helps to offset the cost of typing the long function names. The following example creates some colour scales and then applies them to plots. The results are shown in Figure~\ref{fig:gradient-rb}
 
 % FIGLISTING
 %   LABEL: gradient-rb
@@ -86,12 +89,15 @@ As well as saving single objects, you can also save vectors of \ggplot component
 % xquiet <- scale_x_continuous("", breaks = NA)
 % yquiet <- scale_y_continuous("", breaks = NA)
 % quiet <- c(xquiet, yquiet)
+% 
 % qplot(mpg, wt, data = mtcars) + quiet
 % qplot(displ, cty, data = mpg) + quiet
 \input{_include/57572b003ad02c5e091b70e2f4be427b.tex}
 % END
 
-Similarly, it's easy to write simple functions that change the defaults of a layer. For example, if you wanted to create a function that added linear models to a plot, you could create a function like the one below.  The results are shown in Figure~\ref{fig:geom-lm}.  Depending on how complicated your function is, it might even return multiple components in a vector.
+Similarly, it's easy to write simple functions that change the defaults of a layer. For example, if you wanted to create a function that added linear models to a plot, you could create a function like the one below.  The results are shown in Figure~\ref{fig:geom-lm}.  
+
+Depending on how complicated your function is, it might even return multiple components in a vector. You can build up arbitrarily complex plots this way, reducing duplication wherever you find it.
 
 % FIGLISTING
 %   LABEL: geom-lm
@@ -112,51 +118,70 @@ Similarly, it's easy to write simple functions that change the defaults of a lay
 \section{An introduction to plyr}
 \label{sec:plyr}
 
-With faceting, ggplot2 makes it very easy to identical plots for different subsets of your data.  This section introduces the \pkg{plyr} package which makes it easy to do the same thing for numerical summaries.  \pkg{plyr} provides a comprehensive suite of tools for breaking up complicated data structures into pieces, processing each piece and then joining the results back together.  The \pkg{plyr} package as a whole provides tools for breaking and combining lists, arrays and data frames.  But here will focus on the \f{ddply} function which breaks up data frames into subset based on row values, applies a function to each subset, and the joins the results back into a data frame.  The basic syntax is \code{ddply(.data, .variables, .fun, ...)}, where
+With faceting, ggplot2 makes it very easy to identical plots for different subsets of your data. This section introduces \f{ddply} from the \pkg{plyr} package which makes it easy to do the same thing for numerical summaries. \pkg{plyr} provides a comprehensive suite of tools for breaking up complicated data structures into pieces, processing each piece and then joining the results back together. The \pkg{plyr} package as a whole provides tools for breaking and combining lists, arrays and data frames. Here we will focus on the \f{ddply} function which breaks up a data frame into subsets based on row values, applies a function to each subset, and the joins the results back into a data frame. The basic syntax is \code{ddply(.data, .variables, .fun, ...)}, where
 
 \begin{itemize}
-  \item \code{.data} is the dataset to break up (the same data that you are plotting)
+  \item \code{.data} is the dataset to break up (the data that you are plotting).
   
-  \item \code{.variables} is a formula describing which variables to break the dataset up by.  This is written like \code{.(var1, var2)}, and to match the plot should contain all grouping and faceting variables.  
+  \item \code{.variables} is a description of the variables to break up the dataset by.  This is written like \code{.(var1, var2)}, and to match the plot should contain all grouping and faceting variables used in the plot.
   
-  \item \code{.fun} is the summary function you want to use.  The function can return a vector or data frame.  The result does not need to contain the grouping variables: these will be added on automatically if they're needed.  The result can be a much reduced aggregated dataset (maybe even one number), or the original data modified in some way.
+  \item \code{.fun} is the summary function you want to use.  The function can return a vector or data frame.  The result does not need to contain the grouping variables: these will be added on automatically if they're needed.  The result can be a much reduced aggregated dataset (maybe even one number), or the original data modified or expanded in some way.
+
 \end{itemize}
 
-More information and examples are available in the documentation, \code{?ddply}, and on the package website, \url{http://had.co.nz/plyr}.  The following examples show a few useful summary functions that solving common data manipulation problems.
+More information and examples are available in the documentation, \code{?ddply}, and on the package website, \url{http://had.co.nz/plyr}.  The following examples show a few useful summary functions that solve common data manipulation problems.
 
 \begin{itemize}
   \item Using \f{subset} allows you to select the top (or bottom) n (or x\%) of observations in each group, or observations above (or below) some group specific threshold:
   
   % LISTING
   % 
+  % # Select the smallest diamond in each colour
   % ddply(diamonds, .(color), subset, carat == min(carat))
+  % 
+  % # Select the two smallest diamonds
   % ddply(diamonds, .(color), subset, order(carat) < 2)
-  % ddply(diamonds, .(color), subset, carat > quantile(carat, 0.999))
+  % 
+  % # Select the 1% largest diamonds in each group
+  % ddply(diamonds, .(color), subset, carat > quantile(carat, 0.99))
+  % 
+  % # Select all diamonds bigger that the group average
   % ddply(diamonds, .(color), subset, price > mean(price))
   \input{_include/39a855ab4e46bcdb417c3ec11540bfd1.tex}  
   % END
   
-  When are you trying to select the top n observations, you do need to be careful about ties.  The \f{rank} function may be useful there.
-  
-  \item Using \f{transform} allows you to perform group wise transformations with very little work.  This is particularly useful if you want to add new variables that can only be calculated on a per group level, for example when you want to standardise the variables. Section~\ref{sub:time-series} shows an example of this.
+  \item Using \f{transform} allows you to perform group-wise transformations with very little work.  This is particularly useful if you want to add new variables that can are calculated on a per group level, such as a per-group standardisation.  Section~\ref{sub:time-series} shows another use of this technique for standardising time series to a common scale.
   
   % LISTING
   % 
+  % # Within each colour, scale price to have mean 0 and variance 1
   % ddply(diamonds, .(color), transform, price = scale(price))
+  % 
+  % # Subtract off group mean
   % ddply(diamonds, .(color), transform, price = price - mean(price))
   \input{_include/bfc86a4c688874ab2531722ea6467d6d.tex}  
   % END
+
+  \item If you want to apply a function to every column in the data frame, you might find the \f{colwise} function handy. This function converts a function that operates on vectors to a function that operates column-wise on data frames. This is rather different to most functions: instead of returning a vector of numbers, \f{colwise} returns a new function. The following example creates a function to count the number of missing values in a vector and then shows how we can use \f{colwise} to apply it to every column in a data frame.
+
+  % INTERWEAVE
+  % 
+  % nmissing <- function(x) sum(is.na(x))
+  % nmissing(msleep$name)
+  % nmissing(msleep$braint)
+  % 
+  % nmissing_df <- colwise(nmissing)
+  % nmissing_df(msleep)
+  % # This is shorthand for the previous two steps
+  % colwise(nmissing)(msleep)
   
-  If you want to standardise all of the variables, then you'll probably want to use the \f{colwise} function as described below.
-  
-  
-  \item The \f{colwise} function converts a function that operates on vectors to a function that operates column-wise on data frames.  The specialised version \f{numcolwise} does the same thing, but only works with numeric columns.  \code{numcolwise(median)} will calculate a median for every numeric column. \code{numcolwise(quantile)}
+   The specialised version \f{numcolwise} does the same thing, but works only with numeric columns.  For example, \code{numcolwise(median)} will calculate a median for every numeric column, or \code{numcolwise(quantile)} will calculate quantiles for every numeric column.  Similarly, \f{catcolwise} only works with categorical columns.
   
   % INTERWEAVE
   % 
-  % numcolwise(median)(diamonds)
-  % numcolwise(quantile)(diamonds)
-  % numcolwise(quantile)(diamonds, probs = c(0.25, 0.75))
+  % numcolwise(median)(msleep, na.rm = T)
+  % numcolwise(quantile)(msleep, na.rm = T)
+  % numcolwise(quantile)(msleep, probs = c(0.25, 0.75), na.rm = T)
   \input{_include/6f4f39926aa611a1f933f8b3bbee2bad.tex}  
   % END
   
@@ -164,12 +189,12 @@ More information and examples are available in the documentation, \code{?ddply},
   
   % INTERWEAVE
   % 
-  % ddply(diamonds, .(cut), numcolwise(median))
-  % ddply(diamonds, .(colour), numcolwise(mean))
+  % ddply(msleep, .(vore), numcolwise(median), na.rm = T)
+  % ddply(msleep, .(vore), numcolwise(mean), na.rm = T)
   \input{_include/5d9000102f1c8cae5cdc97e6a52b4a5a.tex}  
   % END
   
-  \item If none of these shortcuts is appropriate, make your own summary function which takes a data frame as input and returns an appropriately summarised data frame as output.
+  \item If none of these shortcuts is appropriate, make your own summary function which takes a data frame as input and returns an appropriately summarised data frame as output.  The following functions calculates the rank correlation of price and carat and compares it to the regular correlation of the logged values.
   
   % INTERWEAVE
   % 
@@ -187,45 +212,61 @@ More information and examples are available in the documentation, \code{?ddply},
   Note how our summary function did not need to output the group variables.  This makes it much easier to aggregate over different groups.
 \end{itemize}
 
+The common pattern of all these problems is that they are easy to solve if we have the right subset.  Often the solution for a single case might be a single line of code.  The difficulty comes when we want to apply the function to multiple subsets and then correctly join back up the results.  This may take a lot of code, especially if you want to preserve group labels.  \f{ddply} takes care of all this for you.
+
 The following case study shows how you can use \pkg{plyr} to reproduce the statistical summaries produced by \ggplot.  This is useful if you want to save them to disk or apply them to other datasets.  It's also useful to be able to check that \ggplot is doing exactly what you think!
 
 \subsection{Fitting multiple models}
 \label{sub:multiple_models}
 
-In this section, we'll work through the process of generating the smoothed data produced by \code{stat_smooth}.  This process will be the same for any other statistic, and should allow you to produce more complex summaries that \ggplot can't produce.  Figure~\ref{fig:smoot} shows the group-wise smoothes produced by the following code.
+In this section, we'll work through the process of generating the smoothed data produced by \code{stat_smooth}.  This process will be the same for any other statistic, and should allow you to produce more complex summaries that \ggplot can't produce by itself.  Figure~\ref{fig:smooth} shows the group-wise smoothes produced by the following code.
 
 % FIGLISTING
 %   LABEL: smooth
 %   CAPTION: A plot showing the smoothed trends for price vs carat for each
-%   colour of diamonds
+%   colour of diamonds.  With the full range of carats (left), the standard
+%   errors balloon after around two carats because there are relatively few
+%   diamonds of that size.  Restricting attention to diamonds of less than
+%   two carats (right) focuses on the region where we have plenty of data.
 % 
-% qplot(carat, price, data = diamonds, geom = "smooth", colour = color, 
-%   se = F)
+% qplot(carat, price, data = diamonds, geom = "smooth", colour = color)
+% dense <- subset(diamonds, carat < 2)
+% qplot(carat, price, data = dense, geom = "smooth", colour = color)
 \input{_include/20dd23c7ef16dd1a194b2df3be1e6cf9.tex}
 % END
 
-How can we recreate this by hand?  First we read the \f{stat_smooth} documentation to determine what the model is: for large data it's \code{gam(y ~ s(x, bs = "cr"))}.  To get the same output as \f{stat_smooth}, we need to fit the model, then predict it on an evenly spaced grid of points.
+How can we recreate this by hand?  First we read the \f{stat_smooth} documentation to determine what the model is: for large data it's \code{gam(y ~ s(x, bs = "cs"))}.  To get the same output as \f{stat_smooth}, we need to fit the model, then predict it on an evenly spaced grid of points.  Figure~\ref{smooth-by-hand} shows the results, which are identical to what we got with \ggplot doing all the work.
 
-% INTERWEAVE
+% FIGLISTING
+%   LABEL: smooth-by-hand
+%   CAPTION: Figure~\ref{fig:smooth} with all statistical calculations 
+%   performed by hand.  The predicted values (left), and with standard errors
+%   (right).
 % 
+% library(mgcv)
 % smooth <- function(df) {
-%   mod <- gam(price ~ s(carat, bs = "cr"), data = df)
-%   grid <- data.frame(carat = seq(min(df$carat), max(df$carat), length = 50))
-%   grid$pred <- predict(mod, grid)
-%   grid  
+%   mod <- gam(price ~ s(carat, bs = "cs"), data = df)
+%   grid <- data.frame(carat = seq(0.2, 2, length = 50))
+%   pred <- predict(mod, grid, se = T)
+%   
+%   grid$price <- pred$fit
+%   grid$se <- pred$se.fit
+%   grid
 % }
-% smoothes <- ddply(diamonds, .(color), smooth)
-% qplot(carat, pred, data = smoothes, colour = color, geom = "line")
+% smoothes <- ddply(dense, .(color), smooth)
+% qplot(carat, price, data = smoothes, colour = color, geom = "line")
+% qplot(carat, price, data = smoothes, colour = color, geom = "smooth",
+%   ymax = price + 2 * se, ymin = price - 2 * se)
 \input{_include/905ab1ad6286c0662fe475b59df96c8f.tex}
 % END
 
-Adding the standard errors is a little more tricky.  You will probably want to refresh your memory of Section~\ref{sub:precomputed}.  This also makes it obvious how we could fit a single model to the data:
+This gives us much more flexibility to fit models where the group is explicitly included as a covariate.  For example, the following model models price as a non-linear function of carat, plus a constant term for each colour.  It's not a very good model as it predicts negative prices for small, poor-quality diamonds, but it's a starting point for a better model.
 
 % INTERWEAVE
 % 
-% mod <- gam(price ~ s(carat, bs = "cr") + color, data = diamonds)
+% mod <- gam(price ~ s(carat, bs = "cs") + color, data = dense)
 % grid <- with(diamonds, expand.grid(
-%   carat = seq(min(carat), max(carat), length = 50),
+%   carat = seq(0.2, 2, length = 50),
 %   color = levels(color)
 % ))
 % grid$pred <- predict(mod, grid)
@@ -304,14 +345,14 @@ The following sections explore two important uses of molten data in more detail:
 \subsection{Multiple time series}
 \label{sub:time-series}
 
-Take the \code{economics} data set.  It contains information about monthly economic data like the number of people unemployed (\code{unemploy}) and the median length of time a person is unemployed for (\code{uempmed}).  We might expect these two variables to be related.  Each of these variables is stored in a column, which makes it easy to compare them with a scatterplot, and draw individual time series, as shown in Figure~\ref{fig:series-wide}.  But what if we want to see them collectively?
+Take the \code{economics} data set.  It contains information about monthly economic data like the number of people unemployed (\code{unemploy}) and the median length of time a person is unemployed (\code{uempmed}).  We might expect these two variables to be related.  Each of these variables is stored in a column, which makes it easy to compare them with a scatterplot, and draw individual time series, as shown in Figure~\ref{fig:series-wide}.  But what if we want to see them collectively?
 
 % FIGURE
 %   COL: 3  TEX-WIDTH: 0.33\linewidth
 %   LABEL: series-wide
-%   CAPTION: When the economics data is stored in wide format, it is easy to
-%   create separate time series plots for each variable (left and centre), and
-%   easy to create scatterplots comparing them (right).
+%   CAPTION: When the economics data set is stored in wide format, it is easy
+%   to create separate time series plots for each variable (left and centre),
+%   and easy to create scatterplots comparing them (right).
 % 
 % qplot(date, uempmed, data = economics, geom = "line")
 % qplot(date, unemploy, data = economics, geom = "line")
@@ -319,14 +360,16 @@ Take the \code{economics} data set.  It contains information about monthly econo
 \input{_include/85fdaf61d98be680d39981b65992ee24.tex}
 % END
 
-One way is to build up the plot with a different layer for each variable.   However, that quickly becomes tedious when you have more than a few variables.  An alternative is to melt the data into a long format, then the two time series have their value stored in the \var{value} variable, and we can distinguish between them with the \var{variable} variable.  The code below shows these two alternatives.  The plots they produce are very similar, and are shown in Figure~\ref{fig:series-methods}.
+One way is to build up the plot with a different layer for each variable.   However, that quickly becomes tedious when you have more than a few variables.  An alternative is to melt the data into a long format. Then the two time series have their value stored in the \var{value} variable and we can distinguish between them with the \var{variable} variable.  The code below shows these two alternatives.  The plots they produce are very similar, and are shown in Figure~\ref{fig:series-methods}.
 
 % FIGLISTING
 %   LABEL: series-methods GG-HEIGHT: 3 GG-WIDTH: 6
 %   CAPTION: The two methods of displaying both series on a single plot 
 %   produce identical plots, but using long data is much easier when you have
 %   many variables.  The series have radically different scales, so we only
-%   see the pattern in the \code{unemploy} variable.
+%   see the pattern in the \code{unemploy} variable. You might not even notice
+%   \code{unempmed} unless you're paying close attention: it's the line at the
+%   bottom of the plot.
 % 
 % ggplot(economics, aes(date)) + 
 %   geom_line(aes(y = unemploy, colour = "unemploy")) + 
@@ -362,54 +405,78 @@ There is a problem with these plots: the two variables have radically different 
 \subsection{Parallel coordinates plot} 
 \label{sub:molten_data}
 
-In a similar manner, we can use molten data to create a parallel coordinates plot.   a new variable to record the row that each observation came from (this is used to define the lines that connect the observations).  This is stored in the \code{rownames} property, which we turn into an explicit variable (with an unusual name, so we don't squash any of the existing variables).  Once we have the data in this form, creating a parallel coordinates plot is easy.
+In a similar manner, we can use molten data to create a parallel coordinates plot \citep{inselberg:1985,wegman:1990}, which has the ``variable'' variable on the x axis and value on the y axis.  We need a new variable to record the row that each observation came from, which is used as a grouping variable for the lines (so we get one line per observation). The easiest value to use for this is the data frame \code{rownames}, and we give it an unusual name {\code{.row}) so we don't squash any of the existing variables). Once we have the data in this form, creating a parallel coordinates plot is easy.
 
-% INTERWEAVE
+In this case study, we will explore the ratings of around 840 movies with over 10,000 votes.  This data set has a moderate number of variables (10) and many cases, and will allow us to experiment with a common technique for dealing with large data in parallel coordinates plots: transparency and clustering.
+
+This data is already on a common scale, so we don't need to rescale it, but in general, we would need to use the technique from the previous section to ensure the variables are comparable.  This is particularly important if we are going to use other multidimensional techniques to analyse the data.
+
+% FIGLISTING
+%   LABEL: pcp
+%   FILETYPE: PNG
 % 
-% msleep2 <- colwise(as.numeric)(msleep)
-% msleep2$.row <- rownames(msleep2)
-% molten <- melt(msleep2, id = ".row")
+% popular <- subset(movies, votes > 1e4)
+% ratings <- popular[, 7:16]
+% ratings$.row <- rownames(ratings)
+% molten <- melt(ratings, id = ".row")
 % 
-% # Rescale to common range
-% scaled <- ddply(molten, .(variable), transform, value = range01(value))
-% 
-% pcp <- ggplot(scaled, aes(variable, value, group = .row)) + geom_line()
-% pcp
+% pcp <- ggplot(molten, aes(variable, value, group = .row))
+% pcp + geom_line()
+% pcp + geom_line(colour = alpha("black", 1 / 20))
+% pcp + geom_line(colour = alpha("black", 1 / 20), position = "jitter")
 \input{_include/e53b8dc010762eac2ef590c86e8f3a48.tex}
 % END
 
-Dealing with missing values in parallel coordinates plots is a little tricky.  One way is just to set missing values to a number outside of the usual range:
-
-% INTERWEAVE
+% FIGLISTING
 % 
-% scaled$value[is.na(molten$value)] <- -0.2
-% pcp %+% scaled
-\input{_include/809b64d7ca992a30abaa5341f623693a.tex}
-% END
-
-Because we have total control of the data transformation, it is easy to experiment with variations on the parallel coordinate plot.  We could use different types of rescaling, like standardising to mean 0 and standard deviation 1, or calculating ranks (this is sometimes called a bump chart).  Or we could use different geoms, like boxplots, to display the data.  Instead of converting categorical variables to numeric, we can treat them as id variable, and then assign them to aesthetics, or facet by them.
-
-% INTERWEAVE
+% cl <- kmeans(ratings[1:10], 5)
+% ratings$cluster <- reorder(factor(cl$cluster), popular$rating)
+% levels(ratings$cluster) <- seq_along(levels(ratings$cluster))
+% molten <- melt(ratings, id = c(".row", "cluster"))
 % 
-% msleep2$brainwt <- log(msleep2$brainwt)
-% msleep2$bodywt <- log(msleep2$bodywt)
-% molten <- melt(msleep2, id = ".row")
-% scaled <- ddply(molten, .(variable), transform, value = range01(value))
-% missing <- transform(scaled, value = ifelse(is.na(value), -0.2, value))
-% pcp %+% missing
+% pcp_cl <- pcp %+% molten + scale_colour_hue(alpha = 1/10)
+% pcp_cl + geom_line(aes(colour = cluster), position ="jitter")
+% pcp_cl + geom_line(aes(colour = cluster)) + facet_wrap(~ cluster)
 % 
-% pcp %+% missing %+% 
-%   geom_boxplot(aes(group = variable), fill = alpha("white", 0.75), 
-%    colour = alpha("#3366CC", 0.75), data = scaled)
-\input{_include/80cfdebffe1f1a715f8ad9a3710d5e8d.tex}
-% END
+% ratings$avg <- cut_number(popular$rating, 5)
+% molten <- melt(ratings, id = c(".row", "cluster", "avg"))
+% pcp_avg <- pcp %+% molten
+% pcp_avg + geom_line(aes(colour = cluster), position="jitter") + facet_grid(cluster ~ avg) + scale_colour_hue(alpha = 0.1)
+% pcp_avg + stat_summary(aes(colour = cluster, group = cluster, fill=cluster), fun.y = mean, fun.ymin = min, fun.ymax = max, geom="smooth")
+% pcp_avg + geom_line(colour=alpha("black", 1/10)) + stat_summary(aes(colour = cluster, group = cluster), fun.y = mean, geom="line", size = 2) + facet_wrap(~ cluster)
+
+% Dealing with missing values in parallel coordinates plots is a little tricky.  One way is just to set missing values to a number outside of the usual range:
+% 
+% % INTERWEAVE
+% % 
+% % scaled$value[is.na(molten$value)] <- -0.2
+% % pcp %+% scaled
+% \input{_include/809b64d7ca992a30abaa5341f623693a.tex}
+% % END
+% 
+% Because we have total control of the data transformation, it is easy to experiment with variations on the parallel coordinate plot.  We could use different types of rescaling, like standardising to mean 0 and standard deviation 1, or calculating ranks (this is sometimes called a bump chart).  Or we could use different geoms, like boxplots, to display the data.  Instead of converting categorical variables to numeric, we can treat them as id variable, and then assign them to aesthetics, or facet by them.
+% 
+% % INTERWEAVE
+% % 
+% % msleep2$brainwt <- log(msleep2$brainwt)
+% % msleep2$bodywt <- log(msleep2$bodywt)
+% % molten <- melt(msleep2, id = ".row")
+% % scaled <- ddply(molten, .(variable), transform, value = range01(value))
+% % missing <- transform(scaled, value = ifelse(is.na(value), -0.2, value))
+% % pcp %+% missing
+% % 
+% % pcp %+% missing %+% 
+% %   geom_boxplot(aes(group = variable), fill = alpha("white", 0.75), 
+% %    colour = alpha("#3366CC", 0.75), data = scaled)
+% \input{_include/80cfdebffe1f1a715f8ad9a3710d5e8d.tex}
+% % END
 
 \section{\f{ggplot} methods}
 \label{sec:methods}
 
-\f{ggplot} is a generic function, with different methods for different types of data.  The most common, and what we have used until now, are data frames. However, like base and lattice graphics, it is possible to extend \f{ggplot} to work with other types of data.  However, the way this works is fundamentally different: \ggplot will not give you a complete plot, but instead will give you the tools to make the plot.
+\f{ggplot} is a generic function, with different methods for different types of data. The most common, and what we have used until now, are data frames. However, as with base and lattice graphics, it is possible to extend \f{ggplot} to work with other types of data. However, the way this works is fundamentally different: \ggplot will not give you a complete plot, but instead will give you the tools to make the plot.
 
-This process is mediated by the \f{fortify} method, which takes an object, and optional data frame, and creates a version of the object in a form suitable for plotting with \ggplot, i.e.\ as a data frame.  The name fortify comes from thinking about combining a model with its data: the model fortifies the data, and the data fortifies the model, and the result can be used to  simultaneously visualise the model and the data.  An example will make this concrete, and below we describe the fortify method for linear models.
+This process is mediated by the \f{fortify} method, which takes an object, and optional data frame, and creates a version of the object in a form suitable for plotting with \ggplot, i.e.\ as a data frame. The name fortify comes from thinking about combining a model with its data: the model fortifies the data, and the data fortifies the model, and the result can be used to simultaneously visualise the model and the data. An example will make this concrete, as you will see when we describe the fortify method for linear models.
 
 This section describes how the \f{fortify} method works, and how you can create new methods that are aligned with the \ggplot philosophy.  The most important philosophical consideration is that data transformation and display should be kept as separate as possible.  This maximises reusability, as you are no longer trapped into the single display that the author envisaged.  
 
@@ -417,7 +484,7 @@ These different types of input also work with \f{qplot}: remember that \f{qplot}
 
 \subsection{Linear models}
 
-Currently, \ggplot provides only one fortify method, for linear models.  Here we'll show how this method works, and how you can use it to create tailored plots for better understanding your data and models.  Figure~\ref{fig:plot-lm} shows the output of \f{plot.lm} for a simple model.  The graphics produces a set of pre-chosen model summary plots.  These are useful for particular problems, but are completely inflexible: there is no way to modify them apart from opening up the source code for \f{plot.lm} and modifying it.  The code is difficult to understand between data transformation and display are inextricably entangled.
+Currently, \ggplot provides only one fortify method, for linear models. Here we'll show how this method works, and how you can use it to create tailored plots for better understanding your data and models. Figure~\ref{fig:plot-lm} shows the output of \f{plot.lm} for a simple model. The graphics produces a set of pre-chosen model summary plots. These are useful for particular problems, but are completely inflexible: there is no way to modify them apart from opening up the source code for \f{plot.lm} and modifying it. The code is difficult to understand because data transformation and display are inextricably entangled.
 
 % mod <- lm(cty ~ displ, data = mpg)
 % pdf("strategy-plot-lm.pdf", width = 8, height = 8)
@@ -432,7 +499,7 @@ Currently, \ggplot provides only one fortify method, for linear models.  Here we
   \label{fig:plot-lm}
 \end{figure}
 
-The \ggplot approach completely separates data transformation and display.  The \f{fortify} method does the transformation, and then we use \ggplot as usual to create the display that we want.  At the time of printing, \f{fortify} adds the variables in Table~\ref{tbl:fortify-vars} to the original dataset.  These are basically all the variables that \f{plot.lm} collects in order to create its summary plots.  The variables have a leading \code{.} in their names, so there is little risk that they will clobber variables already in the dataset.  
+The \ggplot approach completely separates data transformation and display.  The \f{fortify} method does the transformation, and then we use \ggplot as usual to create the display that we want.  At the time of printing, \f{fortify} adds the variables in Table~\ref{tbl:fortify-vars} to the original dataset.  These are basically all the variables that \f{plot.lm} collects in order to create its summary plots.  The variables have a leading \code{.} (full stop) in their names, so there is little risk that they will clobber variables already in the dataset.  
 
 \begin{table}
   \centering
@@ -454,7 +521,7 @@ The \ggplot approach completely separates data transformation and display.  The 
 
 % If we just supply \f{fortify} with the model, it will add the diagnostic columns to the model data frame (which just contains the variables used in the model), or we can also supply the full original dataset.  
 
-To demonstrate these techniques, we're going to fit the very simple model shown below and visualised in Figure~\ref{fig:fortify-mod}.  This model clearly doesn't fit the model very well, so we should be able to use model diagnostics to figure out how to improve it.  A sample of the output from fortifying this model is shown in Table~\ref{tbl:fortify-out}.  Because we supply the original data frame it contains the two variables used in the model and the six diagnostic variables.  It's easy to see exactly what data out plot will be working with and we could easily add more variables if we wanted.
+To demonstrate these techniques, we're going to fit the very simple model shown below and visualised in Figure~\ref{fig:fortify-mod}.  This model clearly doesn't fit the model very well, so we should be able to use model diagnostics to figure out how to improve it.  A sample of the output from fortifying this model is shown in Table~\ref{tbl:fortify-out}.  Because we supply the original data frame it contains the two variables used in the model and the six diagnostic variables.  It's easy to see exactly what data our plot will be working with and we could easily add more variables if we wanted.
 
 % FIGLISTING
 %   LABEL: fortify-mod
@@ -497,6 +564,7 @@ With a fortified data set in hand we can easily recreate the plots produced by \
 %   residuals, centre.  With size proportional to Cook's distance, right.  It
 %   is easy to modify the basic plots when we have access to all of the data.
 % 
+% mod <- lm(cty ~ displ, data = mpg)
 % basic <- ggplot(mod, aes(.fitted, .resid)) +
 %   geom_hline(yintercept = 0, colour = "grey50", size = 0.5) + 
 %   geom_point() + 
@@ -513,8 +581,8 @@ Additionally, we can fortify the whole dataset and add to the plot variables tha
 %   LABEL: fortify-full
 %   CAPTION: Adding variables from the original data can be enlightening.  
 %   Here when we add the number of cylinders we see that instead of a 
-%   curvi-linear relationship between displacement and city mpg, it linear,
-%   conditional on the number of cylinders. 
+%   curvi-linear relationship between displacement and city mpg, it is 
+%   essentially linear, conditional on the number of cylinders. 
 % 
 % full <- basic %+% fortify(mod, mpg)
 % full + aes(colour = factor(cyl))
@@ -524,7 +592,7 @@ Additionally, we can fortify the whole dataset and add to the plot variables tha
 
 \subsection{Writing your own}
 
-If you are writing your own fortify method, you will need to think about what variables are most useful.  The method for linear models adds them on to the original data frame, but this might not be the best approach in other circumstances, and in fact you might want to return a list of data frames giving information at different levels of aggregation.
+If you are writing your own fortify method, you will need to think about what variables are most useful.  The method for linear models adds them on to the original data frame, but this might not be the best approach in other circumstances, and you may want to return a list of data frames giving information at different levels of aggregation.
 
 You can also use \f{fortify} with non-model functions.  The following example shows how we could write a \f{fortify} method to make it easier to add images from disk to your plots.  The \pkg{EBImage} from bioconductor is used to get the image into R, and then the fortify method converts it into a form (a data frame) that \ggplot can render.
 
@@ -543,78 +611,52 @@ You can also use \f{fortify} with non-model functions.  The following example sh
 \input{_include/60650a06a68b4c3cd73d3c706c255134.tex}
 % END
 
-The next example shows how we can use \f{fortify} to get map objects into form that's useful for \ggplot.   This is useful as base method to build more convenient functionality on top of, but it's not terrible appealing as a user interface: the user must know to supply \code{plot = F} and \code{fill = T} to the plot function, and must remember the appropriate mappings.  The results are shown in Figure~\ref{fig:fortify-map}.
-
-% FIGLISTING
-%   LABEL: fortify-map
-%   CAPTION: Left, a map of borders of the USA, and right, individual state
-%   borders.  Both of these were produced with data from the maps package, 
-%   fortified in to a form that works with \ggplot.
-% 
-% fortify.map <- function(model, data, ...) {
-%   df <- as.data.frame(model[c("x", "y")])
-%   df$group <- cumsum(is.na(df$x) & is.na(df$x)) + 1
-%   df$name <- model$names[df$group]
-%   df$region <- sapply(strsplit(model$names, ":"), "[", 1)[df$group]
-%   df[complete.cases(df), ]
-% }
-% 
-% qplot(x, y, data = map("usa", plot = F, fill = T), geom = "path", group = group)
-% qplot(x, y, data = map("state", plot = F, fill = T), geom = "path", group = group)
-\input{_include/772f155fca6d2efcaf34114ca0a179b7.tex}
-% END
-
-Lets make a function that makes it easier to add maps to existing plots.  In the previous section you saw the fortify method that will make a data frame we can plot, but let make the interface even easier: we want a function that will add a layer that draws a map of the specified region.  First, we need to identify the arguments to \f{map} that users will want to control: apart from  \code{database} and \code{regions} all of the arguments control the appearance of the plot, something we're not interested in.  (Again the combination of data manipulation and display code makes this function fiddly to reuse).  We will always use \code{geom_polygon} to draw the map, so don't need to make the geom a parameter, but will need to ensure that other arguments get passed on so that we can control the appearance.
-
-% INTERWEAVE
-% 
-% borders <- function(database = "world", regions = ".", fill = NA, colour = "grey50", ...) {
-%   df <- fortify(map(database, regions, plot = FALSE, fill = TRUE))
-%   geom_polygon(aes(x = x, y = y, group = group), data = df, fill = fill, colour = colour, ...)
-% }
-\input{_include/1de9016f85ba8503be1596b0e4268e97.tex}
-% END
-
-The code below shows how we can use this new function.  The results are illustrated in Figure~\ref{fig:borders}.
-
-% FIGLISTING
-%   LABEL: borders
-%   CAPTION: Example using the new borders function.  Left, all cities with
-%   population (as at January 2006) of greater than half a million, and right, 
-%   cities in Texas. 
-% 
-% data(us.cities)
-% big_cities <- subset(us.cities, pop > 500000)
-% qplot(long, lat, data = big_cities) + borders("state", size = 0.5)
-% 
-% tx_cities <- subset(us.cities, country.etc == "TX")
-% qplot(long, lat, data = tx_cities) + borders("state", "texas")
-\input{_include/102852db80a169eff06ec9faf1d5f8af.tex}
-% END
-
-Two ways to use a map: as outlines to give context, or to produce a choropleth map.  If using a choropleth map, will also want to supply the values to map to colour.  Need to think about whether or not these two uses are sufficiently separate that they should be their own functions.  
 
 The approach described in section cleanly separates the display of the data from its production, and dramatically improves reuse.  However, it does not provide any conveniently pre-packaged functions.  If you want to create a diagnostic plot for a linear model you have to assemble all the pieces yourself.  Once you have the basic structure in place, so that people can always dig back down and alter the individual pieces, you can write a function that joins all the components together in a useful way.
 
 \section{Functions that create plots}
 \label{sec:functions}
 
-Example: plot.lm again
+If you are using the same basic plot again and again with different datasets and slightly different parameters, it may be worthwhile to wrap up all the different options into a single function. Sometimes you can't achieve the desired degree of control just by adding predefined layers. Maybe you need to perform some data restructuring or transformation, or need to combine the data with a predefined model. In that case you will need to write a function that produces \ggplot plots. This section gives you a few pointers to useful functions and techniques that will help you on your way.
 
-Look at the source code for \f{qplot}.
+% Example: plot.lm again
+% 
+% 
+% Need to make some decisions.  How much flexibility does the function require.  This depends a lot on your audience - if it's just for you then you can make relatively inflexible and then just add capabilities as you need them, but if it's for a wider audience, more thought at the start will save time in the long run.
+% 
+% What parameters should your function take?
+% 
 
+\begin{itemize}
+  \item Since you're creating the plot within the environment of a function, you need to be extra careful about supplying the data to \f{ggplot} as a data frame, and you need to double check that you haven't accidentally referred to any function local variables in your aesthetic mappings.
+  
+  \item If you want to allow the user to provide their own variables for aesthetic mappings, I'd suggest using \f{aes_string}.  This function works just like \f{aes}, but uses strings rather than unevaluated expressions. \code{aes_string("cty", colour = "hwy")} is equivalent to \code{aes(cty, colour = hwy).  Strings are much easier to work with than expressions.
 
-Sometimes you can't achieve the desired degree of control just by adding predefined layers.  Maybe you need to perform some data restructuring or transformation, or need to combine the data with a predefined model.  In that case you will need to write a function that produces \ggplot plots.  This section offers some advice on how to construct such a function in a way that is consistent with the philosophy of \ggplot, and ensures that it can be used flexibly and creatively.
+  \item As mentioned in the previous section, you definitely want to separate your plotting code into a function that does any data transformations and manipulations and a function that creates the plot. Generally, your plotting function should do no data manipulation, just create a plot.  See the following example for one way to create a parallel coordinates function.
+  
+  % INTERWEAVE
+  % 
+  % pcp_data <- function(df) {
+  %   numeric <- laply(df, is.numeric)
+  %   # Rescale numeric columns
+  %   df[numeric] <- colwise(range01)(df[numeric])
+  %   # Add row identified
+  %   df$.row <- rownames(df)
+  %   # Melt, using non-numeric variables as id vars
+  %   dfm <- melt(df, id = c(".row", names(df)[!numeric]))
+  %   # Add pcp to class of the data frame
+  %   class(dfm) <- c("pcp", class(dfm))
+  %   dfm
+  % }
+  % pcp <- function(df, ...) {
+  %   df <- pcp_data(df)
+  %   ggplot(df, aes(variable, value)) + geom_line(aes(group = .row))
+  % }
+  % pcp(mpg)
+  % pcp(mpg) + aes(colour = drv)
+  
+\end{itemize}
 
-Need to make some decisions.  How much flexibility does the function require.  This depends a lot on your audience - if it's just for you then you can make relatively inflexible and then just add capabilities as you need them, but if it's for a wider audience, more thought at the start will save time in the long run.
-
-What parameters should your function take?
-
-Format of the data.
-
-Generating aesthetic mappings programmatically with \f{aes_string}, and combining with user supplied aesthetics.
-
-Use example from one of the built in templates.  
-
+The best example of this technique is \f{qplot}, and if you're interesting in writing your own functions I strongly recommend you have a look at the source code for this function and step through it line by line to see how it works.  If you've made your way this far through the book you should have a pretty good grasp of all the \ggplot related code: most of the complexity is R tricks to correctly interpret all of the possible plot types.
 
 \input{_footer.tex}
