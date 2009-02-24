@@ -4,12 +4,13 @@ l(ggplot)
 
 # Need to clean out include directory
 
-chapters <- c("introduction", "layers", "mastery", "position", "polishing", "qplot", "scales", "grid", "specifications", "toolbox", "translating",  "writing-your-own", "strategy", "book-mine")
+chapters <- c("introduction", "layers", "mastery", "position", "polishing", "qplot", "scales", "grid", "specifications", "toolbox", "translating",  "data", "duplication", "book-springer")
 
 tex <- paste(chapters, ".tex", sep="")
 r <-   file.path("public", paste(chapters, ".r", sep=""))
 pdf <- paste(chapters, ".pdf", sep="")
 
+cache_clear()
 l_ply(tex, function(path) {
   cat(path, "\n")
   overwrite_file(path)
