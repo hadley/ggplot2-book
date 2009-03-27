@@ -82,7 +82,7 @@ grid <- with(diamonds, expand.grid(
 grid$pred <- predict(mod, grid)
 qplot(carat, pred, data = grid, colour = color, geom = "line")
 
-# When the economics data set is stored in wide
+# When the economics dataset is stored in wide
 # format, it is easy to create separate time series
 # plots for each variable (left and centre), and easy
 # to create scatterplots comparing them (right).

@@ -88,7 +88,7 @@ More information and examples are available in the documentation, \code{?ddply},
   % nmissing_df(msleep)
   % # This is shorthand for the previous two steps
   % colwise(nmissing)(msleep)
-  \input{_include/9d12f4c4140cfb43f030ee92bc3ed8f0.tex}  
+  \input{_include/2e996688e3755d667e3e04527b957558.tex}  
   % END
   
    The specialised version \f{numcolwise} does the same thing, but works only with numeric columns.  For example, \code{numcolwise(median)} will calculate a median for every numeric column, or \code{numcolwise(quantile)} will calculate quantiles for every numeric column.  Similarly, \f{catcolwise} only works with categorical columns.
@@ -107,7 +107,7 @@ More information and examples are available in the documentation, \code{?ddply},
   % 
   % ddply(msleep, .(vore), numcolwise(median), na.rm = T)
   % ddply(msleep, .(vore), numcolwise(mean), na.rm = T)
-  \input{_include/e4aa0c78fc830999229ecb4cbe26c33c.tex}  
+  \input{_include/7499bd46ea85f0e32affa39173ef5825.tex}  
   % END
   
   \item If none of the previous shortcuts is appropriate, make your own summary function which takes a data frame as input and returns an appropriately summarised data frame as output.  The following functions calculates the rank correlation of price and carat and compares it to the regular correlation of the logged values.
@@ -149,7 +149,7 @@ In this section, we'll work through the process of generating the smoothed data 
 % dense <- subset(diamonds, carat < 2)
 % qplot(carat, price, data = dense, geom = "smooth", colour = color, 
 %   fullrange = TRUE)
-\input{_include/fa4e6cf37451323329026cf8c2d73df5.tex}
+\input{_include/0c9a3d15e3828fbbeb2de3de541c2a6d.tex}
 % END
 
 How can we recreate this by hand?  First we read the \f{stat_smooth} documentation to determine what the model is: for large data it's \code{gam(y ~ s(x, bs = "cs"))}.  To get the same output as \f{stat_smooth}, we need to fit the model, then predict it on an evenly spaced grid of points. This task is performed by the \f{smooth} function in the following code.  Once we have written this function it is straightforward to apply it to each diamond colour  using \f{ddply}.
@@ -176,7 +176,7 @@ Figure~\ref{fig:smooth-by-hand} shows the results of this work, which are identi
 % qplot(carat, price, data = smoothes, colour = color, geom = "line")
 % qplot(carat, price, data = smoothes, colour = color, geom = "smooth",
 %   ymax = price + 2 * se, ymin = price - 2 * se)
-\input{_include/f262a41b8fed5490a75e3917b942dc11.tex}
+\input{_include/1d414302e3ba0712243024a556186f27.tex}
 % END
 
 Doing the summary by hand gives you much more flexibility to fit models where the grouping factor is explicitly included as a covariate. For example, the following model models price as a non-linear function of carat, plus a constant term for each colour. It's not a very good model as it predicts negative prices for small, poor-quality diamonds, but it's a starting point for a better model.
@@ -190,7 +190,7 @@ Doing the summary by hand gives you much more flexibility to fit models where th
 % ))
 % grid$pred <- predict(mod, grid)
 % qplot(carat, pred, data = grid, colour = color, geom = "line")
-\input{_include/4c7a24680aa53cdeb1c43fbabba6f8b1.tex}
+\input{_include/e0d3102f20e6f5de194ae1c90e517438.tex}
 % END
 
 See also Sections~\ref{sub:different_aesthetics} and \ref{sec:uncertainty} for other ways of combining models and data.
@@ -266,19 +266,19 @@ The following sections explore two important uses of molten data in more detail:
 \subsection{Multiple time series}
 \label{sub:time-series}
 
-Take the \code{economics} data set.  It contains information about monthly economic data like the number of people unemployed (\code{unemploy}) and the median length of unemployment (\code{uempmed}).  We might expect these two variables to be related.  Each of these variables is stored in a column, which makes it easy to compare them with a scatterplot, and draw individual time series, as shown in Figure~\ref{fig:series-wide}.  But what if we want to see the time series them simultaneously?
+Take the \code{economics} dataset.  It contains information about monthly economic data like the number of people unemployed (\code{unemploy}) and the median length of unemployment (\code{uempmed}).  We might expect these two variables to be related.  Each of these variables is stored in a column, which makes it easy to compare them with a scatterplot, and draw individual time series, as shown in Figure~\ref{fig:series-wide}.  But what if we want to see the time series them simultaneously?
 
 % FIGURE
 %   COL: 3  TEX-WIDTH: 0.33\linewidth
 %   LABEL: series-wide
-%   CAPTION: When the economics data set is stored in wide format, it is easy
+%   CAPTION: When the economics dataset is stored in wide format, it is easy
 %   to create separate time series plots for each variable (left and centre),
 %   and easy to create scatterplots comparing them (right).
 % 
 % qplot(date, uempmed, data = economics, geom = "line")
 % qplot(date, unemploy, data = economics, geom = "line")
 % qplot(unemploy, uempmed, data = economics) + geom_smooth()
-\input{_include/0f1a32282a2216fa814e619fdfa22e34.tex}
+\input{_include/3dbad078d1c3d2cbbcb3d4dfaf731dbf.tex}
 % END
 
 One way is to build up the plot with a different layer for each variable, as you saw in Section~\ref{sub:scale-discrete}. However, this quickly becomes tedious when you have many variables, and a better alternative is to melt the data into a long format and then visualise that. In the molten data the time series have their value stored in the \var{value} variable and we can distinguish between them with the \var{variable} variable. The code below shows these two alternatives. The plots they produce are very similar, and are shown in Figure~\ref{fig:series-methods}.
@@ -299,7 +299,7 @@ One way is to build up the plot with a different layer for each variable, as you
 %
 % emp <- melt(economics, id = "date", measure = c("unemploy", "uempmed"))
 % qplot(date, value, data = emp, geom = "line", colour = variable)
-\input{_include/1b795adb8b33390eb255571fd6c730a7.tex}
+\input{_include/cbdcba7e8e4c38c839e14e5c7fb3a466.tex}
 % END
 
 There is a problem with these plots: the two variables have radically different scales, and so the series for \code{unempmed} appears as a flat line at the bottom of the plot. There is no way to produce a plot with two axis in \ggplot because this type of plot is fundamentally misleading. Instead there are two perceptually well-founded alternatives: rescale the variables to have a common range, or use faceting with free scales. These alternatives are created with the code below and are shown in Figure~\ref{fig:series-scaling}
@@ -320,7 +320,7 @@ There is a problem with these plots: the two variables have radically different 
 %   colour = variable, linetype = variable)
 % qplot(date, value, data = emp, geom = "line") + 
 %   facet_grid(variable ~ ., scales = "free_y")
-\input{_include/e73bd3e6e0cf6e50becdc1312a4ffed4.tex}
+\input{_include/3d449898824e2d2dbeeca61a02e45052.tex}
 % END
 
 \subsection{Parallel coordinates plot} 
@@ -328,7 +328,7 @@ There is a problem with these plots: the two variables have radically different 
 
 In a similar manner, we can use molten data to create a parallel coordinates plot \citep{inselberg:1985,wegman:1990}, which has the ``variable'' variable on the x axis and value on the y axis.  We need a new variable to record the row that each observation came from, which is used as a grouping variable for the lines (so we get one line per observation). The easiest value to use for this is the data frame \code{rownames}, and we give it an unusual name {\code{.row}) so we don't squash any of the existing variables). Once we have the data in this form, creating a parallel coordinates plot is easy.
 
-The following code does exactly that for the ratings of 840 movies with over 10,000 votes. This data set has a moderate number of variables (10) and many cases, and will allow us to experiment with a common technique for dealing with large data in parallel coordinates plots: transparency and clustering. Each variable gives the proportion of votes givens to each rating between 0 (very bad) and 10 (very good). Since this data is already on a common scale we don't need to rescale it, but in general, we would need to use the technique from the previous section to ensure the variables are comparable. This is particularly important if we are going to use other multidimensional techniques to analyse the data.
+The following code does exactly that for the ratings of 840 movies with over 10,000 votes. This dataset has a moderate number of variables (10) and many cases, and will allow us to experiment with a common technique for dealing with large data in parallel coordinates plots: transparency and clustering. Each variable gives the proportion of votes givens to each rating between 0 (very bad) and 10 (very good). Since this data is already on a common scale we don't need to rescale it, but in general, we would need to use the technique from the previous section to ensure the variables are comparable. This is particularly important if we are going to use other multidimensional techniques to analyse the data.
 
 % CODELISTING
 % 
@@ -343,7 +343,7 @@ Once the data is in this form, creating a parallel coordinates plot is easy. All
 
 % FIGLISTING
 %   LABEL: pcp
-%   FILETYPE: PNG GG-WIDTH: 6
+%   FILETYPE: png GG-WIDTH: 6 COL: 2
 %   CAPTION: Variants on the parallel coordinates plot to better display the 
 %   patterns in this highly discrete data.  To improve the default pcp
 %   (top-left) we experiment with alpha-blending (top-right), jittering 
@@ -355,7 +355,7 @@ Once the data is in this form, creating a parallel coordinates plot is easy. All
 % jit <- position_jitter(width = 0.25, height = 2.5)
 % pcp + geom_line(position = jit)
 % pcp + geom_line(colour = alpha("black", 1 / 20), position = jit)
-\input{_include/d0720ba8f549017657108b06a974f434.tex}
+\input{_include/0318ea82ad1e6d93822f4f6de7a10b22.tex}
 % END
 
 To make the patterns more clear we will cluster the movies into groups of similar rating patterns. The following code uses kmeans clustering \citep{hartigan:1979} to produce six groups of similar movies.  To make the clusters a little more interpretable, they are relabelled so that cluster 1 has the lowest average rating and cluster six the highest.
@@ -373,7 +373,7 @@ There are many different ways that we can visualise the result of this clusterin
 
 % FIGLISTING
 %   LABEL: pcp-colour
-%   FILETYPE: PNG
+%   FILETYPE: png
 %   GG-HEIGHT: 3
 %   CAPTION: Displaying cluster membership on a parallel coordinates plot.
 %   (Left) individual movies coloured by group membership and (right) 
@@ -383,14 +383,14 @@ There are many different ways that we can visualise the result of this clusterin
 %  aes(variable, value, group = .row, colour = cluster)) 
 % pcp_cl + geom_line(position = jit) + scale_colour_hue(alpha = 1/5)
 % pcp_cl + stat_summary(aes(group = cluster), fun.y = mean, geom = "line")
-\input{_include/a188d699e1d35b631f80dcf08567efb3.tex}
+\input{_include/d0609406dfc881bf9c4643ef623f672a.tex}
 % END
 
 These plots are good for showing the differences between groups, but they don't tell us a lot about whether we've done a good job clustering the data.  Figure~\ref{pcp-facet} uses faceting to display the each group in its own panel. This plot highlights the variation within many of the groups, suggesting that perhaps more clusters would be appropriate.
 
 % FIGLISTING
 %   LABEL: pcp-facet
-%   FILETYPE: PNG
+%   FILETYPE: png
 %   TEX-WIDTH: \linewidth GG-WIDTH: 6
 %   CAPTION: Faceting allows us to display each group in its own panel, 
 %   highlighting the fact that there seems to be considerable variation
@@ -399,7 +399,7 @@ These plots are good for showing the differences between groups, but they don't 
 % 
 % pcp_cl + geom_line(position = jit, colour = alpha("black", 1/5)) +
 %   facet_wrap(~ cluster)
-\input{_include/d138ee70b747f8472b5036a787ed4426.tex}
+\input{_include/57a498152f724cc0308561527322d512.tex}
 % END
 
 
@@ -461,7 +461,7 @@ To demonstrate these techniques, we're going to fit the very simple model with c
 % 
 % qplot(displ, cty, data = mpg) + geom_smooth(method = "lm")
 % mpgmod <- lm(cty ~ displ, data = mpg)
-\input{_include/d9e8000a5fd634f94ca2bf67e27289c4.tex}
+\input{_include/ad13a9c5371a8fe7d91da6781b8b8558.tex}
 % END
 
 % library(xtable)
@@ -487,7 +487,7 @@ To demonstrate these techniques, we're going to fit the very simple model with c
 
 % You may notice some similarity between this approach and the transformations performed by stats.  The major difference is that \f{fortify} is global, while statistical transformations are local to the facet and group.
 
-With a fortified data set in hand we can easily recreate the plots produced by \f{plot.lm}, and even better, we can adapt them to our needs. The example below shows how we can recreate and then extend the first plot produced by \f{plot.lm}. Once we have the basic plot we can easily enhance it: use standardised residuals instead of raw residuals, or make size proportional to Cook's distance. The results are shown in Figure~\ref{fig:fortify-fr}.
+With a fortified dataset in hand we can easily recreate the plots produced by \f{plot.lm}, and even better, we can adapt them to our needs. The example below shows how we can recreate and then extend the first plot produced by \f{plot.lm}. Once we have the basic plot we can easily enhance it: use standardised residuals instead of raw residuals, or make size proportional to Cook's distance. The results are shown in Figure~\ref{fig:fortify-fr}.
 
 % FIGLISTING
 %   COL: 3 TEX-WIDTH: 0.33\linewidth
@@ -504,7 +504,7 @@ With a fortified data set in hand we can easily recreate the plots produced by \
 % basic
 % basic + aes(y = .stdresid)
 % basic + aes(size = .cooksd) + scale_area("Cook's distance")
-\input{_include/1635ca756c9c35ae82e7329a25ae025f.tex}
+\input{_include/6b6f05a24d073176a808d1424773b5ba.tex}
 % END
 
 Additionally, we can fortify the whole dataset and add to the plot variables that are in the original data but not in the model. This helps us to understand what variables are useful to improve the model. Figure~\ref{fig:fortify-full} colours the residuals by the number of cylinders, and suggests that this variable would be good to add to the model: within each cylinder group, the pattern is close to linear.
@@ -519,7 +519,7 @@ Additionally, we can fortify the whole dataset and add to the plot variables tha
 % full <- basic %+% fortify(mod, mpg)
 % full + aes(colour = factor(cyl))
 % full + aes(displ, colour = factor(cyl))
-\input{_include/e4367b3cc15821672946e40a121feb2b.tex}
+\input{_include/0d81939b619936c68238d6ff636c7a5e.tex}
 % END
 
 \subsection{Writing your own}
