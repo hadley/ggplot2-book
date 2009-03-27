@@ -6,6 +6,7 @@
 %   INLINE: FALSE
 %   CACHE: TRUE
 % 
+% library(effects)
 
 % END
 
@@ -26,29 +27,29 @@ The layered structure of \ggplot encourages you to design and construct graphics
 %   \item The \code{movies} dataset contains user ratings for nearly 60,000 movies.
 % \end{itemize}
 
-This chapter is broken up into the following sections, each of which deals with a particular graphical challenge.  This is not an exhaustive or exclusive categorisation, and there are many other possible ways to break up graphics into different categories.  Each geoms can be used for many different purposes, especially if you are creative.  However, this breakdown should cover many common tasks and help you learn about some of the possibilities.
+This chapter is broken up into the following sections, each of which deals with a particular graphical challenge. This is not an exhaustive or exclusive categorisation, and there are many other possible ways to break up graphics into different categories. Each geom can be used for many different purposes, especially if you are creative. However, this breakdown should cover many common tasks and help you learn about some of the possibilities.
 
 \begin{itemize}
-  \item Basic plot types, \secref{sec:basics}, to produce common, ``named'' graphics like scatterplots and line charts..
+  \item Basic plot types, \secref{sec:basics}, to produce common, ``named'' graphics like scatterplots and line charts
   
-  \item Displaying distributions, \secref{sec:distributions}, continuous and discrete, 1d and 2d, joint and conditional.
+  \item Displaying distributions, \secref{sec:distributions}, continuous and discrete, 1d and 2d, joint and conditional
   
-  \item Dealing with overplotting in scatterplots, \secref{sec:overplotting}, a challenge with large datasets.
+  \item Dealing with overplotting in scatterplots, \secref{sec:overplotting}, a challenge with large datasets
 
   \item Surface plots, \secref{sec:surface}, display 3d surfaces in 2d.
 
-  \item Statistical summaries, \secref{sec:summary}, display informative data summaries.
+  \item Statistical summaries, \secref{sec:summary}, display informative data summaries
 
-  \item Drawing maps, \secref{sec:maps}.
+  \item Drawing maps, \secref{sec:maps}
 
-  \item Revealing uncertainty and error, \secref{sec:uncertainty}, with various 1d and 2d intervals.
+  \item Revealing uncertainty and error, \secref{sec:uncertainty}, with various 1d and 2d intervals
 
-  \item Annotating a plot, \secref{sec:annotating}, to label, describe and explain with supplemental information.
+  \item Annotating a plot, \secref{sec:annotating}, to label, describe and explain with supplemental information
 
-  \item Weighted data, \secref{sec:weighting}.
+  \item Weighted data, \secref{sec:weighting}
 \end{itemize}
 
-The examples in this section use a mixture of {\tt ggplot()} and {\tt qplot()} calls, reflecting real life use.  If you need a reminder on how to translate between the two, see Appendix~\ref{sec:qplot-ggplot}.  The examples do not go into much depth, but hopefully if you flick through this chapter, you'll be able to see a plot that looks like the one you're trying to create.
+The examples in this section use a mixture of {\tt ggplot()} and {\tt qplot()} calls, reflecting real-life use.  If you need a reminder on how to translate between the two, see Appendix~\ref{sec:qplot-ggplot}.  The examples do not go into much depth, but hopefully if you flick through this chapter, you'll be able to see a plot that looks like the one you're trying to create.
 
 \section{Overall layering strategy}
 \label{sec:strategy}
@@ -58,7 +59,7 @@ It is useful to think about the purpose of each layer before it is added.  In ge
 \begin{itemize}
   \item To display the {\bf data}.  We plot the raw data for many reasons, relying on our skills at pattern detection to spot gross structure, local structure, and outliers.  This layer appears on virtually every graphic.  In the earliest stages of data exploration, it is often the only layer.
 
-  \item To display a statistical {\bf summary} of the data. As we develop and explore models of the data, it is useful to display model predictions in the context of the data. We learn from the data summaries and we evaluate the model. Showing the data helps us improve the model, and showing the model helps reveal subtleties of the data that we might otherwise miss. Summarises are usually drawn on top of the data.
+  \item To display a statistical {\bf summary} of the data. As we develop and explore models of the data, it is useful to display model predictions in the context of the data. We learn from the data summaries and we evaluate the model. Showing the data helps us improve the model, and showing the model helps reveal subtleties of the data that we might otherwise miss. Summaries are usually drawn on top of the data.
 
   If you review the examples in the preceding chapter, you'll see many examples of plots of data with an added layer displaying a statistical summary.
 
@@ -73,7 +74,7 @@ It is useful to think about the purpose of each layer before it is added.  In ge
 
 \section{Basic plot types}\label{sec:basics}
 
-These geoms are the fundamental building blocks of \ggplot.  They are useful in their own right, but also to construct more complex geoms.  are the basic geoms used to build up many of the other geoms.  Most of these geoms are associated with a named plot: when that geom is used by itself in a plot, that plot has a special name.
+These geoms are the fundamental building blocks of \ggplot.  They are useful in their own right, but also to construct more complex geoms.  Most of these geoms are associated with a named plot: when that geom is used by itself in a plot, that plot has a special name.
 
 Each of these geoms is two dimensional and requires both \code{x} and \code{y} aesthetics.  All understand \code{colour} and \code{size} aesthetics, and the filled geoms (bar, tile and polygon) also understand \code{fill}.  The point geom uses \code{shape} and line and path geoms understand \code{linetype}. The geoms are used for displaying data, summaries computed elsewhere, and metadata.
 
@@ -84,7 +85,7 @@ Each of these geoms is two dimensional and requires both \code{x} and \code{y} a
   
   By default, multiple bars in the same location will be stacked on top of one another.
   
-  \item \f{geom_line} makes a \textbf{line plot}.  The \code{group} aesthetic determine which observations are connected, see Section~\ref{sub:grouping} for more details. \code{geom_path} is similar to a \code{geom_line}, but lines are connected in the order they appear in the data, not from left to right.  
+  \item \f{geom_line} makes a \textbf{line plot}.  The \code{group} aesthetic determines which observations are connected; see Section~\ref{sub:grouping} for more details. \code{geom_path} is similar to a \code{geom_line}, but lines are connected in the order they appear in the data, not from left to right.  
   
   \item \f{geom_point} produces a \textbf{scatterplot}.
   
@@ -92,7 +93,7 @@ Each of these geoms is two dimensional and requires both \code{x} and \code{y} a
   
   \item \f{geom_text} adds labels at the specified points.  This is the only geom in this group that requires another aesthetic: \code{label}.  It also has optional aesthetics \code{hjust} and \code{vjust} that control the horizontal and vertical position of the text; and \code{angle} which controls the rotation of the text.  See Appendex~\ref{cha:specifications} for more details.
   
-  \item \f{geom_tile} makes a image plot or level plot.  The tiles form a regular tessellation of the plane and are typically have the \code{fill} aesthetic mapped to another variable.
+  \item \f{geom_tile} makes a image plot or level plot.  The tiles form a regular tessellation of the plane and typically have the \code{fill} aesthetic mapped to another variable.
 
 \end{itemize}
 
@@ -101,7 +102,7 @@ Each of these geoms is two dimensional and requires both \code{x} and \code{y} a
 % FIGLISTING
 %   LABEL: geom-basic
 %   CAPTION: The basic geoms applied to the same data.  Many give rise to 
-%   to named plots (from top-left to bottom-right): scatterplot, barchart,
+%   to named plots (from top left to bottom right): scatterplot, bar chart,
 %   line chart, area chart, path plot, labelled scatterplot, image/level 
 %   plot and polygon plot.  Observe the different axis ranges for the 
 %   bar, area and tile plots: these geoms take up space outside the 
@@ -125,15 +126,15 @@ Each of these geoms is two dimensional and requires both \code{x} and \code{y} a
 
 \section{Displaying distributions}\label{sec:distributions}
 
-There are a number of geoms can be used to display distributions, depending on the dimensionality of the distribution, whether it is continuous or discrete, and whether you are interested in conditional or joint distribution.
+There are a number of geoms that can be used to display distributions, depending on the dimensionality of the distribution, whether it is continuous or discrete, and whether you are interested in conditional or joint distribution.
 
 For 1d continuous distributions the most important geom is the histogram.  Figure~\ref{fig:geom-1d-con} uses the histogram to display the distribution of diamond \var{depth}.  It is important to experiment with bin placement to find a revealing view. You can change the \code{binwidth}, or specify the exact location of the \code{breaks}.  
 
 % FIGURE
 %   LABEL: geom-1d-con
 %   GG-HEIGHT: 4
-%   CAPTION: \Leftc, never rely on the default parameters to get a revealing
-%   view of the distribution.  \Rightc, zooming in on the x axis, 
+%   CAPTION: (Left) Never rely on the default parameters to get a revealing
+%   view of the distribution.  (Right) Zooming in on the x axis, 
 %   {\tt xlim = c(55, 70)}, and selecting a smaller bin width,
 %   {\tt binwidth = 0.1}, reveals far more detail. We can see that the
 %   distribution is slightly skew-right. Don't forget to include information
@@ -166,18 +167,18 @@ If you want to compare the distribution between groups, you have a few options: 
 \input{_include/478e88326776287f60d79954bc6c5996.tex}
 % END
 
-\noindent Both the histogram and frequency polygon geom use \code{stat_bin}.  This statistic produces two output variables \code{count} and \code{density}.  The count is the default as it is most interpretable.  The density is basically the count divided by the total count, and is useful when you want to compare the shape of the distributions, not the overall size.  You will often prefer this when comparing the distribution of subsets that different sizes.
+\noindent Both the histogram and frequency polygon geom use \code{stat_bin}.  This statistic produces two output variables \code{count} and \code{density}.  The count is the default as it is most interpretable.  The density is basically the count divided by the total count, and is useful when you want to compare the shape of the distributions, not the overall size.  You will often prefer this when comparing the distribution of subsets that have different sizes.
 
-Many of the distribution related geoms come in geom/stat pairs.  Most of these geoms are aliases: a basic geom is combined with a stat to produce the desired plot.  The boxplot may appear to be an exception to this rule, but behind the scenes \code{geom_boxplot} uses a combination of the basic bars, lines and points.
+Many of the distribution-related geoms come in geom/stat pairs.  Most of these geoms are aliases: a basic geom is combined with a stat to produce the desired plot.  The boxplot may appear to be an exception to this rule, but behind the scenes \code{geom_boxplot} uses a combination of the basic bars, lines and points.
 
 \begin{itemize}
-  \item \code{geom_boxplot} = \code{stat_boxplot} + \code{geom_boxplot}: box and whisker plot, for a continuous variable conditioned by a categorical variable.  This is a useful display when the categorical variable has many distinct values.  When there few values, the techniques described above give a better view of the shape of the distribution.  This technique can also be used for continuous variables, if they are first finely binned.   Figure~\ref{fig:geom-boxplot} shows boxplots conditioned on both categorical and continuous variables.
+  \item \code{geom_boxplot} = \code{stat_boxplot} + \code{geom_boxplot}: box-and-whisker plot, for a continuous variable conditioned by a categorical variable.  This is a useful display when the categorical variable has many distinct values.  When there are few values, the techniques described above give a better view of the shape of the distribution.  This technique can also be used for continuous variables, if they are first finely binned.   Figure~\ref{fig:geom-boxplot} shows boxplots conditioned on both categorical and continuous variables.
   
   % FIGLISTING
   %   LABEL: geom-boxplot
   %   CAPTION: The boxplot geom can be use to see the distribution of a 
-  %   continuous variable conditional on a discrete varable like cut, \leftc,
-  %   or continuous variable like carat, \rightc.  For continuous variables,
+  %   continuous variable conditional on a discrete varable like cut (left),
+  %   or continuous variable like carat (right).  For continuous variables,
   %   the group aesthetic must be set to get multiple boxplots.  Here 
   %   {\tt group = round\_any(carat, 0.1, floor)} is used to get a boxplot for
   %   each 0.1 carat bin.
@@ -188,15 +189,15 @@ Many of the distribution related geoms come in geom/stat pairs.  Most of these g
   \input{_include/510852746dc5e14290f83a9424a9e584.tex}  
   % END
   
-  \item \code{geom_jitter} = \code{position_jitter} + \code{geom_point}: a crude way of looking at discrete distributions by adding random noise to the the discrete values so that they don't overplot.  An example is shown in Figure~\ref{fig:geom-jitter} created with the code below.
+  \item \code{geom_jitter} = \code{position_jitter} + \code{geom_point}: a crude way of looking at discrete distributions by adding random noise to the discrete values so that they don't overplot.  An example is shown in Figure~\ref{fig:geom-jitter} created with the code below.
   
   % FIGLISTING
   %   LABEL: geom-jitter
   %   COL: 1 GG-WIDTH: 8 TEX-WIDTH: 0.8 \linewidth
   %   CAPTION: The jitter geom can be used to give a crude visualisation of 2d 
   %   distributions with a discrete component.  Generally this works better
-  %   for smaller datasets.  Car class vs continuous variable city mpg (left)
-  %   and discrete variable drive train (right).
+  %   for smaller datasets.  Car class vs. continuous variable city mpg (top)
+  %   and discrete variable drive train (bottom).
   % 
   % qplot(class, cty, data=mpg, geom="jitter")
   % qplot(class, drv, data=mpg, geom="jitter")
@@ -207,7 +208,7 @@ Many of the distribution related geoms come in geom/stat pairs.  Most of these g
   % 
   % % FIGURE
   % %   LABEL: geom-quantile
-  % %   CAPTION: The boxplot geom can be use to see the distribution of a 
+  % %   CAPTION: The boxplot geom can be used to see the distribution of a 
   % %   continuous variable conditional on a, \leftc discrete varable, or
   % %   right continuous variable.  If the number of boxplots is small, 
   % %   faceted histograms will reveal finer details of the distribution.
@@ -243,7 +244,7 @@ Visualising a joint 2d continuous distribution is described in the next section.
 \section{Dealing with overplotting}
 \label{sec:overplotting}
 
-The scatterplot is a very important tool for assessing the relationship between a two continuous variables.  However, when the data is large, often points will be plotted on top of each other, obscuring the true relationship.  In extreme cases, you will only be able to see the extent of the data, and any conclusions drawn from the graphic will be suspect.  This problem is called overplotting and there are a number of ways to deal with it:
+The scatterplot is a very important tool for assessing the relationship between two continuous variables.  However, when the data is large, often points will be plotted on top of each other, obscuring the true relationship.  In extreme cases, you will only be able to see the extent of the data, and any conclusions drawn from the graphic will be suspect.  This problem is called overplotting and there are a number of ways to deal with it:
 
 \begin{itemize}
 
@@ -265,7 +266,7 @@ The scatterplot is a very important tool for assessing the relationship between 
   \input{_include/507c81932d79faee9d98bf89b76c5260.tex}  
   % END
   
-  \item For larger datasets with more overplotting, you can use alpha blending (transparency) to make the points transparent.  If you specify alpha as a ratio, the denominator gives the number of points that must be overplotted to give a solid colour.  In R, the lowest amount of transparency you can use is 1/256, so it will not be effective for heavily overplotting.  Figure~\ref{fig:overp-alpha} demonstrates some of these options with the following code.
+  \item For larger datasets with more overplotting, you can use alpha blending (transparency) to make the points transparent.  If you specify alpha as a ratio, the denominator gives the number of points that must be overplotted to give a solid colour.  In R, the lowest amount of transparency you can use is 1/256, so it will not be effective for heavy overplotting.  Figure~\ref{fig:overp-alpha} demonstrates some of these options with the following code.
     
   % FIGLISTING
   %   FILETYPE: png
@@ -287,7 +288,7 @@ The scatterplot is a very important tool for assessing the relationship between 
   %   FILETYPE: png
   %   COL: 3 TEX-WIDTH: 0.33\linewidth
   %   LABEL: overp-jitter
-  %   CAPTION: A plot of table vs depth from the diamonds data, showing the
+  %   CAPTION: A plot of table vs. depth from the diamonds data, showing the
   %   use of jitter and alpha blending to alleviate overplotting in discrete
   %   data.  From left to right: geom point, geom jitter with default jitter,
   %   geom jitter with horizontal jitter of 0.5 (half the gap between bands) 
@@ -306,7 +307,7 @@ The scatterplot is a very important tool for assessing the relationship between 
   
 \end{itemize}
 
-Alternatively, we can think overplotting as a 2d density estimation problem, which gives rise to two more approaches:
+Alternatively, we can think of overplotting as a 2d density estimation problem, which gives rise to two more approaches:
   
 \begin{itemize}
   \item Bin the points and count the number in each bin, then visualise that count in some way (the 2d generalisation of the histogram).  Breaking the plot into many small squares can produce distracting visual artefacts.  \citet{carr:1987} suggests using hexagons instead, and this is implemented with \code{geom_hexagon}, using the capabilities of the {\tt hexbin} package \citep{hexbin}.  Figure~\ref{fig:overp-bin} compares square and hexagonal bins, using parameters \code{bins} and \code{binwidth} to control the number and size of the bins.  The complete code is shown below.
@@ -338,7 +339,7 @@ Alternatively, we can think overplotting as a 2d density estimation problem, whi
   %   COL: 2 TEX-WIDTH: 0.4\linewidth
   %   LABEL: overp-density
   %   CAPTION: Using density estimation to model and visualise point
-  %   densities.  Top, image displays of the density; bottom, point and 
+  %   densities.  (Top) Image displays of the density; (bottom) point and 
   %   contour based displays.
   % 
   % d <- ggplot(diamonds, aes(carat, price)) + xlim(1,3) + 
@@ -357,13 +358,13 @@ Alternatively, we can think overplotting as a 2d density estimation problem, whi
   
 \end{itemize}
 
-Another approach to dealing with overplotting is to add data summaries to help guide the eye to the true shape of the pattern within the data.  For example,  you could add a smooth line showing the centre of the data with \code{geom_smooth}. Sections~\ref{sec:summary} has more ideas.
+Another approach to dealing with overplotting is to add data summaries to help guide the eye to the true shape of the pattern within the data.  For example,  you could add a smooth line showing the centre of the data with \code{geom_smooth}. Section~\ref{sec:summary} has more ideas.
 
 
 \section{Surface plots}
 \label{sec:surface}
 
-\ggplot currently does not support true 3d surfaces.  However, it does support the common tools for representing 3d surfaces in 2d: contours, coloured tiles, and bubble plots.  These were used to illustrated the 2d density surfaces in the previous section.  You may also want to look at RGL, \url{http://rgl.neoscientists.org/about.shtml}, for interactive 3d plots, including true 3d surfaces.
+\ggplot currently does not support true 3d surfaces.  However, it does support the common tools for representing 3d surfaces in 2d: contours, coloured tiles and bubble plots.  These were used to illustrated the 2d density surfaces in the previous section.  You may also want to look at RGL, \url{http://rgl.neoscientists.org/about.shtml}, for interactive 3d plots, including true 3d surfaces.
 
 \section{Drawing maps}
 \label{sec:maps}
@@ -394,9 +395,9 @@ Adding map border is performed by the \f{borders} function.  The first two argum
 
 % FIGLISTING
 %   LABEL: borders
-%   CAPTION: Example using the borders function.  Left, all cities with
-%   population (as at January 2006) of greater than half a million, and right, 
-%   cities in Texas. 
+%   CAPTION: Example using the borders function.  (Left) All cities with
+%   population (as of January 2006) of greater than half a million, 
+%   (right) cities in Texas. 
 % 
 % library(maps)
 % data(us.cities)
@@ -410,7 +411,7 @@ Adding map border is performed by the \f{borders} function.  The first two argum
 \input{_include/c0cb368475e94ee26f7b100e7af9aa83.tex}
 % END
 
-Choropleth maps are a little trickier and a lot less automated because it is be challenging to match the identifiers in your data to the identifiers in the map data. The following example shows how to use \f{map_data} to convert a map into a data frame, which can then be \f{merge}d with your data to produce a choropleth map. The results are shown in Figure~\ref{choropleth}. The details for your data will probably be different, but the key is to have a column in your data and a column in the map data that can be match.
+Choropleth maps are a little trickier and a lot less automated because it is challenging to match the identifiers in your data to the identifiers in the map data. The following example shows how to use \f{map_data} to convert a map into a data frame, which can then be \f{merge}d with your data to produce a choropleth map. The results are shown in Figure~\ref{choropleth}. The details for your data will probably be different, but the key is to have a column in your data and a column in the map data that can be matched.
 
 % FIGLISTING
 %   LABEL: choropleth
@@ -468,7 +469,7 @@ If you have information about the uncertainty present in your data, whether it b
   \label{tbl:interval}
 \end{table}
 
-Because there are so many different ways to calculate standard errors, the calculation is up to you.  For very simple cases, \ggplot provide some tools in the form of summary functions described in Section~\ref{sec:summary}, otherwise you will have to do it yourself.  The \code{effects} package \citep{effects} is particularly useful for extracting these values from linear models.  The following example fits a two-way model with interaction, and shows how to extract and visualise marginal and conditional effects.  Figure~\ref{fig:model-cat} focuses on the categorical variable colour, and Figure~\ref{fig:model-cont} focuses on the continuous variable carat.
+Because there are so many different ways to calculate standard errors, the calculation is up to you.  For very simple cases, \ggplot provides some tools in the form of summary functions described in Section~\ref{sec:summary}, otherwise you will have to do it yourself.  The \code{effects} package \citep{effects} is particularly useful for extracting these values from linear models.  The following example fits a two-way model with interaction, and shows how to extract and visualise marginal and conditional effects.  Figure~\ref{fig:model-cat} focusses on the categorical variable colour, and Figure~\ref{fig:model-cont} focusses on the continuous variable carat.
 
 % INTERWEAVE
 % 
@@ -497,8 +498,8 @@ Because there are so many different ways to calculate standard errors, the calcu
 % FIGURE
 %   FILETYPE: png
 %   LABEL: ldata
-%   CAPTION: Data transformed to remove most obvious effects.  Left, both
-%   x and y axes are log10 transformed to remove non-linearity.  Right, the
+%   CAPTION: Data transformed to remove most obvious effects.  (Left) Both
+%   x and y axes are log10 transformed to remove non-linearity.  (Right) The
 %   major linear trend is removed.
 % 
 % qplot(lcarat, lprice, data=d, colour = color)
@@ -508,8 +509,8 @@ Because there are so many different ways to calculate standard errors, the calcu
 
 % FIGURE
 %   LABEL: model-cat
-%   CAPTION: Displaying uncertaintly in model estimates for colour.  Left, 
-%   marginal effect of colour, and right, conditional effects of colour for
+%   CAPTION: Displaying uncertainty in model estimates for colour.  (Left)
+%   Marginal effect of colour.  (Right) conditional effects of colour for
 %   different levels of carat.  Error bars show 95\% pointwise confidence 
 %   intervals.
 % 
@@ -525,10 +526,10 @@ Because there are so many different ways to calculate standard errors, the calcu
 
 % FIGURE
 %   LABEL: model-cont
-%   CAPTION: Displaying uncertaintly in model estimates for carat.  Left, 
-%   marginal effect of carat, and right, conditional effects of carat for
+%   CAPTION: Displaying uncertainty in model estimates for carat.  (Left) 
+%   marginal effect of carat.  (Right) conditional effects of carat for
 %   different levels of colour.  Bands show 95\% point-wise confidence
-%   intervals
+%   intervals.
 % 
 % fplot %+% carat + aes(x = lcarat) + geom_smooth(stat="identity")
 % 
@@ -559,9 +560,9 @@ When using \f{stat_summary} you can either supply these the summary functions in
 % FIGURE
 %   COL: 4 TEX-WIDTH: 0.25\linewidth
 %   LABEL: stat-summary
-%   CAPTION: Examples of \code{stat_summary} in use.  Top, continuous
+%   CAPTION: Examples of \code{stat_summary} in use.  (Top) Continuous
 %   x with, from left to right, median and line, \f{median_hilow} and smooth, 
-%   mean and line, and \f{mean_cl_boot} and smooth.  Bottom, discrete x, 
+%   mean and line, and \f{mean_cl_boot} and smooth.  (Bottom) Discrete x  
 %   with, from left to right, \f{mean} and point, \f{mean_cl_normal} and 
 %   error bar, \f{median_hilow} and point range, and \f{median_hilow} and 
 %   crossbar.  Note that \ggplot displays the full range of the data, not just
@@ -635,7 +636,7 @@ The arguments \code{fun.y}, \code{fun.ymin} and \code{fun.ymax} accept simple nu
 
 When annotating your plot with additional labels, the important thing to remember is that these annotations are just extra data.  There are two basic ways to add annotations: one at a time, or many at once.
 
-Adding one at a time works best for small numbers of annotations with varying aesthetics. You just set all the values to the give the desired properties. If you have multiple annotations with similar properties, it may make sense to put them all in a data frame and add them at once. The example below demonstrates both approaches by adding information about presidents to economic data.
+Adding one at a time works best for small numbers of annotations with varying aesthetics. You just set all the values to give the desired properties. If you have multiple annotations with similar properties, it may make sense to put them all in a data frame and add them at once. The example below demonstrates both approaches by adding information about presidents to economic data.
 
 % INTERWEAVE
 %   GG-WIDTH: 8 GG-HEIGHT: 3
@@ -667,13 +668,13 @@ Adding one at a time works best for small numbers of annotations with varying ae
 \begin{itemize}
   \item \code{geom_text} for adding text descriptions or labelling points.  Most plots will not benefit from adding text to every single observation on the plot.  However, pulling out just a few observations (using subset) can be very useful.  Typically you will want to label outliers or other important points.
   
-  \item \code{geom_vline}, \code{geom_hline}: add vertical or horizontal lines to a plot
+  \item \code{geom_vline}, \code{geom_hline}: add vertical or horizontal lines to a plot.
   
-  \item \code{geom_abline}: add lines with arbitrary slope and intercept to a plot
+  \item \code{geom_abline}: add lines with arbitrary slope and intercept to a plot.
   
   \item \code{geom_rect} for highlighting interesting rectangular regions of the plot.  \code{geom_rect} has aesthetics \code{xmin}, \code{xmax}, \code{ymin} and \code{ymax}.
   
-  \item \code{geom_line}, \code{geom_path} and \code{geom_segment} for adding lines.  All these geoms have an \code{arrow} parameter, which allows you to place an arrow head on the line.  You create arrowheads with the \f{arrow} function, which has arguments \code{angle}, \code{length}, \code{ends} and \code{type}.
+  \item \code{geom_line}, \code{geom_path} and \code{geom_segment} for adding lines.  All these geoms have an \code{arrow} parameter, which allows you to place an arrowhead on the line.  You create arrowheads with the \f{arrow} function, which has arguments \code{angle}, \code{length}, \code{ends} and \code{type}.
   
 \end{itemize}
 
@@ -684,9 +685,9 @@ Adding one at a time works best for small numbers of annotations with varying ae
 
 % The {\tt weight} aesthetic is also useful when you have weighted data.  All ggplot2 statistics know how to correctly deal with (WHAT TYPE OF WEIGHTS?) weights, which makes plotting your weighted data easy.  For a more comprehensive description of plotting weights, see ``Weight and see''.
 
-When you have aggregated data where each row in the dataset represents multiple observations, you need some way to take into account the weighting variable.  We will use some data collected on Midwest states in the 2000 US census. The data consists mainly of percentages (eg. percent white, percent below poverty line, percentage with college degree) and some information for each county (area, total population, population density).
+When you have aggregated data where each row in the dataset represents multiple observations, you need some way to take into account the weighting variable.  We will use some data collected on Midwest states in the 2000 US census. The data consists mainly of percentages (e.g., percent white, percent below poverty line, percent with college degree) and some information for each county (area, total population, population density).
 
-There are few different things we might want to weight by: 
+There are a few different things we might want to weight by: 
 
 \begin{itemize}
   \item nothing, to look at numbers of counties
@@ -694,7 +695,7 @@ There are few different things we might want to weight by:
   \item area, to investigate geographic effects
 \end{itemize}
 
-\noindent The choice of a weighting variable profoundly effects what we are looking at in the plot and the conclusions that we will draw.  There are two aesthetic attributes that can be used to adjust for weights.  Firstly, for simple geoms like lines and points, you can make the size of the grob proportional to the number of points, using the {\tt size} aesthetic, as with the following code, whose results are shown in Figure~\ref{fig:miss-basic}.
+\noindent The choice of a weighting variable profoundly affects what we are looking at in the plot and the conclusions that we will draw.  There are two aesthetic attributes that can be used to adjust for weights.  Firstly, for simple geoms like lines and points, you can make the size of the grob proportional to the number of points, using the {\tt size} aesthetic, as with the following code, whose results are shown in Figure~\ref{fig:miss-basic}.
 
 % FIGLISTING
 %   COL: 3 TEX-WIDTH: 0.33\linewidth
@@ -710,11 +711,11 @@ There are few different things we might want to weight by:
 \input{_include/7745c6925b8c7d8e3669d88efb0e9907.tex}
 % END
 
-For more complicated grobs which involve some statistical transformation, we specify weights with the {\tt weight} aesthetic.  These weights will be passed on to the statistical summary function.  Weights are supported for every case where it makes sense: smoothers, quantile regressions, box plots, histograms, and density plots.  You can't see this weighting variable directly, and it doesn't produce a legend, but it will change the results of the statistical summary.  Figure~\ref{fig:weight-lm} shows how weighting by population density affects the relationship between percent white and percent below the poverty line.
+For more complicated grobs which involve some statistical transformation, we specify weights with the {\tt weight} aesthetic.  These weights will be passed on to the statistical summary function.  Weights are supported for every case where it makes sense: smoothers, quantile regressions, boxplots, histograms, and density plots.  You can't see this weighting variable directly, and it doesn't produce a legend, but it will change the results of the statistical summary.  Figure~\ref{fig:weight-lm} shows how weighting by population density affects the relationship between percent white and percent below the poverty line.
 
 % FIGLISTING
 %   LABEL: weight-lm
-%   CAPTION: A unweighted line of best fit (left) and weighted by population
+%   CAPTION: An unweighted line of best fit (left) and weighted by population
 %   size (right).
 %
 % lm_smooth <- geom_smooth(method = lm, size = 1)
@@ -728,7 +729,7 @@ When we weight a histogram or density plot by total population, we change from l
 
 % FIGLISTING
 %   LABEL: weight-hist
-%   CAPTION: The different between a unweighted (left) and weighted (right)
+%   CAPTION: The difference between an unweighted (left) and weighted (right)
 %   histogram.  The unweighted histogram shows number of counties, while the
 %   weighted histogram shows population.  The weighting considerably changes
 %   the interpretation!
