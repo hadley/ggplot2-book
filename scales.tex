@@ -13,13 +13,13 @@
 
 \section{Introduction}
 
-Scales control the mapping from data to aesthetics. They take your data and turn it into something that you can perceive visually: e.g.\ size, colour, position, or shape. Scales also provide the tools you use to read the plot: the axes and legends (collectively known as guides). Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the range). The domain of each scale corresponds to the range of the variable supplied to the scale, and can be continuous or discrete, ordered or unordered. The range consists of the concrete aesthetics that you can perceive and that R can understand: position, colour, shape, size, and line type. If you blinked when you read that scales map data both to position and colour, you are not alone. The notion that the same kind of object is used to map data to positions and symbols strikes some people as unintuitive. However, you will see the logic and power of this notion as you read further in the chapter.
+Scales control the mapping from data to aesthetics. They take your data and turn it into something that you can perceive visually: e.g., size, colour, position or shape. Scales also provide the tools you use to read the plot: the axes and legends (collectively known as guides). Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the range). The domain of each scale corresponds to the range of the variable supplied to the scale, and can be continuous or discrete, ordered or unordered. The range consists of the concrete aesthetics that you can perceive and that R can understand: position, colour, shape, size and line type. If you blinked when you read that scales map data both to position and colour, you are not alone. The notion that the same kind of object is used to map data to positions and symbols strikes some people as unintuitive. However, you will see the logic and power of this notion as you read further in the chapter.
 
-The process of scaling takes place in three steps, transformation, training, and mapping, and is described in Section~\ref{sec:how-scales-work}. Without a scale, there is no way to go from the data to aesthetics, so a scale is required for every aesthetic used on the plot. It would be tedious to manually add a scale every time you used a new aesthetic, so whenever a scale is needed \ggplot will add a default. You can generate many plots without knowing how scales work, but understanding scales and learning how to manipulate them will give you much more control. Default scales and how to override them are described in Section~\ref{sec:scale-usage}. 
+The process of scaling takes place in three steps, transformation, training and mapping, and is described in Section~\ref{sec:how-scales-work}. Without a scale, there is no way to go from the data to aesthetics, so a scale is required for every aesthetic used on the plot. It would be tedious to manually add a scale every time you used a new aesthetic, so whenever a scale is needed \ggplot will add a default. You can generate many plots without knowing how scales work, but understanding scales and learning how to manipulate them will give you much more control. Default scales and how to override them are described in Section~\ref{sec:scale-usage}. 
 
 Scales can be roughly divided into four categories: position scales, colour scales, the manual discrete scale and the identity scale. The common options and most important uses are described in Section~\ref{sec:scale-details}. The section focusses on giving you a high-level overview of the options available, rather than expanding on every detail in depth.  Details about individual parameters are included in the online documentation.
 
-The other important role of the each scale is to produce a {\bf guide} that allows the viewer to perform the inverse mapping, from aesthetic space to data space, and read values off the plot. For position aesthetics, the axes are the guides; for all other aesthetics, legends do the job. Unlike other plotting systems, you have little direct control over the axis or legend: there is no \f{gglegend} or \f{ggaxis} to call to modify legends or axes.  Instead, all aspects of the guides are controlled by parameters of the scale. Axes and legends are discussed in Section~\ref{sec:guides}.
+The other important role of each scale is to produce a {\bf guide} that allows the viewer to perform the inverse mapping, from aesthetic space to data space, and read values off the plot. For position aesthetics, the axes are the guides; for all other aesthetics, legends do the job. Unlike other plotting systems, you have little direct control over the axis or legend: there is no \f{gglegend} or \f{ggaxis} to call to modify legends or axes.  Instead, all aspects of the guides are controlled by parameters of the scale. Axes and legends are discussed in Section~\ref{sec:guides}.
 
 % Add example showing an axis and legend(s?) for the same variable mapped to different aesthetics
 
@@ -30,7 +30,7 @@ Section~\ref{sec:scale-resources} concludes the chapter with pointers to other a
 
 To describe how scales work, we will first describe the domain (the data space) and the range (the aesthetic space), and then outline the process by which one is mapped to the other.
 
-Since an input variable is either discrete or continuous, the domain is either a set of values (stored as a factor, character vector, or logical vector) or an interval on the real line (stored as a numeric vector of length 2). For example, in the mammals sleep dataset, the domain of the discrete variable \var{vore} is \{carni, herbi, omni\}, and the domain of the continuous variable \var{bodywt} is $[0.005, 6654]$.  We often think of these as data ranges, but here we are focussing on their nature as input to to the scale, i.e.\ as a domain of a function.
+Since an input variable is either discrete or continuous, the domain is either a set of values (stored as a factor, character vector or logical vector) or an interval on the real line (stored as a numeric vector of length 2). For example, in the mammals sleep dataset, the domain of the discrete variable \var{vore} is \{carni, herbi, omni\}, and the domain of the continuous variable \var{bodywt} is $[0.005, 6654]$.  We often think of these as data ranges, but here we are focussing on their nature as input to the scale, i.e., as a domain of a function.
 
 The range can also be discrete or continuous. For discrete scales, it is a vector of aesthetic values corresponding to the input values. For continuous scales, it is a 1d path through some more complicated space. For example, a colour gradient interpolates linearly from one colour to another. The range is either specified by the user when the scale is created, or by the scale itself.
 
@@ -42,11 +42,11 @@ The process of mapping the domain to the range includes the following stages:
 
   After any transformations have been applied, the statistical summaries for each layer are computed based on the transformed data. This ensures that a plot of $\log(x)$ vs. $\log(y)$ on linear scales looks the same as $x$ vs. $y$ on log scales.
 
-  \item {\bf training}:  During this key stage, the domain of the scale is learned.  Sometimes learning the domain of a scale is extremely straightforward: In a plot with only one layer, representing only raw data, it consists of determining the minimum and maximum values of a continuous variable (after transformation), or listing the unique levels of a categorical variable.  However, often the domain must reflect multiple layers across multiple datasets in multiple panels.  For example, imagine a scale that will be used to create an axis; the minimum and maxiumum values of the raw data in the first layer and the statistical summary in the second layer are likely to be different, but they must all eventually be drawn on the same plot.
+  \item {\bf training}:  During this key stage, the domain of the scale is learned.  Sometimes learning the domain of a scale is extremely straightforward: In a plot with only one layer, representing only raw data, it consists of determining the minimum and maximum values of a continuous variable (after transformation), or listing the unique levels of a categorical variable.  However, often the domain must reflect multiple layers across multiple datasets in multiple panels.  For example, imagine a scale that will be used to create an axis; the minimum and maximum values of the raw data in the first layer and the statistical summary in the second layer are likely to be different, but they must all eventually be drawn on the same plot.
 
   The domain can also be specified directly, overriding the training process, by manually setting the domain of the scale with the {\tt limits} argument, as described in Section~\ref{sec:scale-usage}.  Any values outside of the domain of the scale will be mapped to \code{NA}.
 
-  \item {\bf mapping:}  we now know the domain and we already knew the range before we started this process, so the last thing to do is to apply the scaling function that maps data values to aesthetic values. 
+  \item {\bf mapping:}  We now know the domain and we already knew the range before we started this process, so the last thing to do is to apply the scaling function that maps data values to aesthetic values. 
 
 \end{itemize}
 
@@ -73,7 +73,7 @@ Default scales are added when you initialise the plot and when you add new layer
 \input{_include/caa8c99b4e75c33bc20e5293c357df38.tex}
 % END
 
-To add a different scale or to modify some features of the default scale, you must construct a new scale and then add it to the plot using \code{+}. All scale constructors have a common naming scheme.  They start with \code{scale_}, followed by the name of the aesthetic (e.g., \code{colour_}, \code{shape_}, or \code{x_}), and finally by the name of the scale (e.g., \code{gradient}, \code{hue}, or \code{manual}). For example, the name of the default scale for the colour aesthetic based on discrete data is {\tt scale\_colour\_hue()}, and the name of the Brewer colour scale for fill colour is {\tt scale\_fill\_brewer()}.
+To add a different scale or to modify some features of the default scale, you must construct a new scale and then add it to the plot using \code{+}. All scale constructors have a common naming scheme.  They start with \code{scale_}, followed by the name of the aesthetic (e.g., \code{colour_}, \code{shape_} or \code{x_}), and finally by the name of the scale (e.g., \code{gradient}, \code{hue} or \code{manual}). For example, the name of the default scale for the colour aesthetic based on discrete data is {\tt scale\_colour\_hue()}, and the name of the Brewer colour scale for fill colour is {\tt scale\_fill\_brewer()}.
 
 \begin{table}
   \begin{center}
@@ -89,7 +89,7 @@ To add a different scale or to modify some features of the default scale, you mu
     \bottomrule
   \end{tabular}
   \end{center}
-  \caption{Scales, by aesthetic and variable type.  Default scales are emboldened. The default scale varies depending on whether the variable is continuous or discrete.  Shape and line type do not not have a default continuous scale; size does not have a default discrete scale.}
+  \caption{Scales, by aesthetic and variable type.  Default scales are emboldened. The default scale varies depending on whether the variable is continuous or discrete.  Shape and line type do not have a default continuous scale; size does not have a default discrete scale.}
   \label{tbl:default-scales}
 \end{table}
 
@@ -97,10 +97,10 @@ The following code illustrates this process.  We start with a plot that uses the
 
 % FIGLISTING
 %   LABEL: scale-adjust
-%   CAPTION: Adjusting the default parameters of a scale. (Top-left) the 
-%   plot with default scale.  (Top-right) adding the default scale by hand
-%   doesn't change the appearance of the plot.  (Bottom-left) adjusting the
-%   parameters of the scale to tweak the legend.  (Bottom-right) using a 
+%   CAPTION: Adjusting the default parameters of a scale. (Top left) The 
+%   plot with default scale.  (Top right) Adding the default scale by hand
+%   doesn't change the appearance of the plot.  (Bottom left) Adjusting the
+%   parameters of the scale to tweak the legend.  (Bottom right) Using a 
 %   different colour scale: Set1 from the ColorBrewer colours.
 %   GG-WIDTH: 4 TEX-WIDTH: 0.5\linewidth COL: 2
 % 
@@ -140,7 +140,7 @@ Scales can be divided roughly into four separate groups:
 
 \end{itemize}
 
-\noindent  This section describes each group in more detail.  Precise details about individual scales can be found in the documentation, within R (e.g.\ {\tt ?scale\_brewer}), or online at  \url{http://had.co.nz/ggplot2}.  
+\noindent  This section describes each group in more detail.  Precise details about individual scales can be found in the documentation, within R (e.g., {\tt ?scale\_brewer}), or online at  \url{http://had.co.nz/ggplot2}.  
 
 \subsection{Common arguments}
 \label{sub:scale-arguments}
@@ -174,7 +174,7 @@ The following arguments are common to all scales.
   
   \item {\tt breaks} and {\tt labels}: {\tt breaks} controls which values appear on the axis or legend, i.e., what values tick marks should appear on an axis or how a continuous scale is segmented in a legend. {\tt labels} specifies the labels that should appear at the breakpoints. If {\tt labels} is set, you must also specify {\tt breaks}, so that the two can be matched up correctly.
 
-  To distinguish breaks from limits, remember that breaks affect what appears on the axes and legends, while limits affect what appears on the plot.  See by Figure~\ref{fig:breaks_vs_limits} for an illustration.  The first column uses the default settings for both breaks and limits, which are {\tt limits = c(4, 8)} and {\tt breaks = 4:8}.  In the middle column, the breaks have been reset: the plotted region is the same, but the tick positions and labels have shifted.  In the right column, it is the limits which have been redefined, so much of the data now falls outside the plotting region. 
+  To distinguish breaks from limits, remember that breaks affect what appears on the axes and legends, while limits affect what appears on the plot.  See Figure~\ref{fig:breaks_vs_limits} for an illustration.  The first column uses the default settings for both breaks and limits, which are {\tt limits = c(4, 8)} and {\tt breaks = 4:8}.  In the middle column, the breaks have been reset: the plotted region is the same, but the tick positions and labels have shifted.  In the right column, it is the limits which have been redefined, so much of the data now falls outside the plotting region. 
   
   % FIGLISTING
   %   LABEL: breaks_vs_limits
@@ -201,7 +201,7 @@ The following arguments are common to all scales.
 \subsection{Position scales}
 \label{sub:scale-position}
 
-Every plot must have two position scales, one for the horizontal positional (the x scale) and one for vertical position (the y scale). \ggplot comes with continuous, discrete (for factor, character and logical vectors), and date scales. Each of these transform the data in a slightly different way, and generate a slightly different type of axis. The following sections describe each type in more detail.
+Every plot must have two position scales, one for the horizontal position (the x scale) and one for the vertical position (the y scale). \ggplot comes with continuous, discrete (for factor, character and logical vectors) and date scales. Each of these transform the data in a slightly different way, and generate a slightly different type of axis. The following sections describe each type in more detail.
 
 A common task for all position axes is changing the axis limits.  Because this is such a common task, \ggplot provides a couple of helper functions to save you some typing: \f{xlim} and \f{ylim}.  These functions inspect their input and then create the appropriate scale, as follows:
 
@@ -248,9 +248,9 @@ The most common continuous position scales are {\tt scale\_x\_continuous} and {\
   \label{tbl:common-trans}
 \end{table}
 
-Transformations are most often used to modify position scales, so there are shortcuts for x, y, and z scales: \f{scale_x_log10} is equivalent to \verb|scale_x_continuous(trans = "log10")|.  The \code{trans} argument works for any continuous scale, including the colour gradients described below, but the shortcuts only exist for position scales.
+Transformations are most often used to modify position scales, so there are shortcuts for x, y and z scales: \f{scale_x_log10} is equivalent to \verb|scale_x_continuous(trans = "log10")|.  The \code{trans} argument works for any continuous scale, including the colour gradients described below, but the shortcuts only exist for position scales.
 
-Of course, you can also perform the transformation yourself. For example instead of using \f{scale_x_log}, you could plot {\tt log10(x)}. That produces an identical result inside the plotting region, but the the axis and tick labels won't be the same. If you use a transformed scale, the axes will be labelled in the original data space. In both cases, the transformation occurs before the statistical summary. Figure~\ref{fig:trans} illustrates this difference with following code.
+Of course, you can also perform the transformation yourself. For example, instead of using \f{scale_x_log}, you could plot {\tt log10(x)}. That produces an identical result inside the plotting region, but the the axis and tick labels won't be the same. If you use a transformed scale, the axes will be labelled in the original data space. In both cases, the transformation occurs before the statistical summary. Figure~\ref{fig:trans} illustrates this difference with the following code.
 
 % FIGLISTING
 %   FILETYPE: PNG
@@ -271,7 +271,7 @@ Transformers are also used in \f{coord_trans}, where the transformation occurs a
 \subsubsection{Date and time}
 \label{sub:scale-date}
 
-Date and times are basically continuous values, but with have special ways of labelling the axes. Currently, only dates of class \code{date} and times of class \code{POSIXct} are supported. If your dates are in a different format you will need to convert them with \f{as.Date} or \f{as.POSIXct}.
+Dates and times are basically continuous values, but with special ways of labelling the axes. Currently, only dates of class \code{date} and times of class \code{POSIXct} are supported. If your dates are in a different format you will need to convert them with \f{as.Date} or \f{as.POSIXct}.
 
 There are three arguments that control the appearance and location of the ticks for date axes: \code{major}, \code{minor} and \code{format}. Generally, the scale does a pretty good job of choosing the defaults, but if you need to tweak them the details are as follows:
 
@@ -313,8 +313,8 @@ The code below generates the plots in Figure~\ref{fig:date-scale}, illustrating 
 
 % FIGLISTING
 %   LABEL: date-scale
-%   CAPTION: A time series of personal savings rate.  (Left) the default
-%   apperance, (middle) breaks every 10 years, and (right) scale restricted
+%   CAPTION: A time series of personal savings rate.  (Left) The default
+%   appearance, (middle) breaks every 10 years, and (right) scale restricted
 %   to 2004, with YMD date format.  Measurements are recorded at the end of 
 %   each month.
 % 
@@ -333,7 +333,7 @@ The code below generates the plots in Figure~\ref{fig:date-scale}, illustrating 
 \subsubsection{Discrete}
 \label{sub:scale-discrete}
 
-Discrete position scales map the unique values of their input to integers.  The order of the result can be controlled by the \code{breaks} argument, and levels can be dropped with \code{limits} argument (or by using \f{xlim} or \f{ylim}).  Because it is often useful to place labels and other annotations on intermediate positions on the plot, discrete position scales also accept continuous values.  If you have not adjusted the breaks or limits, the numerical position of a factor level can be calculated with \f{as.numeric}: the values are placed on integers starting at 1.
+Discrete position scales map the unique values of their input to integers.  The order of the result can be controlled by the \code{breaks} argument, and levels can be dropped with the \code{limits} argument (or by using \f{xlim} or \f{ylim}).  Because it is often useful to place labels and other annotations on intermediate positions on the plot, discrete position scales also accept continuous values.  If you have not adjusted the breaks or limits, the numerical position of a factor level can be calculated with \f{as.numeric}: the values are placed on integers starting at 1.
 
 % TODO: think of a better example to put here
 %% FIGLISTING
@@ -353,21 +353,21 @@ After position, probably the most commonly used aesthetic is colour. There are q
 At the physical level, colour is produced by a mixture of wavelengths of lights. To know a colour completely we need to know the complete mixture of wavelengths, but fortunately for us the human eye only has three different colour receptors, and so we can summarise any colour with just three numbers. You may be familiar with the rgb encoding of colour space, which defines a colour by the intensities of red, green and blue light needed to produce it. One problem with this space is that it is not perceptually uniform: the two colours that are one unit apart may look similar or very different depending on where in the colour space they. This makes it difficult to create a mapping from a continuous variable to a set of colours.  There have been many attempts to come up with colours spaces that are more perceptually uniform.  We'll use a modern attempt called the hcl colour space, which has three components of {\bf h}ue, {\bf c}hroma and {\bf l}uminance:
 
 \begin{itemize}
-  \item Hue is an number between 0 and 360 (an angle) which gives the ``colour'' of the colour: like blue, red, orange etc.
-  \item Luminance is the lightness of the colour.  A luminance of 0 produces a black, and luminance of one produces white.
+  \item Hue is a number between 0 and 360 (an angle) which gives the ``colour'' of the colour: like blue, red, orange, etc.
+  \item Luminance is the lightness of the colour.  A luminance of 0 produces black, and a luminance of 1 produces white.
   \item Chroma is the purity of a colour.  A chroma of 0 is grey, and the maximum value of chroma varies with luminance.
 \end{itemize} 
 
-The combination of these three components does not produce a simple geometric shape.  Figure~\ref{fig:hcl} attempts to show the 3d shape of the space.  Each slice is a constant luminance (brightness) with hue mapped to angle and chroma to radius.  You can see the centre of each slice is gray and the colours get more intense as they get closer to the edge.
+The combination of these three components does not produce a simple geometric shape.  Figure~\ref{fig:hcl} attempts to show the 3d shape of the space.  Each slice is a constant luminance (brightness) with hue mapped to angle and chroma to radius.  You can see the centre of each slice is grey and the colours get more intense as they get closer to the edge.
 
 \begin{figure}[htbp]
   \centering
     \includegraphics[width=\linewidth]{hcl-space}
-  \caption{The shape of the hcl colour space.  Hue is mapped to angle, chroma to radius and each slice shows a different luminance.  The hcl space is a pretty odd shape, but you can see that colours near the centre of each slice are gray, and as you move towards the edges they become more intense.  Slices for luminance 0 and 100 are omitted because they would, respectively, be a single black point and a single white point.}
+  \caption{The shape of the hcl colour space.  Hue is mapped to angle, chroma to radius and each slice shows a different luminance.  The hcl space is a pretty odd shape, but you can see that colours near the centre of each slice are grey, and as you move towards the edges they become more intense.  Slices for luminance 0 and 100 are omitted because they would, respectively, be a single black point and a single white point.}
   \label{fig:hcl}
 \end{figure}
 
-An additional complication is that many people ($\sim$10\% of men) do not possess the normal complement of colour receptors and so can distinguish fewer colours than usual. In brief, it's best to avoid red-green contrasts, and to check your plots with systems that simulate colour blindness. Visicheck is one online solution. Another alternative is the dichromat package \citep{dichromat} which provides tools for simulating colour blindness, and a set of colour schemes known to work well for colour blind people. You can also help people with colour blindness in the same way that you can help people with black and white printers: by providing redundant mappings to other aesthetics like size, line type or shape.
+An additional complication is that many people ($\sim$10\% of men) do not possess the normal complement of colour receptors and so can distinguish fewer colours than usual. In brief, it's best to avoid red-green contrasts, and to check your plots with systems that simulate colour blindness. Visicheck is one online solution. Another alternative is the dichromat package \citep{dichromat} which provides tools for simulating colour blindness, and a set of colour schemes known to work well for colour-blind people. You can also help people with colour blindness in the same way that you can help people with black-and-white printers: by providing redundant mappings to other aesthetics like size, line type or shape.
 
 All of the scales discussed in the following sections work with border (\code{colour}) and fill (\code{fill}) colour aesthetics.
 
@@ -381,21 +381,21 @@ All of the scales discussed in the following sections work with border (\code{co
 There are three types of continuous colour gradients, based on the number of colours in the gradient: 
 
 \begin{itemize}
-  \item \f{scale_colour_gradient} and \f{scale_fill_gradient}: a two--colour gradient, low--high.  Arguments \code{low} and \code{high} control the colours at either end of the gradient.
+  \item \f{scale_colour_gradient} and \f{scale_fill_gradient}: a two-colour gradient, low-high.  Arguments \code{low} and \code{high} control the colours at either end of the gradient.
 
-  \item \f{scale_colour_gradient2} and \f{scale_fill_gradient2}: a three--colour gradient, low--med--high.  As well as \code{low} and \code{high} colours, these scales also have a \code{mid} colour for the colour of the midpoint.  The midpoint defaults to 0, but can be set to any value with the \code{midpoint} argument.  This is particularly useful for creating diverging colour schemes.
+  \item \f{scale_colour_gradient2} and \f{scale_fill_gradient2}: a three-colour gradient, low-med-high.  As well as \code{low} and \code{high} colours, these scales also have a \code{mid} colour for the colour of the midpoint.  The midpoint defaults to 0, but can be set to any value with the \code{midpoint} argument.  This is particularly useful for creating diverging colour schemes.
 
-  \item \f{scale_colour_gradientn} and \f{scale_fill_gradientn}: a custom n--colour gradient.  This scale requires a vector colours in the \code{colours} argument.  Without further arguments these colours will be evenly spaced along the range of the data.  If you want the values to be unequally spaced, use the \code{values} argument, which should be between 0 and 1 if \code{rescale} is true (the default), or within the range of the data is \code{rescale} is false.
+  \item \f{scale_colour_gradientn} and \f{scale_fill_gradientn}: a custom n-colour gradient.  This scale requires a vector of colours in the \code{colours} argument.  Without further arguments these colours will be evenly spaced along the range of the data.  If you want the values to be unequally spaced, use the \code{values} argument, which should be between 0 and 1 if \code{rescale} is true (the default), or within the range of the data is \code{rescale} is false.
 \end{itemize}
 
-Colour gradients are often used to show the height of a 2d surface.  In the following example we'll use the surface of a 2d density estimate of the \code{faithful} dataset \citep{azzalini:1990}, which records the waiting time between eruptions and during of each eruption for the Old Faithful geyser in Yellowstone Park. Figure~\ref{fig:gradient} shows three gradients applied to this data, created with the following code.  Note the use of limits: this parameter is common to all scales.
+Colour gradients are often used to show the height of a 2d surface.  In the following example we'll use the surface of a 2d density estimate of the \code{faithful} dataset \citep{azzalini:1990}, which records the waiting time between eruptions and during each eruption for the Old Faithful geyser in Yellowstone Park. Figure~\ref{fig:gradient} shows three gradients applied to this data, created with the following code.  Note the use of limits: this parameter is common to all scales.
 
 % FIGLISTING
 %   LABEL: gradient
 %   FILETYPE: png
-%   CAPTION: Density of eruptions with three colour schemes.  (Left) default
-%   gradient colour scheme, (mid) customised gradient from white to black and
-%   (right) 3 point gradient with midpoint set to the mean density.
+%   CAPTION: Density of eruptions with three colour schemes.  (Left) Default
+%   gradient colour scheme, (middle) customised gradient from white to black
+%   and (right) 3 point gradient with midpoint set to the mean density.
 % 
 % f2d <- with(faithful, MASS::kde2d(eruptions, waiting, h = c(1, 10), n = 50))
 % df <- with(f2d, cbind(expand.grid(x, y), as.vector(z)))
@@ -413,7 +413,7 @@ Colour gradients are often used to show the height of a 2d surface.  In the foll
 
 % http://www.vendian.org/mncharity/dir3/blackbody/
 
-To create your own custom gradient, use \f{scale_colour_gradientn}. This is useful if you have colours that are meaningful for your data (e.g.\ black body colours or standard terrain colours), or you'd like to use a palette produced by another package. The following code and Figure~\ref{fig:vcd} shows show palettes generates from routines in the \code{vcd} package. \citep{zeileis:2008} describes the philosophy behind these palettes and provides a good introduction to some of the complexities of creating good colour scales.
+To create your own custom gradient, use \f{scale_colour_gradientn}. This is useful if you have colours that are meaningful for your data (e.g., black body colours or standard terrain colours), or you'd like to use a palette produced by another package. The following code and Figure~\ref{fig:vcd} shows palettes generated from routines in the \code{vcd} package. \citet{zeileis:2008} describes the philosophy behind these palettes and provides a good introduction to some of the complexities of creating good colour scales.
 
 % FIGLISTING 
 %   LABEL: vcd
@@ -445,7 +445,7 @@ An alternative to this algorithmic scheme is to use the ColorBrewer colours, \ur
 
 % FIGLISTING
 %   LABEL: brewer-pal
-%   CAPTION: Three colorbrewer palettes, Set1 (left), Set2 (middle) and
+%   CAPTION: Three ColorBrewer palettes, Set1 (left), Set2 (middle) and
 %   Pastel1 (right), applied to points (top) and bars (bottom).
 %   Bright colours work well for points, but are overwhelming on bars.  
 %   Subtle colours work well for bars, but are hard to see on points.
@@ -467,9 +467,9 @@ If you have your own discrete colour scale, you can use \f{scale_colour_manual},
 \subsection{The manual discrete scale}
 \label{sub:scale-discrete}
 
-The discrete scales, \f{scale_linetype}, \f{scale_shape} and \f{scale_size_discrete} basically have no options (although for the shape scale you can choose whether points should be filled or solid). These scales are just a list of valid values that are mapped to each factor levels in turn.
+The discrete scales, \f{scale_linetype}, \f{scale_shape} and \f{scale_size_discrete} basically have no options (although for the shape scale you can choose whether points should be filled or solid). These scales are just a list of valid values that are mapped to each factor level in turn.
 
-If you want to customise these scales, you need to create your own new scale with the manual scale: \f{scale_shape_manual}, \f{scale_linetype_manual}, \f{scale_colour_manual} etc. The manual scale has one important argument, \verb|values|, where you specify the values that the scale should produce. If this vector is named, it will match the values of the output to the values of the input, otherwise it will match in order of the levels of the discrete variable. You will need some knowledge of the valid aesthetic values, which are described in Appendix \ref{cha:specifications}.  The following code demonstrates the use of \f{scale_manual}, with results shown in Figure~\ref{fig:scale-manual}
+If you want to customise these scales, you need to create your own new scale with the manual scale: \f{scale_shape_manual}, \f{scale_linetype_manual}, \f{scale_colour_manual}, etc. The manual scale has one important argument, \verb|values|, where you specify the values that the scale should produce. If this vector is named, it will match the values of the output to the values of the input, otherwise it will match in order of the levels of the discrete variable. You will need some knowledge of the valid aesthetic values, which are described in Appendix \ref{cha:specifications}.  The following code demonstrates the use of \f{scale_manual}, with results shown in Figure~\ref{fig:scale-manual}
 
 % FIGLISTING
 %   LABEL: scale-manual
@@ -500,7 +500,7 @@ The following example shows a creative use \f{scale_colour_manual}, when you wan
 \input{_include/8caf406a171c8a9ed386390fa1aab641.tex}
 % END
 
-What you need to do is tell the colour the scale about the two different lines by creating a mapping from the data to the colour aesthetic. There's no variable present in the data, so you'll have to create one:
+What you need to do is tell the colour scale about the two different lines by creating a mapping from the data to the colour aesthetic. There's no variable present in the data, so you'll have to create one:
 
 % INTERWEAVE  
 %   TEX-WIDTH: 0.75\linewidth
@@ -531,7 +531,7 @@ See Section~\ref{sub:time-series} for an alternative approach to the problem.
 \subsection{The identity scale}
 \label{sub:scale-identity}
 
-The identity scale is used when your data is already in a form that the plotting functions in R understand, i.e.\ when the data and aesthetic spaces are the same.  This means there is no way to derive a meaningful legend from the data alone, and by default a legend is not drawn.  If you want one, you can still use the \code{breaks} and \code{labels} arguments to set it up yourself.
+The identity scale is used when your data is already in a form that the plotting functions in R understand, i.e., when the data and aesthetic spaces are the same.  This means there is no way to derive a meaningful legend from the data alone, and by default a legend is not drawn.  If you want one, you can still use the \code{breaks} and \code{labels} arguments to set it up yourself.
 
 Figure~\ref{fig:scale-identity} shows one sort of data where \code{scale_identity} is useful.  Here the data themselves are colours, and there's no way we could make a meaningful legend.  The identity scale can also be useful in the case where you have manually scaled the data to aesthetic values.  In that situation, you will have to figure out what breaks and labels make sense for your data.
 
@@ -562,7 +562,7 @@ Collectively, axes and legends are called {\bf guides}, and they are the inverse
   \label{fig:labelled-guides}
 \end{figure}
 
-In \ggplot, legends and axes are produced automatically based on the scales and geoms that you used in the plot. This is different to how legends work in most other plotting systems, where you are responsible for adding them.  In \ggplot, there is little you can do to directly control the legend.  This seems like a big restriction at first, but as you get more comfortable with this approach, you will discover that it saves you a lot of time, and there is little you can not do with it.
+In \ggplot, legends and axes are produced automatically based on the scales and geoms that you used in the plot. This is different than how legends work in most other plotting systems, where you are responsible for adding them.  In \ggplot, there is little you can do to directly control the legend.  This seems like a big restriction at first, but as you get more comfortable with this approach, you will discover that it saves you a lot of time, and there is little you cannot do with it.
 
 To draw the legend, the plot must collect information about how each aesthetic is used: for what data and what geoms. The scale breaks are used to determine the values of the legend keys and a list of the geoms that use the aesthetic  is used to determine how to draw the keys. For example, if you use the point geom, then you will get points in the legend; if you use the lines geom, you will get lines. If both point and line geoms are used, then both points and lines will be drawn in the legend.  This is illustrated in Figure~\ref{fig:legend-geom}.
 
@@ -580,7 +580,7 @@ To draw the legend, the plot must collect information about how each aesthetic i
 \input{_include/ab372333b199d1aa8ae6777fe6e4136a.tex}
 % END
 
-\ggplot tries to use the smallest possible number of legends that accurately conveys the aesthetics used in the plot.  It does this by combining legends if a variable is used with more than one aesthetic.  Figure~\ref{fig:legend-merge} shows an example of this for the points geom: if both colour and shape are mapped to the same variable, then only a single legend is necessary.  In order for legends to be merged, they must have the same name (the same legend title).  For this reason, if you change the name of one of the merged legends you'll need to change it for all of them.
+\ggplot tries to use the smallest possible number of legends that accurately conveys the aesthetics used in the plot.  It does this by combining legends if a variable is used with more than one aesthetic.  Figure~\ref{fig:legend-merge} shows an example of this for the points geom: if both colour and shape are mapped to the same variable, then only a single legend is necessary.  In order for legends to be merged, they must have the same name (the same legend title).  For this reason, if you change the name of one of the merged legends, you'll need to change it for all of them.
 
 % FIGURE
 %   TEX-WIDTH: 1in  GG-WIDTH: 1.5 GG-HEIGHT: 2
@@ -596,18 +596,18 @@ To draw the legend, the plot must collect information about how each aesthetic i
 \input{_include/ca8dd5324d1889a77746520612bbc278.tex}
 % END
 
-To contents of the legend and axes is controlled by the scale, and the details of the rendering are controlled by the theming system. The following list includes the most commonly tweaked settings.
+The contents of the legend and axes are controlled by the scale, and the details of the rendering are controlled by the theming system. The following list includes the most commonly tweaked settings.
 
 \begin{itemize}
   \item The scale {\tt name} controls the axis label and the legend title.  This can be a string, or a mathematical expression, as described in \code{?plotmath}.
   
-  \item The {\tt breaks} and {\tt labels} arguments to the scale function, introduced earlier in this chapter, are particularly important because they control what tick marks appear on the axis and what keys appear on the legend.  If the breaks chosen by default are not appropriate (or you want to use more informative labels) setting these arguments will adjust the appearance of the legend keys and axis ticks.  
+  \item The {\tt breaks} and {\tt labels} arguments to the scale function, introduced earlier in this chapter, are particularly important because they control what tick marks appear on the axis and what keys appear on the legend.  If the breaks chosen by default are not appropriate (or you want to use more informative labels), setting these arguments will adjust the appearance of the legend keys and axis ticks.  
   
   \item The theme settings {\tt axis.*} and {\tt legend.*} control the visual appearance of axes and legends.  To learn how to manipulate these settings, see Section~\ref{sec:themes}.
 
   \item The internal grid lines are controlled by the breaks and minor breaks arguments.  By default minor grid lines are spaced evenly in the original data space: this gives the common behaviour of log-log plots where major grid lines are multiplicative and minor grid lines are additive.  You can override the minor grid lines with the {\tt minor\_breaks} argument.  Grid line appearance is controlled by the \code{panel.grid.major} and \code{panel.grid.minor} theme settings.
 
-  \item The position and justification of legends are controlled by the theme setting {\tt legend.position}, and the value can be right, left, top, bottom, none (no legend), or a numeric position.  The numeric position gives (in values between 0 and 1) the position of the corner given by {\tt legend.justification}, a numeric vector of length two.  Top-right = \code{c(1, 1)}, bottom-left = \code{c(0, 0)}.
+  \item The position and justification of legends are controlled by the theme setting {\tt legend.position}, and the value can be right, left, top, bottom, none (no legend), or a numeric position.  The numeric position gives (in values between 0 and 1) the position of the corner given by {\tt legend.justification}, a numeric vector of length two.  Top right = \code{c(1, 1)}, bottom left = \code{c(0, 0)}.
   
 \end{itemize}
 
