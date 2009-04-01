@@ -15,27 +15,27 @@
 
 So far this book has assumed you have your data in a nicely structured data frame ready to feed to \f{ggplot} or \f{qplot}. If this is not the case, then you'll need to do some transformation.  
 
-In Section~\ref{sec:plyr}, you will learn how to use the \pkg{plyr} package to reproduce the statistical transformations performed by the layers, and then in Section~\ref{sec:melting} you will learn a little about ``molten'' (or long) data, which is useful for time series and parallel coordinates plots, among others.  Section~\ref{sec:methods} shows you how to write methods that let you plot objects other than data frames, and demonstrates how \ggplot can be used to recreate a more flexible version of the built in linear-model diagnostics.  
+In Section~\ref{sec:plyr}, you will learn how to use the \pkg{plyr} package to reproduce the statistical transformations performed by the layers, and then in Section~\ref{sec:melting} you will learn a little about ``molten'' (or long) data, which is useful for time series and parallel coordinates plots, among others.  Section~\ref{sec:methods} shows you how to write methods that let you plot objects other than data frames, and demonstrates how \ggplot can be used to re-create a more flexible version of the built in linear-model diagnostics.  
 
 Data cleaning, manipulation and transformation is a big topic and this chapter only scratches the surface of topics closely related to \ggplot.  I recommend the following references which go into considerably more depth on this topic:
 
 \begin{itemize}
-  \item ``Data manipulation with R'', by Phil Spector.  Published by Springer, 2008.
+  \item \emph{Data Manipulation with R}, by Phil Spector.  Published by Springer, 2008.
   
   \item ``plyr: divide and conquer for data analysis'', Hadley Wickham.  Available from \url{http://had.co.nz/plyr}.  This is a full description of the package used in Section~\ref{sec:plyr}.
 
-  \item ``Reshaping data with the reshape package'', Hadley Wickham. \emph{Journal of Statistical Software}, 21 (12), 2007. \url{http://www.jstatsoft.org/v21/i12/}.  This describes the complement of the melt function used in Section~\ref{sec:molten}, which can be used like pivot tables to create a wide range of data summaries and rearrangements.
+  \item ``Reshaping data with the reshape package'', Hadley Wickham. \emph{Journal of Statistical Software}, 21(12), 2007. \url{http://www.jstatsoft.org/v21/i12/}.  This describes the complement of the melt function used in Section~\ref{sec:molten}, which can be used like pivot tables to create a wide range of data summaries and rearrangements.
   
 \end{itemize}
 
 \section{An introduction to plyr}
 \label{sec:plyr}
 
-With faceting, \ggplot makes it very easy to identical plots for different subsets of your data. This section introduces \f{ddply} from the \pkg{plyr} package, a function that makes it easy to do the same thing for numerical summaries. \pkg{plyr} provides a comprehensive suite of tools for breaking up complicated data structures into pieces, processing each piece and then joining the results back together. The \pkg{plyr} package as a whole provides tools for breaking and combining lists, arrays and data frames. Here we will focus on the \f{ddply} function which breaks up a data frame into subsets based on row values, applies a function to each subset, and the joins the results back into a data frame. The basic syntax is \code{ddply(.data, .variables, .fun, ...)}, where
+With faceting, \ggplot makes it very easy to create identical plots for different subsets of your data. This section introduces \f{ddply} from the \pkg{plyr} package, a function that makes it easy to do the same thing for numerical summaries. \pkg{plyr} provides a comprehensive suite of tools for breaking up complicated data structures into pieces, processing each piece and then joining the results back together. The \pkg{plyr} package as a whole provides tools for breaking and combining lists, arrays and data frames. Here we will focus on the \f{ddply} function which breaks up a data frame into subsets based on row values, applies a function to each subset and then joins the results back into a data frame. The basic syntax is \code{ddply(.data, .variables, .fun, ...)}, where
 
 \begin{itemize}
 
-  \item \code{.data} is the dataset to break up (e.g.\ the data that you are plotting).
+  \item \code{.data} is the dataset to break up (e.g., the data that you are plotting).
 
   \item \code{.variables} is a description of the grouping variables used to break up the dataset. This is written like \code{.(var1, var2)}, and to match the plot should contain all the grouping and faceting variables that you've used in the plot.
 
@@ -46,7 +46,7 @@ With faceting, \ggplot makes it very easy to identical plots for different subse
 More information and examples are available in the documentation, \code{?ddply}, and on the package website, \url{http://had.co.nz/plyr}.  The following examples show a few useful summary functions that solve common data manipulation problems.
 
 \begin{itemize}
-  \item Using \f{subset} allows you to select the top (or bottom) n (or x\%) of observations in each group, or observations above (or below) some group specific threshold:
+  \item Using \f{subset} allows you to select the top (or bottom) n (or x\%) of observations in each group, or observations above (or below) some group-specific threshold:
   
   % LISTING
   % 
@@ -59,12 +59,12 @@ More information and examples are available in the documentation, \code{?ddply},
   % # Select the 1% largest diamonds in each group
   % ddply(diamonds, .(color), subset, carat > quantile(carat, 0.99))
   % 
-  % # Select all diamonds bigger that the group average
+  % # Select all diamonds bigger than the group average
   % ddply(diamonds, .(color), subset, price > mean(price))
   \input{_include/21efb3c8e27f35fb12fffcd32f603f6e.tex}  
   % END
   
-  \item Using \f{transform} allows you to perform group-wise transformations with very little work.  This is particularly useful if you want to add new variables that can are calculated on a per group level, such as a per-group standardisation.  Section~\ref{sub:time-series} shows another use of this technique for standardising time series to a common scale.
+  \item Using \f{transform} allows you to perform group-wise transformations with very little work.  This is particularly useful if you want to add new variables that are calculated on a per-group level, such as a per-group standardisation.  Section~\ref{sub:time-series} shows another use of this technique for standardising time series to a common scale.
   
   % LISTING
   % 
@@ -76,7 +76,7 @@ More information and examples are available in the documentation, \code{?ddply},
   \input{_include/a96f045aa9ce7a20784582ad5e08258e.tex}  
   % END
 
-  \item If you want to apply a function to every column in the data frame, you might find the \f{colwise} function handy. This function converts a function that operates on vectors to a function that operates column-wise on data frames. This is rather different to most functions: instead of returning a vector of numbers, \f{colwise} returns a new function. The following example creates a function to count the number of missing values in a vector and then shows how we can use \f{colwise} to apply it to every column in a data frame.
+  \item If you want to apply a function to every column in the data frame, you might find the \f{colwise} function handy. This function converts a function that operates on vectors to a function that operates column-wise on data frames. This is rather different than most functions: instead of returning a vector of numbers, \f{colwise} returns a new function. The following example creates a function to count the number of missing values in a vector and then shows how we can use \f{colwise} to apply it to every column in a data frame.
 
   % INTERWEAVE
   % 
@@ -110,7 +110,7 @@ More information and examples are available in the documentation, \code{?ddply},
   \input{_include/7499bd46ea85f0e32affa39173ef5825.tex}  
   % END
   
-  \item If none of the previous shortcuts is appropriate, make your own summary function which takes a data frame as input and returns an appropriately summarised data frame as output.  The following functions calculates the rank correlation of price and carat and compares it to the regular correlation of the logged values.
+  \item If none of the previous shortcuts is appropriate, make your own summary function which takes a data frame as input and returns an appropriately summarised data frame as output.  The following function calculates the rank correlation of price and carat and compares it to the regular correlation of the logged values.
   
   % INTERWEAVE
   % 
@@ -139,7 +139,7 @@ In this section, we'll work through the process of generating the smoothed data 
 
 % FIGLISTING
 %   LABEL: smooth
-%   CAPTION: A plot showing the smoothed trends for price vs carat for each
+%   CAPTION: A plot showing the smoothed trends for price vs. carat for each
 %   colour of diamonds.  With the full range of carats (left), the standard
 %   errors balloon after around two carats because there are relatively few
 %   diamonds of that size.  Restricting attention to diamonds of less than
@@ -152,7 +152,7 @@ In this section, we'll work through the process of generating the smoothed data 
 \input{_include/0c9a3d15e3828fbbeb2de3de541c2a6d.tex}
 % END
 
-How can we recreate this by hand?  First we read the \f{stat_smooth} documentation to determine what the model is: for large data it's \code{gam(y ~ s(x, bs = "cs"))}.  To get the same output as \f{stat_smooth}, we need to fit the model, then predict it on an evenly spaced grid of points. This task is performed by the \f{smooth} function in the following code.  Once we have written this function it is straightforward to apply it to each diamond colour  using \f{ddply}.
+How can we re-create this by hand?  First we read the \f{stat_smooth} documentation to determine what the model is: for large data it's \code{gam(y ~ s(x, bs = "cs"))}.  To get the same output as \f{stat_smooth}, we need to fit the model, then predict it on an evenly spaced grid of points. This task is performed by the \f{smooth} function in the following code.  Once we have written this function it is straightforward to apply it to each diamond colour  using \f{ddply}.
 
 Figure~\ref{fig:smooth-by-hand} shows the results of this work, which are identical to what we got with \ggplot doing all the work.
 
@@ -198,7 +198,7 @@ See also Sections~\ref{sub:different_aesthetics} and \ref{sec:uncertainty} for o
 \section{Converting data from wide to long}
 \label{sec:melting}
 
-In \ggplot graphics, groups are defined by rows, not by columns. This makes it easy to draw a line for each group defined by the value of a variable (or set of variables) but difficult to draw a separate line for each variable. In this section you will learn how to transform your data to a form in which you can draw line for each variable. This transformation converts from ``wide'' data to ``long'' data, where each variable now occupies it's own set of rows.
+In \ggplot graphics, groups are defined by rows, not by columns. This makes it easy to draw a line for each group defined by the value of a variable (or set of variables) but difficult to draw a separate line for each variable. In this section you will learn how to transform your data to a form in which you can draw a line for each variable. This transformation converts from ``wide'' data to ``long'' data, where each variable now occupies its own set of rows.
 
 To perform this transformation we will use the \f{melt} function from the \pkg{reshape} package \citep{wickham:2007b}. Reshape also provides the \f{cast} function to flexibly reshape and aggregate data, which you may want to read about yourself. Table~\ref{tbl:melt} gives an example. The \f{melt} function has three arguments:
 
@@ -212,7 +212,7 @@ To perform this transformation we will use the \f{melt} function from the \pkg{r
 
 \end{itemize}
 
-If you're familiar with Wilkinson's grammar of graphics, you might wonder why there is no equivalent to the algebra.  There is no equivalent to the algebra within \ggplot itself because there are many other facilities for transforming data in R, and it is inline with the \ggplot philosophy of keeping data transformation and visualisation as separate as possible.
+If you're familiar with Wilkinson's grammar of graphics, you might wonder why there is no equivalent to the algebra.  There is no equivalent to the algebra within \ggplot itself because there are many other facilities for transforming data in R, and it is in line with the \ggplot philosophy of keeping data transformation and visualisation as separate as possible.
 
 % library(xtable)
 % xtable(format(head(economics), digits = 2)[, 1:3])
@@ -289,12 +289,12 @@ One way is to build up the plot with a different layer for each variable, as you
 %   produce identical plots, but using long data is much easier when you have
 %   many variables.  The series have radically different scales, so we only
 %   see the pattern in the \code{unemploy} variable. You might not even notice
-%   \code{unempmed} unless you're paying close attention: it's the line at the
+%   \code{uempmed} unless you're paying close attention: it's the line at the
 %   bottom of the plot.
 % 
 % ggplot(economics, aes(date)) + 
 %   geom_line(aes(y = unemploy, colour = "unemploy")) + 
-%   geom_line(aes(y = uempmed, colour = "umempmed")) + 
+%   geom_line(aes(y = uempmed, colour = "uempmed")) + 
 %   scale_colour_hue("variable")
 %
 % emp <- melt(economics, id = "date", measure = c("unemploy", "uempmed"))
@@ -302,7 +302,7 @@ One way is to build up the plot with a different layer for each variable, as you
 \input{_include/cbdcba7e8e4c38c839e14e5c7fb3a466.tex}
 % END
 
-There is a problem with these plots: the two variables have radically different scales, and so the series for \code{unempmed} appears as a flat line at the bottom of the plot. There is no way to produce a plot with two axis in \ggplot because this type of plot is fundamentally misleading. Instead there are two perceptually well-founded alternatives: rescale the variables to have a common range, or use faceting with free scales. These alternatives are created with the code below and are shown in Figure~\ref{fig:series-scaling}
+There is a problem with these plots: the two variables have radically different scales, and so the series for \code{uempmed} appears as a flat line at the bottom of the plot. There is no way to produce a plot with two axes in \ggplot because this type of plot is fundamentally misleading. Instead there are two perceptually well-founded alternatives: rescale the variables to have a common range, or use faceting with free scales. These alternatives are created with the code below and are shown in Figure~\ref{fig:series-scaling}
 
 % FIGLISTING
 %   LABEL: series-scaling 
@@ -326,9 +326,9 @@ There is a problem with these plots: the two variables have radically different 
 \subsection{Parallel coordinates plot} 
 \label{sub:molten_data}
 
-In a similar manner, we can use molten data to create a parallel coordinates plot \citep{inselberg:1985,wegman:1990}, which has the ``variable'' variable on the x axis and value on the y axis.  We need a new variable to record the row that each observation came from, which is used as a grouping variable for the lines (so we get one line per observation). The easiest value to use for this is the data frame \code{rownames}, and we give it an unusual name {\code{.row}) so we don't squash any of the existing variables). Once we have the data in this form, creating a parallel coordinates plot is easy.
+In a similar manner, we can use molten data to create a parallel coordinates plot \citep{inselberg:1985,wegman:1990}, which has the ``variable'' variable on the x axis and value on the y axis.  We need a new variable to record the row that each observation came from, which is used as a grouping variable for the lines (so we get one line per observation). The easiest value to use for this is the data frame \code{rownames}, and we give it an unusual name {\code{.row}, so we don't squash any of the existing variables. Once we have the data in this form, creating a parallel coordinates plot is easy.
 
-The following code does exactly that for the ratings of 840 movies with over 10,000 votes. This dataset has a moderate number of variables (10) and many cases, and will allow us to experiment with a common technique for dealing with large data in parallel coordinates plots: transparency and clustering. Each variable gives the proportion of votes givens to each rating between 0 (very bad) and 10 (very good). Since this data is already on a common scale we don't need to rescale it, but in general, we would need to use the technique from the previous section to ensure the variables are comparable. This is particularly important if we are going to use other multidimensional techniques to analyse the data.
+The following code does exactly that for the ratings of 840 movies with over 10,000 votes. This dataset has a moderate number of variables (10) and many cases, and will allow us to experiment with a common technique for dealing with large data in parallel coordinates plots: transparency and clustering. Each variable gives the proportion of votes given to each rating between 0 (very bad) and 10 (very good). Since this data is already on a common scale we don't need to rescale it, but in general, we would need to use the technique from the previous section to ensure the variables are comparable. This is particularly important if we are going to use other multidimensional techniques to analyse the data.
 
 % CODELISTING
 % 
@@ -339,15 +339,15 @@ The following code does exactly that for the ratings of 840 movies with over 10,
 \input{_include/db4b6ffbd858aee2875242d855033771.tex}
 % END
 
-Once the data is in this form, creating a parallel coordinates plot is easy. All we need a line plot with \code{variable} on the x axis, \code{value} on the y axis and the lines grouped by \code{.row}. This data needs a few tweaks to the default because the values are highly discrete. In the following code, we experiment with jittering and alpha blending to better display where the bulk on the movies lie. The results are shown in Figure~\ref{fig:pcp}. Most of are rated as sevens or eights by around 25\% voters, with a few exceptional movies getting 35\% of more perfect 10s. However the large number of lines makes it difficult to distinguish individual movies and it's hard to draw firm conclusions.
+Once the data is in this form, creating a parallel coordinates plot is easy. All we need is a line plot with \code{variable} on the x axis, \code{value} on the y axis and the lines grouped by \code{.row}. This data needs a few tweaks to the default because the values are highly discrete. In the following code, we experiment with jittering and alpha blending to better display where the bulk of the movies lie. The results are shown in Figure~\ref{fig:pcp}. Most are rated as sevens or eights by around 25\% of voters, with a few exceptional movies getting 35\% of more perfect 10s. However, the large number of lines makes it difficult to distinguish individual movies and it's hard to draw firm conclusions.
 
 % FIGLISTING
 %   LABEL: pcp
 %   FILETYPE: png GG-WIDTH: 6 COL: 2
 %   CAPTION: Variants on the parallel coordinates plot to better display the 
 %   patterns in this highly discrete data.  To improve the default pcp
-%   (top-left) we experiment with alpha-blending (top-right), jittering 
-%   (bottom-left) and then both together (bottom-right).
+%   (top left) we experiment with alpha blending (top right), jittering 
+%   (bottom left) and then both together (bottom right).
 %
 % pcp <- ggplot(molten, aes(variable, value, group = .row))
 % pcp + geom_line()
@@ -376,7 +376,7 @@ There are many different ways that we can visualise the result of this clusterin
 %   FILETYPE: png
 %   GG-HEIGHT: 3
 %   CAPTION: Displaying cluster membership on a parallel coordinates plot.
-%   (Left) individual movies coloured by group membership and (right) 
+%   (Left) Individual movies coloured by group membership and (right) 
 %   group means.
 % 
 % pcp_cl <- ggplot(molten, 
@@ -386,7 +386,7 @@ There are many different ways that we can visualise the result of this clusterin
 \input{_include/d0609406dfc881bf9c4643ef623f672a.tex}
 % END
 
-These plots are good for showing the differences between groups, but they don't tell us a lot about whether we've done a good job clustering the data.  Figure~\ref{pcp-facet} uses faceting to display the each group in its own panel. This plot highlights the variation within many of the groups, suggesting that perhaps more clusters would be appropriate.
+These plots are good for showing the differences between groups, but they don't tell us a lot about whether we've done a good job clustering the data.  Figure~\ref{pcp-facet} uses faceting to display each group in its own panel. This plot highlights the variation within many of the groups, suggesting that perhaps more clusters would be appropriate.
 
 % FIGLISTING
 %   LABEL: pcp-facet
@@ -408,7 +408,7 @@ These plots are good for showing the differences between groups, but they don't 
 
 \f{ggplot} is a generic function, with different methods for different types of data. The most common input, and what we have used until now, is a data frame. As with base and lattice graphics, it is possible to extend \f{ggplot} to work with other types of data. However, the way this works with \ggplot is fundamentally different: \ggplot will not give you a complete plot, but instead will give you the tools you need to make any plot you desire.
 
-This process is mediated by the \f{fortify} method, which takes an object, and optional data frame, and creates a version of the object in a form suitable for plotting with \ggplot, i.e.\ as a data frame. The name fortify comes from thinking about combining a model with its data: the model fortifies the data, and the data fortifies the model, and the result can be used to simultaneously visualise the model and the data. An example will make this concrete, as you will see when we describe the fortify method for linear models.
+This process is mediated by the \f{fortify} method, which takes an object, and optional data frame, and creates a version of the object in a form suitable for plotting with \ggplot, i.e., as a data frame. The name fortify comes from thinking about combining a model with its data: the model fortifies the data, and the data fortifies the model, and the result can be used to simultaneously visualise the model and the data. An example will make this concrete, as you will see when we describe the fortify method for linear models.
 
 This section describes how the \f{fortify} method works, and how you can create new methods that are aligned with the \ggplot philosophy.  The most important philosophical consideration is that data transformation and display should be kept as separate as possible.  This maximises reusability, as you are no longer trapped into the single display that the author envisaged.  
 
@@ -416,7 +416,7 @@ These different types of input also work with \f{qplot}: remember that \f{qplot}
 
 \subsection{Linear models}
 
-Currently, \ggplot provides only one fortify method, for linear models. Here we'll show how this method works, and how you can use it to create tailored plots for better understanding your data and models. Figure~\ref{fig:plot-lm} shows the output of \f{plot.lm} for a simple model. The graphics are a set of pre-chosen model summary plots. These are useful for particular problems, but are completely inflexible: there is no way to modify them apart from opening up the source code for \f{plot.lm} and modifying it. This is hard because the the because data transformation and display are inextricably entangled, making the code difficult to understand.
+Currently, \ggplot provides only one fortify method, for linear models. Here we'll show how this method works, and how you can use it to create tailored plots for better understanding your data and models. Figure~\ref{fig:plot-lm} shows the output of \f{plot.lm} for a simple model. The graphics are a set of pre-chosen model summary plots. These are useful for particular problems, but are completely inflexible: there is no way to modify them apart from opening up the source code for \f{plot.lm} and modifying it. This is hard because the data transformation and display are inextricably entangled, making the code difficult to understand.
 
 % mod <- lm(cty ~ displ, data = mpg)
 % pdf("data-plot-lm.pdf", width = 8, height = 8)
@@ -487,14 +487,15 @@ To demonstrate these techniques, we're going to fit the very simple model with c
 
 % You may notice some similarity between this approach and the transformations performed by stats.  The major difference is that \f{fortify} is global, while statistical transformations are local to the facet and group.
 
-With a fortified dataset in hand we can easily recreate the plots produced by \f{plot.lm}, and even better, we can adapt them to our needs. The example below shows how we can recreate and then extend the first plot produced by \f{plot.lm}. Once we have the basic plot we can easily enhance it: use standardised residuals instead of raw residuals, or make size proportional to Cook's distance. The results are shown in Figure~\ref{fig:fortify-fr}.
+With a fortified dataset in hand we can easily re-create the plots produced by \f{plot.lm}, and even better, we can adapt them to our needs. The example below shows how we can re-create and then extend the first plot produced by \f{plot.lm}. Once we have the basic plot we can easily enhance it: use standardised residuals instead of raw residuals, or make size proportional to Cook's distance. The results are shown in Figure~\ref{fig:fortify-fr}.
 
 % FIGLISTING
 %   COL: 3 TEX-WIDTH: 0.33\linewidth
 %   LABEL: fortify-fr
-%   CAPTION: Basic fitted values-residual plot, left.  With standardised
-%   residuals, centre.  With size proportional to Cook's distance, right.  It
-%   is easy to modify the basic plots when we have access to all of the data.
+%   CAPTION: (Left) Basic fitted values-residual plot.  (Middle) With
+%   standardised residuals.  (Right) With size proportional to Cook's
+%   distance.  It is easy to modify the basic plots when we have access to all
+%   of the data.
 % 
 % mod <- lm(cty ~ displ, data = mpg)
 % basic <- ggplot(mod, aes(.fitted, .resid)) +
