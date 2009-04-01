@@ -5,7 +5,7 @@
 
 \section{Introduction}
 
-\ggplot does not exist in isolation, but is part of long history of graphical tools in R and elsewhere.  This chapter describes how to convert between \ggplot commands and other plotting systems:
+\ggplot does not exist in isolation, but is part of a long history of graphical tools in R and elsewhere.  This chapter describes how to convert between \ggplot commands and other plotting systems:
 
 \begin{itemize}
   \item Within \ggplot, between the \f{qplot} and \f{ggplot} syntaxes, \secref{sec:qplot-ggplot}
@@ -25,7 +25,7 @@ Each section gives a general outline on how to convert between the difference ty
 Within \ggplot, there are two basic methods to create plots, with \f{qplot} and \f{ggplot}.  \f{qplot} is designed primarily for interactive use: it makes a number of assumptions that speed most cases, but when designing multi-layered plots with different data sources it can get in the way.  This section describes what those defaults are, and how they map to the fuller 
 \f{ggplot} syntax.  
 
-By default, \f{qplot} assumes that you want a scatterplot, i.e.\ you want to use \f{geom_point}.
+By default, \f{qplot} assumes that you want a scatterplot, i.e., you want to use \f{geom_point}.
 
 \begin{alltt}
 qplot(x, y, data = data)
@@ -41,7 +41,7 @@ qplot(x, y, data = data, shape = shape, colour = colour)
 ggplot(data, aes(x, y, shape = shape, colour = colour)) + geom_point()
 \end{alltt}
 
-Aesthetic parameters in \f{qplot} always try and map the aesthetic to a variable.  If the argument is not a variable but a value, effectively a new column is added to the original dataset with that value.  To set an aesthetic to a value and override the default appearance, you surround the value with \f{I} in \f{qplot}, or pass it as a parameter to the layer.  Section~\ref{sub:setting-mapping} expands on the differences between setting and mapping.
+Aesthetic parameters in \f{qplot} always try to map the aesthetic to a variable.  If the argument is not a variable but a value, effectively a new column is added to the original dataset with that value.  To set an aesthetic to a value and override the default appearance, you surround the value with \f{I} in \f{qplot}, or pass it as a parameter to the layer.  Section~\ref{sub:setting-mapping} expands on the differences between setting and mapping.
 
 \begin{alltt}
 qplot(x, y, data = data, colour = I("red"))
@@ -94,16 +94,17 @@ ggplot(data, aes(x, y)) + geom_point() +
   scale_y_continuous(limits = c(10, 20))
 \end{alltt}
 
-Like \f{plot}, \f{qplot} has a convenient way of log transforming the axes.  There are many other possible transformations that are not accessible from within \f{qplot}, see Section~\ref{sub:scale-position} for more details.
+Like \f{plot}, \f{qplot} has a convenient way of log transforming the axes.  There are many other possible transformations that are not accessible from within \f{qplot} see Section~\ref{sub:scale-position} for more details.
 
 \begin{alltt}
 qplot(x, y, data = data, log="xy")
-ggplot(data, aes(x, y)) + geom_point() + scale_x_log10() + scale_y_log10()
+ggplot(data, aes(x, y)) + geom_point() + 
+  scale_x_log10() + scale_y_log10()
 \end{alltt}
 
 \subsection{Plot options}
 
-\f{qplot} recognise the same options as plot does, and converts them to their \ggplot equivalents.  Section~\ref{sec:theme_elements} lists all possible plot options and their effects.
+\f{qplot} recognises the same options as plot does, and converts them to their \ggplot equivalents.  Section~\ref{sec:theme_elements} lists all possible plot options and their effects.
 
 \begin{alltt}
 qplot(x, y, data = data, main="title", asp = 1)
@@ -118,7 +119,7 @@ There are two types of graphics functions in base graphics, those that draw comp
 
 \subsection{High-level plotting commands}
 
-\f{qplot} has been designed to mimic \f{plot}, and can do the job of all other high-level plotting commands.  There are only two graph types from base graphics that can not be replicated with \ggplot: \f{filled.countour} and \f{persp}
+\f{qplot} has been designed to mimic \f{plot}, and can do the job of all other high-level plotting commands.  There are only two graph types from base graphics that cannot be replicated with \ggplot: \f{filled.contour} and \f{persp}
 
 \begin{alltt}
 plot(x, y);  dotchart(x, y); stripchart(x, y)
@@ -146,7 +147,7 @@ coplot(y ~ x | a + b)
 qplot(x, y, facets = a ~ b)
 \end{alltt}
 
-Many of the geoms are parameterised differently to base graphics.  For example, \f{hist} is parameterised in terms of the number of bins, while \f{geom_histogram} is parmeterised in terms of the width of each bin.  
+Many of the geoms are parameterised differently than base graphics.  For example, \f{hist} is parameterised in terms of the number of bins, while \f{geom_histogram} is parameterised in terms of the width of each bin.  
 
 \begin{alltt}
 hist(x, bins = 100)
@@ -173,25 +174,23 @@ qplot(X1, X2, data = melt(x), geom = "contour", fill = value)
 % pie -> geom_bar(width = 1) + coord_polar()
 % stars -> geom_polygon() + coord_polar()
 
-Generally, the base graphics function work with individual vectors, not data frames like \ggplot.  \f{qplot} will try and construct a data frame if one is not specified, but it is not always possible.  If you get strange errors, you may need to create the data frame yourself.
+Generally, the base graphics functions work with individual vectors, not data frames like \ggplot.  \f{qplot} will try to construct a data frame if one is not specified, but it is not always possible.  If you get strange errors, you may need to create the data frame yourself.
 
 \begin{alltt}
 with(df, plot(x, y))
 qplot(x, y, data = df)
 \end{alltt}
 
-By default, \f{qplot} map values to aesthetics with a scale.  To override this behaviour and set aesthetics, overriding the defaults, you need to use \f{I}.
+By default, \f{qplot} maps values to aesthetics with a scale.  To override this behaviour and set aesthetics, overriding the defaults, you need to use \f{I}.
 
 \begin{alltt}
 plot(x, y, col = "red", cex = 1)
 qplot(x, y, colour = I("red"), size = I(1))
 \end{alltt}
 
-matplot and groups
-
 \subsection{Low-level drawing}
 
-The low level drawing functions which add on to existing plot are equivalent to adding a new layer in \ggplot, described in Table~\ref{tbl:base-equiv}.
+The low-level drawing functions which add to an existing plot are equivalent to adding a new layer in \ggplot, described in Table~\ref{tbl:base-equiv}.
 
 \begin{table}
   \begin{center}
@@ -232,18 +231,20 @@ last_plot() + geom_line()
 
 \subsection{Legends, axes and grid lines} 
 
-In \ggplot, the appearance of legends and axes are controlled by the scales.  In base graphics, legends are never displayed automatically, and gain more control over axes you typically do \code{xaxs = F} in the main plot call, and then add the axes yourself with \f{axis} or \f{Axis}.
+In \ggplot, the appearance of legends and axes is controlled by the scales. Axes are produced by the x and y scales, while all other scales produce legends. See plot themes, Section~\ref{sec:themes}, to change the appearance of axes and legends, and, scales, Section~\ref{sec:guides}, to change their contents. The appearance of grid lines is controlled by the \code{grid.major} and \code{grid.minor} theme options, and their position by the breaks of the x and y scales.
 
-\begin{itemize}
-  \item \code{limits} controls the range of the axis or legend.
-  \item \code{breaks} controls which labels appear on the axis or legend.
-  \item \code{labels} controls the text of each label.
-  \item \code{name} controls the axis or legend title.
-\end{itemize}
 
-Because the legend is derived automatically from the plot, there is much less you can do to control it than in base graphics.  Many of the aspects of its appearance can be changed with plot themes, Section~\ref{sec:themes}, while what is displayed in the legend is controlled by the scales, Section~\ref{sec:guides}.
+% In base graphics, legends are never displayed automatically, and to gain more control over axes you typically do \code{xaxs = F} in the main plot call, and then add the axes yourself with \f{axis} or \f{Axis}.   The following arguments to the scale are most important when controlling the appearance of the axis or legend:
+% 
+% \begin{itemize}
+%   \item \code{limits} controls the range of the axis or legend.
+%   \item \code{breaks} controls which labels appear on the axis or legend.
+%   \item \code{labels} controls the text of each label.
+%   \item \code{name} controls the axis or legend title.
+% \end{itemize}
+% 
+% Because the legend is derived automatically from the plot, there is much less you can do to control it than in base graphics. 
 
-The appearance of grid lines are controlled by the \code{grid.major} and \code{grid.minor} options, and there position by the breaks of the x and y scales.
 
 \subsection{Colour palettes}
 
@@ -285,7 +286,7 @@ Unlike \f{plot}, \f{qplot} doesn't know how to plot anything other than data fra
 \section{Lattice graphics}
 \label{sec:translate-lattice}
 
-The major difference between lattice and \ggplot is that lattice uses a formula based interface.  \ggplot does not because the formula does not generalise well to more complicated situations.
+The major difference between lattice and \ggplot is that lattice uses a formula-based interface.  \ggplot does not because the formula does not generalise well to more complicated situations.
 
 \begin{alltt}
 xyplot(rating ~ year, data=movies)
@@ -395,38 +396,39 @@ DATA: source("demographics")
 DATA: longitude, latitude = map(source("World"))
 TRANS: bd = max(birth - death, 0)
 COORD: project.mercator()
-ELEMENT: point(position(lon * lat), size(bf), color(color.red))
+ELEMENT: point(position(lon * lat), size(bd), color(color.red))
 ELEMENT: polygon(position(longitude * latitude))
 \end{verbatim}
 
-This is relatively simple to adapt to the syntax of ggplot:
+This is relatively simple to adapt to the syntax of \ggplot:
 
 \begin{itemize}
   
-  \item {\tt ggplot()} is used to specify the default data and default aesthetic mappings.  {\tt aes} is short for aesthetic mapping and specifies which variables in the data should be mapped to which aesthetic attributes.
+  \item {\tt ggplot()} is used to specify the default data and default aesthetic mappings.
   
   \item Data is provided as standard R data.frames existing in the global environment; it does not need to be explicitly loaded.  We also use a slightly different world dataset, with columns lat and long.  This lets us use the same aesthetic mappings for both datasets. Layers can override the default data and aesthetic mappings provided by the plot. 
   
   \item We replace {\sf TRANS} with an explicit transformation by R code.
 
-  \item {\sf ELEMENT}s are replaced with layers, which explicitly specify where the data comes from.  Each geom has a default statistic which is used to transform the data prior to plotting.  For the geoms in this example, the default statistic is the identity function.  Fixed aesthetics (the colour red in this example) are supplied as additional arguments to the layer, rather than as special constants.
+  \item {\sf ELEMENT}s are replaced with layers, which explicitly specify the data source.  Each geom has a default statistic which is used to transform the data prior to plotting.  For the geoms in this example, the default statistic is the identity function.  Fixed aesthetics (the colour red in this example) are supplied as additional arguments to the layer, rather than as special constants.
 
-  \item The {\sf SCALE} component has been omitted from this example (so that the defaults are used)In both the ggplot and GoG examples, scales are defined by default.  In ggplot you can override the defaults by adding a scale object, e.g. {\tt scale\_colour} or {\tt scale\_size}
+  \item The {\sf SCALE} component has been omitted from this example (so that the defaults are used).  In both the \ggplot and GoG examples, scales are defined by default.  In ggplot you can override the defaults by adding a scale object, e.g., {\tt scale\_colour} or {\tt scale\_size}.
 
   \item {\sf COORD} uses a slightly different format.  In general, most of the components specifications in ggplot are slightly different to those in GoG, in order to be more familiar to R users.
 
-  \item Each component is added together with $+$ to create the final plot
+  \item Each component is added together with $+$ to create the final plot.
 
 \end{itemize}
 
-This gives us:
+All up the equivalent \ggplot code is:
 
 \begin{verbatim}
-demographics <- transform(demographics, bd = max(birth - death, 0))
+demographics <- transform(demographics, 
+  bd = pmax(birth - death, 0))
 
-ggplot(data = demographic, mapping = aes(x = lon, y = lat)) + 
-layer(geom = "point", mapping = aes(size = bd), colour="red") +
-layer(geom = "polygon", data = world) +
-coord_map(projection = "mercator")
+ggplot(demographic, aes(lon, lat)) + 
+  geom_polyogon(data = world) +
+  geom_point(aes(size = bd), colour = "red") +
+  coord_map(projection = "mercator")
 \end{verbatim}
 \input{_footer.tex}
