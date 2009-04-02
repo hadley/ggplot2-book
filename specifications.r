@@ -2,6 +2,19 @@
 xquiet <- scale_x_continuous("", breaks = NA)
 yquiet <- scale_y_continuous("", breaks = NA)
 
+fill <- opts(
+  plot.margin = unit(rep(0, 4), "cm"), 
+  axis.text.x = theme_blank(),
+  axis.text.y = theme_blank(),
+  axis.title.x = theme_blank(),
+  axis.title.y = theme_blank(),
+  axis.ticks.length = unit(0, "cm"),
+  axis.ticks.margin = unit(0, "cm"),
+  panel.grid.major = theme_blank(),
+  panel.grid.minor = theme_blank(),
+  plot.background = theme_rect(fill = "grey90", colour = NA)
+)
+
 # Shapes ---------------------------------------------------------
 
 shapes <- data.frame(
@@ -9,9 +22,10 @@ shapes <- data.frame(
   x = 0:24 %/% 5,
   y = -(0:24 %% 5)
 )
-qplot(x, y, data=shapes, shape=shape, size=I(5), fill=I("blue")) + scale_shape_identity() + scale_x_continuous("", breaks = NA, limits=c(0, 4.4)) + yquiet + geom_text(aes(x = x + 0.2, label=shape), hjust=0) + opts(background.fill = "grey90")
-
-ggsave(file = "spec-shape.pdf", width=4, height=4)
+qplot(x, y, data=shapes, shape=shape, size=I(5), fill=I("blue")) +
+  scale_shape_identity() + xlim(0, 4.4) + 
+  geom_text(aes(x = x + 0.2, label=shape), hjust=0) + fill 
+ggsave("spec-shape.pdf", width=4, height=4)
 
 # Line types -----------------------------------------------------------------
 
@@ -22,9 +36,11 @@ linetypes <- data.frame(
   lty = lty
 ) 
 
-qplot(0, y, data=linetypes, xend = 5, yend=y, geom="segment", linetype=lty) + xquiet + yquiet + scale_linetype_identity() + geom_text(aes(x = 0, y = y + 0.2, label = lty), hjust = 0) + opts(background.fill = "grey90")
-
-ggsave(file = "spec-linetype.pdf", width=4, height=4)
+qplot(0, y, data=linetypes, xend = 5, yend=y, geom="segment", linetype=lty) +
+  scale_linetype_identity() + 
+  geom_text(aes(x = 0, y = y + 0.2, label = lty), hjust = 0) + 
+  fill
+ggsave("spec-linetype.pdf", width=4, height=4)
 
 
 # Justification --------------------------------------------------------------
@@ -58,5 +74,8 @@ dev.off()
 # Colour ---------------------------------------------------------------------
 source("colour-wheel.r")
 
-qplot(x, y, data=hcl, colour=colour) + scale_colour_identity() + opts(aspect.ratio=1) + scale_x_continuous("", breaks=NA) + scale_y_continuous("", breaks=NA)
-ggsave(file = "spec-colour.png", width = 6, height = 6)
+qplot(x, y, data=hcl, colour=colour) + 
+  scale_colour_identity() + 
+  opts(aspect.ratio=1) + 
+  fill
+ggsave("spec-colour.png", width = 6, height = 6)
