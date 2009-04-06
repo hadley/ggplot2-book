@@ -17,12 +17,12 @@
 
 A major requirement of a good data analysis is flexibility. If the data changes, or you discover something that makes you rethink your basic assumptions, you need to be able to easily change many plots at once. The main inhibitor of flexibility is duplication. If you have the same plotting statement repeated over and over again, you have to make the same change in many different places. Often just the thought of making all those changes is exhausting!
 
-This chapter describes three ways of reducing duplication. In Section~\ref{sec:iteration}, you will learn how to iteratively modify the previous plot, allowing you to build on top of your previous work without having to retype a lot of code. Section~\ref{sec:templates} will show you how to produce plot ``templates'' that encapsulate repeated components that are defined once and used in many different places. Finally, \ref{sec:functions} talks about how to create functions that create or modify plots. 
+This chapter describes three ways of reducing duplication. In Section~\ref{sec:iteration}, you will learn how to iteratively modify the previous plot, allowing you to build on top of your previous work without having to retype a lot of code. Section~\ref{sec:templates} will show you how to produce plot ``templates'' that encapsulate repeated components that are defined once and used in many different places. Finally, \ref{sec:functions} talks about how to create functions that create or modify plots.  \index{Duplication!reducing} \index{Reducing duplication}
 
 \section{Iteration}
 \label{sec:iteration}
 
-Whenever you create or modify a plot, \ggplot saves a copy of the result so you can refer to it in later expressions. You can access this plot with \f{last_plot}. This is useful in interactive work as you can start with a basic plot and then iteratively add layers and tweak the scales until you get to the final result. The following code demonstrates iteratively zooming in on a plot to find a region of interest, and then adding a layer which highlights something interesting that we have found: very few diamonds have equal x and y dimensions. The plots are shown in Figure~\ref{fig:iterate-limits}.
+Whenever you create or modify a plot, \ggplot saves a copy of the result so you can refer to it in later expressions. You can access this plot with \f{last_plot}. This is useful in interactive work as you can start with a basic plot and then iteratively add layers and tweak the scales until you get to the final result. The following code demonstrates iteratively zooming in on a plot to find a region of interest, and then adding a layer which highlights something interesting that we have found: very few diamonds have equal x and y dimensions. The plots are shown in Figure~\ref{fig:iterate-limits}. \index{Iteration} \indexf{last_plot} \index{Duplication!iteration}
 
 % FIGLISTING
 %   TEX-WIDTH: 0.33\linewidth COL: 3 FILETYPE: PNG
@@ -54,7 +54,7 @@ Once you have tweaked the plot to your liking, it's a good idea to go back and c
 \section{Plot templates}
 \label{sec:templates}
 
-Each component of a \ggplot plot is its own object and can be created, stored and applied independently to a plot. This makes it possible to create reusable components that can automate common tasks and helps to offset the cost of typing the long function names. The following example creates some colour scales and then applies them to plots. The results are shown in Figure~\ref{fig:gradient-rb}
+Each component of a \ggplot plot is its own object and can be created, stored and applied independently to a plot. This makes it possible to create reusable components that can automate common tasks and helps to offset the cost of typing the long function names. The following example creates some colour scales and then applies them to plots. The results are shown in Figure~\ref{fig:gradient-rb}.  \index{Templates} \index{Duplication!templates}
 
 % FIGLISTING
 %   LABEL: gradient-rb
@@ -69,7 +69,7 @@ Each component of a \ggplot plot is its own object and can be created, stored an
 \input{_include/792831b5a6105a5a503d50137a123229.tex}
 % END
 
-As well as saving single objects, you can also save vectors of \ggplot components. Adding a vector of components to a plot is equivalent to adding each component of the vector in turn. The following example creates two continuous scales that can be used to turn off the display of axis labels and ticks. You only need to create these objects once and you can apply them to many different plots, as shown in the code below and Figure~\ref{fig:quiet}.
+As well as saving single objects, you can also save vectors of \ggplot components. Adding a vector of components to a plot is equivalent to adding each component of the vector in turn. The following example creates two continuous scales that can be used to turn off the display of axis labels and ticks. You only need to create these objects once and you can apply them to many different plots, as shown in the code below and Figure~\ref{fig:quiet}. \index{Layers!reusing}
 
 % FIGLISTING
 %   LABEL: quiet
@@ -106,14 +106,14 @@ Depending on how complicated your function is, it might even return multiple com
 \section{Plot functions}
 \label{sec:functions}
 
-If you are using the same basic plot again and again with different datasets or different parameters, it may be worthwhile to wrap up all the different options into a single function. Maybe you need to perform some data restructuring or transformation, or need to combine the data with a predefined model. In that case you will need to write a function that produces \ggplot plots. It's hard to give advice on how to go about this because there are so many different possible scenarions, but this section aims to point out some important things to think about.
+If you are using the same basic plot again and again with different datasets or different parameters, it may be worthwhile to wrap up all the different options into a single function. Maybe you need to perform some data restructuring or transformation, or need to combine the data with a predefined model. In that case you will need to write a function that produces \ggplot plots. It's hard to give advice on how to go about this because there are so many different possible scenarios, but this section aims to point out some important things to think about. \index{Duplication!functions} \index{Functions that create plots}
 
 \begin{itemize}
   \item Since you're creating the plot within the environment of a function, you need to be extra careful about supplying the data to \f{ggplot} as a data frame, and you need to double check that you haven't accidentally referred to any function local variables in your aesthetic mappings.
 
-  \item If you want to allow the user to provide their own variables for aesthetic mappings, I'd suggest using \f{aes_string}.  This function works just like \f{aes}, but uses strings rather than unevaluated expressions. \code{aes_string("cty", colour = "hwy")} is equivalent to \code{aes(cty, colour = hwy)}.  Strings are much easier to work with than expressions.
+  \item If you want to allow the user to provide their own variables for aesthetic mappings, I'd suggest using \f{aes_string}.  This function works just like \f{aes}, but uses strings rather than unevaluated expressions. \code{aes_string("cty", colour = "hwy")} is equivalent to \code{aes(cty, colour = hwy)}.  Strings are much easier to work with than expressions. \index{Mappings!creating programmatically} \indexf{aes_string}
 
-  \item As mentioned in Chapter~\ref{cha:data}, you want to separate your plotting code into a function that does any data transformations and manipulations and a function that creates the plot. Generally, your plotting function should do no data manipulation, just create a plot. The following example shows one way to create parallel coordinate plot function, wrapping up the code used in Section~\ref{sub:molten_data}.
+  \item As mentioned in Chapter~\ref{cha:data}, you want to separate your plotting code into a function that does any data transformations and manipulations and a function that creates the plot. Generally, your plotting function should do no data manipulation, just create a plot. The following example shows one way to create parallel coordinate plot function, wrapping up the code used in Section~\ref{sub:molten_data}. \index{Parallel coordinates plot}
 
   % INTERWEAVE
   %   GG-WIDTH: 8  TEX-WIDTH: 0.75\linewidth
