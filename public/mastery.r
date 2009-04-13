@@ -1,15 +1,15 @@
 
 # A scatterplot of engine displacement in litres
-# (displ) vs average highway miles per gallon (hwy).
-# Points are coloured according to number of
+# (displ) vs.  average highway miles per gallon
+# (hwy).  Points are coloured according to number of
 # cylinders.  This plot summarises the most important
-# factor governing fuel economy: engine size
+# factor governing fuel economy: engine size.
 qplot(displ, hwy, data = mpg, colour = factor(cyl))
 
 
 # Instead of using points to represent the data, we
 # could use other geoms like lines (left) or bars
-# (right).  Neither of these geoms make sense for
+# (right).  Neither of these geoms makes sense for
 # this data, but they are still grammatically valid.
 qplot(displ, hwy, data=mpg, colour=factor(cyl), geom="line") + 
   opts(drop = "legend_box")

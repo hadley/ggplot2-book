@@ -10,11 +10,9 @@ qplot(cty, data = mpg2, geom="histogram", binwidth = 2) +
 
 qplot(cty, hwy, data = mpg2) + facet_grid(drv ~ cyl)
 
-qplot(cty, hwy, data = mpg2) + facet_grid(. ~ cyl + drv)
-
 # Graphical margins work like margins of a
 # contingency table to give unconditioned views of
-# the data.  A plot facetted by number of cylinders
+# the data.  A plot faceted by number of cylinders
 # and drive train (left) is supplemented with margins
 # (right).
 p <- qplot(displ, hwy, data = mpg2) +
@@ -29,11 +27,18 @@ qplot(displ, hwy, data = mpg2) +
 # Movie rating distribution by decade.
 movies$decade <- round_any(movies$year, 10, floor)
 qplot(rating, ..density.., data=subset(movies, decade > 1890),
-  geom="histogram", binwidth = 0.5) + facet_wrap(~ decade, ncol = 6)
+  geom="histogram", binwidth = 0.5) + 
+  facet_wrap(~ decade, ncol = 6)
+
+# Fixed scales (left) have the same scale for each
+# facet, while free scales (right) have a different
+# scale for each facet.
+p <- qplot(cty, hwy, data = mpg)
+p + facet_wrap(~ cyl)
+p + facet_wrap(~ cyl, scales = "free")
 
 # Free scales are particularly useful when displaying
-# multiple time series that are measured on different
-# scales.
+# multiple time series measured on different scales.
 em <- melt(economics, id = "date")
 qplot(date, value, data = em, geom = "line", group = variable) + 
   facet_grid(variable ~ ., scale = "free_y")
@@ -51,20 +56,20 @@ mpg3 <- within(mpg2, {
 models <- qplot(cty, model, data = mpg3)
 
 models
-models + facet_grid(manufacturer ~ ., scales = "free", space = "free") +  
-  opts(strip.text.y = theme_text())
+models + facet_grid(manufacturer ~ ., scales = "free", 
+  space = "free") +  opts(strip.text.y = theme_text())
 
-# The differences between faceting vs grouping,
-# illustrated with a log-log plot of carat vs price
+# The differences between faceting vs. grouping,
+# illustrated with a log-log plot of carat vs. price
 # with four selected colours.
-xmajor <- c(0.3, 0.5, 1,3, 5)
-xminor <- as.vector(outer(1:10, 10^c(-1, 0)))
-ymajor <- c(500, 1000, 5000, 10000)
-yminor <- as.vector(outer(1:10, 10^c(2,3,4)))
+xmaj <- c(0.3, 0.5, 1,3, 5)
+xmin <- as.vector(outer(1:10, 10^c(-1, 0)))
+ymaj <- c(500, 1000, 5000, 10000)
+ymin <- as.vector(outer(1:10, 10^c(2,3,4)))
 dplot <- ggplot(subset(diamonds, color %in% c("D","E","G","J")), 
   aes(carat, price, colour = color)) + 
-  scale_x_log10(breaks = xmajor, labels = xmajor, minor = xminor) + 
-  scale_y_log10(breaks = ymajor, labels = ymajor, minor = yminor) + 
+  scale_x_log10(breaks = xmaj, labels = xmaj, minor = xmin) + 
+  scale_y_log10(breaks = ymaj, labels = ymaj, minor = ymin) + 
   scale_colour_hue(limits = levels(diamonds$color)) + 
   opts(legend.position = "none")
 
@@ -75,9 +80,10 @@ dplot + geom_smooth(method = lm, se = F, fullrange = T)
 dplot + geom_smooth(method = lm, se = F, fullrange = T) + 
   facet_grid(. ~ color)
 
-# Dodging (top) vs faceting (bottom) for a completely
-# crossed pair of variables.
-qplot(color, data=diamonds, geom="bar", fill=cut, position="dodge")
+# Dodging (top) vs. faceting (bottom) for a
+# completely crossed pair of variables.
+qplot(color, data=diamonds, geom = "bar", fill = cut, 
+  position="dodge")
 qplot(cut, data = diamonds, geom = "bar", fill = cut) + 
   facet_grid(. ~ color) + 
   opts(axis.text.x = theme_text(angle = 90, hjust = 1, size = 8, 
@@ -90,13 +96,18 @@ qplot(cut, data = diamonds, geom = "bar", fill = cut) +
 # the top plot is not useful, but it will be useful
 # in situations where the data is almost crossed,
 # i.e.\ where a single combination is missing.
-mpg4 <- subset(mpg, manufacturer %in% c("audi", "volkswagen", "jeep"))
+mpg4 <- subset(mpg, manufacturer %in% 
+  c("audi", "volkswagen", "jeep"))
+mpg4$manufacturer <- as.character(mpg4$manufacturer)
+mpg4$model <- as.character(mpg4$model)
+
 base <- ggplot(mpg4, aes(fill = model)) + 
-  geom_bar(position = "dodge")
+  geom_bar(position = "dodge") + 
+  opts(legend.position = "none")
 
 base + aes(x = model) + 
-  facet_grid(. ~ manufacturer) + 
-  opts(legend.position = "none")
+  facet_grid(. ~ manufacturer)
+  
 last_plot() +  
   facet_grid(. ~ manufacturer, scales = "free_x", space = "free")
 base + aes(x = manufacturer)
@@ -116,7 +127,7 @@ plot + facet_wrap(~ disp_nn, nrow = 1)
 
 # A set of examples illustrating what a line and
 # rectangle look like when displayed in a variety of
-# coordinate systems.  From top-left to bottom-right:
+# coordinate systems.  From top left to bottom right:
 # Cartesian, polar with x position mapped to angle,
 # polar with y position mapped to angle, flipped,
 # transformed with log in y direction, and equal
@@ -157,8 +168,8 @@ polar + geom_point() + geom_path()
 polar + geom_point(data=extents, colour = "red", size = 4) + geom_path() 
 
 # Setting limits on the coordinate system, vs setting
-# limits on the scales.  Left, entire dataset;
-# middle, x scale limits set to (325, 500); right,
+# limits on the scales.  (Left) Entire dataset;
+# (middle) x scale limits set to (325, 500); (right)
 # coordinate system x limits set to (325, 500).
 # Scaling the coordinate limits performs a visual
 # zoom, while setting the scale limits subsets the
@@ -167,37 +178,38 @@ polar + geom_point(data=extents, colour = "red", size = 4) + geom_path()
 p + scale_x_continuous(limits = c(325, 500))
 p + coord_cartesian(xlim = c(325, 500))
 
-# Setting limits on the coordinate system, vs setting
-# limits on the scales.  Left, entire dataset;
-# middle, x scale limits set to (0, 2); right,
-# coordinate x limits set to (0, 2).  Compare the
-# size of the bins: when you set the scale limits,
-# there is the same number of bins but they each
-# cover a smaller region of the data; when you set
-# the coordinate limits, there are fewer bins and
+# Setting limits on the coordinate system, vs.
+# setting limits on the scales.  (Left) Entire
+# dataset; (middle) x scale limits set to (0, 2);
+# (right) coordinate x limits set to (0, 2).  Compare
+# the size of the bins: when you set the scale
+# limits, there are the same number of bins but they
+# each cover a smaller region of the data; when you
+# set the coordinate limits, there are fewer bins and
 # they cover the same amount of data as the original.
 (d <- ggplot(diamonds, aes(carat, price)) + 
-  stat_bin2d(bins = 25, colour="grey70") + opts(legend.position = "none")) 
+  stat_bin2d(bins = 25, colour="grey70") + 
+  opts(legend.position = "none")) 
 d + scale_x_continuous(limits = c(0, 2))
 d + coord_cartesian(xlim = c(0, 2))
 
-# Left, a scatterplot and smoother with engine
+# (Left) A scatterplot and smoother with engine
 # displacement on x axis and city mpg on y axis.
-# Middle, exchanging \var{cty} and \var{displ}
+# (Middle) Exchanging \var{cty} and \var{displ}
 # rotates the plot 90 degrees, but the smooth is fit
-# to the rotated data.  Left, using \code{coord_flip}
-# fits the smooth to the original data, and then
-# rotates the output, this is a smooth curve of x
-# conditional on y.
+# to the rotated data.  (Right) using
+# \code{coord_flip} fits the smooth to the original
+# data, and then rotates the output, this is a smooth
+# curve of x conditional on y.
 qplot(displ, cty, data = mpg) + geom_smooth()
 qplot(cty, displ, data = mpg) + geom_smooth()
 qplot(cty, displ, data = mpg) + geom_smooth() + coord_flip()
 
-# (Left) a scatterplot of carat vs price on log base
+# (Left) A scatterplot of carat vs. price on log base
 # 10 transformed scales.  A linear regression
 # summarises the trend: $\log(y) = a + b * \log(x)$.
 # (Right) The previous plot backtransformed (with
-# {\tt coord\_trans(x = "pow10", y = "pow10")}) on to
+# {\tt coord\_trans(x = "pow10", y = "pow10")}) onto
 # the original scales.  The linear trend line now
 # becomes geometric, $y = k * c^x$, and highlights
 # the lack of expensive diamonds for larger carats.
@@ -205,12 +217,12 @@ qplot(carat, price, data = diamonds, log = "xy") +
   geom_smooth(method = "lm")
 last_plot() + coord_trans(x = "pow10", y = "pow10")
 
-# (Left) A stacked barchart.  (Middle) The stacked
-# barchart in polar coordinates, with x position
+# (Left) A stacked bar chart.  (Middle) The stacked
+# bar chart in polar coordinates, with x position
 # mapped to radius and y position mapped to angle,
 # \code{coord_polar(theta = "y")}).  This is more
 # commonly known as a pie chart.  (Right) The stacked
-# barchart in polar coordinates with the opposite
+# bar chart in polar coordinates with the opposite
 # mapping, \code{coord_polar(theta = "x")}.  This is
 # sometimes called a bullseye chart.
 # Stacked barchart

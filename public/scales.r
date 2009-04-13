@@ -9,14 +9,13 @@ plot + aes(x = drv)
 # Correcting the default manually resolves the problem.
 plot + aes(x = drv) + scale_x_discrete()
 
-# Adjusting the default parameters of a scale.
-# (Top-left) the plot with default scale.
-# (Top-right) adding the default scale by hand
-# doesn't change the appearance of the plot.
-# (Bottom-left) adjusting the parameters of the scale
-# to tweak the legend.  (Bottom-right) using a
-# different colour scale: Set1 from the ColorBrewer
-# colours.
+# Adjusting the default parameters of a scale. (Top
+# left) The plot with default scale.  (Top right)
+# Adding the default scale by hand doesn't change the
+# appearance of the plot.  (Bottom left) Adjusting
+# the parameters of the scale to tweak the legend.
+# (Bottom right) Using a different colour scale: Set1
+# from the ColorBrewer colours.
 p <- qplot(sleep_total, sleep_cycle, data = msleep, colour = vore)
 p 
 # Explicitly add the default scale
@@ -31,10 +30,8 @@ p + scale_colour_hue("What does\nit eat?",
 # Use a different scale
 p + scale_colour_brewer(pal = "Set1")
 
-# Legends with names given by (from left to right):
-# {\tt "Tip rate"}, {\tt "The amount of the
-# tip$\backslash$ndivided by the total bill"} and
-# {\tt expression(frac(tip, total\_bill)}
+# A demonstration of the different forms legend title
+# can take.
 p <- qplot(cty, hwy, data = mpg, colour = displ)
 p
 p + scale_x_continuous("City mpg")
@@ -66,8 +63,8 @@ qplot(log10(carat), log10(price), data = diamonds)
 qplot(carat, price, data = diamonds) + 
   scale_x_log10() + scale_y_log10()
 
-# A time series of personal savings rate.  (Left) the
-# default apperance, (middle) breaks every 10 years,
+# A time series of personal savings rate.  (Left) The
+# default appearance, (middle) breaks every 10 years,
 # and (right) scale restricted to 2004, with YMD date
 # format.  Measurements are recorded at the end of
 # each month.
@@ -82,11 +79,12 @@ plot + scale_x_date(
 )
 
 # Density of eruptions with three colour schemes.
-# (Left) default gradient colour scheme, (mid)
+# (Left) Default gradient colour scheme, (middle)
 # customised gradient from white to black and (right)
 # 3 point gradient with midpoint set to the mean
 # density.
-f2d <- with(faithful, MASS::kde2d(eruptions, waiting, h = c(1, 10), n = 50))
+f2d <- with(faithful, MASS::kde2d(eruptions, waiting, 
+  h = c(1, 10), n = 50))
 df <- with(f2d, cbind(expand.grid(x, y), as.vector(z)))
 names(df) <- c("eruptions", "waiting", "density")
 erupt <- ggplot(df, aes(waiting, eruptions, fill = density)) +
@@ -94,7 +92,8 @@ erupt <- ggplot(df, aes(waiting, eruptions, fill = density)) +
   scale_x_continuous(expand = c(0, 0)) + 
   scale_y_continuous(expand = c(0, 0))
 erupt + scale_fill_gradient(limits = c(0, 0.04))
-erupt + scale_fill_gradient(limits = c(0, 0.04), low="white", high="black") 
+erupt + scale_fill_gradient(limits = c(0, 0.04), 
+  low = "white", high = "black") 
 erupt + scale_fill_gradient2(limits = c(-0.04, 0.04), 
   midpoint = mean(df$density)) 
 
@@ -103,8 +102,8 @@ erupt + scale_fill_gradient2(limits = c(-0.04, 0.04),
 # package.  From left to right: sequential, diverging
 # and heat hcl palettes.  Each scale is produced with
 # \code{scale_fill_gradientn} with \code{colours} set
-# to \code{sequential_hcl(7)}, \code{diverge_hcl(7)}
-# and \code{heat_hcl(7)}.
+# to \code{rainbow_hcl(7)}, \code{diverge_hcl(7)} and
+# \code{heat_hcl(7)}.
 library(vcd)
 fill_gradn <- function(pal) {
   scale_fill_gradientn(colours = pal(7), limits = c(0, 0.04))
@@ -113,14 +112,16 @@ erupt + fill_gradn(rainbow_hcl)
 erupt + fill_gradn(diverge_hcl)
 erupt + fill_gradn(heat_hcl)
 
-# Three colorbrewer palettes, Set1 (left), Set2
+# Three ColorBrewer palettes, Set1 (left), Set2
 # (middle) and Pastel1 (right), applied to points
 # (top) and bars (bottom).  Bright colours work well
 # for points, but are overwhelming on bars.  Subtle
 # colours work well for bars, but are hard to see on
 # points.
-point <- qplot(brainwt, bodywt, data = msleep, log="xy", colour = vore)
-area <- qplot(log10(brainwt), data = msleep, fill = vore, binwidth=1)
+point <- qplot(brainwt, bodywt, data = msleep, log = "xy", 
+  colour = vore)
+area <- qplot(log10(brainwt), data = msleep, fill = vore, 
+  binwidth = 1)
 
 point + scale_colour_brewer(pal = "Set1")
 point + scale_colour_brewer(pal = "Set2")
@@ -131,16 +132,17 @@ area + scale_fill_brewer(pal = "Pastel1")
 
 # Scale manual used to create custom colour (left and
 # middle) and shape (right) scales.
-plot <- qplot(brainwt, bodywt, data = msleep, log="xy")
+plot <- qplot(brainwt, bodywt, data = msleep, log = "xy")
 plot + aes(colour = vore) + 
-  scale_colour_manual(value = c("red", "orange", "yellow", "green", "blue"))
+  scale_colour_manual(value = c("red", "orange", "yellow", 
+    "green", "blue"))
 colours <- c(carni = "red", "NA" = "orange", insecti = "yellow", 
   herbi = "green", omni = "blue")
 plot + aes(colour = vore) + scale_colour_manual(value = colours)
 plot + aes(shape = vore) + 
   scale_shape_manual(value = c(1, 2, 6, 0, 23))
 
-huron <- data.frame(year = 1875:1972, level = as.vector(LakeHuron))
+huron <- data.frame(year = 1875:1972, level = LakeHuron)
 ggplot(huron, aes(year)) +
   geom_line(aes(y = level - 5), colour = "blue") + 
   geom_line(aes(y = level + 5), colour = "red")

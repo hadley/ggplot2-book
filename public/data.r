@@ -4,19 +4,21 @@ options(digits = 2, width = 60)
 ddply(diamonds, .(color), subset, carat == min(carat))
 
 # Select the two smallest diamonds
-ddply(diamonds, .(color), subset, order(carat) < 2)
+ddply(diamonds, .(color), subset, order(carat) <= 2)
 
 # Select the 1% largest diamonds in each group
-ddply(diamonds, .(color), subset, carat > quantile(carat, 0.99))
+ddply(diamonds, .(color), subset, carat > 
+  quantile(carat, 0.99))
 
-# Select all diamonds bigger that the group average
+# Select all diamonds bigger than the group average
 ddply(diamonds, .(color), subset, price > mean(price))
 
-# Within each colour, scale price to have mean 0 and variance 1
+# Within each colour, scale price to mean 0 and variance 1
 ddply(diamonds, .(color), transform, price = scale(price))
 
 # Subtract off group mean
-ddply(diamonds, .(color), transform, price = price - mean(price))
+ddply(diamonds, .(color), transform, 
+  price = price - mean(price))
 
 nmissing <- function(x) sum(is.na(x))
 nmissing(msleep$name)
@@ -27,12 +29,14 @@ nmissing_df(msleep)
 # This is shorthand for the previous two steps
 colwise(nmissing)(msleep)
 
-numcolwise(median)(msleep, na.rm = T)
-numcolwise(quantile)(msleep, na.rm = T)
-numcolwise(quantile)(msleep, probs = c(0.25, 0.75), na.rm = T)
+msleep2 <- msleep[, -6] # Remove a column to save space
+numcolwise(median)(msleep2, na.rm = T)
+numcolwise(quantile)(msleep2, na.rm = T)
+numcolwise(quantile)(msleep2, probs = c(0.25, 0.75), 
+  na.rm = T)
 
-ddply(msleep, .(vore), numcolwise(median), na.rm = T)
-ddply(msleep, .(vore), numcolwise(mean), na.rm = T)
+ddply(msleep2, .(vore), numcolwise(median), na.rm = T)
+ddply(msleep2, .(vore), numcolwise(mean), na.rm = T)
 
 my_summary <- function(df) {
   with(df, data.frame(
@@ -43,7 +47,7 @@ my_summary <- function(df) {
 ddply(diamonds, .(cut), my_summary)
 ddply(diamonds, .(color), my_summary)
 
-# A plot showing the smoothed trends for price vs
+# A plot showing the smoothed trends for price vs.
 # carat for each colour of diamonds.  With the full
 # range of carats (left), the standard errors balloon
 # after around two carats because there are
@@ -51,10 +55,11 @@ ddply(diamonds, .(color), my_summary)
 # attention to diamonds of less than two carats
 # (right) focuses on the region where we have plenty
 # of data.
-qplot(carat, price, data = diamonds, geom = "smooth", colour = color)
+qplot(carat, price, data = diamonds, geom = "smooth", 
+  colour = color)
 dense <- subset(diamonds, carat < 2)
-qplot(carat, price, data = dense, geom = "smooth", colour = color, 
-  fullrange = TRUE)
+qplot(carat, price, data = dense, geom = "smooth", 
+  colour = color,  fullrange = TRUE)
 
 # Figure~\ref{fig:smooth} with all statistical
 # calculations performed by hand.  The predicted
@@ -70,9 +75,10 @@ smooth <- function(df) {
   grid
 }
 smoothes <- ddply(dense, .(color), smooth)
-qplot(carat, price, data = smoothes, colour = color, geom = "line")
-qplot(carat, price, data = smoothes, colour = color, geom = "smooth",
-  ymax = price + 2 * se, ymin = price - 2 * se)
+qplot(carat, price, data = smoothes, colour = color, 
+  geom = "line")
+qplot(carat, price, data = smoothes, colour = color, 
+  geom = "smooth", ymax = price + 2 * se, ymin = price - 2 * se)
 
 mod <- gam(price ~ s(carat, bs = "cs") + color, data = dense)
 grid <- with(diamonds, expand.grid(
@@ -95,15 +101,16 @@ qplot(unemploy, uempmed, data = economics) + geom_smooth()
 # data is much easier when you have many variables.
 # The series have radically different scales, so we
 # only see the pattern in the \code{unemploy}
-# variable. You might not even notice \code{unempmed}
+# variable. You might not even notice \code{uempmed}
 # unless you're paying close attention: it's the line
 # at the bottom of the plot.
 ggplot(economics, aes(date)) + 
   geom_line(aes(y = unemploy, colour = "unemploy")) + 
-  geom_line(aes(y = uempmed, colour = "umempmed")) + 
+  geom_line(aes(y = uempmed, colour = "uempmed")) + 
   scale_colour_hue("variable")
 
-emp <- melt(economics, id = "date", measure = c("unemploy", "uempmed"))
+emp <- melt(economics, id = "date", 
+  measure = c("unemploy", "uempmed"))
 qplot(date, value, data = emp, geom = "line", colour = variable)
 
 # When the series have very different scales we have
@@ -127,10 +134,9 @@ molten <- melt(ratings, id = ".row")
 
 # Variants on the parallel coordinates plot to better
 # display the patterns in this highly discrete data.
-# To improve the default pcp (top-left) we experiment
-# with alpha-blending (top-right), jittering
-# (bottom-left) and then both together
-# (bottom-right).
+# To improve the default pcp (top left) we experiment
+# with alpha blending (top right), jittering (bottom
+# left) and then both together (bottom right).
 pcp <- ggplot(molten, aes(variable, value, group = .row))
 pcp + geom_line()
 pcp + geom_line(colour = alpha("black", 1 / 20))
@@ -144,13 +150,14 @@ levels(ratings$cluster) <- seq_along(levels(ratings$cluster))
 molten <- melt(ratings, id = c(".row", "cluster"))
 
 # Displaying cluster membership on a parallel
-# coordinates plot.  (Left) individual movies
+# coordinates plot.  (Left) Individual movies
 # coloured by group membership and (right) group
 # means.
 pcp_cl <- ggplot(molten, 
- aes(variable, value, group = .row, colour = cluster)) 
-pcp_cl + geom_line(position = jit) + scale_colour_hue(alpha = 1/5)
-pcp_cl + stat_summary(aes(group = cluster), fun.y = mean, geom = "line")
+  aes(variable, value, group = .row, colour = cluster)) 
+pcp_cl + geom_line(position = jit, alpha = 1/5)
+pcp_cl + stat_summary(aes(group = cluster), fun.y = mean, 
+  geom = "line")
 
 # Faceting allows us to display each group in its own
 # panel, highlighting the fact that there seems to be
@@ -165,11 +172,11 @@ pcp_cl + geom_line(position = jit, colour = alpha("black", 1/5)) +
 qplot(displ, cty, data = mpg) + geom_smooth(method = "lm")
 mpgmod <- lm(cty ~ displ, data = mpg)
 
-# Basic fitted values-residual plot, left.  With
-# standardised residuals, centre.  With size
-# proportional to Cook's distance, right.  It is easy
-# to modify the basic plots when we have access to
-# all of the data.
+# (Left) Basic fitted values-residual plot.  (Middle)
+# With standardised residuals.  (Right) With size
+# proportional to Cook's distance.  It is easy to
+# modify the basic plots when we have access to all
+# of the data.
 mod <- lm(cty ~ displ, data = mpg)
 basic <- ggplot(mod, aes(.fitted, .resid)) +
   geom_hline(yintercept = 0, colour = "grey50", size = 0.5) + 
@@ -196,6 +203,6 @@ fortify.Image <- function(model, data, ...) {
 }
 
 library(EBImage)
-img <- readImage("http://had.co.nz/me.jpeg", TrueColor)
+img <- readImage("http://had.co.nz/me.jpg", TrueColor)
 qplot(x, y, data = img, fill = value, geom="tile") + 
   scale_fill_identity() + coord_equal()

@@ -62,8 +62,9 @@ A minimal layer may do nothing more than specify a {\bf geom}, a way of visually
 
 % LISTING
 % 
-% layer(geom, geom_params, stat, stat_params, data, mapping, position)
-\input{_include/dab9e23f1099640d69d7ce8d8a1f4093.tex}
+% layer(geom, geom_params, stat, stat_params, data, mapping, 
+%   position)
+\input{_include/9c143921cfd6cac6a346451be0e6291c.tex}
 % END
 
 \noindent Here is what a more complicated call looks like.  It produces a histogram (a combination of bars and binning) coloured ``steelblue'' with a bin width of 2:
@@ -118,19 +119,21 @@ Layers can be added to plots created with \f{ggplot} or \f{qplot}.  Remember, be
 
 % LISTING
 % 
-% ggplot(msleep, aes(sleep_rem / sleep_total, awake)) + geom_point()
+% ggplot(msleep, aes(sleep_rem / sleep_total, awake)) + 
+%   geom_point()
 % # which is equivalent to
 % qplot(sleep_rem / sleep_total, awake, data = msleep)
 % 
 % # You can add layers to qplot too:
-% qplot(sleep_rem / sleep_total, awake, data = msleep) + geom_smooth()
+% qplot(sleep_rem / sleep_total, awake, data = msleep) + 
+%   geom_smooth()
 % # This is equivalent to 
 % qplot(sleep_rem / sleep_total, awake, data = msleep, 
-%   geom=c("point", "smooth"))
-% # and
+%   geom = c("point", "smooth"))
+% # or
 % ggplot(msleep, aes(sleep_rem / sleep_total, awake)) + 
 %   geom_point() + geom_smooth()
-\input{_include/c331760439d390f6dd727037ea685a34.tex}
+\input{_include/9260eec336f41f0ed07e835011e3144b.tex}
 % END
 
 You've seen that plot objects can be stored as variables. The summary function can be helpful for inspecting the structure of a plot without plotting it, as seen in the following example. \index{Summary!of plot object} The summary shows information about the plot defaults, and then each layer. You will learn about scales and faceting in Chapters~\ref{cha:scales} and \ref{cha:position}.
@@ -142,7 +145,7 @@ You've seen that plot objects can be stored as variables. The summary function c
 %
 % p <- p + geom_point()
 % summary(p)
-\input{_include/c1d85b696ccbe396ba97ff78ebe3b576.tex}
+\input{_include/5e5fb70302edf1b32e17dc2558f8a37f.tex}
 % END
 
 Layers are regular R objects and so can be stored as variables, making it easy to write clean code that reduces duplication. \index{Layers!saving as variables} For example, a set of plots can be initialised using different data then enhanced with the same layer.  If you later decide to change that layer, you only need to do so in one place.  The following shows a simple example, where we create a layer that displays a translucent thick blue line of best fit.
@@ -217,7 +220,7 @@ The default aesthetic mappings can be set when the plot is initialised or modifi
 %
 % p <- p + aes(wt, hp)
 % summary(p)
-\input{_include/de85d254b6d0322a9e0e87e695de5874.tex}
+\input{_include/fe332f45a17f1bb385252c4ff2ba43ce.tex}
 % END
 
 One reason you might want to do this is shown in Section~\ref{sub:different_aesthetics}.  We have seen several examples of using the default mapping when adding a layer to a plot:
@@ -226,16 +229,19 @@ One reason you might want to do this is shown in Section~\ref{sub:different_aest
 % 
 % p <- ggplot(mtcars, aes(x = mpg, y = wt))
 % p + geom_point()
-\input{_include/8de3ff5116c0f5d7db60c722d2c33c59.tex}
+\input{_include/c23a69789d849d9712a35836c7d12271.tex}
 % END
 
-As these two examples show, the default mappings in the plot \code{p} can be extended or overridden in added layers: \index{Mappings!overriding}
+The default mappings in the plot \code{p} can be extended or overridden in the layers, as with the following code. \index{Mappings!overriding} The results are shown in Figure~\ref{fig:aes-override}.
 
-% INTERWEAVE
+% FIGLISTING
+%   LABEL: aes-override
+%   CAPTION: Overriding aesthetics.  (Left) Overriding colour with 
+%   {\tt factor(cyl)} and (right) overriding y-position with {\tt disp}
 % 
 % p + geom_point(aes(colour = factor(cyl)))
 % p + geom_point(aes(y = disp))
-\input{_include/a307e1157a43c1f4ff6d251fc9d51371.tex}
+\input{_include/a1ea50b4992b86bf63e7a371acaaf881.tex}
 % END
 
 \noindent The rules are summarised in Table~\ref{tbl:aes-override}.  Aesthetic mappings specified in a layer affect only that layer.  For that reason,  unless you modify the default scales, axis labels and legend titles will be based on the plot defaults.  The way to change these is described in Section~\ref{sec:guides}.
@@ -294,7 +300,7 @@ With \f{qplot}, you can do the same thing by putting the value inside of \f{I}, 
 % 
 % qplot(mpg, wt, data=mtcars, colour = I("darkblue"))
 % qplot(mpg, wt, data=mtcars, colour = "darkblue")
-\input{_include/885f744d3efd81ec149ec86924423ee8.tex}
+\input{_include/34d37e27311c0abe1a63fce084152910.tex}
 % END
 
 \subsection{Grouping}
@@ -330,7 +336,7 @@ The first plot in Figure~\ref{fig:group-lines} shows a set of time series plots,
 % data(Oxboys, package="nlme")
 % qplot(age, height, data=Oxboys, group = Subject, geom="line")
 % qplot(age, height, data=Oxboys, geom="line")
-\input{_include/584161940d30a777cca8ece32f878d25.tex}
+\input{_include/8721e7fde54545d917bcaf39d25da0aa.tex}
 % END
 
 \paragraph{Different groups on different layers.}  Sometimes we want to plot summaries based on different levels of aggregation. Different layers might have different group aesthetics, so that some display individual level data while others display summaries of larger groups.
@@ -362,12 +368,12 @@ This is not what we wanted; we have inadvertently added a smoothed line for each
 %   geom_smooth(method="lm", se = F)
 % qplot(age, height, data=Oxboys, group = Subject, geom="line") +
 %   geom_smooth(aes(group = 1), method="lm", size = 2, se = F)
-\input{_include/17731e05577d1a97642a71ea6c25b158.tex}
+\input{_include/51232d73ac23c7258abfa4ea1b8609cd.tex}
 % END
  
 Note how we stored the first plot in the variable {\tt p}, so we could experiment with the code to generate the second layer without having to re-enter any of the code for the first layer.  This is a useful time-saving technique, and is expanded upon in Chapter~\ref{cha:duplication}.
 
-\paragraph{Overiding the default grouping.}  The plot has a discrete scale but you want to draw lines that connect {\em across} groups.  This is the strategy used in interaction plots, profile plots, and parallel coordinate plots, among others.  For example, we draw boxplots of height at each measurement occasion, as shown in the first figure in Figure~\ref{fig:group-boxplots}: \indexf{geom_boxplot}
+\paragraph{Overriding the default grouping.}  The plot has a discrete scale but you want to draw lines that connect {\em across} groups.  This is the strategy used in interaction plots, profile plots, and parallel coordinate plots, among others.  For example, we draw boxplots of height at each measurement occasion, as shown in the first figure in Figure~\ref{fig:group-boxplots}: \indexf{geom_boxplot}
 
 % LISTING
 % 
@@ -396,7 +402,7 @@ We change the line colour in the second layer to make them distinct from the box
 % qplot(Occasion, height, data=Oxboys, geom="boxplot")
 % qplot(Occasion, height, data=Oxboys, geom="boxplot") +
 %  geom_line(aes(group = Subject), colour="#3366FF")
-\input{_include/145a074ae279f9ae378b2285380d8092.tex}
+\input{_include/92507b05107d5e48c737ce25fc09103e.tex}
 % END
 
 % The reason is simple, but fairly subtle - it's because of the default
@@ -407,13 +413,14 @@ We change the line colour in the second layer to make them distinct from the box
 % default grouping so that there is a single group for the whole
 % dataset:
 
-% INTERWEAVE
-% 
-% qplot(cut, data = diamonds, geom = "bar")
-% qplot(cut, ..density.., data = diamonds, geom = "bar")
-% qplot(cut, ..density.., data = diamonds, geom = "bar", group = 1)
-\input{_include/be2bdeccea2e862ffbed71adfd8d1352.tex}
-% END
+% % INTERWEAVE
+% % 
+% % qplot(cut, data = diamonds, geom = "bar")
+% % qplot(cut, ..density.., data = diamonds, geom = "bar")
+% % qplot(cut, ..density.., data = diamonds, geom = "bar", 
+% %   group = 1)
+% \input{_include/d48e2cbda69bd28b2c2634a203740a8c.tex}
+% % END
 
 \subsection{Matching aesthetics to graphic objects}
 \label{sub:matching}
@@ -435,7 +442,7 @@ Lines and paths operate on an off-by-one principle: there is one more observatio
 % qplot(x, y, data=df, colour=factor(colour), size = I(5)) + 
 %   geom_line(aes(group = 1), size = 2)
 % qplot(x, y, data=df, colour=colour, size = I(5)) + geom_line(size = 2)
-\input{_include/c30eeb19930a7a0cd552c52a4e3676cf.tex}
+\input{_include/800df80ca62fcadf7fe5005d2a443488.tex}
 % END
 
 You could imagine a more complicated system where segments smoothly blend from one aesthetic to another.  This would work for continuous variables like size or colour, but not for line type, and is not used in \ggplot.  If this is the behaviour you want, you can perform the linear interpolation yourself, as shown below.  
@@ -465,7 +472,7 @@ These issues are most relevant when mapping aesthetics to continuous variable, b
 % 
 % qplot(color, data = diamonds)
 % qplot(color, data = diamonds, fill = cut)
-\input{_include/8552718228bab4fd9372447956f57f4d.tex}
+\input{_include/9f89761c933c500cbae11af243e675b7.tex}
 % END
 
 \section{Geoms}
@@ -618,7 +625,7 @@ These generated variables can be used instead of the variables present in the or
 % 
 % ggplot(diamonds, aes(carat)) + 
 %   geom_histogram(aes(y = ..density..), binwidth = 0.1)
-\input{_include/90389a8e7d7849f7cd958da0f2d4d17a.tex}
+\input{_include/926e05b5e722f1afc3047405e384101a.tex}
 % END
 
 The names of generated variables must be surrounded with {\tt ..} when used.  This prevents confusion in case the original dataset includes a variable with the same name as a generated variable, and it makes it clear to any later reader of the code that this variable was generated by a stat.  Each statistic lists the variables that it creates in its documentation. \indexc{..}
@@ -627,8 +634,9 @@ The syntax to produce this plot with \f{qplot} is very similar:
 
 % LISTING
 % 
-% qplot(carat, ..density.., data = diamonds, geom="histogram", binwidth = 0.1)
-\input{_include/789daf219bd2d9bd8fb7d05c600fa8a1.tex}
+% qplot(carat, ..density.., data = diamonds, geom="histogram", 
+%   binwidth = 0.1)
+\input{_include/708316b3ce33b0a6eb6c1febd4c4d62e.tex}
 % END
 
 \section{Position adjustments}
@@ -666,7 +674,7 @@ The different types of adjustment are best illustrated with a bar chart.  Figure
 % dplot + geom_bar(position = "stack")
 % dplot + geom_bar(position = "fill")
 % dplot + geom_bar(position = "dodge")
-\input{_include/b933510e4cd7af68f7b5ce1b59ca6d0a.tex}
+\input{_include/268f05dffbd5920eca2233dc4f395e6b.tex}
 % END
 
 % FIGURE
@@ -678,7 +686,7 @@ The different types of adjustment are best illustrated with a bar chart.  Figure
 % dplot + geom_bar(position = "identity")
 % qplot(clarity, data = diamonds, geom="line", colour = cut, 
 %   stat="bin", group=cut)
-\input{_include/c1d06aa78dffb0010356ab92b6f3e7f6.tex}
+\input{_include/878c9b84d2a8fbf81aa2764059aa671c.tex}
 % END
 
 \section{Pulling it all together}
@@ -723,7 +731,7 @@ By connecting geoms with different statistics, you can easily create new graphic
 % d + stat_bin(aes(ymax = ..count..), binwidth = 0.1, geom = "area")
 % d + stat_bin(aes(size = ..density..), binwidth = 0.1, geom = "point", position="identity")
 % d + stat_bin(aes(y=1, fill = ..count..), binwidth = 0.1, geom = "tile", position="identity") + scale_y_continuous("")
-\input{_include/aef638013f0ccbbc50ba7a1744fb979b.tex}
+\input{_include/257c2d996802d37e67c1fd1bda8dd7df.tex}
 % END
 
 A number of the geoms available in \ggplot were derived from other geoms in a process like the one just described, starting with an existing geom and making a few changes in the default aesthetics or stat.  For example, the jitter geom is simply the point geom with the default position adjustment set to jitter.  Once it becomes clear that a particular variant is going to be used a lot or used in a very different context, it makes sense to create a new geom. Table~\ref{tbl:aliased-geoms} lists these ``aliased'' geoms. \index{Geoms!aliases}
@@ -765,10 +773,11 @@ First we'll load the \pkg{nlme} package, and fit a model with varying intercepts
 % INTERWEAVE
 % 
 % require(nlme, quiet = TRUE, warn.conflicts = FALSE)
-% model <- lme(height ~ age, data = Oxboys, random = ~ 1 + age | Subject)
+% model <- lme(height ~ age, data = Oxboys, 
+%  random = ~ 1 + age | Subject)
 % oplot <- ggplot(Oxboys, aes(age, height, group = Subject)) + 
 %   geom_line()
-\input{_include/aeb15a821b9e6677ff3096ca3e1a1a64.tex}
+\input{_include/167f90803c333596037fc2b2a50f6a03.tex}
 % END
 
 Next we'll compare the predicted trajectories to the actual trajectories.  We do this by building up a grid that contains all combinations of ages and subjects.  This is overkill for this simple linear case, where we only need two values of age to draw the predicted straight line, but we show it here because it is necessary when the model is more complex.  Next we add the predictions from the model back into this dataset, as a variable called \var{height}.  \indexf{geom_line}
@@ -788,7 +797,7 @@ Once we have the predictions we can display them along with the original data.  
 % INTERWEAVE
 % 
 % oplot + geom_line(data = preds, colour = "#3366FF", size= 0.4)
-\input{_include/2f308bf37937bd5cee93ae3a93526ba8.tex}
+\input{_include/c3bac4110594cb12ebfca3222b87b2ea.tex}
 % END
 
 It seems that the model does a good job of capturing the high-level structure of the data, but it's hard to see the details: plots of longitudinal data are often called spaghetti plots, and with good reason.  Another way to compare the model to the data is to look at residuals, so let's do that.  We add the predictions from the model to the original data (\var{fitted}), calculate residuals (\var{resid}), and add the residuals as well.  The next plot is a little more complicated: We update the plot dataset (recall the use of \code{\%+\%} to update the default data), change the default y aesthetic to \var{resid}, and add a smooth line for all observations. \indexf{geom_smooth}
@@ -799,7 +808,7 @@ It seems that the model does a good job of capturing the high-level structure of
 % Oxboys$resid <- with(Oxboys, fitted - height)
 % 
 % oplot %+% Oxboys + aes(y = resid) + geom_smooth(aes(group=1))
-\input{_include/890bcd99ce499928dcb562b9d1f188ce.tex}
+\input{_include/0448f66f9d51ed0e15518a224b55acba.tex}
 % END
 
 The smooth line makes it evident that the residuals are not random, showing a deficiency in the model.  We add a quadratic term, refit the model, recalculate predictions and residuals, and replot.  There is now less evidence of model inadequacy.
@@ -811,7 +820,7 @@ The smooth line makes it evident that the residuals are not random, showing a de
 % Oxboys$resid2 <- with(Oxboys, fitted2 - height)
 % 
 % oplot %+% Oxboys + aes(y = resid2) + geom_smooth(aes(group=1))
-\input{_include/82c779da5619df22787bbb43387c024a.tex}
+\input{_include/5464ff3fc5578ef3bebe81ce0a915771.tex}
 % END
 
 Notice how easily we were able to modify the plot object.  We updated the data and replotted twice without needing to reinitialise \code{oplot}.  Layering in \ggplot is designed to work well with the iterative process of fitting and evaluating models.

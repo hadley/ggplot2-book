@@ -17,7 +17,7 @@ qplot(x, y, data = diamonds, na.rm = T) +
   xlim(4, 4.5) + ylim(4, 4.5)
 
 # Saving a scale to a variable makes it easy to apply
-# exaclty the same scale to multiple plots.  You can
+# exactly the same scale to multiple plots.  You can
 # do the same thing with layers and facets too.
 gradient_rb <- scale_colour_gradient(low = "red", high = "blue")
 qplot(cty, hwy, data = mpg, colour = displ) + gradient_rb

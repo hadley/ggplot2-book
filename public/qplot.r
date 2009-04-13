@@ -1,5 +1,5 @@
 
-set.set(1410) # Make the sample reproducible
+set.seed(1410) # Make the sample reproducible
 dsmall <- diamonds[sample(nrow(diamonds), 100), ]
 
 qplot(carat, price, data = diamonds)
@@ -8,26 +8,26 @@ qplot(log(carat), log(price), data = diamonds)
 
 qplot(carat, x * y * z, data = diamonds)
 
-# Mapping point colour (left), size (middle) and
-# shape (right) of cut quality.
+# Mapping point colour to diamond colour (left), and
+# point shape to cut quality (right).
 qplot(carat, price, data = dsmall, colour = color)
 qplot(carat, price, data = dsmall, shape = cut)
 
-# Reducing the alpha value from 1/10 (left), to 1/100
-# (middle) to 1/200 (right) makes it easier to see
+# Reducing the alpha value from 1/10 (left) to 1/100
+# (middle) to 1/200 (right) makes it possible to see
 # where the bulk of the points lie.
-qplot(carat, price, data = diamonds, colour = I(alpha("black", 1/10)))
-qplot(carat, price, data = diamonds, colour = I(alpha("black", 1/100)))
-qplot(carat, price, data = diamonds, colour = I(alpha("black", 1/200)))
+qplot(carat, price, data = diamonds, alpha = I(1/10))
+qplot(carat, price, data = diamonds, alpha = I(1/100))
+qplot(carat, price, data = diamonds, alpha = I(1/200))
 
-# Smooth curves add to scatterplots of carat vs
+# Smooth curves add to scatterplots of carat vs.\
 # price. The dsmall dataset (left) and the full
 # dataset (right).
 qplot(carat, price, data = dsmall, geom = c("point", "smooth"))
 qplot(carat, price, data = diamonds, geom = c("point", "smooth"))
 
 # The effect of the span parameter.  (Left)
-# \code{span = 0.2}, and (right) \code{span = 1}
+# \code{span = 0.2}, and (right) \code{span = 1}.
 qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
   span = 0.2)
 qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
@@ -35,26 +35,26 @@ qplot(carat, price, data = dsmall, geom = c("point", "smooth"),
 
 # The effect of the formula parameter, using a
 # generalised additive model as a smoother.  (Left)
-# \code{formula = y ~ s(x)}, the default; (Right)
-# \code{formula = y ~ s(x, bs = "cs")}
+# \code{formula = y ~ s(x)}, the default; (right)
+# \code{formula = y ~ s(x, bs = "cs")}.
 library(mgcv)
 qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
-  method="gam", formula= y ~ s(x))
+  method = "gam", formula = y ~ s(x))
 qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
-  method="gam", formula= y ~ s(x, bs = "cs"))
+  method = "gam", formula = y ~ s(x, bs = "cs"))
 
 # The effect of the formula parameter, using a linear
 # model as a smoother.  (Left) \code{formula = y ~
-# x}, the default; (Right) \code{formula = y ~ ns(x,
-# 3)}
+# x}, the default; (right) \code{formula = y ~ ns(x,
+# 5)}.
 library(splines)
-qplot(carat, price, data = dsmall, geom=c("point", "smooth"), 
+qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
   method = "lm")
-qplot(carat, price, data = dsmall, geom=c("point", "smooth"), 
-  method = "lm", formula=y ~ ns(x,3))
+qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
+  method = "lm", formula = y ~ ns(x,5))
 
 # Using jittering (left) and boxplots (right) to
-# investigate the distribution of price per carat
+# investigate the distribution of price per carat,
 # conditional on colour.  As the colour improves
 # (from left to right) the spread of values
 # decreases, but there is little change in the centre
@@ -67,28 +67,28 @@ qplot(color, price / carat, data = diamonds, geom = "boxplot")
 # we begin to see where the bulk of the data lies.
 # However, the boxplot still does much better.
 qplot(color, price / carat, data = diamonds, geom = "jitter",
- colour = I(alpha("black", 1 / 5)))
+ alpha = I(1 / 5))
 qplot(color, price / carat, data = diamonds, geom = "jitter",
- colour = I(alpha("black", 1 / 50)))
+ alpha = I(1 / 50))
 qplot(color, price / carat, data = diamonds, geom = "jitter",
- colour = I(alpha("black", 1 / 200)))
+ alpha = I(1 / 200))
 
 # Displaying the distribution of diamonds.  (Left)
 # \code{geom = "histogram"} and (right) \code{geom =
-# "density"}
+# "density"}.
 qplot(carat, data = diamonds, geom = "histogram")
 qplot(carat, data = diamonds, geom = "density")
 
 # Varying the bin width on a histogram of carat
 # reveals interesting patterns.  Binwidths from left
-# to right: 1, 0.1, and 0.01 carats. Only diamonds
+# to right: 1, 0.1 and 0.01 carats. Only diamonds
 # between 0 and 3 carats shown.
 qplot(carat, data = diamonds, geom = "histogram", binwidth = 1, 
-  xlim=c(0,3))
+  xlim = c(0,3))
 qplot(carat, data = diamonds, geom = "histogram", binwidth = 0.1,
-  xlim=c(0,3))
+  xlim = c(0,3))
 qplot(carat, data = diamonds, geom = "histogram", binwidth = 0.01,
-  xlim=c(0,3))
+  xlim = c(0,3))
 
 # Mapping a categorical variable to an aesthetic will
 # automatically split up the geom by that variable.
@@ -106,32 +106,33 @@ qplot(color, data = diamonds, geom = "bar", weight = carat) +
   scale_y_continuous("carat")
 
 # Two time series measuring amount of unemployment.
-# ({\sc left}) Percent of population that is
-# unemployed and ({\sc right}) median number of weeks
-# unemployed.  Plots created with {\tt geom="line"}.
+# (Left) Percent of population that is unemployed and
+# (right) median number of weeks unemployed.  Plots
+# created with {\tt geom="line"}.
 qplot(date, unemploy / pop, data = economics, geom = "line")
 qplot(date, uempmed, data = economics, geom = "line")
 
 # Path plots illustrating the relationship between
 # percent of people unemployed and median length of
-# unemployment.  (Left) scatterplot with overlaid
-# path.  (Right) pure path plot coloured by year.
+# unemployment.  (Left) Scatterplot with overlaid
+# path.  (Right) Pure path plot coloured by year.
 year <- function(x) as.POSIXlt(x)$year + 1900
-qplot(unemploy / pop, uempmed, data = economics, geom = c("point", "path"))
-qplot(unemploy / pop, uempmed, data = economics, geom = "path",
-  colour = year(date)) + scale_area()
+qplot(unemploy / pop, uempmed, data = economics, 
+   geom = c("point", "path"))
+qplot(unemploy / pop, uempmed, data = economics, 
+  geom = "path", colour = year(date)) + scale_area()
 
 # Histograms showing the distribution of carat
-# conditional on colour.  (Left) bars show counts and
-# ({\sc right}) bars show densities (proportions of
-# the whole).  The density plot makes it easier to
+# conditional on colour.  (Left) Bars show counts and
+# (right) bars show densities (proportions of the
+# whole).  The density plot makes it easier to
 # compare distributions ignoring the relative
 # abundance of diamonds within each colour.
 # High-quality diamonds (colour D) are skewed towards
 # small sizes, and as quality declines the
 # distribution becomes more flat.
-qplot(carat, data = diamonds, facets = color ~ ., geom = "histogram",
-  binwidth = 0.1, xlim = c(0, 3))
+qplot(carat, data = diamonds, facets = color ~ ., 
+  geom = "histogram", binwidth = 0.1, xlim = c(0, 3))
 qplot(carat, ..density.., data = diamonds, facets = color ~ .,
   geom = "histogram", binwidth = 0.1, xlim = c(0, 3))
 

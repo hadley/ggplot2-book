@@ -54,26 +54,28 @@ More information and examples are available in the documentation, \code{?ddply},
   % ddply(diamonds, .(color), subset, carat == min(carat))
   % 
   % # Select the two smallest diamonds
-  % ddply(diamonds, .(color), subset, order(carat) < 2)
+  % ddply(diamonds, .(color), subset, order(carat) <= 2)
   % 
   % # Select the 1% largest diamonds in each group
-  % ddply(diamonds, .(color), subset, carat > quantile(carat, 0.99))
+  % ddply(diamonds, .(color), subset, carat > 
+  %   quantile(carat, 0.99))
   % 
   % # Select all diamonds bigger than the group average
   % ddply(diamonds, .(color), subset, price > mean(price))
-  \input{_include/cafc08f2d0bf1d229a8ca8fce823a80f.tex}  
+  \input{_include/3741c0e6dafd9b82ddf24890a5a1c07c.tex}  
   % END
   
   \item Using \f{transform} allows you to perform group-wise transformations with very little work.  This is particularly useful if you want to add new variables that are calculated on a per-group level, such as a per-group standardisation.  Section~\ref{sub:time-series} shows another use of this technique for standardising time series to a common scale. \index{Transformation!group-wise}  \indexf{transform}
   
   % LISTING
   % 
-  % # Within each colour, scale price to have mean 0 and variance 1
+  % # Within each colour, scale price to mean 0 and variance 1
   % ddply(diamonds, .(color), transform, price = scale(price))
   % 
   % # Subtract off group mean
-  % ddply(diamonds, .(color), transform, price = price - mean(price))
-  \input{_include/a96f045aa9ce7a20784582ad5e08258e.tex}  
+  % ddply(diamonds, .(color), transform, 
+  %   price = price - mean(price))
+  \input{_include/9e24cecb95215dd4cea1abbab38ff677.tex}  
   % END
 
   \item If you want to apply a function to every column in the data frame, you might find the \f{colwise} function handy. This function converts a function that operates on vectors to a function that operates column-wise on data frames. This is rather different than most functions: instead of returning a vector of numbers, \f{colwise} returns a new function. The following example creates a function to count the number of missing values in a vector and then shows how we can use \f{colwise} to apply it to every column in a data frame. \index{Transformation!column-wise} \indexf{colwise}
@@ -98,8 +100,9 @@ More information and examples are available in the documentation, \code{?ddply},
   % msleep2 <- msleep[, -6] # Remove a column to save space
   % numcolwise(median)(msleep2, na.rm = T)
   % numcolwise(quantile)(msleep2, na.rm = T)
-  % numcolwise(quantile)(msleep2, probs = c(0.25, 0.75), na.rm = T)
-  \input{_include/22973fb980c0459fe3face8a29226149.tex}  
+  % numcolwise(quantile)(msleep2, probs = c(0.25, 0.75), 
+  %   na.rm = T)
+  \input{_include/8656413f1960ddc186982c016b192a98.tex}  
   % END
   
   Combined with \code{ddply}, this makes it easy to produce per-group summaries: \index{Summary!group-wise}
@@ -146,14 +149,15 @@ In this section, we'll work through the process of generating the smoothed data 
 %   diamonds of that size.  Restricting attention to diamonds of less than
 %   two carats (right) focuses on the region where we have plenty of data.
 % 
-% qplot(carat, price, data = diamonds, geom = "smooth", colour = color)
+% qplot(carat, price, data = diamonds, geom = "smooth", 
+%   colour = color)
 % dense <- subset(diamonds, carat < 2)
-% qplot(carat, price, data = dense, geom = "smooth", colour = color, 
-%   fullrange = TRUE)
-\input{_include/520432aa266eedd0a71583c6140ae9a8.tex}
+% qplot(carat, price, data = dense, geom = "smooth", 
+%   colour = color,  fullrange = TRUE)
+\input{_include/e1ef81e65c031271b35d629f86360bcc.tex}
 % END
 
-How can we re-create this by hand?  First we read the \f{stat_smooth} documentation to determine what the model is: for large data it's \code{gam(y ~ s(x, bs = "cs"))}.  To get the same output as \f{stat_smooth}, we need to fit the model, then predict it on an evenly spaced grid of points. This task is performed by the \f{smooth} function in the following code.  Once we have written this function it is straightforward to apply it to each diamond colour  using \f{ddply}. \index{Package!mgcv}
+How can we re-create this by hand?  First we read the \f{stat_smooth} documentation to determine what the model is: for large data it's {\tt gam(y \verb|~| s(x, bs = "cs"))}.  To get the same output as \f{stat_smooth}, we need to fit the model, then predict it on an evenly spaced grid of points. This task is performed by the \f{smooth} function in the following code.  Once we have written this function it is straightforward to apply it to each diamond colour  using \f{ddply}. \index{Package!mgcv}
 
 Figure~\ref{fig:smooth-by-hand} shows the results of this work, which are identical to what we got with \ggplot doing all the work.
 
@@ -174,10 +178,11 @@ Figure~\ref{fig:smooth-by-hand} shows the results of this work, which are identi
 %   grid
 % }
 % smoothes <- ddply(dense, .(color), smooth)
-% qplot(carat, price, data = smoothes, colour = color, geom = "line")
-% qplot(carat, price, data = smoothes, colour = color, geom = "smooth",
-%   ymax = price + 2 * se, ymin = price - 2 * se)
-\input{_include/a95443c42067de3ec12c6760b2752feb.tex}
+% qplot(carat, price, data = smoothes, colour = color, 
+%   geom = "line")
+% qplot(carat, price, data = smoothes, colour = color, 
+%   geom = "smooth", ymax = price + 2 * se, ymin = price - 2 * se)
+\input{_include/91e86d3d725cab996f572fb84726b3da.tex}
 % END
 
 Doing the summary by hand gives you much more flexibility to fit models where the grouping factor is explicitly included as a covariate. For example, the following model models price as a non-linear function of carat, plus a constant term for each colour. It's not a very good model as it predicts negative prices for small, poor-quality diamonds, but it's a starting point for a better model.
@@ -191,7 +196,7 @@ Doing the summary by hand gives you much more flexibility to fit models where th
 % ))
 % grid$pred <- predict(mod, grid)
 % qplot(carat, pred, data = grid, colour = color, geom = "line")
-\input{_include/bef542d564afa3b3e46830bf2b9c8d03.tex}
+\input{_include/e1c5ea855e22ea09ab023dfb3601d833.tex}
 % END
 
 See also Sections~\ref{sub:different_aesthetics} and \ref{sec:uncertainty} for other ways of combining models and data.
@@ -298,9 +303,10 @@ One way is to build up the plot with a different layer for each variable, as you
 %   geom_line(aes(y = uempmed, colour = "uempmed")) + 
 %   scale_colour_hue("variable")
 %
-% emp <- melt(economics, id = "date", measure = c("unemploy", "uempmed"))
+% emp <- melt(economics, id = "date", 
+%   measure = c("unemploy", "uempmed"))
 % qplot(date, value, data = emp, geom = "line", colour = variable)
-\input{_include/1656d12f67fd9113f430fd635d40b9da.tex}
+\input{_include/7a4330ba19a874da2286979a1cf52c87.tex}
 % END
 
 There is a problem with these plots: the two variables have radically different scales, and so the series for \code{uempmed} appears as a flat line at the bottom of the plot. There is no way to produce a plot with two axes in \ggplot because this type of plot is fundamentally misleading. Instead there are two perceptually well-founded alternatives: rescale the variables to have a common range, or use faceting with free scales. These alternatives are created with the code below and are shown in Figure~\ref{fig:series-scaling}.  \index{Axis!multiple}
@@ -321,7 +327,7 @@ There is a problem with these plots: the two variables have radically different 
 %   colour = variable, linetype = variable)
 % qplot(date, value, data = emp, geom = "line") + 
 %   facet_grid(variable ~ ., scales = "free_y")
-\input{_include/ae989935a36c1578d8372a0660ee3416.tex}
+\input{_include/8aa636ba34b553cbb4eb9041ec2adc47.tex}
 % END
 
 \subsection{Parallel coordinates plot} 
@@ -356,7 +362,7 @@ Once the data is in this form, creating a parallel coordinates plot is easy. All
 % jit <- position_jitter(width = 0.25, height = 2.5)
 % pcp + geom_line(position = jit)
 % pcp + geom_line(colour = alpha("black", 1 / 20), position = jit)
-\input{_include/7b8d68c1672208ff82a29b83cd42c430.tex}
+\input{_include/bae41be8a7bf5c91fbe00ec422ef5e2a.tex}
 % END
 
 To make the patterns more clear we will cluster the movies into groups of similar rating patterns. The following code uses kmeans clustering \citep{hartigan:1979} to produce six groups of similar movies.  To make the clusters a little more interpretable, they are relabelled so that cluster 1 has the lowest average rating and cluster six the highest. \index{Clustering}
@@ -381,10 +387,11 @@ There are many different ways that we can visualise the result of this clusterin
 %   group means.
 % 
 % pcp_cl <- ggplot(molten, 
-%  aes(variable, value, group = .row, colour = cluster)) 
+%   aes(variable, value, group = .row, colour = cluster)) 
 % pcp_cl + geom_line(position = jit, alpha = 1/5)
-% pcp_cl + stat_summary(aes(group = cluster), fun.y = mean, geom = "line")
-\input{_include/ea542edf4e62c785101a8cd211167739.tex}
+% pcp_cl + stat_summary(aes(group = cluster), fun.y = mean, 
+%   geom = "line")
+\input{_include/ea0309eb75d61899f70c76a86e145dc5.tex}
 % END
 
 These plots are good for showing the differences between groups, but they don't tell us a lot about whether we've done a good job clustering the data.  Figure~\ref{fig:pcp-facet} uses faceting to display each group in its own panel. This plot highlights the variation within many of the groups, suggesting that perhaps more clusters would be appropriate.
@@ -400,7 +407,7 @@ These plots are good for showing the differences between groups, but they don't 
 % 
 % pcp_cl + geom_line(position = jit, colour = alpha("black", 1/5)) +
 %   facet_wrap(~ cluster)
-\input{_include/f9b4e59093021f49174f0c9ea45da8f8.tex}
+\input{_include/0e74c3e111b1941dd3adab016846659e.tex}
 % END
 
 
@@ -462,7 +469,7 @@ To demonstrate these techniques, we're going to fit the very simple model with c
 % 
 % qplot(displ, cty, data = mpg) + geom_smooth(method = "lm")
 % mpgmod <- lm(cty ~ displ, data = mpg)
-\input{_include/72863d85cb336f9a6f1348f977e0e401.tex}
+\input{_include/d99a9d583375a36a14208698628e443b.tex}
 % END
 
 % library(xtable)
@@ -506,7 +513,7 @@ With a fortified dataset in hand we can easily re-create the plots produced by \
 % basic
 % basic + aes(y = .stdresid)
 % basic + aes(size = .cooksd) + scale_area("Cook's distance")
-\input{_include/66a98cfe2e732e16f67dcb00156ac240.tex}
+\input{_include/28cc9429dd6efd35b84349fe71174a5e.tex}
 % END
 
 Additionally, we can fortify the whole dataset and add to the plot variables that are in the original data but not in the model. This helps us to understand what variables are useful to improve the model. Figure~\ref{fig:fortify-full} colours the residuals by the number of cylinders, and suggests that this variable would be good to add to the model: within each cylinder group, the pattern is close to linear.
@@ -521,7 +528,7 @@ Additionally, we can fortify the whole dataset and add to the plot variables tha
 % full <- basic %+% fortify(mod, mpg)
 % full + aes(colour = factor(cyl))
 % full + aes(displ, colour = factor(cyl))
-\input{_include/1c57abb6c46808b3f1b40a997bad2b02.tex}
+\input{_include/ac6b0880d5ef17b0cb10835e850b0641.tex}
 % END
 
 \subsection{Writing your own}
@@ -539,10 +546,10 @@ You can also use \f{fortify} with non-model functions.  The following example sh
 % }
 % 
 % library(EBImage)
-% img <- readImage("http://had.co.nz/me.jpeg", TrueColor)
+% img <- readImage("http://had.co.nz/me.jpg", TrueColor)
 % qplot(x, y, data = img, fill = value, geom="tile") + 
 %   scale_fill_identity() + coord_equal()
-\input{_include/1316d3d4289e8219eb3253cdd46c03be.tex}
+\input{_include/8ebd524d7d8bfc3caec3774559b24eea.tex}
 % END
 
 This approach cleanly separates the display of the data from its production, and dramatically improves reuse. However, it does not provide any conveniently pre-packaged functions. If you want to create a diagnostic plot for a linear model you have to assemble all the pieces yourself. Once you have the basic structure in place, so that people can always dig back down and alter the individual pieces, you can write a function that joins all the components together in a useful way. See Section~\ref{sec:functions} for some pointers on how to do this.
