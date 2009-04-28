@@ -1,10 +1,9 @@
 options(digits = 2)
 
-# When ``zooming'' in on the plot, it's useful to use
-# \f{last_plot} iteratively to quickly find the best
-# view.  The final plot adds a line with slope 1 and
-# intercept 0, confirming it is the square diamonds
-# that are missing.
+# When ``zooming'' in on the plot, it's useful to use \f{last_plot}
+# iteratively to quickly find the best view.  The final plot adds a
+# line with slope 1 and intercept 0, confirming it is the square
+# diamonds that are missing.
 qplot(x, y, data = diamonds, na.rm = TRUE)
 last_plot() + xlim(3, 11) + ylim(3, 11)
 last_plot() + xlim(4, 10) + ylim(4, 10)
@@ -16,16 +15,16 @@ qplot(x, y, data = diamonds, na.rm = T) +
   geom_abline(colour = "red") +
   xlim(4, 4.5) + ylim(4, 4.5)
 
-# Saving a scale to a variable makes it easy to apply
-# exactly the same scale to multiple plots.  You can
-# do the same thing with layers and facets too.
+# Saving a scale to a variable makes it easy to apply exactly the same
+# scale to multiple plots.  You can do the same thing with layers and
+# facets too.
 gradient_rb <- scale_colour_gradient(low = "red", high = "blue")
 qplot(cty, hwy, data = mpg, colour = displ) + gradient_rb
 qplot(bodywt, brainwt, data = msleep, colour = awake, log="xy") +
   gradient_rb
 
-# Using ``quiet'' x and y scales removes the labels
-# and hides ticks and gridlines.
+# Using ``quiet'' x and y scales removes the labels and hides ticks and
+# gridlines.
 xquiet <- scale_x_continuous("", breaks = NA)
 yquiet <- scale_y_continuous("", breaks = NA)
 quiet <- c(xquiet, yquiet)
@@ -33,9 +32,8 @@ quiet <- c(xquiet, yquiet)
 qplot(mpg, wt, data = mtcars) + quiet
 qplot(displ, cty, data = mpg) + quiet
 
-# Creating a custom geom function saves typing when
-# creating plots with similar (but not the same)
-# components.
+# Creating a custom geom function saves typing when creating plots with
+# similar (but not the same) components.
 geom_lm <- function(formula = y ~ x) {
   geom_smooth(formula = formula, se = FALSE, method = "lm")
 }
