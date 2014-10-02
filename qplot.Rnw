@@ -7,7 +7,10 @@
 % * more error bar and ribbon examples
 % * table of options
 
-
+<<r setup, echo=FALSE>>=
+library(ggplot2)
+knitr::opts_chunk$set(fig.width = 4, fig.height = 2.4, out.width = "0.5\\linewidth", message = FALSE, cache = TRUE, cache.path = "cache/qplot-", fig.path = "figure/qplot-")
+@
 
 \chapter{Getting started with qplot}
 \label{cha:qplot}
@@ -61,14 +64,10 @@ In this chapter we'll just use one data source, so you can get familiar with the
 
 The dataset has not been well cleaned, so as well as demonstrating interesting relationships about diamonds, it also demonstrates some data quality problems. We'll also use another dataset, {\tt dsmall}, which is a random sample of 100 diamonds. We'll use this data for plots that are more appropriate for smaller datasets. 
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{set.seed}\hlstd{(}\hlnum{1410}\hlstd{)} \hlcom{# Make the sample reproducible}
-\hlstd{dsmall} \hlkwb{<-} \hlstd{diamonds[}\hlkwd{sample}\hlstd{(}\hlkwd{nrow}\hlstd{(diamonds),} \hlnum{100}\hlstd{), ]}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
+<<dsmall>>= 
+set.seed(1410) # Make the sample reproducible
+dsmall <- diamonds[sample(nrow(diamonds), 100), ]
+@
 
 \section{Basic use}
 \label{sec:basic_use}
@@ -77,41 +76,23 @@ As with  {\tt plot}, the first two arguments to \f{qplot} are {\tt x} and {\tt y
 
 Here is a simple example of the use of \f{qplot}.  It produces a scatterplot showing the relationship between the price and carats (weight) of a diamond.  \index{Scatterplot}
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{qplot}\hlstd{(carat, price,} \hlkwc{data} \hlstd{= diamonds)}
-\end{alltt}
-\end{kframe}
-\includegraphics[width=0.5\linewidth]{figure/qplot-qscatter} 
-
-\end{knitrout}
+<<qscatter, dev="png">>= 
+qplot(carat, price, data = diamonds)
+@
 
 The plot shows a strong correlation with notable outliers and some interesting vertical striation.  The relationship looks exponential, though, so the first thing we'd like to do is to transform the variables.  Because \f{qplot} accepts functions of variables as arguments, we plot log(price) vs.\ log(carat):
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{qplot}\hlstd{(}\hlkwd{log}\hlstd{(carat),} \hlkwd{log}\hlstd{(price),} \hlkwc{data} \hlstd{= diamonds)}
-\end{alltt}
-\end{kframe}
-\includegraphics[width=0.5\linewidth]{figure/qplot-qlog} 
-
-\end{knitrout}
+<<qlog, dev="png">>=
+qplot(log(carat), log(price), data = diamonds)
+@
 
 \noindent The relationship now looks linear.  With this much overplotting, though, we need to be cautious about drawing firm conclusions.
 
 Arguments can also be combinations of existing variables, so, if we are curious about the relationship between the volume of the diamond (approximated by $x \times y \times z$) and its weight, we could do the following:
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{qplot}\hlstd{(carat, x} \hlopt{*} \hlstd{y} \hlopt{*} \hlstd{z,} \hlkwc{data} \hlstd{= diamonds)}
-\end{alltt}
-\end{kframe}
-\includegraphics[width=0.5\linewidth]{figure/qplot-volume} 
-
-\end{knitrout}
+<<volume, dev="png">>= 
+qplot(carat, x * y * z, data = diamonds)
+@
 
 We would expect the density (weight/volume) of diamonds to be constant, and so see a linear relationship between volume and weight. The majority of diamonds do seem to fall along a line, but there are some large outliers.
 
@@ -122,41 +103,20 @@ The first big difference when using {\tt qplot} instead of {\tt plot} comes when
 
 In the next example, we augment the plot of carat and price with information about diamond colour and cut.  The results are shown in Figure~\ref{fig:qplot-aesthetics}.
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{qplot}\hlstd{(carat, price,} \hlkwc{data} \hlstd{= dsmall,} \hlkwc{colour} \hlstd{= color)}
-\hlkwd{qplot}\hlstd{(carat, price,} \hlkwc{data} \hlstd{= dsmall,} \hlkwc{shape} \hlstd{= cut)}
-\end{alltt}
-\end{kframe}\begin{figure}[]
-
-\includegraphics[width=0.5\linewidth]{figure/qplot-qplot-aesthetics1} 
-\includegraphics[width=0.5\linewidth]{figure/qplot-qplot-aesthetics2} \caption[Mapping point colour to diamond colour (left), and point shape to cut quality (right)]{Mapping point colour to diamond colour (left), and point shape to cut quality (right).\label{fig:qplot-aesthetics}}
-\end{figure}
-
-
-\end{knitrout}
+<<qplot-aesthetics, fig.show = "hold", fig.cap = "Mapping point colour to diamond colour (left), and point shape to cut quality (right).">>=
+qplot(carat, price, data = dsmall, colour = color)
+qplot(carat, price, data = dsmall, shape = cut)
+@
 
 Colour, size and shape are all examples of aesthetic attributes, visual properties that affect the way observations are displayed. For every aesthetic attribute, there is a function, called a \emph{scale}, which maps data values to valid values for that aesthetic. It is this scale that controls the appearance of the points and associated legend. For example, in the above plots, the colour scale maps J to purple and F to green. (Note that while I use British spelling throughout this book, the software also accepts American spellings.)\index{Aesthetics}
 
 You can also manually set the aesthetics using \f{I}, e.g., \code{colour = I("red")} or \code{size = I(2)}.  This is not the same as mapping and is explained in more detail in Section~\ref{sub:setting-mapping}.  For large datasets, like the diamonds data, semi-transparent points are often useful to alleviate some of the overplotting.  To make a semi-transparent colour you can use the alpha aesthetic, which takes a value between 0 (completely transparent) and 1 (complete opaque).  It's often useful to specify the transparency as a fraction, e.g., \code{1/10} or \code{1/20}, as the denominator specifies the number of points that must overplot to get a completely opaque colour. \index{Aesthetics!setting} \indexf{I}
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{qplot}\hlstd{(carat, price,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{alpha} \hlstd{=} \hlkwd{I}\hlstd{(}\hlnum{1}\hlopt{/}\hlnum{10}\hlstd{))}
-\hlkwd{qplot}\hlstd{(carat, price,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{alpha} \hlstd{=} \hlkwd{I}\hlstd{(}\hlnum{1}\hlopt{/}\hlnum{100}\hlstd{))}
-\hlkwd{qplot}\hlstd{(carat, price,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{alpha} \hlstd{=} \hlkwd{I}\hlstd{(}\hlnum{1}\hlopt{/}\hlnum{200}\hlstd{))}
-\end{alltt}
-\end{kframe}\begin{figure}[]
-
-\includegraphics[width=0.32\linewidth]{figure/qplot-qplot-set1} 
-\includegraphics[width=0.32\linewidth]{figure/qplot-qplot-set2} 
-\includegraphics[width=0.32\linewidth]{figure/qplot-qplot-set3} \caption[Reducing the alpha value from 1/10 (left) to 1/100 (middle) to 1/200 (right) makes it possible to see where the bulk of the points lie]{Reducing the alpha value from 1/10 (left) to 1/100 (middle) to 1/200 (right) makes it possible to see where the bulk of the points lie.\label{fig:qplot-set}}
-\end{figure}
-
-
-\end{knitrout}
+<<qplot-set, fig.show = "hold", dev = "png", fig.cap = "Reducing the alpha value from 1/10 (left) to 1/100 (middle) to 1/200 (right) makes it possible to see where the bulk of the points lie.", out.width = "0.32\\linewidth", fig.weight = 4, fig.height = 4>>=
+qplot(carat, price, data = diamonds, alpha = I(1/10))
+qplot(carat, price, data = diamonds, alpha = I(1/100))
+qplot(carat, price, data = diamonds, alpha = I(1/200))
+@
 
 Different types of aesthetic attributes work better with different types of variables. For example, colour and shape work well with categorical variables, while size works better with continuous variables. The amount of data also makes a difference: if there is a lot of data, like in the plots above, it can be hard to distinguish the different groups. An alternative solution is to use faceting, which will be introduced in Section~\ref{sec:qplot-faceting}.
 
@@ -190,20 +150,10 @@ Different types of aesthetic attributes work better with different types of vari
 If you have a scatterplot with many data points, it can be hard to see exactly what trend is shown by the data. In this case you may want to add a smoothed line to the plot. This is easily done using the {\tt smooth} geom as shown in Figure~\ref{fig:qplot-smooth}. Notice that we have combined multiple geoms by supplying a vector of geom names created with \f{c}.  The geoms will be overlaid in the order in which they appear.  \index{Smoothing} \indexf{geom_smooth}
 
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{qplot}\hlstd{(carat, price,} \hlkwc{data} \hlstd{= dsmall,} \hlkwc{geom} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"point"}\hlstd{,} \hlstr{"smooth"}\hlstd{))}
-\hlkwd{qplot}\hlstd{(carat, price,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{geom} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"point"}\hlstd{,} \hlstr{"smooth"}\hlstd{))}
-\end{alltt}
-\end{kframe}\begin{figure}[]
-
-\includegraphics[width=0.5\linewidth]{figure/qplot-qplot-smooth1} 
-\includegraphics[width=0.5\linewidth]{figure/qplot-qplot-smooth2} \caption[Smooth curves add to scatterplots of carat vs]{Smooth curves add to scatterplots of carat vs. price. The dsmall dataset (left) and the full dataset (right).\label{fig:qplot-smooth}}
-\end{figure}
-
-
-\end{knitrout}
+<<qplot-smooth, fig.show = "hold", dev = "png", fig.cap = "Smooth curves add to scatterplots of carat vs.\ price. The dsmall dataset (left) and the full dataset (right).">>=
+qplot(carat, price, data = dsmall, geom = c("point", "smooth"))
+qplot(carat, price, data = diamonds, geom = c("point", "smooth"))
+@
 
 Despite overplotting, our impression of an exponential relationship between price and carat was correct. There are few diamonds bigger than three carats, and our uncertainty in the form of the relationship increases as illustrated by the point-wise confidence interval shown in grey. If you want to turn the confidence interval off, use {\tt se = FALSE}. 
 
@@ -212,22 +162,12 @@ There are many different smoothers you can choose between by using the {\tt meth
 \begin{itemize}
   \item {\tt method = "loess"}, the default for small n, uses a smooth local regression.  More details about the algorithm used can be found in {\tt ?loess}.  The wiggliness of the line is controlled by the \code{span} parameter, which ranges from 0 (exceedingly wiggly) to 1 (not so wiggly), as shown in Figure~\ref{fig:smooth-loess}.  \index{Model!loess}
   
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{qplot}\hlstd{(carat, price,} \hlkwc{data} \hlstd{= dsmall,} \hlkwc{geom} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"point"}\hlstd{,} \hlstr{"smooth"}\hlstd{),}
-  \hlkwc{span} \hlstd{=} \hlnum{0.2}\hlstd{)}
-\hlkwd{qplot}\hlstd{(carat, price,} \hlkwc{data} \hlstd{= dsmall,} \hlkwc{geom} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"point"}\hlstd{,} \hlstr{"smooth"}\hlstd{),}
-  \hlkwc{span} \hlstd{=} \hlnum{1}\hlstd{)}
-\end{alltt}
-\end{kframe}\begin{figure}[]
-
-\includegraphics[width=0.5\linewidth]{figure/qplot-smooth-loess1} 
-\includegraphics[width=0.5\linewidth]{figure/qplot-smooth-loess2} \caption[The effect of the span parameter]{The effect of the span parameter.  (Left) \code{span = 0.2}, and (right) \code{span = 1}.\label{fig:smooth-loess}}
-\end{figure}
-
-
-\end{knitrout}
+<<smooth-loess, fig.show = "hold", dev = "png", fig.cap = "The effect of the span parameter.  (Left) \\code{span = 0.2}, and (right) \\code{span = 1}.">>=
+qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
+  span = 0.2)
+qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
+  span = 1)
+@
   
   \noindent Loess does not work well for large datasets (it's $O(n^2)$ in memory), and so an alternative smoothing algorithm is used when $n$ is greater than 1,000.
 
@@ -235,44 +175,24 @@ There are many different smoothers you can choose between by using the {\tt meth
 \index{Package!mgcv} \index{Model!generalised additive}
 
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{library}\hlstd{(mgcv)}
-\hlkwd{qplot}\hlstd{(carat, price,} \hlkwc{data} \hlstd{= dsmall,} \hlkwc{geom} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"point"}\hlstd{,} \hlstr{"smooth"}\hlstd{),}
-  \hlkwc{method} \hlstd{=} \hlstr{"gam"}\hlstd{,} \hlkwc{formula} \hlstd{= y} \hlopt{~} \hlkwd{s}\hlstd{(x))}
-\hlkwd{qplot}\hlstd{(carat, price,} \hlkwc{data} \hlstd{= dsmall,} \hlkwc{geom} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"point"}\hlstd{,} \hlstr{"smooth"}\hlstd{),}
-  \hlkwc{method} \hlstd{=} \hlstr{"gam"}\hlstd{,} \hlkwc{formula} \hlstd{= y} \hlopt{~} \hlkwd{s}\hlstd{(x,} \hlkwc{bs} \hlstd{=} \hlstr{"cs"}\hlstd{))}
-\end{alltt}
-\end{kframe}\begin{figure}[]
-
-\includegraphics[width=0.5\linewidth]{figure/qplot-smooth-gam1} 
-\includegraphics[width=0.5\linewidth]{figure/qplot-smooth-gam2} \caption[The effect of the formula parameter, using a generalised additive model as a smoother]{The effect of the formula parameter, using a generalised additive model as a smoother.  (Left) \code{formula = y ~ s(x)}, the default; (right) \code{formula = y ~ s(x, bs = 'cs')}.\label{fig:smooth-gam}}
-\end{figure}
-
-
-\end{knitrout}
+<<smooth-gam, fig.show = "hold", dev = "png", fig.cap = "The effect of the formula parameter, using a generalised additive model as a smoother.  (Left) \\code{formula = y ~ s(x)}, the default; (right) \\code{formula = y ~ s(x, bs = 'cs')}.">>=
+library(mgcv)
+qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
+  method = "gam", formula = y ~ s(x))
+qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
+  method = "gam", formula = y ~ s(x, bs = "cs"))
+@
 
   \item {\tt method = "lm"} fits a linear model.  The default will fit a straight line to your data, or you can specify {\tt formula = y \verb|~| poly(x, 2)} to specify a degree 2 polynomial, or better, load the {\tt splines} package and use a natural spline: {\tt formula = y \verb|~| ns(x, 2)}. The second parameter is the degrees of freedom: a higher number will create a wigglier curve. You are free to specify any formula involving $x$ and $y$.  Figure~\ref{fig:smooth-lm} shows two examples created with the following code.  \index{Model!linear}
 
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{library}\hlstd{(splines)}
-\hlkwd{qplot}\hlstd{(carat, price,} \hlkwc{data} \hlstd{= dsmall,} \hlkwc{geom} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"point"}\hlstd{,} \hlstr{"smooth"}\hlstd{),}
-  \hlkwc{method} \hlstd{=} \hlstr{"lm"}\hlstd{)}
-\hlkwd{qplot}\hlstd{(carat, price,} \hlkwc{data} \hlstd{= dsmall,} \hlkwc{geom} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"point"}\hlstd{,} \hlstr{"smooth"}\hlstd{),}
-  \hlkwc{method} \hlstd{=} \hlstr{"lm"}\hlstd{,} \hlkwc{formula} \hlstd{= y} \hlopt{~} \hlkwd{ns}\hlstd{(x,} \hlnum{5}\hlstd{))}
-\end{alltt}
-\end{kframe}\begin{figure}[]
-
-\includegraphics[width=0.5\linewidth]{figure/qplot-smooth-lm1} 
-\includegraphics[width=0.5\linewidth]{figure/qplot-smooth-lm2} \caption[The effect of the formula parameter, using a linear model as a smoother]{The effect of the formula parameter, using a linear model as a smoother.  (Left) \code{formula = y ~ x}, the default; (right) \code{formula = y ~ ns(x, 5)}.\label{fig:smooth-lm}}
-\end{figure}
-
-
-\end{knitrout}
+<<smooth-lm, fig.show = "hold", dev = "png", fig.cap = "The effect of the formula parameter, using a linear model as a smoother.  (Left) \\code{formula = y ~ x}, the default; (right) \\code{formula = y ~ ns(x, 5)}.">>=
+library(splines)
+qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
+  method = "lm")
+qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
+  method = "lm", formula = y ~ ns(x, 5))
+@
 
   \item {\tt method = "rlm"} works like {\tt lm}, but uses a robust fitting algorithm so that outliers don't affect the fit as much.  It's part of the {\tt MASS} package, so remember to load that first. \index{Model!robust} \index{Package!MASS}
 
@@ -283,45 +203,24 @@ There are many different smoothers you can choose between by using the {\tt meth
 
 When a set of data includes a categorical variable and one or more continuous variables, you will probably be interested to know how the values of the continuous variables vary with the levels of the categorical variable.  Box-plots and jittered points offer two ways to do this.  Figure~\ref{fig:jitter-boxplot} explores how the distribution of price per carat varies with the colour of the diamond using jittering ({\tt geom = "jitter"}, left) and box-and-whisker plots ({\tt geom = "boxplot"}, right). \index{Boxplot} \index{Jittering} \indexf{geom_boxplot}
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{qplot}\hlstd{(color, price} \hlopt{/} \hlstd{carat,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{geom} \hlstd{=} \hlstr{"jitter"}\hlstd{)}
-\hlkwd{qplot}\hlstd{(color, price} \hlopt{/} \hlstd{carat,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{geom} \hlstd{=} \hlstr{"boxplot"}\hlstd{)}
-\end{alltt}
-\end{kframe}\begin{figure}[]
-
-\includegraphics[width=0.5\linewidth]{figure/qplot-jitter-boxplot1} 
-\includegraphics[width=0.5\linewidth]{figure/qplot-jitter-boxplot2} \caption[Using jittering (left) and boxplots (right) to investigate the distribution of price per carat, conditional on colour]{Using jittering (left) and boxplots (right) to investigate the distribution of price per carat, conditional on colour.  As the colour improves (from left to right) the spread of values decreases, but there is little change in the centre of the distribution.\label{fig:jitter-boxplot}}
-\end{figure}
-
-
-\end{knitrout}
+<<jitter-boxplot, fig.show = "hold", dev = "png", fig.cap = "Using jittering (left) and boxplots (right) to investigate the distribution of price per carat, conditional on colour.  As the colour improves (from left to right) the spread of values decreases, but there is little change in the centre of the distribution.">>=
+qplot(color, price / carat, data = diamonds, geom = "jitter")
+qplot(color, price / carat, data = diamonds, geom = "boxplot")
+@
 
 Each method has its strengths and weaknesses. Boxplots summarise the bulk of the distribution with only five numbers, while jittered plots show every point but can suffer from overplotting. In the example here, both plots show the dependency of the spread of price per carat on diamond colour, but the boxplots are more informative, indicating that there is very little change in the median and adjacent quartiles.
 
 The overplotting seen in the plot of jittered values can be alleviated somewhat by using semi-transparent points using the {\tt alpha} argument. Figure~\ref{fig:jitter-alpha} illustrates three different levels of transparency, which make it easier to see where the bulk of the points lie.  The plots are produced with the following code. \indexf{geom_jitter}
 
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{qplot}\hlstd{(color, price} \hlopt{/} \hlstd{carat,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{geom} \hlstd{=} \hlstr{"jitter"}\hlstd{,}
- \hlkwc{alpha} \hlstd{=} \hlkwd{I}\hlstd{(}\hlnum{1} \hlopt{/} \hlnum{5}\hlstd{))}
-\hlkwd{qplot}\hlstd{(color, price} \hlopt{/} \hlstd{carat,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{geom} \hlstd{=} \hlstr{"jitter"}\hlstd{,}
- \hlkwc{alpha} \hlstd{=} \hlkwd{I}\hlstd{(}\hlnum{1} \hlopt{/} \hlnum{50}\hlstd{))}
-\hlkwd{qplot}\hlstd{(color, price} \hlopt{/} \hlstd{carat,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{geom} \hlstd{=} \hlstr{"jitter"}\hlstd{,}
- \hlkwc{alpha} \hlstd{=} \hlkwd{I}\hlstd{(}\hlnum{1} \hlopt{/} \hlnum{200}\hlstd{))}
-\end{alltt}
-\end{kframe}\begin{figure}[]
-
-\includegraphics[width=0.32\linewidth]{figure/qplot-jitter-alpha1} 
-\includegraphics[width=0.32\linewidth]{figure/qplot-jitter-alpha2} 
-\includegraphics[width=0.32\linewidth]{figure/qplot-jitter-alpha3} \caption[Varying the alpha level]{Varying the alpha level.  From left to right: $1/5$, $1/50$, $1/200$.  As the opacity decreases we begin to see where the bulk of the data lies.  However, the boxplot still does much better.\label{fig:jitter-alpha}}
-\end{figure}
-
-
-\end{knitrout}
+<<jitter-alpha, fig.show = "hold", dev = "png", fig.cap = "Varying the alpha level.  From left to right: $1/5$, $1/50$, $1/200$.  As the opacity decreases we begin to see where the bulk of the data lies.  However, the boxplot still does much better.", fig.height = 3, fig.width = 3, out.width = "0.32\\linewidth">>=
+qplot(color, price / carat, data = diamonds, geom = "jitter",
+ alpha = I(1 / 5))
+qplot(color, price / carat, data = diamonds, geom = "jitter",
+ alpha = I(1 / 50))
+qplot(color, price / carat, data = diamonds, geom = "jitter",
+ alpha = I(1 / 200))
+@
 
 This technique can't show the positions of the quantiles as well as a boxplot can, but it may reveal other features of the distribution that a boxplot cannot.
 
@@ -333,63 +232,30 @@ Another way to look at conditional distributions is to use faceting to plot a se
 
 Histogram and density plots show the distribution of a single variable.  They provide more information about the distribution of a single group than boxplots do, but it is harder to compare many groups (although we will look at one way to do so).  Figure~\ref{fig:dist} shows the distribution of carats with a histogram and a density plot. \index{Histogram} \index{Density!plot} \indexf{geom_histogram} \indexf{geom_density}
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{qplot}\hlstd{(carat,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{geom} \hlstd{=} \hlstr{"histogram"}\hlstd{)}
-\hlkwd{qplot}\hlstd{(carat,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{geom} \hlstd{=} \hlstr{"density"}\hlstd{)}
-\end{alltt}
-\end{kframe}\begin{figure}[]
-
-\includegraphics[width=0.5\linewidth]{figure/qplot-dist1} 
-\includegraphics[width=0.5\linewidth]{figure/qplot-dist2} \caption[Displaying the distribution of diamonds]{Displaying the distribution of diamonds.  (Left) \code{geom = 'histogram'} and (right) \code{geom = 'density'}.\label{fig:dist}}
-\end{figure}
-
-
-\end{knitrout}
+<<dist, fig.show = "hold", fig.width = 4, fig.height = 3, fig.cap = "Displaying the distribution of diamonds.  (Left) \\code{geom = 'histogram'} and (right) \\code{geom = 'density'}.">>=
+qplot(carat, data = diamonds, geom = "histogram")
+qplot(carat, data = diamonds, geom = "density")
+@
 
 For the density plot, the {\tt adjust} argument controls the degree of smoothness (high values of {\tt adjust} produce smoother plots). For the histogram, the {\tt binwidth} argument controls the amount of smoothing by setting the bin size.  (Break points can also be specified explicitly, using the {\tt breaks} argument.) It is {\bf very important} to experiment with the level of smoothing.  With a histogram you should try many bin widths: You may find that gross features of the data show up well at a large bin width, while finer features require a very narrow width.
 
 In Figure~\ref{fig:hist-binwidth}, we experiment with three values of {\tt binwidth}: 1.0, 0.1 and 0.01.  It is only in the plot with the smallest bin width (right) that we see the striations we noted in an earlier scatterplot, most at ``nice'' numbers of carats. The full code is:
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{qplot}\hlstd{(carat,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{geom} \hlstd{=} \hlstr{"histogram"}\hlstd{,} \hlkwc{binwidth} \hlstd{=} \hlnum{1}\hlstd{,}
-  \hlkwc{xlim} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{0}\hlstd{,}\hlnum{3}\hlstd{))}
-\hlkwd{qplot}\hlstd{(carat,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{geom} \hlstd{=} \hlstr{"histogram"}\hlstd{,} \hlkwc{binwidth} \hlstd{=} \hlnum{0.1}\hlstd{,}
-  \hlkwc{xlim} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{0}\hlstd{,}\hlnum{3}\hlstd{))}
-\hlkwd{qplot}\hlstd{(carat,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{geom} \hlstd{=} \hlstr{"histogram"}\hlstd{,} \hlkwc{binwidth} \hlstd{=} \hlnum{0.01}\hlstd{,}
-  \hlkwc{xlim} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{0}\hlstd{,}\hlnum{3}\hlstd{))}
-\end{alltt}
-
-
-{\ttfamily\noindent\color{warningcolor}{\#\# Warning: position\_stack requires constant width: output may be incorrect}}\end{kframe}\begin{figure}[]
-
-\includegraphics[width=0.32\linewidth]{figure/qplot-hist-binwidth1} 
-\includegraphics[width=0.32\linewidth]{figure/qplot-hist-binwidth2} 
-\includegraphics[width=0.32\linewidth]{figure/qplot-hist-binwidth3} \caption[Varying the bin width on a histogram of carat reveals interesting patterns]{Varying the bin width on a histogram of carat reveals interesting patterns.  Binwidths from left to right: 1, 0.1 and 0.01 carats. Only diamonds between 0 and 3 carats shown.\label{fig:hist-binwidth}}
-\end{figure}
-
-
-\end{knitrout}
+<<hist-binwidth, fig.show = "hold", fig.width = 4, fig.height = 3, out.width = "0.32\\linewidth", fig.cap = "Varying the bin width on a histogram of carat reveals interesting patterns.  Binwidths from left to right: 1, 0.1 and 0.01 carats. Only diamonds between 0 and 3 carats shown.">>=
+qplot(carat, data = diamonds, geom = "histogram", binwidth = 1, 
+  xlim = c(0,3))
+qplot(carat, data = diamonds, geom = "histogram", binwidth = 0.1,
+  xlim = c(0,3))
+qplot(carat, data = diamonds, geom = "histogram", binwidth = 0.01,
+  xlim = c(0,3))
+@
 
 To compare the distributions of different subgroups, just add an aesthetic mapping, as in the following code.
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{qplot}\hlstd{(carat,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{geom} \hlstd{=} \hlstr{"density"}\hlstd{,} \hlkwc{colour} \hlstd{= color)}
-\hlkwd{qplot}\hlstd{(carat,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{geom} \hlstd{=} \hlstr{"histogram"}\hlstd{,} \hlkwc{fill} \hlstd{= color)}
-\end{alltt}
-\end{kframe}\begin{figure}[]
-
-\includegraphics[width=0.5\linewidth]{figure/qplot-dist-fill1} 
-\includegraphics[width=0.5\linewidth]{figure/qplot-dist-fill2} \caption[Mapping a categorical variable to an aesthetic will automatically split up the geom by that variable]{Mapping a categorical variable to an aesthetic will automatically split up the geom by that variable.  (Left) Density plots are overlaid and (right) histograms are stacked.\label{fig:dist-fill}}
-\end{figure}
-
-
-\end{knitrout}
+<<dist-fill, fig.show = "hold", fig.width = 4, fig.height = 3, fig.cap = "Mapping a categorical variable to an aesthetic will automatically split up the geom by that variable.  (Left) Density plots are overlaid and (right) histograms are stacked.">>=
+qplot(carat, data = diamonds, geom = "density", colour = color)
+qplot(carat, data = diamonds, geom = "histogram", fill = color)
+@
 
 \noindent Mapping a categorical variable to an aesthetic will automatically split up the geom by that variable, so these commands instruct \f{qplot} to draw a density plot and histogram for each level of diamond colour. The results are shown in Figure~\ref{fig:dist-fill}.  
 
@@ -400,21 +266,11 @@ The density plot is more appealing at first because it seems easy to read and co
 
 The discrete analogue of histogram is the bar chart,~\code{geom = "bar"}. The bar geom counts the number of instances of each class so that you don't need to tabulate your values beforehand, as with \code{barchart} in base R. If the data has already been tabulated or if you'd like to tabulate class members in some other way, such as by summing up a continuous variable, you can use the \code{weight} geom. This is illustrated in Figure~\ref{fig:dist-bar}. The first plot is a simple bar chart of diamond colour, and the second is a bar chart of diamond colour weighted by carat. \index{Barchart} \indexf{geom_bar}
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{qplot}\hlstd{(color,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{geom} \hlstd{=} \hlstr{"bar"}\hlstd{)}
-\hlkwd{qplot}\hlstd{(color,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{geom} \hlstd{=} \hlstr{"bar"}\hlstd{,} \hlkwc{weight} \hlstd{= carat)} \hlopt{+}
-  \hlkwd{scale_y_continuous}\hlstd{(}\hlstr{"carat"}\hlstd{)}
-\end{alltt}
-\end{kframe}\begin{figure}[]
-
-\includegraphics[width=0.5\linewidth]{figure/qplot-dist-bar1} 
-\includegraphics[width=0.5\linewidth]{figure/qplot-dist-bar2} \caption[Bar charts of diamond colour]{Bar charts of diamond colour.  The left plot shows counts and the right plot is weighted by \code{weight = carat} to show the total weight of diamonds of each colour.\label{fig:dist-bar}}
-\end{figure}
-
-
-\end{knitrout}
+<<dist-bar, fig.show = "hold", fig.width = 4, fig.height = 2.4, fig.cap = "Bar charts of diamond colour.  The left plot shows counts and the right plot is weighted by \\code{weight = carat} to show the total weight of diamonds of each colour.">>=
+qplot(color, data = diamonds, geom = "bar")
+qplot(color, data = diamonds, geom = "bar", weight = carat) +
+  scale_y_continuous("carat")
+@
 
 \subsection{Time series with line and path plots}
 \label{sub:line}
@@ -423,42 +279,22 @@ Line and path plots are typically used for time series data.  Line plots join th
 
 Because there is no time variable in the diamonds data, we use the {\tt economics} dataset, which contains economic data on the US measured over the last 40 years. Figure~\ref{fig:line-employment} shows two plots of unemployment over time, both produced using {\tt geom = "line"}. The first shows an unemployment rate and the second shows the median number of weeks unemployed. We can already see some differences in these two variables, particularly in the last peak, where the unemployment percentage is lower than it was in the preceding peaks, but the length of unemployment is high. \index{Time series!bivariate} \indexf{geom_line} \indexf{geom_path}
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{qplot}\hlstd{(date, unemploy} \hlopt{/} \hlstd{pop,} \hlkwc{data} \hlstd{= economics,} \hlkwc{geom} \hlstd{=} \hlstr{"line"}\hlstd{)}
-\hlkwd{qplot}\hlstd{(date, uempmed,} \hlkwc{data} \hlstd{= economics,} \hlkwc{geom} \hlstd{=} \hlstr{"line"}\hlstd{)}
-\end{alltt}
-\end{kframe}\begin{figure}[]
-
-\includegraphics[width=0.5\linewidth]{figure/qplot-line-employment1} 
-\includegraphics[width=0.5\linewidth]{figure/qplot-line-employment2} \caption[Two time series measuring amount of unemployment]{Two time series measuring amount of unemployment.  (Left) Percent of population that is unemployed and (right) median number of weeks unemployed.  Plots created with {	t geom='line'}.\label{fig:line-employment}}
-\end{figure}
-
-
-\end{knitrout}
+<<line-employment, fig.show = "hold", fig.width = 4, fig.height = 2.4, fig.cap = "Two time series measuring amount of unemployment.  (Left) Percent of population that is unemployed and (right) median number of weeks unemployed.  Plots created with {\tt geom='line'}.">>=
+qplot(date, unemploy / pop, data = economics, geom = "line")
+qplot(date, uempmed, data = economics, geom = "line")
+@
 
 To examine this relationship in greater detail, we would like to draw both time series on the same plot. We could draw a scatterplot of unemployment rate vs.\ length of unemployment, but then we could no longer see the evolution over time. The solution is to join points adjacent in time with line segments, forming a \emph{path} plot.
 
 Below we plot unemployment rate vs.\ length of unemployment and join the individual observations with a path. Because of the many line crossings, the direction in which time flows isn't easy to see in the first plot. In the second plot, we apply the {\tt colour} aesthetic to the line to make it easier to see the direction of time.
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlstd{year} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{as.POSIXlt}\hlstd{(x)}\hlopt{$}\hlstd{year} \hlopt{+} \hlnum{1900}
-\hlkwd{qplot}\hlstd{(unemploy} \hlopt{/} \hlstd{pop, uempmed,} \hlkwc{data} \hlstd{= economics,}
-   \hlkwc{geom} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"point"}\hlstd{,} \hlstr{"path"}\hlstd{))}
-\hlkwd{qplot}\hlstd{(unemploy} \hlopt{/} \hlstd{pop, uempmed,} \hlkwc{data} \hlstd{= economics,}
-  \hlkwc{geom} \hlstd{=} \hlstr{"path"}\hlstd{,} \hlkwc{colour} \hlstd{=} \hlkwd{year}\hlstd{(date))} \hlopt{+} \hlkwd{scale_area}\hlstd{()}
-\end{alltt}
-\end{kframe}\begin{figure}[]
-
-\includegraphics[width=0.5\linewidth]{figure/qplot-path-employ1} 
-\includegraphics[width=0.5\linewidth]{figure/qplot-path-employ2} \caption[Path plots illustrating the relationship between percent of people unemployed and median length of unemployment]{Path plots illustrating the relationship between percent of people unemployed and median length of unemployment.  (Left) Scatterplot with overlaid path.  (Right) Pure path plot coloured by year.\label{fig:path-employ}}
-\end{figure}
-
-
-\end{knitrout}
+<<path-employ, fig.show = "hold", fig.width = 4, fig.height = 2.4, fig.cap = "Path plots illustrating the relationship between percent of people unemployed and median length of unemployment.  (Left) Scatterplot with overlaid path.  (Right) Pure path plot coloured by year.">>=
+year <- function(x) as.POSIXlt(x)$year + 1900
+qplot(unemploy / pop, uempmed, data = economics, 
+   geom = c("point", "path"))
+qplot(unemploy / pop, uempmed, data = economics, 
+  geom = "path", colour = year(date)) + scale_area()
+@
 
 We can see that percent unemployed and length of unemployment are highly correlated, although in recent years the length of unemployment has been increasing relative to the unemployment rate.
 
@@ -480,22 +316,12 @@ The default faceting method in \f{qplot} creates plots arranged on a grid specif
 Figure~\ref{fig:facet-hist} illustrates this technique with two plots, sets of histograms showing the distribution of carat conditional on colour.
 The second set of histograms shows proportions, making it easier to compare distributions regardless of the relative abundance of diamonds of each colour. The \code{..density..} syntax is new. The y-axis of the histogram does not come from the original data, but from the statistical transformation that counts the number of observations in each bin.  Using \code{..density..} tells \ggplot to map the density to the y-axis instead of the default use of count.  
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{qplot}\hlstd{(carat,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{facets} \hlstd{= color} \hlopt{~} \hlstd{.,}
-  \hlkwc{geom} \hlstd{=} \hlstr{"histogram"}\hlstd{,} \hlkwc{binwidth} \hlstd{=} \hlnum{0.1}\hlstd{,} \hlkwc{xlim} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{0}\hlstd{,} \hlnum{3}\hlstd{))}
-\hlkwd{qplot}\hlstd{(carat, ..density..,} \hlkwc{data} \hlstd{= diamonds,} \hlkwc{facets} \hlstd{= color} \hlopt{~} \hlstd{.,}
-  \hlkwc{geom} \hlstd{=} \hlstr{"histogram"}\hlstd{,} \hlkwc{binwidth} \hlstd{=} \hlnum{0.1}\hlstd{,} \hlkwc{xlim} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{0}\hlstd{,} \hlnum{3}\hlstd{))}
-\end{alltt}
-\end{kframe}\begin{figure}[]
-
-\includegraphics[width=0.5\linewidth]{figure/qplot-facet-hist1} 
-\includegraphics[width=0.5\linewidth]{figure/qplot-facet-hist2} \caption[Histograms showing the distribution of carat conditional on colour]{Histograms showing the distribution of carat conditional on colour.  (Left) Bars show counts and (right) bars show densities (proportions of the whole).  The density plot makes it easier to compare distributions ignoring the relative abundance of diamonds within each colour. High-quality diamonds (colour D) are skewed towards small sizes, and as quality declines the distribution becomes more flat.\label{fig:facet-hist}}
-\end{figure}
-
-
-\end{knitrout}
+<<facet-hist, fig.show = "hold", fig.width = 4, fig.height = 8, fig.cap = "Histograms showing the distribution of carat conditional on colour.  (Left) Bars show counts and (right) bars show densities (proportions of the whole).  The density plot makes it easier to compare distributions ignoring the relative abundance of diamonds within each colour. High-quality diamonds (colour D) are skewed towards small sizes, and as quality declines the distribution becomes more flat.">>=
+qplot(carat, data = diamonds, facets = color ~ ., 
+  geom = "histogram", binwidth = 0.1, xlim = c(0, 3))
+qplot(carat, ..density.., data = diamonds, facets = color ~ .,
+  geom = "histogram", binwidth = 0.1, xlim = c(0, 3))
+@
 
 \section{Other options}\label{sec:other_options}
 
@@ -511,37 +337,21 @@ These are a few other {\tt qplot} options to control the graphic's appearance. T
 \clearpage
 The following examples show the options in action.
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlkwd{qplot}\hlstd{(}
-  \hlstd{carat, price,} \hlkwc{data} \hlstd{= dsmall,}
-  \hlkwc{xlab} \hlstd{=} \hlstr{"Price ($)"}\hlstd{,} \hlkwc{ylab} \hlstd{=} \hlstr{"Weight (carats)"}\hlstd{,}
-  \hlkwc{main} \hlstd{=} \hlstr{"Price-weight relationship"}
-\hlstd{)}
-\end{alltt}
-\end{kframe}
-\includegraphics[width=0.5\linewidth]{figure/qplot-labels1} 
-\begin{kframe}\begin{alltt}
-\hlkwd{qplot}\hlstd{(}
-   \hlstd{carat, price}\hlopt{/}\hlstd{carat,} \hlkwc{data} \hlstd{= dsmall,}
-   \hlkwc{ylab} \hlstd{=} \hlkwd{expression}\hlstd{(}\hlkwd{frac}\hlstd{(price,carat)),}
-   \hlkwc{xlab} \hlstd{=} \hlstr{"Weight (carats)"}\hlstd{,}
-   \hlkwc{main}\hlstd{=}\hlstr{"Small diamonds"}\hlstd{,}
-   \hlkwc{xlim} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{.2}\hlstd{,}\hlnum{1}\hlstd{)}
-\hlstd{)}
-\end{alltt}
-
-
-{\ttfamily\noindent\color{warningcolor}{\#\# Warning: Removed 35 rows containing missing values (geom\_point).}}\end{kframe}
-\includegraphics[width=0.5\linewidth]{figure/qplot-labels2} 
-\begin{kframe}\begin{alltt}
-\hlkwd{qplot}\hlstd{(carat, price,} \hlkwc{data} \hlstd{= dsmall,} \hlkwc{log} \hlstd{=} \hlstr{"xy"}\hlstd{)}
-\end{alltt}
-\end{kframe}
-\includegraphics[width=0.5\linewidth]{figure/qplot-labels3} 
-
-\end{knitrout}
+<<labels, fig.width = 4, fig.height = 4>>=
+qplot(
+  carat, price, data = dsmall, 
+  xlab = "Price ($)", ylab = "Weight (carats)",  
+  main = "Price-weight relationship"
+)
+qplot(
+   carat, price/carat, data = dsmall, 
+   ylab = expression(frac(price,carat)), 
+   xlab = "Weight (carats)",  
+   main="Small diamonds", 
+   xlim = c(.2,1)
+)
+qplot(carat, price, data = dsmall, log = "xy")
+@
 
 \section{Differences from plot}
 \label{sec:plot_diffs}
