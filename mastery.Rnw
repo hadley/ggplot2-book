@@ -71,10 +71,9 @@ What precisely is a scatterplot? You have seen many before and have probably eve
 
 Once we have these mappings we can create a new dataset that records this information. Table~\ref{tbl:mapping} shows the first 10 rows of the data behind Figure~\ref{fig:mpg}. This new dataset is a result of applying the aesthetic mappings to the original data. We can create many different types of plots using this data. The scatterplot uses points, but were we instead to draw lines we would get a line plot. If we used bars, we'd get a bar plot. Neither of those examples makes sense for this data, but we could still draw them, as in Figure~\ref{fig:other-geoms}. In \ggplot we can produce many  plots that don't make sense, yet are grammatically valid.  This is no different than English, where we can create senseless but grammatical sentences like the angry rock barked like a comma.
 
-<<src2, echo=FALSE>>=
+<<src2, echo=FALSE, eval=FALSE>>=
 scatter <- with(mpg, data.frame(x = displ, y = hwy, colour = cyl))
-# use pander instead?
-#cat(tabulate(scatter[1:10, ]))
+pander::pandoc.table(scatter[1:10, ], style = "grid", caption = "First 10 rows from \\code{mpg} rearranged into the format required for a scatterplot.  This data frame contains all the data to be displayed on the plot.")
 @
 
 \begin{table}[ht]
@@ -101,10 +100,10 @@ scatter <- with(mpg, data.frame(x = displ, y = hwy, colour = cyl))
 \end{table}
 
 <<other-geoms, fig.cap = "Instead of using points to represent the data, we could use other geoms like lines (left) or bars (right).  Neither of these geoms makes sense for this data, but they are still grammatically valid.">>=
-qplot(displ, hwy, data=mpg, colour=factor(cyl), geom="line") + 
+qplot(displ, hwy, data = mpg, colour = factor(cyl), geom = "line") + 
   theme(legend.position = "none")
-qplot(displ, hwy, data=mpg, colour=factor(cyl), geom="bar", 
-  stat="identity", position = "identity") + 
+qplot(displ, hwy, data = mpg, colour = factor(cyl), geom = "bar", 
+  stat = "identity", position = "identity") + 
   theme(legend.position = "none")
 @
 
@@ -152,17 +151,26 @@ The result of these conversions is Table~\ref{tbl:scaled}, which contains values
 
 % Colour the entries by their actual colour
 
-<<src3, echo=FALSE>>=
+<<src3, echo=FALSE, eval=FALSE>>=
+# rescaler was deprecated at some point -- https://github.com/hadley/ggplot2/issues/279
+# idea for this fix came from -- https://github.com/hadley/ggplot2/commit/030fadf59a0fd896865b28fd9e76da9698164ec2
+rescale01 <- function(x) {
+  rng <- range(x, na.rm = TRUE)
+  (x - rng[1]) / (rng[2] - rng[1])
+}
 scaled <- transform(scatter,
-  x = format(rescaler(x, "range"), digits=2),
-  y = format(rescaler(y, "range"), digits=2)
+  x = format(rescale01(x), digits = 2),
+  y = format(rescale01(y), digits = 2)
 )
-col <- scale_colour_discrete()
-col$train(factor(scaled$colour))
-scaled$colour <- col$map(factor(scaled$colour))
-scaled$size <- 1
-scaled$shape <- 20
-# cat(tabulate(scaled[1:10, ]))
+# use ggplot_build to get colour codes and geom parameters
+p <- qplot(displ, hwy, data = mpg, size = I(1), shape = I(19), colour = factor(cyl))
+b <- ggplot_build(p)
+# I assume it's OK that the color codes have changed?
+scaled$colour <- b$data[[1]]$colour 
+params <- get("geom_params", envir = b$plot$layers[[1]])
+for (i in names(params)) scaled[[i]] <- as.numeric(params[[i]])
+# How to encode colours into colour column? This might be useful -- https://github.com/Rapporter/pander#highlighting-cells
+pander::pandoc.table(scaled[1:10,], type = "grid", caption = "Simple dataset with variables mapped into aesthetic space. The description of colours is intimidating, but this is the form that R uses internally.  Default values for other aesthetics are filled in: the points will be filled circles (shape 19 in R) with a 1-mm diameter.")
 @
 
 \definecolor{ff6c91}{rgb}{1.00, 0.42, 0.57}
@@ -209,12 +217,14 @@ With a simple example under our belts, let's now turn to look at the slightly mo
 qplot(displ, hwy, data=mpg, facets = . ~ year) + geom_smooth()
 @
 
-<<src4, echo=FALSE>>=
+<<src4, echo=FALSE, eval=FALSE>>=
 scatter2 <- with(mpg, 
   data.frame(x = displ, y = hwy, colour = cyl, year = year)
 )
-# cat(tabulate(subset(scatter2, year == 1999)[1:10, 1:3]))
-# cat(tabulate(subset(scatter2, year == 2008)[1:10, 1:3]))
+dat <- cbind(subset(scatter2, year == 1999)[1:10, 1:3],
+             subset(scatter2, year == 2008)[1:10, 1:3])
+pander::pandoc.table(dat, style = "grid",
+  caption = "A 1\\,$\\times$\\,2 grid of data frames used for faceting.  In general, this structure also has a third dimension for layers, but in this example the data for each layer is the same.")
 @
 
 
