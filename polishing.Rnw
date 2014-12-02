@@ -62,7 +62,7 @@ You can apply themes in two ways:
 
 \noindent The following example shows a few of these combinations:
 
-<<hgram, prompt=TRUE>>=
+<<hgram, prompt=TRUE, fig.show='asis', fig.align='left'>>=
 hgram <- qplot(rating, data = movies, binwidth = 1)
 
 # Themes affect the plot when they are drawn, 
@@ -226,7 +226,7 @@ DEPRECATED!
 
 To change the default scale associated with an aesthetic, use \f{set_default_scale}. (See Table~\ref{tbl:default-scales} for the defaults.)  This function takes three arguments: the name of the aesthetic, the type of variable (discrete or continuous) and the name of the scale to use as the default.  Further arguments override the default parameters of the scale.  The following example sets up colour and fill scales for black-and-white printing: \index{Scales!customising defaults} \indexf{set_default_scale}
 
-<<eval=FALSE>>=
+<<eval=FALSE, echo=FALSE>>=
 set_default_scale("colour", "discrete", "grey")
 set_default_scale("fill", "discrete", "grey")
 set_default_scale("colour", "continuous", "gradient", 
@@ -249,18 +249,34 @@ qplot(rating, data = movies, geom = "histogram", binwidth = 1)
 
 Table~\ref{tbl:geom-defaults} lists all of the common aesthetic defaults.  If you change the defaults for one geom, it's a good idea to change all the defaults for all the other geoms that you commonly use so that your plots look consistent.  If you are unsure on what makes for a valid colour, line type, shape or size, Appendix~\ref{cha:specifications} gives the details. \index{Aesthetics!defaults}
 
-% aes_value <- function(x) paste(names(x), x, sep =": ")
-% 
-% geoms <- Geom$find_all()
-% escape <- function(x) paste("\\code{", x, "}", sep ="")
-% aes_defaults <- lapply(geoms, function(y) aes_value(y$default_aes()))
-% names(aes_defaults) <- unname(sapply(geoms, function(y) y$objname))
-% aes_list <- invert(aes_defaults)
-% aes_list <- Filter(function(x) length(x) > 1, aes_list)
-% aes_names <- lapply(aes_list, function(x) paste(escape(sort(x)), collapse = ", "))
-% names <- colsplit(names(aes_names), ": ", c("aes", "value"))
-% names <- apply(names, c(1,2), escape)
-% cat(tabulate(data.frame(names, unlist(aes_names))))
+<<geom-defaults, results='asis', echo=FALSE, eval=FALSE>>=
+# adapted from http://stackoverflow.com/questions/11657380/is-there-a-table-or-catalog-of-aesthetics-for-ggplot2
+#aes_value <- function(x) paste(names(x), x, sep =": ")
+ind_aes <- function(geom = "point") { 
+  plyr::try_default({
+    Geom <- getFromNamespace(paste0("Geom", ggplot2:::firstUpper(geom)), "ggplot2")
+    tmp <- Geom$default_aes()
+    tmp[!is.na(tmp)]
+  }, default = NULL, quiet = TRUE)
+}
+
+# grab all the geoms from the home page
+library(rvest)
+geoms <- html("http://docs.ggplot2.org/current/") %>%
+  html_nodes(".index:nth-child(4) a") %>% html_text()
+geoms <- sub("geom_", "", geoms[geoms != ""])
+
+# put everything neatly into a table
+geomz <- Filter(function(x) length(x) > 1, sapply(geoms, ind_aes))
+gs <- lapply(geomz, function(x) data.frame(Aesthetic = names(x), 
+                                     Default = as.character(x)))
+frames <- mapply(function(x, y) cbind(x, Geoms = y), gs, names(gs), 
+                 SIMPLIFY = FALSE)
+df <- do.call("rbind", frames)
+df[] <- lapply(df, function(x) paste("\\code{", x, "}", sep =""))
+df2 <- ddply(df, .(Aesthetic, Default), summarise, Cap = paste(Geoms, collapse = ", "))
+pander::pandoc.table(df2, caption = "Default aesthetic values for geoms.  See Appendix~\\ref{cha:specifications} for how the values are interpreted by R.")
+@
 
 \begin{table}
   \begin{center}
