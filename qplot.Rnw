@@ -8,8 +8,8 @@
 % * table of options
 
 <<qplot, echo=FALSE>>=
-library("ggplot2")
-knitr::opts_chunk$set(fig.width = 4, fig.height = 2.4, out.width = "0.5\\linewidth", message = FALSE, cache = TRUE, cache.path = "cache/qplot-", fig.path = "figure/qplot-")
+knitr::set_parent('knit-book.Rnw') # allows us to compile as an individual document
+knitr::opts_chunk$set(fig.height = 2.4, cache.path = "cache/qplot-", fig.path = "figure/qplot-")
 @
 
 \chapter{Getting started with qplot}
@@ -64,7 +64,7 @@ In this chapter we'll just use one data source, so you can get familiar with the
 
 The dataset has not been well cleaned, so as well as demonstrating interesting relationships about diamonds, it also demonstrates some data quality problems. We'll also use another dataset, {\tt dsmall}, which is a random sample of 100 diamonds. We'll use this data for plots that are more appropriate for smaller datasets. 
 
-<<dsmall>>= 
+<<dsmall, prompt=TRUE, fig.align='left'>>= 
 set.seed(1410) # Make the sample reproducible
 dsmall <- diamonds[sample(nrow(diamonds), 100), ]
 @
@@ -76,13 +76,13 @@ As with  {\tt plot}, the first two arguments to \f{qplot} are {\tt x} and {\tt y
 
 Here is a simple example of the use of \f{qplot}.  It produces a scatterplot showing the relationship between the price and carats (weight) of a diamond.  \index{Scatterplot}
 
-<<qscatter, dev="png">>= 
+<<qscatter, dev="png", prompt=TRUE, fig.align='left'>>= 
 qplot(carat, price, data = diamonds)
 @
 
 The plot shows a strong correlation with notable outliers and some interesting vertical striation.  The relationship looks exponential, though, so the first thing we'd like to do is to transform the variables.  Because \f{qplot} accepts functions of variables as arguments, we plot log(price) vs.\ log(carat):
 
-<<qlog, dev="png">>=
+<<qlog, dev="png", prompt=TRUE, fig.align='left'>>=
 qplot(log(carat), log(price), data = diamonds)
 @
 
@@ -90,7 +90,7 @@ qplot(log(carat), log(price), data = diamonds)
 
 Arguments can also be combinations of existing variables, so, if we are curious about the relationship between the volume of the diamond (approximated by $x \times y \times z$) and its weight, we could do the following:
 
-<<volume, dev="png">>= 
+<<volume, dev="png", prompt=TRUE, fig.align='left'>>= 
 qplot(carat, x * y * z, data = diamonds)
 @
 
@@ -293,7 +293,7 @@ year <- function(x) as.POSIXlt(x)$year + 1900
 qplot(unemploy / pop, uempmed, data = economics, 
    geom = c("point", "path"))
 qplot(unemploy / pop, uempmed, data = economics, 
-  geom = "path", colour = year(date)) + scale_area()
+  geom = "path", colour = year(date))
 @
 
 We can see that percent unemployed and length of unemployment are highly correlated, although in recent years the length of unemployment has been increasing relative to the unemployment rate.
@@ -337,7 +337,7 @@ These are a few other {\tt qplot} options to control the graphic's appearance. T
 \clearpage
 The following examples show the options in action.
 
-<<labels, fig.width = 4, fig.height = 4, fig.show='hold', out.width="0.4\\linewidth">>=
+<<labels, prompt=TRUE, fig.align='left', fig.show='asis', out.width="0.4\\linewidth">>=
 qplot(
   carat, price, data = dsmall, 
   xlab = "Price ($)", ylab = "Weight (carats)",  
