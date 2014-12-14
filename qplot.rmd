@@ -15,9 +15,8 @@ qplot chapter suggestions:
 * table of options
 -->
 
-```{r qplot, echo=FALSE, results='hide'}
+```{r qplot, echo=FALSE}
 library("ggplot2")
-options(reindent.spaces = 0)
 ```
 
 # Getting started with qplot {#cha:qplot}
@@ -141,7 +140,7 @@ There are many different smoothers you can choose between by using the `method` 
 
 * `method = "loess"`, the default for small n, uses a smooth local regression.  More details about the algorithm used can be found in `?loess`.  The wiggliness of the line is controlled by the `span` parameter, which ranges from 0 (exceedingly wiggly) to 1 (not so wiggly), as shown in Figure~\ref{fig:smooth-loess}.  \index{Model!loess}
   
-```{r smooth-loess, fig.show = "hold", dev = "png", fig.cap = "The effect of the span parameter.  (Left) `span = 0.2`, and (right) `span = 1`."}
+```{r smooth-loess, fig.show = "hold", dev = "png", fig.cap = "The effect of the span parameter.  (Left) \\texttt{span = 0.2}, and (right) \\texttt{span = 1}."}
 qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
   span = 0.2)
 qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
@@ -153,7 +152,7 @@ qplot(carat, price, data = dsmall, geom = c("point", "smooth"),
 * You could also load the __mgcv__ library and use `method = "gam", formula = y ~ s(x)` to fit a generalised additive model. This is similar to using a spline with `lm()`, but the degree of smoothness is estimated from the data.  For large data, use the formula `y ~ s(x, bs = "cs")`.  This is used by default when there are more than 1,000 points. 
 \index{Package!mgcv} \index{Model!generalised additive}
 
-```{r smooth-gam, fig.show = "hold", dev = "png", fig.cap = "The effect of the formula parameter, using a generalised additive model as a smoother.  (Left) `formula = y ~ s(x)`, the default; (right) `formula = y ~ s(x, bs = 'cs')`."}
+```{r smooth-gam, fig.show = "hold", dev = "png", fig.cap = "The effect of the formula parameter, using a generalised additive model as a smoother.  (Left) \\texttt{formula = y ~ s(x)}, the default; (right) \\texttt{formula = y ~ s(x, bs = 'cs')}."}
 library(mgcv)
 qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
   method = "gam", formula = y ~ s(x))
@@ -163,7 +162,7 @@ qplot(carat, price, data = dsmall, geom = c("point", "smooth"),
 
 * `method = "lm"` fits a linear model.  The default will fit a straight line to your data, or you can specify `formula = y \verb|~| poly(x, 2)` to specify a degree 2 polynomial, or better, load the __splines__ package and use a natural spline: `formula = y ~ ns(x, 2)`. The second parameter is the degrees of freedom: a higher number will create a wigglier curve. You are free to specify any formula involving $x$ and $y$.  Figure~\ref{fig:smooth-lm} shows two examples created with the following code.  \index{Model!linear}
 
-```{r smooth-lm, fig.show = "hold", dev = "png", fig.cap = "The effect of the formula parameter, using a linear model as a smoother.  (Left) `formula = y ~ x`, the default; (right) `formula = y ~ ns(x, 5)`."}
+```{r smooth-lm, fig.show = "hold", dev = "png", fig.cap = "The effect of the formula parameter, using a linear model as a smoother.  (Left) \\texttt{formula = y ~ x}, the default; (right) \\texttt{formula = y ~ ns(x, 5)}."}
 library(splines)
 qplot(carat, price, data = dsmall, geom = c("point", "smooth"), 
   method = "lm")
@@ -205,7 +204,7 @@ Another way to look at conditional distributions is to use [faceting](#sec:qplot
 
 Histogram and density plots show the distribution of a single variable.  They provide more information about the distribution of a single group than boxplots do, but it is harder to compare many groups (although we will look at one way to do so).  Figure~\ref{fig:dist} shows the distribution of carats with a histogram and a density plot. \index{Histogram} \index{Density!plot} \indexf{geom_histogram} \indexf{geom_density}
 
-```{r dist, fig.show = "hold", fig.width = 4, fig.height = 3, fig.cap = "Displaying the distribution of diamonds.  (Left) `geom = 'histogram'` and (right) `geom = 'density'`."}
+```{r dist, fig.show = "hold", fig.width = 4, fig.height = 3, fig.cap = "Displaying the distribution of diamonds.  (Left) \\texttt{geom = 'histogram'} and (right) \\texttt{geom = 'density'}."}
 qplot(carat, data = diamonds, geom = "histogram")
 qplot(carat, data = diamonds, geom = "density")
 ```
@@ -238,7 +237,7 @@ The density plot is more appealing at first because it seems easy to read and co
 
 The discrete analogue of histogram is the bar chart, `geom = "bar"`. The bar geom counts the number of instances of each class so that you don't need to tabulate your values beforehand, as with `barplot()` in base R. If the data has already been tabulated or if you'd like to tabulate class members in some other way, such as by summing up a continuous variable, you can use the `weight` geom. This is illustrated in Figure~\ref{fig:dist-bar}. The first plot is a simple bar chart of diamond colour, and the second is a bar chart of diamond colour weighted by carat. \index{Barchart} \indexf{geom_bar}
 
-```{r dist-bar, fig.show = "hold", fig.width = 4, fig.height = 2.4, fig.cap = "Bar charts of diamond colour.  The left plot shows counts and the right plot is weighted by `weight = carat` to show the total weight of diamonds of each colour."}
+```{r dist-bar, fig.show = "hold", fig.width = 4, fig.height = 2.4, fig.cap = "Bar charts of diamond colour.  The left plot shows counts and the right plot is weighted by \\texttt{weight = carat} to show the total weight of diamonds of each colour."}
 qplot(color, data = diamonds, geom = "bar")
 qplot(color, data = diamonds, geom = "bar", weight = carat) +
   scale_y_continuous("carat")
@@ -250,7 +249,7 @@ Line and path plots are typically used for time series data.  Line plots join th
 
 Because there is no time variable in the diamonds data, we use the `economics` dataset, which contains economic data on the US measured over the last 40 years. Figure~\ref{fig:line-employment} shows two plots of unemployment over time, both produced using `geom = "line"`. The first shows an unemployment rate and the second shows the median number of weeks unemployed. We can already see some differences in these two variables, particularly in the last peak, where the unemployment percentage is lower than it was in the preceding peaks, but the length of unemployment is high. \index{Time series!bivariate} \indexf{geom_line} \indexf{geom_path}
 
-```{r line-employment, fig.show = "hold", fig.width = 4, fig.height = 2.4, fig.cap = "Two time series measuring amount of unemployment.  (Left) Percent of population that is unemployed and (right) median number of weeks unemployed.  Plots created with `geom='line'`."}
+```{r line-employment, fig.show = "hold", fig.width = 4, fig.height = 2.4, fig.cap = "Two time series measuring amount of unemployment.  (Left) Percent of population that is unemployed and (right) median number of weeks unemployed.  Plots created with \\texttt{geom='line'}."}
 qplot(date, unemploy / pop, data = economics, geom = "line")
 qplot(date, uempmed, data = economics, geom = "line")
 ```
@@ -325,7 +324,7 @@ qplot(carat, price, data = dsmall, log = "xy")
 
 ## Differences from plot {#sec:plot-diffs}
 
-There are a few important differences between `plot()` and `qplot()`: \index{qplot!differences from plot@differences from \f{plot}} \indexf{plot}
+There are a few important differences between `plot()` and `qplot()`: \index{qplot!differences from plot@differences from \texttt{plot()}} \indexf{plot}
 
 * `qplot()` is not generic: you cannot pass any type of R object to qplot and expect to get some kind of default plot.  Note, however, that `ggplot()` is generic, and may provide a starting point for producing visualisations of arbitrary R objects.  See Chapter [data](#cha:data) for more details.
   

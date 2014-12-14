@@ -1,19 +1,19 @@
 ---
 title: toolbox
 output: bookdown::html_chapter
+bibliography: references.bib
 ---
 
 ```{r toolbox, echo=FALSE} 
 library("ggplot2")
 library("dplyr")
-knitr::opts_chunk$set(cache.path = "cache/toolbox-", fig.path = "figures/toolbox-")
 ```
 
 # Toolbox {#cha:toolbox}
 
 ## Introduction
 
-The layered structure of \ggplot encourages you to design and construct graphics in a structured manner. You have learned what a layer is and how to add one to your graphic, but not what geoms and statistics are available to help you build revealing plots. This chapter lists some of the many geoms and stats included in \ggplot, broken down by their purpose. This chapter will provide a good overview of the available options, but it does not describe each geom and stat in detail. For more information about individual geoms, along with many more examples illustrating their use, see the online and electronic documentation.  You may also want to consult the documentation to learn more about the datasets used in this chapter.
+The layered structure of `ggplot` encourages you to design and construct graphics in a structured manner. You have learned what a layer is and how to add one to your graphic, but not what geoms and statistics are available to help you build revealing plots. This chapter lists some of the many geoms and stats included in `ggplot`, broken down by their purpose. This chapter will provide a good overview of the available options, but it does not describe each geom and stat in detail. For more information about individual geoms, along with many more examples illustrating their use, see the online and electronic documentation.  You may also want to consult the documentation to learn more about the datasets used in this chapter.
 
 <!--
 % To illustrate the geoms a wide range of datasets is used.  You have seen each of them before, but the list below should refresh your memory about the major features of each dataset.  Remember you can find out more details in the online documentation.
@@ -63,7 +63,7 @@ These geoms are the fundamental building blocks of `ggplot`.  They are useful in
 Each of these geoms is two dimensional and requires both `x` and `y` aesthetics.  All understand `colour` and `size` aesthetics, and the filled geoms (bar, tile and polygon) also understand `fill`.  The point geom uses `shape` and line and path geoms understand `linetype`. The geoms are used for displaying data, summaries computed elsewhere, and metadata.
 
 * `geom_area()` draws an __area plot__, which is a line plot filled to the y-axis (filled lines).  Multiple groups will be stacked on top of each other. \index{Area plot} \indexf{geom_area}
-* `geom_bar(stat = "identity")` makes a __barchart__. We need `stat = "identity"` because the default stat automatically counts values (so is essentially a 1d geom, see \secref{sec:distributions}). The identity stat leaves the data unchanged. \index{Barchart} \indexf{geom_bar}
+* `geom_bar(stat = "identity")` makes a __barchart__. We need `stat = "identity"` because the default stat automatically counts values (so is essentially a 1d geom, see [displaying distributions](#sec:distributions). The identity stat leaves the data unchanged. \index{Barchart} \indexf{geom_bar}
   
 By default, multiple bars in the same location will be stacked on top of one another.
   
@@ -100,7 +100,7 @@ There are a number of geoms that can be used to display distributions, depending
 
 For 1d continuous distributions the most important geom is the histogram.  Figure~\ref{fig:geom-1d-con} uses the histogram to display the distribution of diamond `depth`.  It is important to experiment with bin placement to find a revealing view. You can change the `binwidth`, or specify the exact location of the `breaks`.  \index{Histogram!choosing bins} \indexf{geom_histogram} 
 
-```{r geom-1d-con, fig.height=4, fig.show='hold', fig.cap = "(Left) Never rely on the default parameters to get a revealing view of the distribution.  (Right) Zooming in on the x axis, `xlim = c(55, 70)`, and selecting a smaller bin width, `binwidth = 0.1`, reveals far more detail. We can see that the distribution is slightly skew-right. Don't forget to include information about important parameters (like bin width) in the caption."} 
+```{r geom-1d-con, fig.height=4, fig.show='hold', fig.cap = "(Left) Never rely on the default parameters to get a revealing view of the distribution.  (Right) Zooming in on the x axis, \\texttt{xlim = c(55, 70)}, and selecting a smaller bin width, \\texttt{binwidth = 0.1}, reveals far more detail. We can see that the distribution is slightly skew-right. Don't forget to include information about important parameters (like bin width) in the caption."} 
 qplot(depth, data=diamonds, geom="histogram")
 qplot(depth, data=diamonds, geom="histogram", xlim=c(55, 70), binwidth=0.1)
 ```
@@ -124,13 +124,13 @@ Many of the distribution-related geoms come in geom/stat pairs.  Most of these g
 
 * `geom_boxplot` = `stat_boxplot` + `geom_boxplot`: box-and-whisker plot, for a continuous variable conditioned by a categorical variable.  This is a useful display when the categorical variable has many distinct values.  When there are few values, the techniques described above give a better view of the shape of the distribution.  This technique can also be used for continuous variables, if they are first finely binned.   Figure~\ref{fig:geom-boxplot} shows boxplots conditioned on both categorical and continuous variables. \index{Boxplot}  \indexf{geom_boxplot}  \indexf{stat_boxplot}
   
-```{r geom-boxplot, fig.show='hold', fig.cap="The boxplot geom can be use to see the distribution of a continuous variable conditional on a discrete varable like cut (left), or continuous variable like carat (right). For continuous variables, the group aesthetic must be set to get multiple boxplots. Here {\\tt group = plyr::round\\_any(carat, 0.1, floor)} is used to get a boxplot for each 0.1 carat bin."} 
+```{r geom-boxplot, fig.show='hold', fig.cap="The boxplot geom can be use to see the distribution of a continuous variable conditional on a discrete varable like cut (left), or continuous variable like carat (right). For continuous variables, the group aesthetic must be set to get multiple boxplots. Here \\texttt{group = plyr::round\\_any(carat, 0.1, floor)} is used to get a boxplot for each 0.1 carat bin."} 
 qplot(cut, depth, data=diamonds, geom="boxplot")
 qplot(carat, depth, data=diamonds, geom="boxplot", 
       group = plyr::round_any(carat, 0.1, floor), xlim = c(0, 3))
 ```
   
-  \item `geom_jitter()` = `position_jitter()` + `geom_point()`: a crude way of looking at discrete distributions by adding random noise to the discrete values so that they don't overplot.  An example is shown in Figure~\ref{fig:geom-jitter} created with the code below. \index{Jittering}  \indexf{geom_jitter}  \indexf{position_jitter}
+* `geom_jitter()` = `position_jitter()` + `geom_point()`: a crude way of looking at discrete distributions by adding random noise to the discrete values so that they don't overplot.  An example is shown in Figure~\ref{fig:geom-jitter} created with the code below. \index{Jittering}  \indexf{geom_jitter}  \indexf{position_jitter}
   
 ```{r geom-jitter, fig.width=8,  fig.show='hold', out.width="0.8\\linewidth", fig.cap="The jitter geom can be used to give a crude visualisation of 2d distributions with a discrete component. Generally this works better for smaller datasets. Car class vs. continuous variable city mpg (top) and discrete variable drive train (bottom)."} 
 qplot(class, cty, data=mpg, geom="jitter")
@@ -176,7 +176,7 @@ The scatterplot is a very important tool for assessing the relationship between 
 
 * Small amounts of overplotting can sometimes be alleviated by making the points smaller, or using hollow glyphs, as shown in Figure~\ref{fig:overp-glyph}. The data is 2000 points sampled from two independent normal distributions, and the code to produce the graphic is shown below.  \indexf{geom_point}
 
-```{r overp-glyph, dev='png', fig.show='hold', out.width="0.32\\linewidth", fig.cap="Modifying the glyph used can help with mild to moderate overplotting.  From left to right: the default shape, `shape = 1` (hollow points), and `shape= \".\"` (pixel points)."} 
+```{r overp-glyph, dev='png', fig.show='hold', out.width="0.32\\linewidth", fig.cap="Modifying the glyph used can help with mild to moderate overplotting.  From left to right: the default shape, \\texttt{shape = 1} (hollow points), and \\texttt{shape= \".\"} (pixel points)."} 
 df <- data.frame(x = rnorm(2000), y = rnorm(2000))
 norm <- ggplot(df, aes(x, y))
 norm + geom_point()
@@ -208,10 +208,10 @@ td + geom_jitter(position = jit, alpha = 1/200)
 ```
 
 Alternatively, we can think of overplotting as a 2d density estimation problem, which gives rise to two more approaches: 
+
+* Bin the points and count the number in each bin, then visualise that count in some way (the 2d generalisation of the histogram).  Breaking the plot into many small squares can produce distracting visual artefacts.  [@carr:1987] suggests using hexagons instead, and this is implemented with `geom_hexagon()`, using the capabilities of the __hexbin__ package [@hexbin].  Figure~\ref{fig:overp-bin} compares square and hexagonal bins, using parameters `bins` and `binwidth` to control the number and size of the bins.  The complete code is shown below. \index{Binning!1d|see{Histogram}} \index{Binning!2d}  \indexf{geom_hexagon}  \indexf{stat_binhex} \indexf{stat_bin2d}
   
-* Bin the points and count the number in each bin, then visualise that count in some way (the 2d generalisation of the histogram).  Breaking the plot into many small squares can produce distracting visual artefacts.  \citet{carr:1987} suggests using hexagons instead, and this is implemented with `geom_hexagon()`, using the capabilities of the __hexbin__ package \citep{hexbin}.  Figure~\ref{fig:overp-bin} compares square and hexagonal bins, using parameters \code{bins} and `binwidth` to control the number and size of the bins.  The complete code is shown below. \index{Binning!1d|see{Histogram}} \index{Binning!2d}  \indexf{geom_hexagon}  \indexf{stat_binhex} \indexf{stat_bin2d}
-  
-```{r overp-bin, dev='png', out.width="0.32\\linewidth", fig.show='hold', fig.cap="Binning with, top row, square bins, and bottom row, hexagonal bins. Left column uses default parameters, middle column `bins = 10`, and right column `binwidth = c(0.02, 200)`. Legends have been omitted to save space."} 
+```{r overp-bin, dev='png', out.width="0.32\\linewidth", fig.show='hold', fig.cap="Binning with, top row, square bins, and bottom row, hexagonal bins. Left column uses default parameters, middle column \\texttt{bins = 10}, and right column \\texttt{binwidth = c(0.02, 200)}. Legends have been omitted to save space."} 
 d <- ggplot(diamonds, aes(carat, price)) + xlim(1, 3) +
   theme(legend.position = "none")
 d + stat_bin2d()
@@ -305,7 +305,7 @@ The `map_data()` function is also useful if you'd like to process the map data i
 ```{r iowa, prompt=TRUE} 
 ia <- map_data("county", "iowa")
 mid_range <- function(x) mean(range(x, na.rm = TRUE))
-centres <- ia %>% group_by(subregion) %>%
+centres <- ia %>% tbl_df %>% group_by(subregion) %>%
   summarise(lat = mid_range(lat), long = mid_range(long))
 ggplot(ia, aes(long, lat)) + 
   geom_polygon(aes(group = group), 
@@ -317,7 +317,7 @@ ggplot(ia, aes(long, lat)) +
 ## Revealing uncertainty {#sec:uncertainty}
 
 If you have information about the uncertainty present in your data, whether it be from a model or from distributional assumptions, it is often important to display it.  There are four basic families of geoms that can be used for this job, depending on whether the x values are discrete or continuous, and whether or not you want to display the middle of the interval, or just the extent.  These geoms are listed in Table~\ref{tbl:interval}.  These geoms assume that you are interested in the distribution of y conditional on x and use the aesthetics `ymin` and `ymax` to determine the range of the y values.  If you want the opposite, see [cartesian coordinate systems](#sub:cartesian). \index{Uncertainty!visualising} \index{Error bar} \index{Error band} \indexf{geom_ribbon} \indexf{geom_smooth} \indexf{geom_errorbar} \indexf{geom_linerange} \indexf{geom_crossbar} \indexf{geom_pointrange}
-
+<!-- convert
 \begin{table}
   \centering
   \begin{tabular}{lp{1.3in}p{2.2in}}
@@ -332,8 +332,9 @@ If you have information about the uncertainty present in your data, whether it b
   \caption{Geoms that display intervals, useful for visualising uncertainty.}
   \label{tbl:interval}
 \end{table}
+-->
 
-Because there are so many different ways to calculate standard errors, the calculation is up to you. \index{Standard errors} For very simple cases, `ggplot` provides some tools in the form of summary functions described in [statistical summaries](#sec:summary), otherwise you will have to do it yourself.  The **effects** package \citep{effects} is particularly useful for extracting these values from linear models.  The following example fits a two-way model with interaction, and shows how to extract and visualise marginal and conditional effects.  Figure~\ref{fig:model-cat} focusses on the categorical variable colour, and Figure~\ref{fig:model-cont} focusses on the continuous variable carat. \index{Package!effects}
+Because there are so many different ways to calculate standard errors, the calculation is up to you. \index{Standard errors} For very simple cases, `ggplot` provides some tools in the form of summary functions described in [statistical summaries](#sec:summary), otherwise you will have to do it yourself.  The **effects** package [@effects] is particularly useful for extracting these values from linear models.  The following example fits a two-way model with interaction, and shows how to extract and visualise marginal and conditional effects.  Figure~\ref{fig:model-cat} focusses on the categorical variable colour, and Figure~\ref{fig:model-cont} focusses on the continuous variable carat. \index{Package!effects}
 
 ```{r effects, prompt=TRUE} 
 d <- subset(diamonds, carat < 2.5 & 
@@ -389,7 +390,7 @@ Note, when captioning such figures, you need to carefully describe the nature of
 % \section{Connecting related observations}
 % \label{sec:connecting}
 % 
-% It is often useful to connect related observations explicitly with a line.  This is the basis of the parallel coordinates plot \citep{inselberg:1985,wegman:1990}, the m-n plot \citep{diaconis:1983}, time series plots, and profile plots.  
+% It is often useful to connect related observations explicitly with a line.  This is the basis of the parallel coordinates plot [@inselberg:1985,wegman:1990], the m-n plot [@diaconis:1983], time series plots, and profile plots.  
 %
 % Grouping particularly important.  Revisit [grouping](#sub:grouping)
 -->
@@ -400,7 +401,7 @@ It's often useful to be able to summarise the y values for each unique x value. 
 
 When using `stat_summary()` you can either supply these the summary functions individually or altogether.  These alternatives are described below.  
 
-```{r stat-summary, fig.show='hold', out.width="0.24\\linewidth", fig.cap="Examples of `stat_summary()` in use. (Top) Continuous x with, from left to right, median and line, `median_hilow()` and smooth, mean and line, and `mean_cl_boot()` and smooth. (Bottom) Discrete x with, from left to right, `mean()` and point, `mean_cl_normal()` and error bar, `median_hilow()` and point range, and `median_hilow()` and crossbar. Note that \\ggplot displays the full range of the data, not just the range of the summary statistics."} 
+```{r stat-summary, fig.show='hold', out.width="0.24\\linewidth", fig.cap="Examples of \\texttt{stat\\_summary()} in use. (Top) Continuous x with, from left to right, median and line, \\texttt{median\\_hilow()} and smooth, mean and line, and \\texttt{mean\\_cl\\_boot()} and smooth. (Bottom) Discrete x with, from left to right, \\texttt{mean()} and point, \\texttt{mean\\_cl\\_normal()} and error bar, \\texttt{median\\_hilow()} and point range, and \\texttt{median\\_hilow()} and crossbar. Note that \\texttt{ggplot} displays the full range of the data, not just the range of the summary statistics."} 
 m <- ggplot(movies, aes(year, rating))
 m + stat_summary(fun.y = "median", geom = "line")
 m + stat_summary(fun.data = "median_hilow", geom = "smooth")
@@ -429,7 +430,7 @@ m2 +
 
 ### Single summary function
 
-`fun.data` can be used with more complex summary functions such as one of the summary functions from the **Hmisc** package \citep{Hmisc} described in Table~\ref{tbl:hmisc}. You can also write your own summary function. This summary function should return a named vector as output, as shown in the following example.
+`fun.data` can be used with more complex summary functions such as one of the summary functions from the **Hmisc** package [@hmisc] described in Table~\ref{tbl:hmisc}. You can also write your own summary function. This summary function should return a named vector as output, as shown in the following example.
 
 ```{r iqr, prompt=TRUE, fig.align='left'} 
 iqr <- function(x, ...) {
@@ -440,6 +441,7 @@ iqr <- function(x, ...) {
 m + stat_summary(fun.data = "iqr", geom="ribbon")
 ```
 
+<!-- convert
 \begin{table}
   \begin{center}
   \begin{tabular}{lllp{2in}}
@@ -460,6 +462,7 @@ m + stat_summary(fun.data = "iqr", geom="ribbon")
   \caption{Summary functions from the \code{Hmisc} package that have special wrappers to make them easy to use with \f{stat_summary}.}
   \label{tbl:hmisc}
 \end{table}
+-->
 
 ## Annotating a plot {#sec:annotating}
 

@@ -1,11 +1,11 @@
 ---
 title: scales
 output: bookdown::html_chapter
+bibliography: references.bib
 ---
 
 ```{r scales-chap, echo=FALSE}
 library("ggplot2")
-knitr::opts_chunk$set(out.width = "0.32\\linewidth", cache.path = "cache/scales-", fig.path = "figures/scales-")
 ```
 
 # Scales, axes and legends {#cha:scales}
@@ -151,7 +151,7 @@ p + xlab(expression(frac(miles, gallon)))
 
   To distinguish breaks from limits, remember that breaks affect what appears on the axes and legends, while limits affect what appears on the plot.  See Figure~\ref{fig:breaks_vs_limits} for an illustration.  The first column uses the default settings for both breaks and limits, which are `limits = c(4, 8)` and `breaks = 4:8`.  In the middle column, the breaks have been reset: the plotted region is the same, but the tick positions and labels have shifted.  In the right column, it is the limits which have been redefined, so much of the data now falls outside the plotting region. 
   
-```{r breaks_vs_limits, out.width="0.32\\linewidth", fig.cap="The difference between breaks and limits. (Left) default plot with `limits = c(4, 8), breaks = 4:8`, (middle) `breaks = c(5.5,6.5)` and (right) `limits = c(5.5 ,6.5)`. The effect on the x axis (top) and colour legend (bottom)"}
+```{r breaks_vs_limits, out.width="0.32\\linewidth", fig.cap="The difference between breaks and limits. (Left) default plot with \\texttt{limits = c(4, 8), breaks = 4:8}, (middle) \\texttt{breaks = c(5.5,6.5)} and (right) \\texttt{limits = c(5.5 ,6.5)}. The effect on the x axis (top) and colour legend (bottom)"}
 p <- qplot(cyl, wt, data = mtcars)
 p
 p + scale_x_continuous(breaks = c(5.5, 6.5))
@@ -257,7 +257,7 @@ There are three arguments that control the appearance and location of the ticks 
     
   \end{tabular}
   \end{center}
-  \caption{Common data formatting codes, adapted from the documentation of \code{strptime}.  Listed from shortest to longest duration.}
+  \caption{Common data formatting codes, adapted from the documentation of \texttt{strptime}.  Listed from shortest to longest duration.}
   \label{tbl:dates}
 \end{table}
 
@@ -314,7 +314,7 @@ The combination of these three components does not produce a simple geometric sh
   \label{fig:hcl}
 \end{figure}
 
-An additional complication is that many people (~10% of men) do not possess the normal complement of colour receptors and so can distinguish fewer colours than usual. \index{Colour!blindness} In brief, it's best to avoid red-green contrasts, and to check your plots with systems that simulate colour blindness. Visicheck is one online solution. Another alternative is the **dichromat** package \citep{dichromat} which provides tools for simulating colour blindness, and a set of colour schemes known to work well for colour-blind people. You can also help people with colour blindness in the same way that you can help people with black-and-white printers: by providing redundant mappings to other aesthetics like size, line type or shape.
+An additional complication is that many people (~10% of men) do not possess the normal complement of colour receptors and so can distinguish fewer colours than usual. \index{Colour!blindness} In brief, it's best to avoid red-green contrasts, and to check your plots with systems that simulate colour blindness. Visicheck is one online solution. Another alternative is the **dichromat** package [@dichromat] which provides tools for simulating colour blindness, and a set of colour schemes known to work well for colour-blind people. You can also help people with colour blindness in the same way that you can help people with black-and-white printers: by providing redundant mappings to other aesthetics like size, line type or shape.
 
 All of the scales discussed in the following sections work with border (`colour`) and fill (`fill`) colour aesthetics.
 <!--
@@ -331,7 +331,7 @@ There are three types of continuous colour gradients, based on the number of col
 * `scale_colour_gradient2()` and `scale_fill_gradient2()`: a three-colour gradient, low-med-high.  As well as `low` and `high` colours, these scales also have a `mid` colour for the colour of the midpoint.  The midpoint defaults to 0, but can be set to any value with the `midpoint` argument.  This is particularly useful for creating diverging colour schemes.\indexf{scale_colour_gradient2} \indexf{scale_fill_gradient2}
 * `scale_colour_gradientn()` and `scale_fill_gradientn()`: a custom n-colour gradient.  This scale requires a vector of colours in the `colours` argument.  Without further arguments these colours will be evenly spaced along the range of the data.  If you want the values to be unequally spaced, use the `values` argument, which should be between 0 and 1 if `rescale` is true (the default), or within the range of the data is `rescale` is false.
 
-Colour gradients are often used to show the height of a 2d surface.  In the following example we'll use the surface of a 2d density estimate of the `faithful` dataset \citep{azzalini:1990}, which records the waiting time between eruptions and during each eruption for the Old Faithful geyser in Yellowstone Park. Figure~\ref{fig:gradient} shows three gradients applied to this data, created with the following code.  Note the use of limits: this parameter is common to all scales.
+Colour gradients are often used to show the height of a 2d surface.  In the following example we'll use the surface of a 2d density estimate of the `faithful` dataset [@azzalini:1990], which records the waiting time between eruptions and during each eruption for the Old Faithful geyser in Yellowstone Park. Figure~\ref{fig:gradient} shows three gradients applied to this data, created with the following code.  Note the use of limits: this parameter is common to all scales.
 
 ```{r gradient, dev='png', fig.cap="Density of eruptions with three colour schemes. (Left) Default gradient colour scheme, (middle) customised gradient from white to black and (right) 3 point gradient with midpoint set to the mean density."}
 f2d <- with(faithful, MASS::kde2d(eruptions, waiting, 
@@ -352,9 +352,9 @@ erupt + scale_fill_gradient2(limits = c(-0.04, 0.04),
 % http://www.vendian.org/mncharity/dir3/blackbody/
 -->
 
-To create your own custom gradient, use `scale_colour_gradientn()`. This is useful if you have colours that are meaningful for your data (e.g., black body colours or standard terrain colours), or you'd like to use a palette produced by another package. The following code and Figure~\ref{fig:colorspace} shows palettes generated from routines in the **colorspace** package. \citet{zeileis:2008} describes the philosophy behind these palettes and provides a good introduction to some of the complexities of creating good colour scales. \index{Colour!palettes} \indexf{scale_colour_gradientn} \indexf{scale_fill_gradientn}
+To create your own custom gradient, use `scale_colour_gradientn()`. This is useful if you have colours that are meaningful for your data (e.g., black body colours or standard terrain colours), or you'd like to use a palette produced by another package. The following code and Figure~\ref{fig:colorspace} shows palettes generated from routines in the **colorspace** package. [@zeileis:2008] describes the philosophy behind these palettes and provides a good introduction to some of the complexities of creating good colour scales. \index{Colour!palettes} \indexf{scale_colour_gradientn} \indexf{scale_fill_gradientn}
 
-```{r colorspace, dev='png', fig.cap="Gradient colour scales using perceptually well-formed palettes produced by the **colorspace** package.  From left to right: sequential, diverging and heat hcl palettes.  Each scale is produced with `scale_fill_gradientn` with \\code{colours} set to `rainbow_hcl(7)`, `diverge_hcl(7)` and `heat_hcl(7)`."}
+```{r colorspace, dev='png', fig.cap="Gradient colour scales using perceptually well-formed palettes produced by the \\textbf{colorspace} package.  From left to right: sequential, diverging and heat hcl palettes.  Each scale is produced with \\texttt{scale\\_fill\\_gradientn} with \\texttt{colours} set to \\texttt{rainbow\\_hcl(7)}, \\texttt{diverge\\_hcl(7)} and \\texttt{heat\\_hcl(7)}."}
 library("colorspace")
 fill_gradn <- function(pal) {
   scale_fill_gradientn(colours = pal(7), limits = c(0, 0.04))
@@ -501,7 +501,7 @@ The contents of the legend and axes are controlled by the scale, and the details
 
 As you experiment with different aesthetic choices and new scales, it's important to keep in mind how the plot will be perceived.   Some particularly good references to consult are:
 
-* \citet{cleveland:1993,cleveland:1987,cleveland:1994} for research on how plots are perceived and the best ways to encode data.
-* \citet{tufte:2006,tufte:1990,tufte:1997,tufte:2001} for how to make beautiful, data-rich, graphics.
-* \citet{brewer:1994,brewer:1994a} for how to choose colours that work well in a wide variety of situations, particularly for area plots.
-* \citet{carr:1999,carr:1994,carr:2002} for the use of colour in general.
+* [@cleveland:1993; cleveland:1987; cleveland:1994] for research on how plots are perceived and the best ways to encode data.
+* [@tufte:2006,tufte:1990,tufte:1997,tufte:2001] for how to make beautiful, data-rich, graphics.
+* [@brewer:1994; brewer:1994a] for how to choose colours that work well in a wide variety of situations, particularly for area plots.
+* [@carr:1999; carr:1994; carr:2002] for the use of colour in general.

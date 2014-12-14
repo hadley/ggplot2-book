@@ -1,5 +1,11 @@
 library("bookdown")
 library("rmarkdown")
+library("pander")
+
+# Global options for pander tables -------------------------------------------
+panderOptions('table.split.table', Inf)
+panderOptions('table.alignment.default', 'left')
+panderOptions('table.style', 'simple')
 
 # Render chapters into tex  ----------------------------------------------------
 needs_update <- function(src, dest) {
@@ -10,71 +16,35 @@ needs_update <- function(src, dest) {
 
 render_chapter <- function(src) {
   dest <- file.path("book/tex/", gsub("\\.rmd", "\\.tex", src))
-  if (!needs_update(src, dest)) return()
-  message("Rendering ", src)
-  command <- bquote(rmarkdown::render(.(src), bookdown::tex_chapter(),
-    output_dir = "book/tex", quiet = TRUE, env = globalenv()))
-  writeLines(deparse(command), "run.r")
-  on.exit(unlink("run.r"))
-  source_clean("run.r")
+  #if (!needs_update(src, dest)) return()
+  base <- bookdown::tex_chapter()
+  # set some knitr options...
+  chap <- sub("\\.rmd", "", src)
+  within(base$knitr$opts_chunk, {
+          message = FALSE
+          warning = FALSE
+          fig.show = 'hold'
+          fig.height = 4
+          fig.width = 4
+          fig.path = paste0("figures/", chap)
+          cache.path = paste0("_cache/", chap)})
+  capture.output(render(src, base, output_dir = "book/tex", env = globalenv()),
+                 file = "book/tex/render-log.txt")
 }
 
-source_clean <- function(path) {
-  r_path <- file.path(R.home("bin"), "R")
-  cmd <- paste0(shQuote(r_path), " --quiet --file=", shQuote(path))
-
-  out <- system(cmd, intern = TRUE)
-  status <- attr(out, "status")
-  if (is.null(status)) status <- 0
-  if (!identical(as.character(status), "0")) {
-    stop("Command failed (", status, ")", call. = FALSE)
-  }
-}
+# produce tex individually (useful for debugging)
+# render("scales.rmd", bookdown::tex_chapter(),
+#        output_dir = "book/tex", env = globalenv())
 
 chapters <- dir(".", pattern = "\\.rmd$")
 lapply(chapters, render_chapter)
 
-# New approach
-# adpated from bookdown::tex_chapter
-# base <- pdf_document(template = NULL, latex_engine = "xelatex", 
-#                      pandoc_args = c("--chapters", ""))
-# base$pandoc$from <- bookdown:::markdown_style
-# base$pandoc$ext <- ".tex"
-# base$knitr <- bookdown:::knitr_opts("tex")
-# base$knitr$opts_chunk
-# render()
-# base
-
-# Apply regular expressions to files -------------------------------------------
-apply_regexp <- function(file, regexps) {
-  lines <- readLines(file)
-  for (i in seq_along(regexps)) {
-    lines <- gsub(escape(names(regexps)[i]), escape(regexps[[i]]), lines)
-  }
-
-  writeLines(lines, file)
-}
-apply_regexps <- function(regexps) {
-  files <- dir("book/tex/", "\\.tex$", full.names = TRUE)
-  lapply(files, apply_regexp, regexps = regexps)
-}
-escape <- function(x) {
-  x <- gsub("\\\\", "\\\\\\\\", x)
-  gsub("([{}])", "\\\\\\1", x)
-}
-apply_regexps(c(
-  "\\begin{SIDEBAR}" =    "\\begin{shortbox}\\begin{minipage}{25pc}\\Boxhead{",
-  "\\end{SIDEBAR}"   = "}",
-  "\\begin{ENDSIDEBAR}\\end{ENDSIDEBAR}" = "\\end{minipage}\\end{shortbox}"
-))
 
 # Copy across additional files -------------------------------------------------
 file.copy("book/ggplot2-book.tex", "book/tex/", recursive = TRUE)
-file.copy("book/svmono.cls", "book/tex/", recursive = TRUE)
+file.copy("book/krantz.cls", "book/tex/", recursive = TRUE)
 file.copy("diagrams/", "book/tex/", recursive = TRUE)
-# no screenshots?
-#file.copy("screenshots/", "book/tex/", recursive = TRUE)
-file.copy("figures", "book/tex/", recursive = TRUE)
+file.copy("figures/", "book/tex/", recursive = TRUE)
 
 # Build tex file ---------------------------------------------------------------
 # (build with Rstudio to find/diagnose errors)

@@ -1,11 +1,11 @@
 ---
 title: layers
 output: bookdown::html_chapter
+bibliography: references.bib
 ---
 
 ```{r layers, echo=FALSE}
 library("ggplot2")
-knitr::opts_chunk$set(cache.path = "cache/layers-", fig.path = "figures/layers-")
 ```
 
 
@@ -195,13 +195,14 @@ p + geom_point()
 
 The default mappings in the plot `p` can be extended or overridden in the layers, as with the following code. \index{Mappings!overriding} The results are shown in Figure~\ref{fig:aes-override}.
 
-```{r aes-override, fig.show='hold', fig.cap="Overriding aesthetics. (Left) Overriding colour with `factor(cyl)` and (right) overriding y-position with `disp`"}
+```{r aes-override, fig.show='hold', fig.cap="Overriding aesthetics. (Left) Overriding colour with \\texttt{factor(cyl)} and (right) overriding y-position with \\texttt{disp}"}
 p + geom_point(aes(colour = factor(cyl)))
 p + geom_point(aes(y = disp))
 ```
 
 \noindent The rules are summarised in Table~\ref{tbl:aes-override}.  Aesthetic mappings specified in a layer affect only that layer.  For that reason,  unless you modify the default scales, axis labels and legend titles will be based on the plot defaults.  The way to change these is described in [legends and axes](#sec:guides).
 
+<!--
 \begin{table}
   \begin{center}
   \begin{tabular}{lll}
@@ -220,6 +221,7 @@ p + geom_point(aes(y = disp))
   \caption{Rules for combining layer mappings with the default mapping of \code{aes(mpg, wt)}.  Layer aesthetics can add to, override, and remove the default mappings.}
   \label{tbl:aes-override}
 \end{table}
+-->
 
 
 ## Setting vs. mapping {#sub:setting-mapping}
@@ -289,7 +291,7 @@ This is not what we wanted; we have inadvertently added a smoothed line for each
 p + geom_smooth(aes(group = 1), method="lm", size = 2, se = F)
 ```
 
-```{r group-smooths, fig.show='hold', fig.cap="Adding smooths to the Oxboys data.  (Left) Using the same grouping as the lines results in a line of best fit for each boy.  (Right) Using `aes(group = 1)` in the smooth layer fits a single line of best fit across all boys."}
+```{r group-smooths, fig.show='hold', fig.cap="Adding smooths to the Oxboys data.  (Left) Using the same grouping as the lines results in a line of best fit for each boy.  (Right) Using \\texttt{aes(group = 1)} in the smooth layer fits a single line of best fit across all boys."}
 qplot(age, height, data=Oxboys, group = Subject, geom="line") +
   geom_smooth(method="lm", se = F)
 qplot(age, height, data=Oxboys, group = Subject, geom="line") +
@@ -314,7 +316,7 @@ boysbox + geom_line(aes(group = Subject), colour = "#3366FF")
 
 We change the line colour in the second layer to make them distinct from the boxes.  This is another example of setting an aesthetic to a fixed value.  The colour is a rendering attribute, which has no corresponding variable in the data. \index{Aesthetics!setting}
 
-```{r group-boxplots, fig.show='hold', fig.cap="(Left) If boxplots are used to look at the distribution of heights at each occasion (a discrete variable), the default grouping works correctly.  (Right) If trajectories of individual boys are overlaid with {\\tt geom\\_line()}, then {\\tt aes(group = Subject)} is needed for the new layer."}
+```{r group-boxplots, fig.show='hold', fig.cap="(Left) If boxplots are used to look at the distribution of heights at each occasion (a discrete variable), the default grouping works correctly.  (Right) If trajectories of individual boys are overlaid with \\texttt{geom\\_line()}, then \\texttt{aes(group = Subject)} is needed for the new layer."}
 qplot(Occasion, height, data=Oxboys, geom="boxplot")
 qplot(Occasion, height, data=Oxboys, geom="boxplot") +
  geom_line(aes(group = Subject), colour="#3366FF")
@@ -384,6 +386,7 @@ Some geoms differ primarily in the way that they are parameterised.  For example
 
 Every geom has a default statistic, and every statistic a default geom.  For example, the bin statistic defaults to using the bar geom to produce a histogram.  These defaults are listed in Table~\ref{tbl:geom-aesthetics}.  Overriding these defaults will still produce valid plots, but they may violate graphical conventions.  See examples in [combining geoms and stats](#sub:new-plot-types). \index{Geoms!defaults}
 
+
 \begin{table}
   \begin{center}
  \begin{tabular}{lp{3in}}
@@ -423,7 +426,7 @@ Every geom has a default statistic, and every statistic a default geom.  For exa
   \bottomrule
   \end{tabular}
   \end{center}
-  \caption{Geoms in \ggplot}
+  \caption{Geoms in `ggplot`}
   \label{tbl:geoms}
 \end{table}
 
@@ -473,11 +476,11 @@ Every geom has a default statistic, and every statistic a default geom.  For exa
   \label{tbl:geom-aesthetics}
 \end{table}
 
-
 ## Stat {#sec:stat}
 
 A statistical transformation, or **stat**, transforms the data, typically by summarising it in some manner.  For example, a useful stat is the smoother, which calculates the mean of y, conditional on x, subject to some restriction that ensures smoothness. All currently available stats are listed in Table~\ref{tbl:stats}.  To make sense in a graphic context a stat must be location-scale invariant: $\mbox{f}(x + a) = \mbox{f}(x) + a$ and $\mbox{f}(b \cdot x) = b \cdot \mbox{f}(x)$.  This ensures that the transformation stays the same when you change the scales of the plot.
 
+<!-- convert/update!
 \begin{table}
   \begin{center}
   \begin{tabular}{lp{3in}}
@@ -502,11 +505,12 @@ A statistical transformation, or **stat**, transforms the data, typically by sum
     \bottomrule
   \end{tabular}
   \end{center}
-  \caption{Stats in \ggplot}
+  \caption{Stats in `ggplot`}
   \label{tbl:stats}
 \end{table}
+-->
 
-A stat takes a dataset as input and returns a dataset as output, and so a stat can add new variables to the original dataset.  It is possible to map aesthetics to these new variables.  For example, \code{stat_bin}, the statistic used to make histograms, produces the following variables: \index{Stats!creating new variables} \indexf{stat_bin}
+A stat takes a dataset as input and returns a dataset as output, and so a stat can add new variables to the original dataset.  It is possible to map aesthetics to these new variables.  For example, `stat_bin`, the statistic used to make histograms, produces the following variables: \index{Stats!creating new variables} \indexf{stat_bin}
 
 * `count`, the number of observations in each bin
 * `density`, the density of observations in each bin (percentage of total / bar width)

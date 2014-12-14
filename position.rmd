@@ -1,11 +1,11 @@
 ---
 title: position
 output: bookdown::html_chapter
+bibliography: references.bib
 ---
 
 ```{r position, echo=FALSE}
 library("ggplot2")
-knitr::opts_chunk$set(cache.path = "cache/position-", fig.path = "figures/position-")
 ```
 
 # Positioning {#cha:position}
@@ -31,7 +31,7 @@ There are two types of faceting provided by `ggplot`: `facet_grid()` and `facet_
 \begin{figure}[htbp]
   \centering
     \includegraphics[width=0.5\linewidth]{diagrams/position-facets}
-  \caption{A sketch illustrating the difference between the two faceting systems.   `facet_grid` (left) is fundamentally 2d, being made up of two independent components.  `facet_wrap` (right) is 1d, but wrapped into 2d to save space.}
+  \caption{A sketch illustrating the difference between the two faceting systems. \texttt{facet\_grid} (left) is fundamentally 2d, being made up of two independent components. \texttt{facet\_wrap} (right) is 1d, but wrapped into 2d to save space.}
   \label{fig:facet-sketch}
 \end{figure}
 
@@ -151,7 +151,7 @@ There is an additional constraint on the scales of `facet_grid()`: all panels in
 
 For `facet_grid()` there is an additional parameter called `space`, which takes values `"free"` or `"fixed"`.  When the space can vary freely, each column (or row) will have width (or height) proportional to the range of the scale for that column (or row).  This makes the scaling equal across the whole plot: 1 cm on each panel maps to the same range of data.  (This is somewhat analogous to the 'sliced' axis limits of lattice.)  For example, if panel a had range 2 and panel b had range 4, one-third of the space would be given to a, and two-thirds to b.  This is most useful for categorical scales, where we can assign space proportionally based on the number of levels in each facet, as illustrated by Figure~\ref{fig:discrete-free}.  The code to create this plot is shown below: note the use of `reorder()` to arrange the models and manufacturers in order of city fuel usage. \index{Faceting!panel size}
 
-```{r discrete-free, fig.height=8, fig.cap="A dotplot showing the range of city gas mileage for each model of car. (Left) Models ordered by average mpg, and (right) faceted by manufacturer with `scales=\"free_y\"` and `space = \"free\"`. The `strip.text.y` theme setting has been used to rotate the facet labels."}
+```{r discrete-free, fig.height=8, fig.cap="A dotplot showing the range of city gas mileage for each model of car. (Left) Models ordered by average mpg, and (right) faceted by manufacturer with \\texttt{scales='free\\_y'} and \\texttt{space = 'free'}. The \\texttt{strip.text.y} theme setting has been used to rotate the facet labels."}
 mpg3 <- within(mpg2, {
   model <- reorder(model, cty)
   manufacturer <- reorder(manufacturer, -cty)
@@ -291,6 +291,7 @@ Coordinate systems have two main jobs:
 % describe(Coord)
 -->
 
+<!-- convert/update!
 \begin{table}
   \begin{center}
   \begin{tabular}{ll}
@@ -310,6 +311,8 @@ Coordinate systems have two main jobs:
   \caption{Coordinate systems available in ggplot.  `coord_equal()`, `coord_flip()` and `coord_trans()` are all basically Cartesian in nature (i.e., the dimensions combine orthogonally), while `coord_map()` and `coord_polar()` are more complex.}
   \label{tbl:coord}
 \end{table}
+-->
+
 
 ### Transformation {#sub:coord-transformation}
 
@@ -383,7 +386,7 @@ d + coord_cartesian(xlim = c(0, 2))
 
 Most statistics and geoms assume you are interested in y values conditional on x values (e.g., smooth, summary, boxplot, line): in most statistical models, the x values are assumed to be measured without error.  If you are interested in x conditional on y (or you just want to rotate the plot 90 degrees), you can use `coord_flip()` to exchange the x and y axes.  Compare this with just exchanging the variables mapped to x and y, as shown in Figure~\ref{fig:coord-flip}. \index{Rotating} \index{Coordinate systems!flipping the axes} \indexf{coord_flip}
 
-```{r coord-flip, out.width="0.32\\linewidth", fig.cap="(Left) A scatterplot and smoother with engine displacement on x axis and city mpg on y axis.  (Middle) Exchanging `cty` and `displ` rotates the plot 90 degrees, but the smooth is fit to the rotated data.  (Right) using `coord_flip()` fits the smooth to the original data, and then rotates the output, this is a smooth curve of x conditional on y."}
+```{r coord-flip, out.width="0.32\\linewidth", fig.cap="(Left) A scatterplot and smoother with engine displacement on x axis and city mpg on y axis.  (Middle) Exchanging \\texttt{cty} and \\texttt{displ} rotates the plot 90 degrees, but the smooth is fit to the rotated data.  (Right) using \\texttt{coord\\_flip()} fits the smooth to the original data, and then rotates the output, this is a smooth curve of x conditional on y."}
 qplot(displ, cty, data = mpg) + geom_smooth()
 qplot(cty, displ, data = mpg) + geom_smooth()
 qplot(cty, displ, data = mpg) + geom_smooth() + coord_flip()
@@ -393,7 +396,7 @@ qplot(cty, displ, data = mpg) + geom_smooth() + coord_flip()
 
 Like limits, we can also transform the data in two places: at the scale level or at the coordinate system level. `coord_trans()` has arguments `x` and `y` which should be strings naming the transformer (Table~\ref{tbl:common-trans}) to use for that axis. Transforming at the scale level occurs before statistics are computed and does not change the shape of the geom.  Transforming at the coordinate system level occurs after the statistics have been computed, and does affect the shape of the geom.  Using both together allows us to model the data on a transformed scale and then backtransform it for interpretation: a common pattern in analysis.  An example of this is shown in Figure~\ref{fig:backtrans}. \index{Transformation!coordinate system} \index{Coordinate systems!transformation} \indexf{coord_trans}
 
-```{r backtrans, dev='png', fig.cap="(Left) A scatterplot of carat vs. price on log base 10 transformed scales.  A linear regression summarises the trend: $\\log(y) = a + b * \\log(x)$.  (Right) The previous plot backtransformed (with `coord_trans(x = \"pow10\", y = \"pow10\")`) onto the original scales.  The linear trend line now becomes geometric, $y = k * c^x$, and highlights the lack of expensive diamonds for larger carats."}
+```{r backtrans, dev='png', fig.cap="(Left) A scatterplot of carat vs. price on log base 10 transformed scales.  A linear regression summarises the trend: $\\log(y) = a + b * \\log(x)$.  (Right) The previous plot backtransformed (with \\texttt{coord\\_trans(x = 'pow10', y = 'pow10')}) onto the original scales.  The linear trend line now becomes geometric, $y = k * c^x$, and highlights the lack of expensive diamonds for larger carats."}
 pow10 <- scales::exp_trans(10)
 qplot(carat, price, data = diamonds, log = "xy") + 
   geom_smooth(method = "lm")
@@ -412,7 +415,7 @@ There are two non-Cartesian coordinate systems: polar coordinates and map projec
 
 Using polar coordinates gives rise to pie charts and wind roses (from bar geoms), and radar charts (from line geoms).  Polar coordinates are often used for circular data, particularly time or direction, but the perceptual properties are not good because the angle is harder to perceive for small radii than it is for large radii.  The `theta} argument determines which position variable is mapped to angle (by default, x) and which to radius.  Figure~\ref{fig:polar} shows how by changing the coordinate system we can turn a bar chart into a pie chart or a bullseye chart.  The documentation includes other examples of polar charts. \index{Polar coordinates} \index{Coordinate systems!polar} \indexf{coord_polar}
 
-```{r polar, out.width="0.32\\linewidth", fig.cap="(Left) A stacked bar chart.  (Middle) The stacked bar chart in polar coordinates, with x position mapped to radius and y position mapped to angle, `coord_polar(theta = \"y\")`).  This is more commonly known as a pie chart.  (Right) The stacked bar chart in polar coordinates with the opposite mapping, `coord_polar(theta = \"x\")`. This is sometimes called a bullseye chart."}
+```{r polar, out.width="0.32\\linewidth", fig.cap="(Left) A stacked bar chart.  (Middle) The stacked bar chart in polar coordinates, with x position mapped to radius and y position mapped to angle, \\texttt{coord\\_polar(theta = 'y')}).  This is more commonly known as a pie chart.  (Right) The stacked bar chart in polar coordinates with the opposite mapping, \\texttt{coord\\_polar(theta = 'x')}. This is sometimes called a bullseye chart."}
 # Stacked barchart
 (pie <- ggplot(mtcars, aes(x = factor(1), fill = factor(cyl))) +
   geom_bar(width = 1))
@@ -425,4 +428,4 @@ pie + coord_polar()
 
 **Map projections.**  
 
-These are still rather experimental, and rely on the **mapproj** package \citep{mapproj}.  `coord_map()` takes the same arguments as `mapproj()` for controlling the projection.  See the documentation of `coord_map()` for more examples, and consult a cartographer for the most appropriate projection for your data. \index{Maps!projections} \index{Coordinate systems!map projections} \indexf{coord_map}
+These are still rather experimental, and rely on the **mapproj** package [@mapproj].  `coord_map()` takes the same arguments as `mapproj()` for controlling the projection.  See the documentation of `coord_map()` for more examples, and consult a cartographer for the most appropriate projection for your data. \index{Maps!projections} \index{Coordinate systems!map projections} \indexf{coord_map}

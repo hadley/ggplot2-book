@@ -1,0 +1,250 @@
+\chapter{Reducing duplication}\label{cha:duplication}
+
+\section{Introduction}
+
+A major requirement of a good data analysis is flexibility. If the data
+changes, or you discover something that makes you rethink your basic
+assumptions, you need to be able to easily change many plots at once.
+The main inhibitor of flexibility is duplication. If you have the same
+plotting statement repeated over and over again, you have to make the
+same change in many different places. Often just the thought of making
+all those changes is exhausting!
+
+This chapter describes three ways of reducing duplication. In
+\hyperref[sec:iteration]{iteration}, you will learn how to iteratively
+modify the previous plot, allowing you to build on top of your previous
+work without having to retype a lot of code.
+\hyperref[sec:templates]{Plot templates} will show you how to produce
+plot `templates' that encapsulate repeated components that are defined
+once and used in many different places. Finally,
+\hyperref[sec:functions]{plot functions} talks about how to create
+functions that create or modify plots. \index{Duplication!reducing}
+\index{Reducing duplication}
+
+\hyperdef{}{sec:iteration}{\section{Iteration}\label{sec:iteration}}
+
+Whenever you create or modify a plot, \texttt{ggplot} saves a copy of
+the result so you can refer to it in later expressions. You can access
+this plot with \texttt{last\_plot()}. This is useful in interactive work
+as you can start with a basic plot and then iteratively add layers and
+tweak the scales until you get to the final result. The following code
+demonstrates iteratively zooming in on a plot to find a region of
+interest, and then adding a layer which highlights something interesting
+that we have found: very few diamonds have equal x and y dimensions. The
+plots are shown in Figure\textasciitilde{}\ref{fig:iterate-limits}.
+\index{Iteration} \indexf{last_plot} \index{Duplication!iteration}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{data =} \NormalTok{diamonds, }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{)}
+\KeywordTok{last_plot}\NormalTok{() +}\StringTok{ }\KeywordTok{xlim}\NormalTok{(}\DecValTok{3}\NormalTok{, }\DecValTok{11}\NormalTok{) +}\StringTok{ }\KeywordTok{ylim}\NormalTok{(}\DecValTok{3}\NormalTok{, }\DecValTok{11}\NormalTok{)}
+\KeywordTok{last_plot}\NormalTok{() +}\StringTok{ }\KeywordTok{xlim}\NormalTok{(}\DecValTok{4}\NormalTok{, }\DecValTok{10}\NormalTok{) +}\StringTok{ }\KeywordTok{ylim}\NormalTok{(}\DecValTok{4}\NormalTok{, }\DecValTok{10}\NormalTok{)}
+\CommentTok{#> Scale for 'x' is already present. Adding another scale for 'x', which will replace the existing scale.}
+\CommentTok{#> Scale for 'y' is already present. Adding another scale for 'y', which will replace the existing scale.}
+\KeywordTok{last_plot}\NormalTok{() +}\StringTok{ }\KeywordTok{xlim}\NormalTok{(}\DecValTok{4}\NormalTok{, }\DecValTok{5}\NormalTok{) +}\StringTok{ }\KeywordTok{ylim}\NormalTok{(}\DecValTok{4}\NormalTok{, }\DecValTok{5}\NormalTok{)}
+\CommentTok{#> Scale for 'x' is already present. Adding another scale for 'x', which will replace the existing scale.}
+\CommentTok{#> Scale for 'y' is already present. Adding another scale for 'y', which will replace the existing scale.}
+\KeywordTok{last_plot}\NormalTok{() +}\StringTok{ }\KeywordTok{xlim}\NormalTok{(}\DecValTok{4}\NormalTok{, }\FloatTok{4.5}\NormalTok{) +}\StringTok{ }\KeywordTok{ylim}\NormalTok{(}\DecValTok{4}\NormalTok{, }\FloatTok{4.5}\NormalTok{)}
+\CommentTok{#> Scale for 'x' is already present. Adding another scale for 'x', which will replace the existing scale.}
+\CommentTok{#> Scale for 'y' is already present. Adding another scale for 'y', which will replace the existing scale.}
+\KeywordTok{last_plot}\NormalTok{() +}\StringTok{ }\KeywordTok{geom_abline}\NormalTok{(}\DataTypeTok{colour =} \StringTok{"red"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+\includegraphics[width=0.32\linewidth]{figures/iterate-limits-1} \includegraphics[width=0.32\linewidth]{figures/iterate-limits-2} \includegraphics[width=0.32\linewidth]{figures/iterate-limits-3} \includegraphics[width=0.32\linewidth]{figures/iterate-limits-4} \includegraphics[width=0.32\linewidth]{figures/iterate-limits-5} \includegraphics[width=0.32\linewidth]{figures/iterate-limits-6} \caption{When 'zooming' in on the plot, it's useful to use \texttt{last\_plot()} iteratively to quickly find the best view. The final plot adds a line with slope 1 and intercept 0, confirming it is the square diamonds that are missing.\label{fig:iterate-limits}}
+\end{figure}
+
+Once you have tweaked the plot to your liking, it's a good idea to go
+back and create a single expression that generates your final plot. This
+is important as when you come back to the plot, you'll be able to
+re-create the plot quickly, without having to step through your original
+process. You many want to add a comment to your code to indicate exactly
+why you chose that final plot. This is good practice in general for R
+code: after experimenting interactively, you always want to create a
+source file that re-creates your analysis. The following code shows the
+final plot after our interactive modifications above.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{data =} \NormalTok{diamonds, }\DataTypeTok{na.rm =} \NormalTok{T) +}\StringTok{ }
+\StringTok{  }\KeywordTok{geom_abline}\NormalTok{(}\DataTypeTok{colour =} \StringTok{"red"}\NormalTok{) +}
+\StringTok{  }\KeywordTok{xlim}\NormalTok{(}\DecValTok{4}\NormalTok{, }\FloatTok{4.5}\NormalTok{) +}\StringTok{ }\KeywordTok{ylim}\NormalTok{(}\DecValTok{4}\NormalTok{, }\FloatTok{4.5}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\hyperdef{}{sec:templates}{\section{Plot
+templates}\label{sec:templates}}
+
+Each component of a \texttt{ggplot} plot is its own object and can be
+created, stored and applied independently to a plot. This makes it
+possible to create reusable components that can automate common tasks
+and helps to offset the cost of typing the long function names. The
+following example creates some colour scales and then applies them to
+plots. The results are shown in
+Figure\textasciitilde{}\ref{fig:gradient-rb}. \index{Templates}
+\index{Duplication!templates}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{gradient_rb <-}\StringTok{ }\KeywordTok{scale_colour_gradient}\NormalTok{(}\DataTypeTok{low =} \StringTok{"red"}\NormalTok{, }\DataTypeTok{high =} \StringTok{"blue"}\NormalTok{)}
+\KeywordTok{qplot}\NormalTok{(cty, hwy, }\DataTypeTok{data =} \NormalTok{mpg, }\DataTypeTok{colour =} \NormalTok{displ) +}\StringTok{ }\NormalTok{gradient_rb}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/gradient-rb-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(bodywt, brainwt, }\DataTypeTok{data =} \NormalTok{msleep, }\DataTypeTok{colour =} \NormalTok{awake, }\DataTypeTok{log=}\StringTok{"xy"}\NormalTok{) +}
+\StringTok{  }\NormalTok{gradient_rb}
+\CommentTok{#> Warning: Removed 27 rows containing missing values}
+\CommentTok{#> (geom_point).}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/gradient-rb-2.pdf}
+
+As well as saving single objects, you can also save vectors of
+\texttt{ggplot} components. Adding a vector of components to a plot is
+equivalent to adding each component of the vector in turn. The following
+example creates two continuous scales that can be used to turn off the
+display of axis labels and ticks. You only need to create these objects
+once and you can apply them to many different plots, as shown in the
+code below and Figure\textasciitilde{}\ref{fig:quiet}.
+\index{Layers!reusing}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{xquiet <-}\StringTok{ }\KeywordTok{scale_x_continuous}\NormalTok{(}\DataTypeTok{breaks =} \OtherTok{NULL}\NormalTok{)}
+\NormalTok{yquiet <-}\StringTok{ }\KeywordTok{scale_y_continuous}\NormalTok{(}\DataTypeTok{breaks =} \OtherTok{NULL}\NormalTok{)}
+
+\KeywordTok{qplot}\NormalTok{(mpg, wt, }\DataTypeTok{data =} \NormalTok{mtcars) +}\StringTok{ }\NormalTok{xquiet }
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/quiet-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(displ, cty, }\DataTypeTok{data =} \NormalTok{mpg) +}\StringTok{ }\NormalTok{xquiet +}\StringTok{ }\NormalTok{yquiet }
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/quiet-2.pdf}
+
+Similarly, it's easy to write simple functions that change the defaults
+of a layer. For example, if you wanted to create a function that added
+linear models to a plot, you could create a function like the one below.
+The results are shown in Figure\textasciitilde{}\ref{fig:geom-lm}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{geom_lm <-}\StringTok{ }\NormalTok{function(}\DataTypeTok{formula =} \NormalTok{y ~}\StringTok{ }\NormalTok{x) \{}
+  \KeywordTok{geom_smooth}\NormalTok{(}\DataTypeTok{formula =} \NormalTok{formula, }\DataTypeTok{se =} \OtherTok{FALSE}\NormalTok{, }\DataTypeTok{method =} \StringTok{"lm"}\NormalTok{)}
+\NormalTok{\}}
+\KeywordTok{qplot}\NormalTok{(mpg, wt, }\DataTypeTok{data =} \NormalTok{mtcars) +}\StringTok{ }\KeywordTok{geom_lm}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/geom-lm-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(}\StringTok{"splines"}\NormalTok{)}
+\KeywordTok{qplot}\NormalTok{(mpg, wt, }\DataTypeTok{data =} \NormalTok{mtcars) +}\StringTok{ }\KeywordTok{geom_lm}\NormalTok{(y ~}\StringTok{ }\KeywordTok{ns}\NormalTok{(x, }\DecValTok{3}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/geom-lm-2.pdf}
+
+Depending on how complicated your function is, it might even return
+multiple components in a vector. You can build up arbitrarily complex
+plots this way, reducing duplication wherever you find it. If you want
+to create a plot that combines together many different components in a
+pre-specified way, you might need to write a function that produces the
+entire plot. This is described in the next section.
+
+\hyperdef{}{sec:functions}{\section{Plot
+functions}\label{sec:functions}}
+
+If you are using the same basic plot again and again with different
+datasets or different parameters, it may be worthwhile to wrap up all
+the different options into a single function. Maybe you need to perform
+some data restructuring or transformation, or need to combine the data
+with a predefined model. In that case you will need to write a function
+that produces \texttt{ggplot} plots. It's hard to give advice on how to
+go about this because there are so many different possible scenarios,
+but this section aims to point out some important things to think about.
+\index{Duplication!functions} \index{Functions that create plots}
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Since you're creating the plot within the environment of a function,
+  you need to be extra careful about supplying the data to
+  \texttt{ggplot()} as a data frame, and you need to double check that
+  you haven't accidentally referred to any function local variables in
+  your aesthetic mappings.
+\item
+  If you want to allow the user to provide their own variables for
+  aesthetic mappings, I'd suggest using \texttt{aes\_string()}. This
+  function works just like \texttt{aes}, but uses strings rather than
+  unevaluated expressions. \texttt{aes\_string("cty", colour = "hwy")}
+  is equivalent to \texttt{aes(cty, colour = hwy)}. Strings are much
+  easier to work with than expressions.
+  \index{Mappings!creating programmatically} \indexf{aes_string}
+\item
+  As mentioned in \hyperref[cha:data]{data}, you want to separate your
+  plotting code into a function that does any data transformations and
+  manipulations and a function that creates the plot. Generally, your
+  plotting function should do no data manipulation, just create a plot.
+  The following example shows one way to create parallel coordinate plot
+  function, wrapping up the code used in
+  \hyperref[sub:molten-data]{parallel coordinates plot}.
+  \index{Parallel coordinates plot}
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{>}\StringTok{ }\NormalTok{rescale01 <-}\StringTok{ }\NormalTok{function(x) \{}
+\NormalTok{+}\StringTok{   }\NormalTok{rng <-}\StringTok{ }\KeywordTok{range}\NormalTok{(x, }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{)}
+\NormalTok{+}\StringTok{   }\NormalTok{(x -}\StringTok{ }\NormalTok{rng[}\DecValTok{1}\NormalTok{]) /}\StringTok{ }\NormalTok{(rng[}\DecValTok{2}\NormalTok{] -}\StringTok{ }\NormalTok{rng[}\DecValTok{1}\NormalTok{])}
+\NormalTok{+}\StringTok{ }\NormalTok{\}}
+\NormalTok{>}\StringTok{ }\NormalTok{pcp_data <-}\StringTok{ }\NormalTok{function(df) \{}
+\NormalTok{+}\StringTok{   }\NormalTok{numeric <-}\StringTok{ }\KeywordTok{sapply}\NormalTok{(df, is.numeric)}
+\NormalTok{+}\StringTok{   }\CommentTok{# Rescale numeric columns}
+\NormalTok{+}\StringTok{   }\NormalTok{df[numeric] <-}\StringTok{ }\KeywordTok{lapply}\NormalTok{(df[numeric], rescale01)}
+\NormalTok{+}\StringTok{   }\CommentTok{# Add row identified}
+\NormalTok{+}\StringTok{   }\NormalTok{df$.row <-}\StringTok{ }\KeywordTok{rownames}\NormalTok{(df)}
+\NormalTok{+}\StringTok{   }\CommentTok{# Treat numerics as value (aka measure) variables }
+\NormalTok{+}\StringTok{   }\NormalTok{dfg <-}\StringTok{ }\NormalTok{tidyr::}\KeywordTok{gather_}\NormalTok{(df, }\StringTok{"variable"}\NormalTok{, }\StringTok{"value"}\NormalTok{, }\KeywordTok{names}\NormalTok{(df)[numeric])}
+\NormalTok{+}\StringTok{   }\CommentTok{# Add pcp to class of the data frame}
+\NormalTok{+}\StringTok{   }\KeywordTok{class}\NormalTok{(dfg) <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"pcp"}\NormalTok{, }\KeywordTok{class}\NormalTok{(dfg))}
+\NormalTok{+}\StringTok{   }\NormalTok{dfg}
+\NormalTok{+}\StringTok{ }\NormalTok{\}}
+\NormalTok{>}\StringTok{ }\NormalTok{pcp <-}\StringTok{ }\NormalTok{function(df, ...) \{}
+\NormalTok{+}\StringTok{   }\NormalTok{df <-}\StringTok{ }\KeywordTok{pcp_data}\NormalTok{(df)}
+\NormalTok{+}\StringTok{   }\KeywordTok{ggplot}\NormalTok{(df, }\KeywordTok{aes}\NormalTok{(variable, value)) +}\StringTok{ }\KeywordTok{geom_line}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{group =} \NormalTok{.row))}
+\NormalTok{+}\StringTok{ }\NormalTok{\}}
+\NormalTok{>}\StringTok{ }\KeywordTok{pcp}\NormalTok{(mpg)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics[width=0.75\linewidth]{figures/pcp_data-1}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{>}\StringTok{ }\KeywordTok{pcp}\NormalTok{(mpg) +}\StringTok{ }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{colour =} \NormalTok{drv)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics[width=0.75\linewidth]{figures/pcp_data-2}
+
+The best example of this technique is \texttt{qplot()}, and if you're
+interesting in writing your own functions I strongly recommend you have
+a look at the source code for this function and step through it line by
+line to see how it works. If you've made your way this far through the
+book you should have a pretty good grasp of all the \texttt{ggplot}
+related code: most of the complexity is R tricks to correctly interpret
+all of the possible plot types.

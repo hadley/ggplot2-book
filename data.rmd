@@ -1,14 +1,14 @@
 ---
 title: data
 output: bookdown::html_chapter
+bibliography: references.bib
 ---
 
 ```{r data, echo=FALSE}
 library("ggplot2")
+library("plyr")
 library("dplyr")
 library("tidyr")
-library("plyr")
-knitr::opts_chunk$set(cache.path = "cache/data-", fig.path = "figures/data-")
 options(digits = 2, width = 60)
 ```
 
@@ -29,7 +29,7 @@ Data cleaning, manipulation and transformation is a big topic and this chapter o
 With faceting, `ggplot` makes it very easy to create identical plots for different subsets of your data. \index{Package!plyr} This section introduces `ddply()` from the **plyr** package, a function that makes it easy to do the same thing for numerical summaries. **plyr** provides a comprehensive suite of tools for breaking up complicated data structures into pieces, processing each piece and then joining the results back together. The **plyr** package as a whole provides tools for breaking and combining lists, arrays and data frames. Here we will focus on the `ddply()` function which breaks up a data frame into subsets based on row values, applies a function to each subset and then joins the results back into a data frame. The basic syntax is `ddply(.data, .variables, .fun, ...)`, where \indexf{ddply}
 
 * `.data` is the dataset to break up (e.g., the data that you are plotting).
-* `.variables` is a description of the grouping variables used to break up the dataset. This is written like \code{.(var1, var2)}, and to match the plot should contain all the grouping and faceting variables that you've used in the plot.
+* `.variables` is a description of the grouping variables used to break up the dataset. This is written like `.(var1, var2)`, and to match the plot should contain all the grouping and faceting variables that you've used in the plot.
 * `.fun` is the summary function you want to use. The function can return a vector or data frame. The result does not need to contain the grouping variables: these will be added on automatically if they're needed. The result can be a much reduced aggregated dataset (maybe even one number), or the original data modified or expanded in some way.
 
 More information and examples are available in the documentation, `?ddply`, and on the package website, <http://had.co.nz/plyr>.  The following examples show a few useful summary functions that solve common data manipulation problems.
@@ -163,7 +163,7 @@ See also [varying aesthetics and data](#sub:different-aesthetics) and [revealing
 
 In `ggplot` graphics, groups are defined by rows, not by columns. This makes it easy to draw a line for each group defined by the value of a variable (or set of variables) but difficult to draw a separate line for each variable. In this section you will learn how to transform your data to a form in which you can draw a line for each variable. This transformation converts from 'wide' data to 'long' data, where each variable now occupies its own set of rows. \index{Data!wide-to-long} \index{Converting data!from wide to long}
 
-To perform this transformation we will use the `melt()` function from the **reshape** package \citep{wickham:2007b}. Reshape also provides the `cast()` function to flexibly reshape and aggregate data, which you may want to read about yourself. Table~\ref{tbl:melt} gives an example. The `melt()` function has three arguments: \index{Package!reshape} \indexf{melt}
+To perform this transformation we will use the `melt()` function from the **reshape** package [@wickham:2007b]. Reshape also provides the `cast()` function to flexibly reshape and aggregate data, which you may want to read about yourself. Table~\ref{tbl:melt} gives an example. The `melt()` function has three arguments: \index{Package!reshape} \indexf{melt}
 
 * `data`: the data frame you want to convert to long form.
 * `id.vars`: Identifier (id) variables identify the unit that measurements take place on. Id variables are usually discrete, and are typically fixed by design. In `anova()` notation ($Y_{ijk}$), id variables are the indices on the variables ($i, j, k$); in database notation, id variables are a composite primary key.
@@ -173,7 +173,7 @@ If you're familiar with Wilkinson's grammar of graphics, you might wonder why th
 
 ```{r melt, results='asis', echo=FALSE}
 em <- tidyr::gather(economics, variable, value, -date)
-pander::pandoc.table(em, caption = "Economics data in wide, left, and long, right, formats. The data stored in each table is equivalent, just the arrangement is different. It it easy to use the wider format with `ggplot` to produce a line for each variable.")
+pander::pandoc.table(head(em), caption = "Economics data in wide, left, and long, right, formats. The data stored in each table is equivalent, just the arrangement is different. It it easy to use the wider format with `ggplot` to produce a line for each variable.")
 ```
 
 The following sections explore two important uses of molten data in more detail: plotting multiple time series and creating parallel coordinate plots. You will also see how to use `ddply()` to rescale the variables, and learn about the features of `ggplot` that are most useful in conjunction with this sort of data.
@@ -190,7 +190,7 @@ qplot(unemploy, uempmed, data = economics) + geom_smooth()
 
 One way is to build up the plot with a different layer for each variable, as you saw in [the manual discrete scale](#sub:scale-manual). However, this quickly becomes tedious when you have many variables, and a better alternative is to melt the data into a long format and then visualise that. In the molten data the time series have their value stored in the `value` variable and we can distinguish between them with the `variable` variable. The code below shows these two alternatives. The plots they produce are very similar, and are shown in Figure~\ref{fig:series-methods}.
 
-```{r series-methods, fig.width=6, fig.height=3, fig.cap="The two methods of displaying both series on a single plot produce identical plots, but using long data is much easier when you have many variables.  The series have radically different scales, so we only see the pattern in the `unemploy` variable. You might not even notice `uempmed` unless you're paying close attention: it's the line at the bottom of the plot."}
+```{r series-methods, fig.width=6, fig.height=3, fig.cap="The two methods of displaying both series on a single plot produce identical plots, but using long data is much easier when you have many variables.  The series have radically different scales, so we only see the pattern in the \\texttt{unemploy} variable. You might not even notice \\texttt{uempmed} unless you're paying close attention: it's the line at the bottom of the plot."}
 ggplot(economics, aes(date)) + 
   geom_line(aes(y = unemploy, colour = "unemploy")) + 
   geom_line(aes(y = uempmed, colour = "uempmed")) + 
@@ -216,7 +216,7 @@ qplot(date, value, data = emp, geom = "line") +
 
 ### Parallel coordinates plot {#sub:molten-data}
 
-In a similar manner, we can use molten data to create a parallel coordinates plot \citep{inselberg:1985,wegman:1990}, which has the 'variable' variable on the x axis and value on the y axis.  We need a new variable to record the row that each observation came from, which is used as a grouping variable for the lines (so we get one line per observation). The easiest value to use for this is the data frame `rownames`, and we give it an unusual name `.row`, so we don't squash any of the existing variables. Once we have the data in this form, creating a parallel coordinates plot is easy. \index{Parallel coordinates plot}
+In a similar manner, we can use molten data to create a parallel coordinates plot [@inselberg:1985,wegman:1990], which has the 'variable' variable on the x axis and value on the y axis.  We need a new variable to record the row that each observation came from, which is used as a grouping variable for the lines (so we get one line per observation). The easiest value to use for this is the data frame `rownames`, and we give it an unusual name `.row`, so we don't squash any of the existing variables. Once we have the data in this form, creating a parallel coordinates plot is easy. \index{Parallel coordinates plot}
 
 The following code does exactly that for the ratings of 840 movies with over 10,000 votes. This dataset has a moderate number of variables (10) and many cases, and will allow us to experiment with a common technique for dealing with large data in parallel coordinates plots: transparency and clustering. Each variable gives the proportion of votes given to each rating between 0 (very bad) and 10 (very good). Since this data is already on a common scale we don't need to rescale it, but in general, we would need to use the technique from the previous section to ensure the variables are comparable. This is particularly important if we are going to use other multidimensional techniques to analyse the data. \index{Rescaling}
 
@@ -238,7 +238,7 @@ pcp + geom_line(position = jit)
 pcp + geom_line(alpha = 1 / 20, position = jit)
 ```
 
-To make the patterns more clear we will cluster the movies into groups of similar rating patterns. The following code uses kmeans clustering \citep{hartigan:1979} to produce six groups of similar movies.  To make the clusters a little more interpretable, they are relabelled so that cluster 1 has the lowest average rating and cluster six the highest. \index{Clustering}
+To make the patterns more clear we will cluster the movies into groups of similar rating patterns. The following code uses kmeans clustering [@hartigan:1979] to produce six groups of similar movies.  To make the clusters a little more interpretable, they are relabelled so that cluster 1 has the lowest average rating and cluster six the highest. \index{Clustering}
 
 ```{r }
 cl <- kmeans(ratings[1:10], 6)
@@ -278,7 +278,7 @@ These different types of input also work with `qplot()`: remember that `qplot()`
 
 Currently, `ggplot` provides only one fortify method, for linear models. Here we'll show how this method works, and how you can use it to create tailored plots for better understanding your data and models. Figure~\ref{fig:plot-lm} shows the output of `plot.lm()` for a simple model. The graphics are a set of pre-chosen model summary plots. These are useful for particular problems, but are completely inflexible: there is no way to modify them apart from opening up the source code for `plot.lm()` and modifying it. This is hard because the data transformation and display are inextricably entangled, making the code difficult to understand. \index{Model!diagnostics} \index{Model!linear} \index{Linear models} \indexf{fortify.lm}
 
-```{r plot-lm, out.width="0.4\\linewidth", fig.cap="The output from `plot.lm()` for a simple model."}
+```{r plot-lm, out.width="0.4\\linewidth", fig.cap="The output from \\texttt{plot.lm()} for a simple model."}
 mod <- lm(cty ~ displ, data = mpg)
 plot(mod)
 ```
@@ -286,6 +286,7 @@ plot(mod)
 
 The `ggplot` approach completely separates data transformation and display. The `fortify()` method does the transformation, and then we use `ggplot` as usual to create the display that we want. Currently `fortify()` adds the variables listed in Table~\ref{tbl:fortify-vars} to the original dataset. These are basically all the variables that `plot.lm()` creates in order to produce its summary plots. The variables have a leading `.` (full stop) in their names, so there is little risk that they will clobber variables already in the dataset.
 
+<!--
 \begin{table}
   \centering
   \begin{tabular}{lp{2.5in}}
@@ -303,6 +304,7 @@ The `ggplot` approach completely separates data transformation and display. The 
   \caption{The diagnostic variables that \f{fortify.lm} assembles and adds to the model data.}
   \label{tbl:fortify-vars}
 \end{table}
+-->
 
 <!--
 % If we just supply \f{fortify} with the model, it will add the diagnostic columns to the model data frame (which just contains the variables used in the model), or we can also supply the full original dataset.  
