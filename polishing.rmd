@@ -79,49 +79,15 @@ theme_set(previous_theme)
 
 ### Theme elements and element functions {#sec:theme-elements}
 
-A theme is made up of multiple *elements* which control the appearance of a single item on the plot, as listed in Table~\ref{tbl:elements}. There are three elements that have individual `x` and `y` settings: `axis.text`, `axis.title` and `strip.text`. Having a different setting for the horizontal and vertical elements allows you to control how text should appear in different orientations. The appearance of each element is controlled by an \emph{element function}. \index{Themes!elements}
+A theme is made up of multiple *elements* which control the appearance of a single item on the plot, as listed in Table~\ref{tbl:elements}. There are three elements that have individual `x` and `y` settings: `axis.text`, `axis.title` and `strip.text`. Having a different setting for the horizontal and vertical elements allows you to control how text should appear in different orientations. The appearance of each element is controlled by an *element function*. \index{Themes!elements}
 
-\begin{table}
-  \begin{center}
-  \begin{tabular}{lll}\\
-    \toprule
-    Theme element              & Type     & Description  \\
-    \midrule                              
-    \texttt{axis.line}         & segment  & line along axis  \\
-    \texttt{axis.text.x}       & text     & x axis label  \\
-    \texttt{axis.text.y}       & text     & y axis label  \\
-    \texttt{axis.ticks}        & segment  & axis tick marks  \\
-    \texttt{axis.title.x}      & text     & horizontal tick labels  \\
-    \texttt{axis.title.y}      & text     & vertical tick labels  \\[0.5em]
-
-    \texttt{legend.background} & rect     & background of legend  \\
-    \texttt{legend.key}        & rect     & background underneath legend keys \\
-    \texttt{legend.text}       & text     & legend labels  \\
-    \texttt{legend.title}      & text     & legend name  \\[0.5em]
-
-    \texttt{panel.background}  & rect     & background of panel  \\
-    \texttt{panel.border}      & rect     & border around panel  \\
-    \texttt{panel.grid.major}  & line     & major grid lines \\
-    \texttt{panel.grid.minor}  & line     & minor grid lines \\
-    \texttt{plot.background}   & rect     & background of the entire plot \\
-    \texttt{plot.title}        & text     & plot title   \\[0.5em]
-
-    \texttt{strip.background}  & rect     & background of facet labels   \\
-    \texttt{strip.text.x}      & text     & text for horizontal strips  \\
-    \texttt{strip.text.y}      & text     & text for vertical strips  \\
-    \bottomrule                           
-  
-  \end{tabular}
-  \end{center}
-  \caption{Theme elements}
-  \label{tbl:elements}
-\end{table}
+\include{tbls/elements}
 
 There are four basic types of built-in element functions: text, lines and segments, rectangles and blank.  Each element function has a set of parameters that control the appearance as described below:
 
 * `element_text()` draws labels and headings. You can control the font `family`, `face`, `colour`, `size`, `hjust`, `vjust`, `angle` and `lineheight`. \index{Themes!labels} \indexf{element_text}
   
-  The following code shows the effect of changing these parameters on the plot title. The results are shown in Figure~\ref{fig:theme-text}. Changing the angle is probably more useful for tick labels.  When changing the angle you will probably also need to change `hjust} to 0 or 1.
+  The following code shows the effect of changing these parameters on the plot title. The results are shown in Figure~\ref{fig:theme-text}. Changing the angle is probably more useful for tick labels.  When changing the angle you will probably also need to change `hjust` to 0 or 1.
   
 ```{r theme-text, out.width="0.32\\linewidth", fig.cap="Changing the appearance of the plot title."}
 hgramt <- hgram + labs(title = "This is a histogram")
@@ -242,34 +208,7 @@ qplot(rating, data = movies, geom = "histogram", binwidth = 1)
 
 Table~\ref{tbl:geom-defaults} lists all of the common aesthetic defaults.  If you change the defaults for one geom, it's a good idea to change all the defaults for all the other geoms that you commonly use so that your plots look consistent.  If you are unsure on what makes for a valid colour, line type, shape or size, [Specifications](#cha:specifications) gives the details. \index{Aesthetics!defaults}
 
-```{r geom-defaults, results='asis', echo=FALSE}
-# adapted from http://stackoverflow.com/questions/11657380/is-there-a-table-or-catalog-of-aesthetics-for-ggplot2
-#aes_value <- function(x) paste(names(x), x, sep =": ")
-ind_aes <- function(geom = "point") { 
-  plyr::try_default({
-    Geom <- getFromNamespace(paste0("Geom", ggplot2:::firstUpper(geom)), "ggplot2")
-    tmp <- Geom$default_aes()
-    tmp[!is.na(tmp)]
-  }, default = NULL, quiet = TRUE)
-}
-
-# grab all the geoms from the home page
-library(rvest)
-geoms <- html("http://docs.ggplot2.org/current/index.html") %>%
-  html_nodes(".index a") %>% html_text()
-geoms <- sub("geom_", "", geoms[geoms != ""])
-
-# put everything neatly into a table
-geomz <- Filter(function(x) length(x) > 1, sapply(geoms, ind_aes))
-gs <- lapply(geomz, function(x) data.frame(Aesthetic = names(x), 
-                                     Default = as.character(x)))
-frames <- mapply(function(x, y) cbind(x, Geoms = y), gs, names(gs), 
-                 SIMPLIFY = FALSE)
-df <- do.call("rbind", frames)
-df[] <- lapply(df, function(x) paste("`", x, "`", sep =""))
-df2 <- ddply(df, .(Aesthetic, Default), summarise, Cap = paste(Geoms, collapse = ", "))
-pander::pandoc.table(df2, caption = "Default aesthetic values for geoms.  See [specifications](#cha:specifications) for how the values are interpreted by R.")
-```
+\include{tbls/geom-defaults}
 
 ## Saving your output {#sec:saving}
 

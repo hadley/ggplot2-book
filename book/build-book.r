@@ -1,11 +1,13 @@
 library("bookdown")
 library("rmarkdown")
-library("pander")
+library("xtable")
 
-# Global options for pander tables -------------------------------------------
-panderOptions('table.split.table', Inf)
-panderOptions('table.alignment.default', 'left')
-panderOptions('table.style', 'simple')
+# Global options for tables -------------------------------------------
+options(xtable.include.rownames = FALSE)
+options(xtable.comment = FALSE)
+options(xtable.sanitize.text.function = function(x) x)
+# function used in some chapters for displaying code in tables
+tex_code <- function(x) paste0("\\texttt{", x, "}")
 
 # Render chapters into tex  ----------------------------------------------------
 needs_update <- function(src, dest) {
@@ -18,24 +20,26 @@ render_chapter <- function(src) {
   dest <- file.path("book/tex/", gsub("\\.rmd", "\\.tex", src))
   #if (!needs_update(src, dest)) return()
   base <- bookdown::tex_chapter()
-  # set some knitr options...
   chap <- sub("\\.rmd", "", src)
-  within(base$knitr$opts_chunk, {
-          message = FALSE
-          warning = FALSE
-          fig.show = 'hold'
-          fig.height = 4
-          fig.width = 4
-          fig.path = paste0("figures/", chap)
-          cache.path = paste0("_cache/", chap)})
+  # set some global knitr chunk options...
+  base$knitr$opts_chunk <- 
+    plyr::defaults(list(message = FALSE,
+                        warning = FALSE,
+                        fig.show = 'hold',
+                        fig.height = 4,
+                        fig.width = 4,
+                        out.width = "0.49\\linewidth",
+                        fig.path = paste0("figures/", chap),
+                        cache.path = paste0("_cache/", chap)),
+                 base$knitr$opts_chunk)
   capture.output(render(src, base, output_dir = "book/tex", env = globalenv()),
                  file = "book/tex/render-log.txt")
 }
 
 # produce tex individually (useful for debugging)
-# render("scales.rmd", bookdown::tex_chapter(),
-#        output_dir = "book/tex", env = globalenv())
+#render_chapter("layers.rmd")
 
+# produce all the tex!
 chapters <- dir(".", pattern = "\\.rmd$")
 lapply(chapters, render_chapter)
 

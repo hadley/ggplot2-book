@@ -1,21 +1,3 @@
-\begin{verbatim}
-#> 
-#> Attaching package: 'dplyr'
-#> 
-#> The following objects are masked from 'package:plyr':
-#> 
-#>     arrange, count, desc, failwith, id, mutate,
-#>     rename, summarise, summarize
-#> 
-#> The following object is masked from 'package:stats':
-#> 
-#>     filter
-#> 
-#> The following objects are masked from 'package:base':
-#> 
-#>     intersect, setdiff, setequal, union
-\end{verbatim}
-
 \chapter{Manipulating data}\label{cha:data}
 
 So far this book has assumed you have your data in a nicely structured
@@ -299,22 +281,15 @@ produced by the following code. \index{Model!fitting multiple models}
 \begin{Highlighting}[]
 \KeywordTok{qplot}\NormalTok{(carat, price, }\DataTypeTok{data =} \NormalTok{diamonds, }\DataTypeTok{geom =} \StringTok{"smooth"}\NormalTok{, }
   \DataTypeTok{colour =} \NormalTok{color)}
-\CommentTok{#> geom_smooth: method="auto" and size of largest group is >=1000, so using gam with formula: y ~ s(x, bs = "cs"). Use 'method = x' to change the smoothing method.}
-\end{Highlighting}
-\end{Shaded}
-
-\includegraphics{figures/smooth-1.pdf}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \NormalTok{dense <-}\StringTok{ }\KeywordTok{subset}\NormalTok{(diamonds, carat <}\StringTok{ }\DecValTok{2}\NormalTok{)}
 \KeywordTok{qplot}\NormalTok{(carat, price, }\DataTypeTok{data =} \NormalTok{dense, }\DataTypeTok{geom =} \StringTok{"smooth"}\NormalTok{, }
   \DataTypeTok{colour =} \NormalTok{color,  }\DataTypeTok{fullrange =} \OtherTok{TRUE}\NormalTok{)}
-\CommentTok{#> geom_smooth: method="auto" and size of largest group is >=1000, so using gam with formula: y ~ s(x, bs = "cs"). Use 'method = x' to change the smoothing method.}
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{figures/smooth-2.pdf}
+\begin{figure}
+\includegraphics[width=0.49\linewidth]{figures/datasmooth-1} \includegraphics[width=0.49\linewidth]{figures/datasmooth-2} \caption{A plot showing the smoothed trends for price vs. carat for each colour of diamonds. With the full range of carats (left), the standard errors balloon after around two carats because there are relatively few diamonds of that size. Restricting attention to diamonds of less than two carats (right) focuses on the region where we have plenty of data.\label{fig:smooth}}
+\end{figure}
 
 How can we re-create this by hand? First we read the
 \texttt{stat\_smooth()} documentation to determine what the model is:
@@ -344,20 +319,14 @@ all the work.
 \NormalTok{smoothes <-}\StringTok{ }\KeywordTok{ddply}\NormalTok{(dense, .(color), smooth)}
 \KeywordTok{qplot}\NormalTok{(carat, price, }\DataTypeTok{data =} \NormalTok{smoothes, }\DataTypeTok{colour =} \NormalTok{color, }
   \DataTypeTok{geom =} \StringTok{"line"}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\includegraphics{figures/smooth-by-hand-1.pdf}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \KeywordTok{qplot}\NormalTok{(carat, price, }\DataTypeTok{data =} \NormalTok{smoothes, }\DataTypeTok{colour =} \NormalTok{color, }
   \DataTypeTok{geom =} \StringTok{"smooth"}\NormalTok{, }\DataTypeTok{ymax =} \NormalTok{price +}\StringTok{ }\DecValTok{2} \NormalTok{*}\StringTok{ }\NormalTok{se, }\DataTypeTok{ymin =} \NormalTok{price -}\StringTok{ }\DecValTok{2} \NormalTok{*}\StringTok{ }\NormalTok{se)}
-\CommentTok{#> geom_smooth: method="auto" and size of largest group is <1000, so using loess. Use 'method = x' to change the smoothing method.}
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{figures/smooth-by-hand-2.pdf}
+\begin{figure}
+\includegraphics[width=0.49\linewidth]{figures/datasmooth-by-hand-1} \includegraphics[width=0.49\linewidth]{figures/datasmooth-by-hand-2} \caption{Figure~\ref{fig:smooth} with all statistical calculations performed by hand.  The predicted values (left), and with standard errors (right).\label{fig:smooth-by-hand}}
+\end{figure}
 
 Doing the summary by hand gives you much more flexibility to fit models
 where the grouping factor is explicitly included as a covariate. For
@@ -378,7 +347,7 @@ it's a starting point for a better model.
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{figures/gam-1.pdf}
+\includegraphics[width=0.49\linewidth]{figures/datagam-1}
 
 See also \hyperref[sub:different-aesthetics]{varying aesthetics and
 data} and \hyperref[sec:uncertainty]{revealing uncertainty} for other
@@ -427,27 +396,23 @@ other facilities for transforming data in R, and it is in line with the
 \texttt{ggplot} philosophy of keeping data transformation and
 visualisation as separate as possible.
 
-\begin{longtable}[c]{@{}lll@{}}
-\caption{Economics data in wide, left, and long, right, formats. The
-data stored in each table is equivalent, just the arrangement is
-different. It it easy to use the wider format with \texttt{ggplot} to
-produce a line for each variable.}\tabularnewline
-\toprule
-date & variable & value\tabularnewline
-\midrule
-\endfirsthead
-\toprule
-date & variable & value\tabularnewline
-\midrule
-\endhead
-1967-06-30 & pce & 507.8\tabularnewline
-1967-07-31 & pce & 510.9\tabularnewline
-1967-08-31 & pce & 516.7\tabularnewline
-1967-09-30 & pce & 513.3\tabularnewline
-1967-10-31 & pce & 518.5\tabularnewline
-1967-11-30 & pce & 526.2\tabularnewline
-\bottomrule
-\end{longtable}
+\begin{table}[ht]
+\centering
+\begin{tabular}{rlr}
+  \hline
+date & variable & value \\ 
+  \hline
+-916.00 & pce & 507.80 \\ 
+  -885.00 & pce & 510.90 \\ 
+  -854.00 & pce & 516.70 \\ 
+  -824.00 & pce & 513.30 \\ 
+  -793.00 & pce & 518.50 \\ 
+  -763.00 & pce & 526.20 \\ 
+   \hline
+\end{tabular}
+\caption{Economics data in wide, left, and long, right, formats. The data stored in each table is equivalent, just the arrangement is different. It it easy to use the wider format with \texttt{ggplot} to produce a line for each variable.} 
+\label{melt}
+\end{table}
 
 The following sections explore two important uses of molten data in more
 detail: plotting multiple time series and creating parallel coordinate
@@ -471,32 +436,13 @@ want to see the time series simultaneously?
 \begin{Shaded}
 \begin{Highlighting}[]
 \KeywordTok{qplot}\NormalTok{(date, uempmed, }\DataTypeTok{data =} \NormalTok{economics, }\DataTypeTok{geom =} \StringTok{"line"}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{figure}
-\includegraphics[width=0.32\linewidth]{figures/series-wide-1} \caption{When the economics dataset is stored in wide format, it is easy to create separate time series plots for each variable (left and centre), and easy to create scatterplots comparing them (right).\label{fig:series-wide1}}
-\end{figure}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \KeywordTok{qplot}\NormalTok{(date, unemploy, }\DataTypeTok{data =} \NormalTok{economics, }\DataTypeTok{geom =} \StringTok{"line"}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{figure}
-\includegraphics[width=0.32\linewidth]{figures/series-wide-2} \caption{When the economics dataset is stored in wide format, it is easy to create separate time series plots for each variable (left and centre), and easy to create scatterplots comparing them (right).\label{fig:series-wide2}}
-\end{figure}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \KeywordTok{qplot}\NormalTok{(unemploy, uempmed, }\DataTypeTok{data =} \NormalTok{economics) +}\StringTok{ }\KeywordTok{geom_smooth}\NormalTok{()}
-\CommentTok{#> geom_smooth: method="auto" and size of largest group is <1000, so using loess. Use 'method = x' to change the smoothing method.}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{figure}
-\includegraphics[width=0.32\linewidth]{figures/series-wide-3} \caption{When the economics dataset is stored in wide format, it is easy to create separate time series plots for each variable (left and centre), and easy to create scatterplots comparing them (right).\label{fig:series-wide3}}
+\includegraphics[width=0.32\linewidth]{figures/dataseries-wide-1} \includegraphics[width=0.32\linewidth]{figures/dataseries-wide-2} \includegraphics[width=0.32\linewidth]{figures/dataseries-wide-3} \caption{When the economics dataset is stored in wide format, it is easy to create separate time series plots for each variable (left and centre), and easy to create scatterplots comparing them (right).\label{fig:series-wide}}
 \end{figure}
 
 One way is to build up the plot with a different layer for each
@@ -515,20 +461,15 @@ shown in Figure\textasciitilde{}\ref{fig:series-methods}.
 \StringTok{  }\KeywordTok{geom_line}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{y =} \NormalTok{unemploy, }\DataTypeTok{colour =} \StringTok{"unemploy"}\NormalTok{)) +}\StringTok{ }
 \StringTok{  }\KeywordTok{geom_line}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{y =} \NormalTok{uempmed, }\DataTypeTok{colour =} \StringTok{"uempmed"}\NormalTok{)) +}\StringTok{ }
 \StringTok{  }\KeywordTok{scale_colour_hue}\NormalTok{(}\StringTok{"variable"}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\includegraphics{figures/series-methods-1.pdf}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 
 \NormalTok{emp <-}\StringTok{ }\NormalTok{tidyr::}\KeywordTok{gather}\NormalTok{(economics, variable, value, uempmed, unemploy)}
 \KeywordTok{qplot}\NormalTok{(date, value, }\DataTypeTok{data =} \NormalTok{emp, }\DataTypeTok{geom =} \StringTok{"line"}\NormalTok{, }\DataTypeTok{colour =} \NormalTok{variable)}
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{figures/series-methods-2.pdf}
+\begin{figure}
+\includegraphics[width=0.49\linewidth]{figures/dataseries-methods-1} \includegraphics[width=0.49\linewidth]{figures/dataseries-methods-2} \caption{The two methods of displaying both series on a single plot produce identical plots, but using long data is much easier when you have many variables.  The series have radically different scales, so we only see the pattern in the \texttt{unemploy} variable. You might not even notice \texttt{uempmed} unless you're paying close attention: it's the line at the bottom of the plot.\label{fig:series-methods}}
+\end{figure}
 
 There is a problem with these plots: the two variables have radically
 different scales, and so the series for \texttt{uempmed} appears as a
@@ -549,19 +490,14 @@ Figure\textasciitilde{}\ref{fig:series-scaling}. \index{Axis!multiple}
 \NormalTok{emp2 <-}\StringTok{ }\KeywordTok{ddply}\NormalTok{(emp, .(variable), transform, }\DataTypeTok{value =} \KeywordTok{range01}\NormalTok{(value))}
 \KeywordTok{qplot}\NormalTok{(date, value, }\DataTypeTok{data =} \NormalTok{emp2, }\DataTypeTok{geom =} \StringTok{"line"}\NormalTok{, }
   \DataTypeTok{colour =} \NormalTok{variable, }\DataTypeTok{linetype =} \NormalTok{variable)}
-\end{Highlighting}
-\end{Shaded}
-
-\includegraphics{figures/series-scaling-1.pdf}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \KeywordTok{qplot}\NormalTok{(date, value, }\DataTypeTok{data =} \NormalTok{emp, }\DataTypeTok{geom =} \StringTok{"line"}\NormalTok{) +}\StringTok{ }
 \StringTok{  }\KeywordTok{facet_grid}\NormalTok{(variable ~}\StringTok{ }\NormalTok{., }\DataTypeTok{scales =} \StringTok{"free_y"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{figures/series-scaling-2.pdf}
+\begin{figure}
+\includegraphics[width=0.49\linewidth]{figures/dataseries-scaling-1} \includegraphics[width=0.49\linewidth]{figures/dataseries-scaling-2} \caption{When the series have very different scales we have two alternatives: left, rescale the variables to a common scale, or right, display the variables on separate facets and using free scales.\label{fig:series-scaling}}
+\end{figure}
 
 \subsection{Parallel coordinates plot}\label{sub:molten-data}
 
@@ -612,35 +548,16 @@ it's hard to draw firm conclusions. \indexf{geom_line}
 \begin{Highlighting}[]
 \NormalTok{pcp <-}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(molten, }\KeywordTok{aes}\NormalTok{(variable, value, }\DataTypeTok{group =} \NormalTok{.row))}
 \NormalTok{pcp +}\StringTok{ }\KeywordTok{geom_line}\NormalTok{()}
-\end{Highlighting}
-\end{Shaded}
-
-\includegraphics{figures/pcp-1.png}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \NormalTok{pcp +}\StringTok{ }\KeywordTok{geom_line}\NormalTok{(}\DataTypeTok{alpha =} \DecValTok{1} \NormalTok{/}\StringTok{ }\DecValTok{20}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\includegraphics{figures/pcp-2.png}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \NormalTok{jit <-}\StringTok{ }\KeywordTok{position_jitter}\NormalTok{(}\DataTypeTok{width =} \FloatTok{0.25}\NormalTok{, }\DataTypeTok{height =} \FloatTok{2.5}\NormalTok{)}
 \NormalTok{pcp +}\StringTok{ }\KeywordTok{geom_line}\NormalTok{(}\DataTypeTok{position =} \NormalTok{jit)}
-\end{Highlighting}
-\end{Shaded}
-
-\includegraphics{figures/pcp-3.png}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \NormalTok{pcp +}\StringTok{ }\KeywordTok{geom_line}\NormalTok{(}\DataTypeTok{alpha =} \DecValTok{1} \NormalTok{/}\StringTok{ }\DecValTok{20}\NormalTok{, }\DataTypeTok{position =} \NormalTok{jit)}
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{figures/pcp-4.png}
+\begin{figure}
+\includegraphics[width=0.49\linewidth]{figures/datapcp-1} \includegraphics[width=0.49\linewidth]{figures/datapcp-2} \includegraphics[width=0.49\linewidth]{figures/datapcp-3} \includegraphics[width=0.49\linewidth]{figures/datapcp-4} \caption{Variants on the parallel coordinates plot to better display the patterns in this highly discrete data.  To improve the default pcp (top left) we experiment with alpha blending (top right), jittering (bottom left) and then both together (bottom right).\label{fig:pcp}}
+\end{figure}
 
 To make the patterns more clear we will cluster the movies into groups
 of similar rating patterns. The following code uses kmeans clustering
@@ -670,19 +587,14 @@ create, as shown in the following code.
 \NormalTok{pcp_cl <-}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(molten, }
   \KeywordTok{aes}\NormalTok{(variable, value, }\DataTypeTok{group =} \NormalTok{.row, }\DataTypeTok{colour =} \NormalTok{cluster)) }
 \NormalTok{pcp_cl +}\StringTok{ }\KeywordTok{geom_line}\NormalTok{(}\DataTypeTok{position =} \NormalTok{jit, }\DataTypeTok{alpha =} \DecValTok{1}\NormalTok{/}\DecValTok{5}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\includegraphics{figures/pcp-colour-1.png}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \NormalTok{pcp_cl +}\StringTok{ }\KeywordTok{stat_summary}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{group =} \NormalTok{cluster), }\DataTypeTok{fun.y =} \NormalTok{mean, }
   \DataTypeTok{geom =} \StringTok{"line"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{figures/pcp-colour-2.png}
+\begin{figure}
+\includegraphics[width=0.49\linewidth]{figures/datapcp-colour-1} \includegraphics[width=0.49\linewidth]{figures/datapcp-colour-2} \caption{Displaying cluster membership on a parallel coordinates plot. (Left) Individual movies coloured by group membership and (right) group means.\label{fig:pcp-colour}}
+\end{figure}
 
 These plots are good for showing the differences between groups, but
 they don't tell us a lot about whether we've done a good job clustering
@@ -699,7 +611,7 @@ be appropriate.
 \end{Shaded}
 
 \begin{figure}
-\includegraphics[width=\linewidth]{figures/pcp-facet-1} \caption{Faceting allows us to display each group in its own panel, highlighting the fact that there seems to be considerable variation within each group, and suggesting that we need more groups in our clustering.\label{fig:pcp-facet}}
+\includegraphics[width=\linewidth]{figures/datapcp-facet-1} \caption{Faceting allows us to display each group in its own panel, highlighting the fact that there seems to be considerable variation within each group, and suggesting that we need more groups in our clustering.\label{fig:pcp-facet}}
 \end{figure}
 
 \hyperdef{}{sec:methods}{\section{\texttt{ggplot()}
@@ -757,13 +669,7 @@ are inextricably entangled, making the code difficult to understand.
 \end{Shaded}
 
 \begin{figure}
-\includegraphics[width=0.4\linewidth]{figures/plot-lm-1} \caption{The output from \texttt{plot.lm()} for a simple model.\label{fig:plot-lm1}}
-\end{figure}\begin{figure}
-\includegraphics[width=0.4\linewidth]{figures/plot-lm-2} \caption{The output from \texttt{plot.lm()} for a simple model.\label{fig:plot-lm2}}
-\end{figure}\begin{figure}
-\includegraphics[width=0.4\linewidth]{figures/plot-lm-3} \caption{The output from \texttt{plot.lm()} for a simple model.\label{fig:plot-lm3}}
-\end{figure}\begin{figure}
-\includegraphics[width=0.4\linewidth]{figures/plot-lm-4} \caption{The output from \texttt{plot.lm()} for a simple model.\label{fig:plot-lm4}}
+\includegraphics[width=0.4\linewidth]{figures/dataplot-lm-1} \includegraphics[width=0.4\linewidth]{figures/dataplot-lm-2} \includegraphics[width=0.4\linewidth]{figures/dataplot-lm-3} \includegraphics[width=0.4\linewidth]{figures/dataplot-lm-4} \caption{The output from \texttt{plot.lm()} for a simple model.\label{fig:plot-lm}}
 \end{figure}
 
 The \texttt{ggplot} approach completely separates data transformation
@@ -775,6 +681,24 @@ These are basically all the variables that \texttt{plot.lm()} creates in
 order to produce its summary plots. The variables have a leading
 \texttt{.} (full stop) in their names, so there is little risk that they
 will clobber variables already in the dataset.
+
+\begin{table}
+  \centering
+  \begin{tabular}{lp{2.5in}}
+    \toprule
+    Variable & Description \\
+    \midrule
+    \code{.cooksd}   & Cook's distances \\
+    \code{.fitted}   & Fitted values \\
+    \code{.hat}      & Diagonal of the hat matrix \\
+    \code{.resid}    & Residuals \\
+    \code{.sigma}    & Estimate of residual standard deviation when corresponding observation is dropped from model \\
+    \code{.stdresid} & Standardised residuals \\
+    \bottomrule
+  \end{tabular}
+  \caption{The diagnostic variables that \texttt{fortify.lm} assembles and adds to the model data.}
+  \label{tbl:fortify-vars}
+\end{table}
 
 To demonstrate these techniques, we're going to fit the very simple
 model with code below, which also creates the plot in
@@ -790,16 +714,13 @@ could easily add more variables if we wanted.
 \begin{Shaded}
 \begin{Highlighting}[]
 \KeywordTok{qplot}\NormalTok{(displ, cty, }\DataTypeTok{data =} \NormalTok{mpg) +}\StringTok{ }\KeywordTok{geom_smooth}\NormalTok{(}\DataTypeTok{method =} \StringTok{"lm"}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\includegraphics{figures/fortify-mod-1.pdf}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \NormalTok{mpgmod <-}\StringTok{ }\KeywordTok{lm}\NormalTok{(cty ~}\StringTok{ }\NormalTok{displ, }\DataTypeTok{data =} \NormalTok{mpg)}
 \end{Highlighting}
 \end{Shaded}
+
+\begin{figure}
+\includegraphics[width=0.49\linewidth]{figures/datafortify-mod-1} \caption{A simple linear model that doesn't fit the data very well.\label{fig:fortify-mod}}
+\end{figure}
 
 With a fortified dataset in hand we can easily re-create the plots
 produced by \texttt{plot.lm()}, and even better, we can adapt them to
@@ -817,34 +738,13 @@ shown in Figure\textasciitilde{}\ref{fig:fortify-fr}.
 \StringTok{  }\KeywordTok{geom_point}\NormalTok{() +}\StringTok{ }
 \StringTok{  }\KeywordTok{geom_smooth}\NormalTok{(}\DataTypeTok{size =} \FloatTok{0.5}\NormalTok{, }\DataTypeTok{se =} \NormalTok{F)}
 \NormalTok{basic}
-\CommentTok{#> geom_smooth: method="auto" and size of largest group is <1000, so using loess. Use 'method = x' to change the smoothing method.}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{figure}
-\includegraphics[width=0.32\linewidth]{figures/fortify-fr-1} \caption{(Left) Basic fitted values-residual plot. (Middle) With standardised residuals. (Right) With size proportional to Cook's distance. It is easy to modify the basic plots when we have access to all of the data.\label{fig:fortify-fr1}}
-\end{figure}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \NormalTok{basic +}\StringTok{ }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{y =} \NormalTok{.stdresid)}
-\CommentTok{#> geom_smooth: method="auto" and size of largest group is <1000, so using loess. Use 'method = x' to change the smoothing method.}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{figure}
-\includegraphics[width=0.32\linewidth]{figures/fortify-fr-2} \caption{(Left) Basic fitted values-residual plot. (Middle) With standardised residuals. (Right) With size proportional to Cook's distance. It is easy to modify the basic plots when we have access to all of the data.\label{fig:fortify-fr2}}
-\end{figure}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \NormalTok{basic +}\StringTok{ }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{size =} \NormalTok{.cooksd) +}\StringTok{ }\KeywordTok{scale_size_area}\NormalTok{(}\StringTok{"Cook's distance"}\NormalTok{)}
-\CommentTok{#> geom_smooth: method="auto" and size of largest group is <1000, so using loess. Use 'method = x' to change the smoothing method.}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{figure}
-\includegraphics[width=0.32\linewidth]{figures/fortify-fr-3} \caption{(Left) Basic fitted values-residual plot. (Middle) With standardised residuals. (Right) With size proportional to Cook's distance. It is easy to modify the basic plots when we have access to all of the data.\label{fig:fortify-fr3}}
+\includegraphics[width=0.32\linewidth]{figures/datafortify-fr-1} \includegraphics[width=0.32\linewidth]{figures/datafortify-fr-2} \includegraphics[width=0.32\linewidth]{figures/datafortify-fr-3} \caption{(Left) Basic fitted values-residual plot. (Middle) With standardised residuals. (Right) With size proportional to Cook's distance. It is easy to modify the basic plots when we have access to all of the data.\label{fig:fortify-fr}}
 \end{figure}
 
 Additionally, we can fortify the whole dataset and add to the plot
@@ -859,20 +759,13 @@ linear.
 \begin{Highlighting}[]
 \NormalTok{full <-}\StringTok{ }\NormalTok{basic %+%}\StringTok{ }\KeywordTok{fortify}\NormalTok{(mod, mpg)}
 \NormalTok{full +}\StringTok{ }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{colour =} \KeywordTok{factor}\NormalTok{(cyl))}
-\CommentTok{#> geom_smooth: method="auto" and size of largest group is <1000, so using loess. Use 'method = x' to change the smoothing method.}
-\end{Highlighting}
-\end{Shaded}
-
-\includegraphics{figures/fortify-full-1.pdf}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \NormalTok{full +}\StringTok{ }\KeywordTok{aes}\NormalTok{(displ, }\DataTypeTok{colour =} \KeywordTok{factor}\NormalTok{(cyl))}
-\CommentTok{#> geom_smooth: method="auto" and size of largest group is <1000, so using loess. Use 'method = x' to change the smoothing method.}
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{figures/fortify-full-2.pdf}
+\begin{figure}
+\includegraphics[width=0.49\linewidth]{figures/datafortify-full-1} \includegraphics[width=0.49\linewidth]{figures/datafortify-full-2} \caption{Adding variables from the original data can be enlightening. Here when we add the number of cylinders we see that instead of a curvi-linear relationship between displacement and city mpg, it is essentially linear, conditional on the number of cylinders.\label{fig:fortify-full}}
+\end{figure}
 
 \subsection{Writing your own}
 

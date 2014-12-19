@@ -9,7 +9,7 @@ library("ggplot2")
 ```
 
 
-# Build a plot layer by layer {cha:layers}
+# Build a plot layer by layer {#cha:layers}
 
 ## Introduction
 
@@ -202,27 +202,15 @@ p + geom_point(aes(y = disp))
 
 \noindent The rules are summarised in Table~\ref{tbl:aes-override}.  Aesthetic mappings specified in a layer affect only that layer.  For that reason,  unless you modify the default scales, axis labels and legend titles will be based on the plot defaults.  The way to change these is described in [legends and axes](#sec:guides).
 
-<!--
-\begin{table}
-  \begin{center}
-  \begin{tabular}{lll}
-    \toprule
-    Operation & Layer aesthetics  & Result \\
-    \midrule
-    Add       & \code{aes(colour = cyl)} & 
-      \code{aes(mpg, wt, colour = cyl)} \\
-    Override  & \code{aes(y = disp)}     & 
-      \code{aes(mpg, disp)} \\
-    Remove    & \code{aes(y = NULL)}     & 
-      \code{aes(mpg)} \\
-    \bottomrule
-  \end{tabular}
-  \end{center}
-  \caption{Rules for combining layer mappings with the default mapping of \code{aes(mpg, wt)}.  Layer aesthetics can add to, override, and remove the default mappings.}
-  \label{tbl:aes-override}
-\end{table}
--->
-
+```{r aes, echo=FALSE, results='asis'}
+Operation <- c("Add", "Override", "Remove")
+tbl <- data.frame(Operation)
+tbl['Layer aesthetics'] <- 
+  tex_code(c("aes(colour = cyl)", "aes(y = disp)", "aes(y = NULL)"))
+tbl['Result'] <- 
+  tex_code(c("aes(mpg, wt, colour = cyl)", "aes(mpg, disp)", "aes(mpg)"))
+xtable(tbl, caption = "Rules for combining layer mappings with the default mapping of \\texttt{aes(mpg, wt)}.  Layer aesthetics can add to, override, and remove the default mappings.", label = "tbl:aes-override")
+```
 
 ## Setting vs. mapping {#sub:setting-mapping}
 
@@ -386,129 +374,14 @@ Some geoms differ primarily in the way that they are parameterised.  For example
 
 Every geom has a default statistic, and every statistic a default geom.  For example, the bin statistic defaults to using the bar geom to produce a histogram.  These defaults are listed in Table~\ref{tbl:geom-aesthetics}.  Overriding these defaults will still produce valid plots, but they may violate graphical conventions.  See examples in [combining geoms and stats](#sub:new-plot-types). \index{Geoms!defaults}
 
-
-\begin{table}
-  \begin{center}
- \begin{tabular}{lp{3in}}
-  \toprule
-  Name & Description \\
-  \midrule
-  abline       & Line, specified by slope and intercept                                       \\
-  area         & Area plots                                                                   \\
-  bar          & Bars, rectangles with bases on y-axis                                        \\
-  blank        & Blank, draws nothing                                                         \\
-  boxplot      & Box-and-whisker plot                                                        \\
-  contour      & Display contours of a 3d surface in 2d                                       \\
-  crossbar     & Hollow bar with middle indicated by horizontal line                          \\
-  density      & Display a smooth density estimate                                            \\
-  density\_2d & Contours from a 2d density estimate                                          \\
-  errorbar     & Error bars                                                                   \\
-  histogram    & Histogram                                                                    \\
-  hline        & Line, horizontal                                                             \\
-  interval     & Base for all interval (range) geoms                                          \\
-  jitter       & Points, jittered to reduce overplotting                                      \\
-  line         & Connect observations, in order of x value                                  \\
-  linerange    & An interval represented by a vertical line                                   \\
-  path         & Connect observations, in original order                                      \\
-  point        & Points, as for a scatterplot                                                 \\
-  pointrange   & An interval represented by a vertical line, with a point in the middle       \\
-  polygon      & Polygon, a filled path                                                       \\
-  quantile     & Add quantile lines from a quantile regression                                \\
-  ribbon       & Ribbons, y range with continuous x values                                    \\
-  rug          & Marginal rug plots                                                           \\
-  segment      & Single line segments                                                         \\
-  smooth       & Add a smoothed condition mean                                               \\
-  step         & Connect observations by stairs                                               \\
-  text         & Textual annotations                                                          \\
-  tile         & Tile plot as densely as possible, assuming that every tile is the same size \\
-  vline        & Line, vertical                                                               \\
-
-  \bottomrule
-  \end{tabular}
-  \end{center}
-  \caption{Geoms in `ggplot`}
-  \label{tbl:geoms}
-\end{table}
-
-\begin{table}
-  \begin{center}
-  \begin{tabular}{llp{3in}}
-  \toprule
-  Name & Default stat & Aesthetics \\
-  \midrule
-  abline     & abline    & colour, linetype, size                                                                                                     \\
-  area       & identity  & colour, fill, linetype, size, \textbf{x}, \textbf{y}                                                                     \\
-  bar        & bin       & colour, fill, linetype, size, weight, \textbf{x}                                                                          \\
-  bin2d      & bin2d     & colour, fill, linetype, size, weight, \textbf{xmax}, \textbf{xmin}, \textbf{ymax}, \textbf{ymin}                       \\
-  blank      & identity  &                                                                                                                            \\
-  boxplot    & boxplot   & colour, fill, \textbf{lower}, \textbf{middle}, size, \textbf{upper}, weight, \textbf{x}, \textbf{ymax}, \textbf{ymin}\\
-  contour    & contour   & colour, linetype, size, weight, \textbf{x}, \textbf{y}                                                                   \\
-  crossbar   & identity  & colour, fill, linetype, size, \textbf{x}, \textbf{y}, \textbf{ymax}, \textbf{ymin}                                     \\
-  density    & density   & colour, fill, linetype, size, weight, \textbf{x}, \textbf{y}                                                             \\
-  density2d  & density2d & colour, linetype, size, weight, \textbf{x}, \textbf{y}                                                                   \\
-  errorbar   & identity  & colour, linetype, size, width, \textbf{x}, \textbf{ymax}, \textbf{ymin}                                                 \\
-  freqpoly   & bin       & colour, linetype, size                                                                                                     \\
-  hex        & binhex    & colour, fill, size, \textbf{x}, \textbf{y}                                                                               \\
-  histogram  & bin       & colour, fill, linetype, size, weight, \textbf{x}                                                                          \\
-  hline      & hline     & colour, linetype, size                                                                                                     \\
-  jitter     & identity  & colour, fill, shape, size, \textbf{x}, \textbf{y}                                                                        \\
-  line       & identity  & colour, linetype, size, \textbf{x}, \textbf{y}                                                                           \\
-  linerange  & identity  & colour, linetype, size, \textbf{x}, \textbf{ymax}, \textbf{ymin}                                                        \\
-  path       & identity  & colour, linetype, size, \textbf{x}, \textbf{y}                                                                           \\
-  point      & identity  & colour, fill, shape, size, \textbf{x}, \textbf{y}                                                                        \\
-  pointrange & identity  & colour, fill, linetype, shape, size, \textbf{x}, \textbf{y}, \textbf{ymax}, \textbf{ymin}                              \\
-  polygon    & identity  & colour, fill, linetype, size, \textbf{x}, \textbf{y}                                                                     \\
-  quantile   & quantile  & colour, linetype, size, weight, \textbf{x}, \textbf{y}                                                                   \\
-  rect       & identity  & colour, fill, linetype, size, \textbf{xmax}, \textbf{xmin}, \textbf{ymax}, \textbf{ymin}                               \\
-  ribbon     & identity  & colour, fill, linetype, size, \textbf{x}, \textbf{ymax}, \textbf{ymin}                                                  \\
-  rug        & identity  & colour, linetype, size                                                                                                     \\
-  segment    & identity  & colour, linetype, size, \textbf{x}, \textbf{xend}, \textbf{y}, \textbf{yend}                                           \\
-  smooth     & smooth    & alpha, colour, fill, linetype, size, weight, \textbf{x}, \textbf{y}                                                      \\
-  step       & identity  & colour, linetype, size, \textbf{x}, \textbf{y}                                                                           \\
-  text       & identity  & angle, colour, hjust, \textbf{label}, size, vjust, \textbf{x}, \textbf{y}                                               \\
-  tile       & identity  & colour, fill, linetype, size, \textbf{x}, \textbf{y}                                                                     \\
-  vline      & vline     & colour, linetype, size                                                                                                     \\
-  
-  \bottomrule
-  \end{tabular}
-  \end{center}
-  \caption{Default statistics and aesthetics.  Emboldened aesthetics are required.}
-  \label{tbl:geom-aesthetics}
-\end{table}
+\include{tbls/geoms}
+\include{tbls/geom-aesthetics}
 
 ## Stat {#sec:stat}
 
 A statistical transformation, or **stat**, transforms the data, typically by summarising it in some manner.  For example, a useful stat is the smoother, which calculates the mean of y, conditional on x, subject to some restriction that ensures smoothness. All currently available stats are listed in Table~\ref{tbl:stats}.  To make sense in a graphic context a stat must be location-scale invariant: $\mbox{f}(x + a) = \mbox{f}(x) + a$ and $\mbox{f}(b \cdot x) = b \cdot \mbox{f}(x)$.  This ensures that the transformation stays the same when you change the scales of the plot.
 
-<!-- convert/update!
-\begin{table}
-  \begin{center}
-  \begin{tabular}{lp{3in}}
-    \toprule
-    Name & Description \\
-    \midrule
-    bin          & Bin data                                                   \\
-    boxplot      & Calculate components of box-and-whisker plot               \\
-    contour      & Contours of 3d data                                        \\
-    density      & Density estimation, 1d                                     \\
-    density\_2d & Density estimation, 2d                                     \\
-    function     & Superimpose a function                                     \\
-    identity     & Don't transform data                                       \\
-    qq           & Calculation for quantile-quantile plot                     \\
-    quantile     & Continuous quantiles                                       \\
-    smooth       & Add a smoother                                             \\
-    spoke        & Convert angle and radius to xend and yend                  \\
-    step         & Create stair steps                                         \\
-    sum          & Sum unique values.  Useful for overplotting on scatterplots\\
-    summary      & Summarise y values at every unique x                       \\
-    unique       & Remove duplicates                                          \\
-    \bottomrule
-  \end{tabular}
-  \end{center}
-  \caption{Stats in `ggplot`}
-  \label{tbl:stats}
-\end{table}
--->
+\include{tbls/stats.tex}
 
 A stat takes a dataset as input and returns a dataset as output, and so a stat can add new variables to the original dataset.  It is possible to map aesthetics to these new variables.  For example, `stat_bin`, the statistic used to make histograms, produces the following variables: \index{Stats!creating new variables} \indexf{stat_bin}
 
@@ -536,23 +409,7 @@ qplot(carat, ..density.., data = diamonds, geom="histogram",
 
 Position adjustments apply minor tweaks to the position of elements within a layer.  Table~\ref{fig:position} lists all of the position adjustments available within `ggplot`.  Position adjustments are normally used with discrete data.  Continuous data typically doesn't overlap exactly, and when it does (because of high data density) minor adjustments, like jittering, are usually insufficient to fix the problem. \index{Position adjustments} \index{Adjustments!position}  \index{Positioning!position adjustments}
 
-\begin{table}
-  \begin{center}
-  \begin{tabular}{ll}
-    \toprule
-    Adjustment & Description  \\
-    \midrule
-    dodge     & Adjust position by dodging overlaps to the side \\
-    fill      & Stack overlapping objects and standardise have equal height\\
-    identity  & Don't adjust position \\
-    jitter    & Jitter points to avoid overplotting \\
-    stack     & Stack overlapping objects on top of one another \\
-    \bottomrule
-  \end{tabular}
-  \end{center}
-  \caption{The five position adjustments.}
-  \label{fig:position}
-\end{table}
+\include{tbls/position}
 
 The different types of adjustment are best illustrated with a bar chart.  Figure~\ref{fig:position-bar} shows stacking, filling and dodging.  Stacking puts bars on the same x on top of one another; filling does the same, but normalises height to 1; and dodging places the bars side-by-side.  Dodging is rather similar to faceting, and the advantages and disadvantages of each method are described in [dodging vs. faceting](#sub:dodge-vs-facet). For these operations to work, each bar must have the same width and not overlap with any others.  The identity adjustment (i.e., do nothing) doesn't make much sense for bars, but is shown in Figure~\ref{fig:position-identity} along with a line plot of the same data for reference. \index{Dodging} \index{Side-by-side|see{Dodging}} \index{Stacking} \indexf{position_dodge} \indexf{position_fill}  \indexf{position_stack} \indexf{geom_bar}
 
