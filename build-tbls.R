@@ -75,9 +75,9 @@ print(xtable(pos_info[, c("Name", "Description")],
 coord_info <- t(sapply(coords, get_info, USE.NAMES = FALSE))
 print(xtable(coord_info[, c("Name", "Description")],  
              caption = "Coordinate systems available in ggplot. 
-\\texttt{coord_equal()}, \\texttt{coord_flip()} and \\texttt{coord_trans()} 
+\\texttt{coord\\_equal()}, \\texttt{coord\\_flip()} and \\texttt{coord\\_trans()} 
 are all basically Cartesian in nature (i.e., the dimensions combine orthogonally), 
-while \\texttt{coord_map()} and \\texttt{coord_polar()} are more complex.",
+while \\texttt{coord\\_map()} and \\texttt{coord\\_polar()} are more complex.",
              label = "coord"), file = "tbls/coord.tex")
 
 # Theme elements
@@ -108,5 +108,5 @@ df <- do.call("rbind", frames)
 df[] <- lapply(df, tex_code)
 df2 <- df %>% group_by(Aesthetic, Default) %>%
   summarise(Cap = paste(Geoms, collapse = ", ")) %>% as.data.frame
-print(xtable(df2, caption = "Default aesthetic values for geoms. See specifications~\\ref{#cha:specifications} for how the values are interpreted by R.",
+print(xtable(df2, caption = "Default aesthetic values for geoms. See \\hyperref[cha:specifications]{\\textbf{specifications}} for how the values are interpreted by R.",
             label = "tbl:geom-defaults"), file = "tbls/geom-defaults.tex")

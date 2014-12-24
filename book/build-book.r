@@ -37,7 +37,7 @@ render_chapter <- function(src) {
 }
 
 # produce tex individually (useful for debugging)
-#render_chapter("layers.rmd")
+#render_chapter("mastery.rmd")
 
 # produce all the tex!
 chapters <- dir(".", pattern = "\\.rmd$")
@@ -48,6 +48,7 @@ lapply(chapters, render_chapter)
 file.copy("book/ggplot2-book.tex", "book/tex/", recursive = TRUE)
 file.copy("book/krantz.cls", "book/tex/", recursive = TRUE)
 file.copy("diagrams/", "book/tex/", recursive = TRUE)
+file.copy("tbls/", "book/tex/", recursive = TRUE)
 file.copy("figures/", "book/tex/", recursive = TRUE)
 
 # Build tex file ---------------------------------------------------------------
