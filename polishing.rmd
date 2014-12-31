@@ -28,7 +28,7 @@ The visual appearance of the plot is determined by both data and non-data relate
 
 The appearance of non-data elements of the plot is controlled by the theme system. The theme system does not affect how the data is rendered by geoms, or how it is transformed by scales. Themes don't change the perceptual properties of the plot, but they do help you make the plot aesthetically pleasing or match existing style guides. Themes give you control over things like the fonts in all parts of the plot: the title, axis labels, axis tick labels, strips, legend labels and legend key labels; and the colour of ticks, grid lines and backgrounds (panel, plot, strip and legend). \index{Themes} \index{Publication!themes}
 
-This separation of control into data and non-data parts is quite different than base and lattice graphics.  In base and lattice graphics, most functions take a large number of arguments that specify both data and non-data appearance, which makes the functions complicated and hard to learn.  `ggplot` takes a different approach: when creating the plot you determine how the data is displayed, then *after* it has been created you can edit every detail of the rendering, using the theming system.  Some of the effects of changing the theme of a plot are shown in Figure~\ref{fig:themes}.  The two plots show the two themes included by default in `ggplot`.
+This separation of control into data and non-data parts is quite different than base and lattice graphics.  In base and lattice graphics, most functions take a large number of arguments that specify both data and non-data appearance, which makes the functions complicated and hard to learn.  ggplot takes a different approach: when creating the plot you determine how the data is displayed, then *after* it has been created you can edit every detail of the rendering, using the theming system.  Some of the effects of changing the theme of a plot are shown in Figure \ref{fig:themes}.  The two plots show the two themes included by default in ggplot.
 
 ```{r themes, fig.cap="The effect of changing themes.  (Left) The default grey theme with grey background and white gridlines.  (Right) the alternative black and white theme with white background and grey gridlines.  Notice how the bars, data elements, are identical in both plots.", echo=FALSE}
 qplot(rating, data = movies, binwidth = 1)
@@ -37,19 +37,20 @@ last_plot() + theme_bw()
 
 Like many other areas of `ggplot`, themes can be controlled on multiple levels from the coarse to fine.  You can:
 
-* Use a [built-in theme](#sec:built-in). This affects every element of the plot in a visually consistent manner.  The default theme uses a grey panel background with white gridlines, while the alternative theme uses a white background with grey gridlines.
-* [Modify a single element of a built-in theme](#sec:theme-elements). Each theme is made up of multiple elements. The theme system comes with a number of built-in element rendering functions with a limited set of parameters.  By adjusting these parameters you can control things like text size and colour, background and grid line colours and text orientation.  By combining multiple elements you can create your own theme.
+* Use a built-in theme. This affects every element of the plot in a visually consistent manner.  The default theme uses a grey panel background with white gridlines; however, there are built-in alternatives such as `theme_bw()` which uses a white background with grey gridlines ([link to section](#sec:built-in)).
+* Modify a single element of a built-in theme. Each theme is made up of multiple elements. The theme system comes with a number of built-in element rendering functions with a limited set of parameters.  By adjusting these parameters you can control things like text size and colour, background and grid line colours and text orientation.  By combining multiple elements you can create your own theme ([link to section](#sec:theme-elements)).
+
 <!--
-  % \item Write a custom element function with grid, as described in [](#sec:theme-elements).  This allows you to completely customise the appearance of any element; you are not restricted to a fixed set of drawing options.  
+  * Write a custom element function with grid, as described in [](#sec:theme-elements).  This allows you to completely customise the appearance of any element; you are not restricted to a fixed set of drawing options.  
 -->
 
-\noindent Generally each of these theme settings can be applied globally, to all plots, or locally to a single plot.  How to do this is described in each section.
+Generally each of these theme settings can be applied globally, to all plots, or locally to a single plot.  How to do this is described in each section.
 
 ### Built-in themes {#sec:built-in}
 
-There are two built-in themes. \index{Themes!built-in} The default, `theme_gray()`, uses a very light grey background with white gridlines.  This follows from the advice of [@tufte:2006; tufte:1990; tufte:2001; tufte:1997] and [@brewer:1994; carr:2002; carr:1994; carr:1999]. We can still see the gridlines to aid in the judgement of position [@cleveland:1993a], but they have little visual impact and we can easily 'tune' them out. The grey background gives the plot a similar colour (in a typographical sense) to the remainder of the text, ensuring that the graphics fit in with the flow of a text without jumping out with a bright white background. Finally, the grey background creates a continuous field of colour which ensures that the plot is perceived as a single visual entity. \indexf{theme_grey}
+There are two built-in themes. \index{Themes!built-in} The default, `theme_gray()`, uses a very light grey background with white gridlines.  This follows from the advice of [@tufte:2006; @tufte:1990; @tufte:2001; @tufte:1997] and [@brewer:1994; @carr:2002; @carr:1994; @carr:1999]. We can still see the gridlines to aid in the judgement of position [@cleveland:1993a], but they have little visual impact and we can easily 'tune' them out. The grey background gives the plot a similar colour (in a typographical sense) to the remainder of the text, ensuring that the graphics fit in with the flow of a text without jumping out with a bright white background. Finally, the grey background creates a continuous field of colour which ensures that the plot is perceived as a single visual entity. \indexf{theme_grey}
 
-The other built-in theme, `theme_bw()`, has a more traditional white background with dark grey gridlines.  Figure~\ref{fig:themes} shows some of the difference between these themes. \index{White background} \index{Themes!white background} \indexf{theme_bw}
+The other built-in theme, `theme_bw()`, has a more traditional white background with dark grey gridlines.  Figure \ref{fig:themes} shows some of the difference between these themes. \index{White background} \index{Themes!white background} \indexf{theme_bw}
 
 Both themes have a single parameter, `base_size`, which controls the base font size.  The base font size is the size that the axis titles use: the plot title is 20% bigger, and the tick and strip labels are 20% smaller.  If you want to control these sizes separately, you'll need to modify the individual elements as described in the following section.
 
@@ -58,7 +59,7 @@ You can apply themes in two ways:
 * Globally, affecting all plots when they are drawn: `theme_set(theme_grey())` or `theme_set(theme_bw())`.  `theme_set()` returns the previous theme so that you can restore it later if you want. \indexf{theme_set}
 * Locally, for an individual plot:  `qplot(...) + theme_grey()`.  A locally applied theme will override the global default. 
 
-\noindent The following example shows a few of these combinations:
+The following example shows a few of these combinations:
 
 ```{r hgram, prompt=TRUE, fig.show='asis', fig.align='left'}
 hgram <- qplot(rating, data = movies, binwidth = 1)
@@ -80,14 +81,14 @@ theme_set(previous_theme)
 ### Theme elements and element functions {#sec:theme-elements}
 
 A theme is made up of multiple *elements* which control the appearance of a single item on the plot, as listed in Table~\ref{tbl:elements}. There are three elements that have individual `x` and `y` settings: `axis.text`, `axis.title` and `strip.text`. Having a different setting for the horizontal and vertical elements allows you to control how text should appear in different orientations. The appearance of each element is controlled by an *element function*. \index{Themes!elements}
-
+<!--
 \input{tbls/elements}
-
+-->
 There are four basic types of built-in element functions: text, lines and segments, rectangles and blank.  Each element function has a set of parameters that control the appearance as described below:
 
 * `element_text()` draws labels and headings. You can control the font `family`, `face`, `colour`, `size`, `hjust`, `vjust`, `angle` and `lineheight`. \index{Themes!labels} \indexf{element_text}
   
-  The following code shows the effect of changing these parameters on the plot title. The results are shown in Figure~\ref{fig:theme-text}. Changing the angle is probably more useful for tick labels.  When changing the angle you will probably also need to change `hjust` to 0 or 1.
+  The following code shows the effect of changing these parameters on the plot title. The results are shown in Figure \ref{fig:theme-text}. Changing the angle is probably more useful for tick labels.  When changing the angle you will probably also need to change `hjust` to 0 or 1.
   
 ```{r theme-text, out.width="0.32\\linewidth", fig.cap="Changing the appearance of the plot title."}
 hgramt <- hgram + labs(title = "This is a histogram")
@@ -103,7 +104,7 @@ hgramt + theme(plot.title =
               element_text(size = 20, angle = 180))
 ```
 
-* `element_line()` draws lines with the same options but in a slightly different way.  Make sure you match the appropriate type or you will get strange grid errors.  For these element functions you can control the `colour`, `size` and `linetype`.  These options are illustrated with the code and the results are shown in Figure~\ref{fig:theme-line}. \indexf{element_line}
+* `element_line()` draws lines with the same options but in a slightly different way.  Make sure you match the appropriate type or you will get strange grid errors.  For these element functions you can control the `colour`, `size` and `linetype`.  These options are illustrated with the code and the results are shown in Figure \ref{fig:theme-line}. \indexf{element_line}
 
 ```{r theme-line, out.width="0.32\\linewidth", fig.cap="Changing the appearance of lines and segments in the plot."}
 hgram + theme(panel.grid.major = element_line(colour = "red"))
@@ -114,7 +115,7 @@ hgram + theme(axis.line = element_line(colour = "red"))
 hgram + theme(axis.line = element_line(size = 0.5, linetype = "dashed"))
 ```
 
-* `theme_rect()` draws rectangles, mostly used for backgrounds, you can control the `fill` colour and border `colour`, `size` and `linetype`.  Examples shown in Figure~\ref{fig:theme-background} are created with the code below: \index{Background} \index{Themes!background} \indexf{theme_rect}
+* `theme_rect()` draws rectangles, mostly used for backgrounds, you can control the `fill` colour and border `colour`, `size` and `linetype`.  Examples shown in Figure \ref{fig:theme-background} are created with the code below: \index{Background} \index{Themes!background} \indexf{theme_rect}
   
 ```{r theme-background, out.width="0.32\\linewidth", fig.cap="Changing the appearance of the plot and panel background"}
 hgram + theme(plot.background = element_rect(fill = "grey80", colour = NA))
@@ -125,7 +126,7 @@ hgram + theme(panel.background = element_rect(colour = NA))
 hgram + theme(panel.background = element_rect(linetype = "dotted"))
 ```
 
-* `element_blank()` draws nothing.  Use this element type if you don't want anything drawn, and no space allocated for that element.  The following example uses `element_blank()` to progressively suppress the appearance of elements we're not interested in. The results are shown in Figure~\ref{fig:theme-blank}.  Notice how the plot automatically reclaims the space previously used by these elements: if you don't want this to happen (perhaps because they need to line up with other plots on the page), use `colour = NA, fill = NA` as parameter to create invisible elements that still take up space. \indexf{element_blank}
+* `element_blank()` draws nothing.  Use this element type if you don't want anything drawn, and no space allocated for that element.  The following example uses `element_blank()` to progressively suppress the appearance of elements we're not interested in. The results are shown in Figure \ref{fig:theme-blank}.  Notice how the plot automatically reclaims the space previously used by these elements: if you don't want this to happen (perhaps because they need to line up with other plots on the page), use `colour = NA, fill = NA` as parameter to create invisible elements that still take up space. \indexf{element_blank}
 
 ```{r theme-blank, out.width="0.32\\linewidth", fig.cap="Progressively removing non-data elements from a plot with \\texttt{element\\_blank}."}
 hgramt
@@ -138,7 +139,7 @@ last_plot() +
 last_plot() + theme(axis.line = element_line())
 ```
 
-You can see the settings for the current theme with `theme_get()`.  The output isn't included here because it takes up several pages.  You can modify the elements locally for a single plot with `theme()` (as seen above), or globally for all future plots with `theme_update`.  Figure~\ref{fig:theme-update} shows the results of pulling together multiple theme settings with the following code. \index{Themes!updating} \indexf{theme_get} \indexf{theme}
+You can see the settings for the current theme with `theme_get()`.  The output isn't included here because it takes up several pages.  You can modify the elements locally for a single plot with `theme()` (as seen above), or globally for all future plots with `theme_update`.  Figure \ref{fig:theme-update} shows the results of pulling together multiple theme settings with the following code. \index{Themes!updating} \indexf{theme_get} \indexf{theme}
 
 ```{r theme-update, fig.cap="A bar chart and scatterplot created after a new visually consistent (if ugly!) theme has been applied."}
 old_theme <- theme_update(
@@ -207,12 +208,13 @@ qplot(rating, data = movies, geom = "histogram", binwidth = 1)
 ```
 
 Table~\ref{tbl:geom-defaults} lists all of the common aesthetic defaults.  If you change the defaults for one geom, it's a good idea to change all the defaults for all the other geoms that you commonly use so that your plots look consistent.  If you are unsure on what makes for a valid colour, line type, shape or size, [Specifications](#cha:specifications) gives the details. \index{Aesthetics!defaults}
-
+<!--
 \input{tbls/geom-defaults}
+-->
 
 ## Saving your output {#sec:saving}
 
-You have two basic choices of output: raster or vector.  Vector graphics are procedural.  This means that they are essentially 'infinitely' zoomable; there is no loss of detail.  Raster graphics are stored as an array of pixels and have a fixed optimal viewing size.  Figure~\ref{fig:vector-raster} illustrates the basic differences for a basic circle.  A good description is available at <http://tinyurl.com/rstrvctr>. \index{Saving} \index{Exporting} \index{Publication!saving output}
+You have two basic choices of output: raster or vector.  Vector graphics are procedural.  This means that they are essentially 'infinitely' zoomable; there is no loss of detail.  Raster graphics are stored as an array of pixels and have a fixed optimal viewing size.  Figure \ref{fig:vector-raster} illustrates the basic differences for a basic circle.  A good description is available at <http://tinyurl.com/rstrvctr>. \index{Saving} \index{Exporting} \index{Publication!saving output}
 
 Generally, vector output is more desirable, but for complex graphics containing thousands of graphical objects it can be slow to render.  In this case, it may be better to switch to raster output.  For printed use, a high-resolution (e.g., 600 dpi) graphic may be an acceptable compromise, but may be large. 
 
@@ -269,7 +271,7 @@ If you are using LaTeX, I recommend including `\DeclareGraphicsExtensions{.png,.
 
 If you want to arrange multiple plots on a single page, you'll need to learn a little bit of grid, the underlying graphics system used by `ggplot`. The key concept you'll need to learn about is a viewport: a rectangular subregion of the display. The default viewport takes up the entire plotting region, and by customising the viewport you can arrange a set of plots in just about any way you can imagine. \index{Layout} \index{Publication!multiple plots on the same page}
 
-To begin, let's create three plots that we can experiment with. When arranging multiple plots on a page, it will usually be easiest to create them, assign them to variables and then plot them. This makes it easier to experiment with plot placement independent of content. The plots created by the code below are shown in Figure~\ref{fig:layout}.
+To begin, let's create three plots that we can experiment with. When arranging multiple plots on a page, it will usually be easiest to create them, assign them to variables and then plot them. This makes it easier to experiment with plot placement independent of content. The plots created by the code below are shown in Figure \ref{fig:layout}.
 
 ```{r layout, fig.cap="Three simple graphics we'll use to experiment with sophisticated plot layouts."}
 (a <- qplot(date, unemploy, data = economics, geom = "line"))
@@ -305,7 +307,7 @@ vp4 <- viewport(x = 1, y = 1, just = c("right", "top"))
 vp5 <- viewport(x = 0, y = 0, just = c("right", "bottom"))
 ```
 
-To draw the plot in our new viewport, we use the `vp` argument of the `ggplot.print()` method.  This method is normally called automatically whenever you evaluate something on the command line, but because we want to customise the viewport, we need to call it ourselves.  The result of this is shown in Figure~\ref{fig:subplot-1}.
+To draw the plot in our new viewport, we use the `vp` argument of the `ggplot.print()` method.  This method is normally called automatically whenever you evaluate something on the command line, but because we want to customise the viewport, we need to call it ourselves.  The result of this is shown in Figure \ref{fig:subplot-1}.
 
 ```{r polish, results='hide'}
 pdf("diagrams/polishing-subplot-1.pdf", width = 4, height = 4)
@@ -315,7 +317,7 @@ print(c, vp = subvp)
 dev.off()
 ```
 
-This gives us what we want, but we need to make a few tweaks to the appearance: the text should be smaller, we want to remove the axis labels and shrink the plot margins.  The result is shown in Figure~\ref{fig:subplot-2}.
+This gives us what we want, but we need to make a few tweaks to the appearance: the text should be smaller, we want to remove the axis labels and shrink the plot margins.  The result is shown in Figure \ref{fig:subplot-2}.
 
 ```{r polish2, results='hide'}
 csmall <- c + 
@@ -349,7 +351,7 @@ Note we need to use `pdf()` (or `png()` etc.) to save the plots to disk because 
 
 A more complicated scenario is when you want to arrange a number of plots in a rectangular grid. Of course you could create a series of viewports and use what you've learned above, but doing all the calculations by hand is cumbersome. A better approach is to use `grid.layout()`, which sets up a regular grid of viewports with arbitrary heights and widths. You still need to create each viewport, but instead of explicitly specifying the position and size, you can specify the row and column of the layout.
 
-The following example shows how this work.  We first create the layout, here a 2 by 2 grid, then assign it to a viewport and push that viewport on to the plotting device.  Now we are ready to draw each plot into its own position on the grid.  We create a small function to save some typing, and then draw each plot in the desired place on the grid.  You can supply a vector of rows or columns to span a plot over multiple cells.  The results are shown in Figure~\ref{fig:layout-2}.
+The following example shows how this work.  We first create the layout, here a 2 by 2 grid, then assign it to a viewport and push that viewport on to the plotting device.  Now we are ready to draw each plot into its own position on the grid.  We create a small function to save some typing, and then draw each plot in the desired place on the grid.  You can supply a vector of rows or columns to span a plot over multiple cells.  The results are shown in Figure \ref{fig:layout-2}.
 
 ```{r polish3}
 pdf("diagrams/polishing-layout.pdf", width = 8, height = 6)

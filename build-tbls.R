@@ -5,8 +5,9 @@ library("dplyr")
 library("magrittr")
 library("xtable")
 
+
 tex_code <- function(x) paste0("\\texttt{", x, "}")
-clean_txt <- function(x) gsub("  ", " ", gsub("\\n", "", x))
+clean_txt <- function(x) gsub("\\s+", " ", gsub("\\n", "", x))
 
 # function to grab most recent geoms, stats, etc.
 get_verb <- function(verb) {
@@ -54,6 +55,8 @@ try_aes <- function(site, ...){
 
 # Geom specific tables
 geom_info <- t(sapply(geoms, get_info, USE.NAMES = FALSE))
+
+# How to automatically detect and wrap functions in code markup??
 print(xtable(geom_info[, c("Name", "Description")], 
              caption = "Geoms in \\texttt{ggplot}",
              label = "geoms"), file = "tbls/geoms.tex")
@@ -75,9 +78,9 @@ print(xtable(pos_info[, c("Name", "Description")],
 coord_info <- t(sapply(coords, get_info, USE.NAMES = FALSE))
 print(xtable(coord_info[, c("Name", "Description")],  
              caption = "Coordinate systems available in ggplot. 
-\\texttt{coord\\_equal()}, \\texttt{coord\\_flip()} and \\texttt{coord\\_trans()} 
+\\texttt{coord_equal()}, \\texttt{coord_flip()} and \\texttt{coord_trans()} 
 are all basically Cartesian in nature (i.e., the dimensions combine orthogonally), 
-while \\texttt{coord\\_map()} and \\texttt{coord\\_polar()} are more complex.",
+while \\texttt{coord_map()} and \\texttt{coord_polar()} are more complex.",
              label = "coord"), file = "tbls/coord.tex")
 
 # Theme elements
@@ -87,8 +90,6 @@ elems[,2] <- clean_txt(elems[,2])
 print(xtable(elems,
              caption = "Theme elements.",
              label = "elements"), file = "tbls/elements.tex")
-  
-
 
 # Get default aesthetic values for each geom (in polishing chapter)
 # adapted from http://stackoverflow.com/questions/11657380/is-there-a-table-or-catalog-of-aesthetics-for-ggplot2

@@ -19,13 +19,13 @@ This chapter is mainly a technical description of how layers, geoms, statistics 
 
 [Creating a plot](#sec:ggplot) will teach you how to initialise a plot object by hand, a task that `qplot()` performs for us.  The plot is not ready to be displayed until at least one layer is added, as described in [Layers](#sec:layers).  This section first describes the complete layer specification, which helps you see exactly how the components of the grammar are realised in R code, and then shows you the shortcuts that will save you a lot of time.  As you have learned in the previous chapter, there are five components of a layer:
 
-* The [data](#sec:data), which must be an R data frame, and can be changed after the plot is created.
-* A set of [aesthetic mappings](#sec:aes), which describe how variables in the data are mapped to aesthetic properties of the layer.  This section includes a description of how layer settings override the plot defaults, the difference between setting and mapping, and the important group aesthetic.
-* The [geom](#sec:geom), which describes the geometric used to draw the layer.  The geom defines the set of available aesthetic properties.
-* The [stat](#sec:stat), which takes the raw data and transforms it in some useful way.  The stat returns a data frame with new variables that can also be mapped to aesthetics with a special syntax.
-* The [position adjustment](#sec:position), which adjusts elements to avoid overplotting.
+* The __data__, which must be an R data frame, and can be changed after the plot is created ([link to section](#sec:data)).
+* A set of __aesthetic mappings__, which describe how variables in the data are mapped to aesthetic properties of the layer.  This section includes a description of how layer settings override the plot defaults, the difference between setting and mapping, and the important group aesthetic ([link to section](#sec:aes)).
+* The __geom__, which describes the geometric used to draw the layer.  The geom defines the set of available aesthetic properties ([link to section](#sec:geom)).
+* The __stat__, which takes the raw data and transforms it in some useful way.  The stat returns a data frame with new variables that can also be mapped to aesthetics with a special syntax ([link to section](#sec:stat)).
+* The __position adjustment__, which adjusts elements to avoid overplotting ([link to section](#sec:position)).
 
-To conclude, [Pulling it all together](#sec:pull-together) shows you some plotting techniques that pull together everything you have learned in this chapter to create novel visualisations and to visualise model information along with your data.
+To conclude, [pulling it all together](#sec:pull-together) shows you some plotting techniques that pull together everything you have learned in this chapter to create novel visualisations and to visualise model information along with your data.
 
 ## Creating a plot {#sec:ggplot}
 
@@ -45,14 +45,14 @@ A minimal layer may do nothing more than specify a **geom**, a way of visually r
 p <- p + layer(geom = "point")
 ```
 
-\noindent Note how we use `+` to **add** the layer to the plot. \index{Layers!adding} \indexc{+} This layer uses the plot defaults for data and aesthetic mapping and it uses default values for two optional arguments: the statistical transformation (the stat) and the position adjustment.  A more fully specified layer can take any or all of these arguments:
+Note how we use `+` to **add** the layer to the plot. \index{Layers!adding} \indexc{+} This layer uses the plot defaults for data and aesthetic mapping and it uses default values for two optional arguments: the statistical transformation (the stat) and the position adjustment.  A more fully specified layer can take any or all of these arguments:
 
 ```{r layer3, eval = FALSE}
 layer(geom, geom_params, stat, stat_params, data, mapping, 
       position)
 ```
 
-\noindent Here is what a more complicated call looks like.  It produces a histogram (a combination of bars and binning) coloured 'steelblue' with a bin width of 2:
+Here is what a more complicated call looks like.  It produces a histogram (a combination of bars and binning) coloured 'steelblue' with a bin width of 2:
 
 ```{r layer4, eval = FALSE}
 p <- ggplot(diamonds, aes(x = carat))
@@ -65,20 +65,20 @@ p <- p + layer(
 p
 ```
 
-\noindent  This layer specification is precise but verbose. We can simplify it by using shortcuts that rely on the fact that every geom is associated with a default statistic and position, and every statistic with a default geom.  This means that you only need to specify one of `stat` or `geom` to get a completely specified layer, with parameters passed on to the geom or stat as appropriate.  This expression generates the same layer as the full layer command above:
+This layer specification is precise but verbose. We can simplify it by using shortcuts that rely on the fact that every geom is associated with a default statistic and position, and every statistic with a default geom.  This means that you only need to specify one of `stat` or `geom` to get a completely specified layer, with parameters passed on to the geom or stat as appropriate.  This expression generates the same layer as the full layer command above:
 
 ```{r layer5, eval = FALSE}
 geom_histogram(binwidth = 2, fill = "steelblue")
 ```
 
-\noindent All the shortcut functions have the same basic form, beginning with `geom_` or `stat_`:
+All the shortcut functions have the same basic form, beginning with `geom_` or `stat_`:
 
 ```{r layer6, eval = FALSE}
-geom_XXX(mapping, data, ..., geom, position)
-stat_XXX(mapping, data, ..., stat, position)
+geom_XXX(mapping, data, ..., stat, position)
+stat_XXX(mapping, data, ..., geom, position)
 ```
 
-\noindent Their common parameters define the components of the layer:
+Their common parameters define the components of the layer:
 
 * __mapping__ (optional): A set of aesthetic mappings, specified using the `aes()` function and combined with the plot defaults as described in [aesthetic mappings](#sec:aes).
 
@@ -150,7 +150,7 @@ mtcars <- transform(mtcars, mpg = mpg ^ 2)
 p %+% mtcars
 ```
 
-\noindent Any change of values or dimensions is legitimate.  However, if a variable changes from discrete to continuous (or vice versa), you will need to change the default scales, as described in [scale usage](#sec:scale-usage).
+Any change of values or dimensions is legitimate.  However, if a variable changes from discrete to continuous (or vice versa), you will need to change the default scales, as described in [scale usage](#sec:scale-usage).
 
 It is not necessary to specify a default dataset except when using faceting; faceting is a global operation (i.e., it works on all layers) and it needs to have a base dataset which defines the set of facets for all datasets.  See [missing faceting variables](#sub:missing-faceting-columns) for more details.  If the default dataset is omitted, every layer must supply its own data.
 
@@ -170,7 +170,7 @@ Here we are mapping x-position to weight, y-position to height and colour to age
 aes(weight, height, colour = sqrt(age))
 ```
 
-\noindent Note that functions of variables can be used.
+Note that functions of variables can be used.
 
 Any variable in an `aes()` specification must be contained inside the plot or layer data.  This is one of the ways in which `ggplot` objects are guaranteed to be entirely self-contained, so that they can be stored and re-used.
 
@@ -188,19 +188,19 @@ summary(p)
 
 One reason you might want to do this is shown in [varying aesthetics and data](#sub:different-aesthetics).  We have seen several examples of using the default mapping when adding a layer to a plot:
 
-```{r layer14, prompt=TRUE}
+```{r layer14, prompt=TRUE, fig.align='left'}
 p <- ggplot(mtcars, aes(x = mpg, y = wt))
 p + geom_point()
 ```
 
-The default mappings in the plot `p` can be extended or overridden in the layers, as with the following code. \index{Mappings!overriding} The results are shown in Figure~\ref{fig:aes-override}.
+The default mappings in the plot `p` can be extended or overridden in the layers, as with the following code. \index{Mappings!overriding} The results are shown in Figure \ref{fig:aes-override}.
 
 ```{r aes-override, fig.show='hold', fig.cap="Overriding aesthetics. (Left) Overriding colour with \\texttt{factor(cyl)} and (right) overriding y-position with \\texttt{disp}"}
 p + geom_point(aes(colour = factor(cyl)))
 p + geom_point(aes(y = disp))
 ```
 
-\noindent The rules are summarised in Table~\ref{tbl:aes-override}.  Aesthetic mappings specified in a layer affect only that layer.  For that reason,  unless you modify the default scales, axis labels and legend titles will be based on the plot defaults.  The way to change these is described in [legends and axes](#sec:guides).
+The rules are summarised in Table \ref{tbl:aes-override}.  Aesthetic mappings specified in a layer affect only that layer.  For that reason,  unless you modify the default scales, axis labels and legend titles will be based on the plot defaults.  The way to change these is described in [legends and axes](#sec:guides).
 
 ```{r aes, echo=FALSE, results='asis'}
 Operation <- c("Add", "Override", "Remove")
@@ -221,13 +221,13 @@ p <- ggplot(mtcars, aes(mpg, wt))
 p + geom_point(colour = "darkblue") 
 ```
 
-\noindent This sets the point colour to be dark blue instead of black. This is quite different than
+This sets the point colour to be dark blue instead of black. This is quite different than
 
 ```{r layer16, eval = FALSE}
 p + geom_point(aes(colour = "darkblue"))
 ```
 
-\noindent This **maps** (not sets) the colour to the value 'darkblue'.  This effectively creates a new variable containing only the value  'darkblue' and then maps colour to that new variable.  Because this value is discrete, the default colour scale uses evenly spaced colours on the colour wheel, and since there is only one value this colour is pinkish.  The difference between setting and mapping is illustrated in Figure~\ref{fig:qplot-setting}.  
+This **maps** (not sets) the colour to the value 'darkblue'.  This effectively creates a new variable containing only the value  'darkblue' and then maps colour to that new variable.  Because this value is discrete, the default colour scale uses evenly spaced colours on the colour wheel, and since there is only one value this colour is pinkish.  The difference between setting and mapping is illustrated in Figure \ref{fig:qplot-setting}.  
 
 With `qplot()`, you can do the same thing by putting the value inside of `I()`, e.g. `colour = I("darkblue")`.  Chapter [Specifications](#cha:specifications) describes how values should be specified for the various aesthetics. \indexf{I}
 
@@ -248,16 +248,16 @@ There are three common cases where the default is not enough, and we will consid
 
 In many situations, you want to separate your data into groups, but render them in the same way.  When looking at the data in aggregate you want to be able to distinguish individual subjects, but not identify them.  This is common in longitudinal studies with many subjects, where the plots are often descriptively called spaghetti plots.  \index{Data!longitudinal}  
 
-The first plot in Figure~\ref{fig:group-lines} shows a set of time series plots, one for each boy. You can see the separate growth trajectories for each boy, but there is no way to see which boy belongs to which trajectory.  This plot was generated with: \index{Time series}
+The first plot in Figure \ref{fig:group-lines} shows a set of time series plots, one for each boy. You can see the separate growth trajectories for each boy, but there is no way to see which boy belongs to which trajectory.  This plot was generated with: \index{Time series}
 
 ```{r layer17, eval = FALSE}
 p <- ggplot(Oxboys, aes(age, height, group = Subject)) + 
   geom_line()
 ```
 
-\noindent We specified the `Subject` as the grouping variable to get a line for each boy. The second plot in the figure shows the result of leaving this out: we get a single line which passes through every point.  This is not very useful! Line plots with an incorrect grouping specification typically have this characteristic appearance. \indexf{geom_line}
+We specified the `Subject` as the grouping variable to get a line for each boy. The second plot in the figure shows the result of leaving this out: we get a single line which passes through every point.  This is not very useful! Line plots with an incorrect grouping specification typically have this characteristic appearance. \indexf{geom_line}
 
-```{r group-lines, fig.show='hold', fig.cap='(Left) Correctly specifying {\\tt group = Subject} produces one line per subject.  (Right) A single line connects all observations. This pattern is characteristic of an incorrect grouping aesthetic, and is what we see if the group aesthetic is omitted, which in this case is equivalent to {\\tt group = 1}.'}
+```{r group-lines, echo = FALSE, fig.show='hold', fig.cap='(Left) Correctly specifying {\\tt group = Subject} produces one line per subject.  (Right) A single line connects all observations. This pattern is characteristic of an incorrect grouping aesthetic, and is what we see if the group aesthetic is omitted, which in this case is equivalent to {\\tt group = 1}.'}
 data(Oxboys, package="nlme")
 qplot(age, height, data=Oxboys, group = Subject, geom="line")
 qplot(age, height, data=Oxboys, geom="line")
@@ -267,7 +267,7 @@ qplot(age, height, data=Oxboys, geom="line")
 
 Sometimes we want to plot summaries based on different levels of aggregation. Different layers might have different group aesthetics, so that some display individual level data while others display summaries of larger groups.
 
-Building on the previous example, suppose we want to add a single smooth line to the plot just created, based on the ages and heights of *all* the boys.  If we use the same grouping for the smooth that we used for the line, we get the first plot in Figure~\ref{fig:group-smooths}.   \indexf{geom_smooth}
+Building on the previous example, suppose we want to add a single smooth line to the plot just created, based on the ages and heights of *all* the boys.  If we use the same grouping for the smooth that we used for the line, we get the first plot in Figure \ref{fig:group-smooths}.   \indexf{geom_smooth}
 
 ```{r layer18, eval = FALSE}
 p + geom_smooth(aes(group = Subject), method="lm", se = F)
@@ -279,7 +279,7 @@ This is not what we wanted; we have inadvertently added a smoothed line for each
 p + geom_smooth(aes(group = 1), method="lm", size = 2, se = F)
 ```
 
-```{r group-smooths, fig.show='hold', fig.cap="Adding smooths to the Oxboys data.  (Left) Using the same grouping as the lines results in a line of best fit for each boy.  (Right) Using \\texttt{aes(group = 1)} in the smooth layer fits a single line of best fit across all boys."}
+```{r group-smooths, echo = FALSE, fig.show='hold', fig.cap="Adding smooths to the Oxboys data.  (Left) Using the same grouping as the lines results in a line of best fit for each boy.  (Right) Using \\texttt{aes(group = 1)} in the smooth layer fits a single line of best fit across all boys."}
 qplot(age, height, data=Oxboys, group = Subject, geom="line") +
   geom_smooth(method="lm", se = F)
 qplot(age, height, data=Oxboys, group = Subject, geom="line") +
@@ -290,13 +290,13 @@ Note how we stored the first plot in the variable `p`, so we could experiment wi
 
 **Overriding the default grouping.**
 
-The plot has a discrete scale but you want to draw lines that connect *across* groups.  This is the strategy used in interaction plots, profile plots, and parallel coordinate plots, among others.  For example, we draw boxplots of height at each measurement occasion, as shown in the first figure in Figure~\ref{fig:group-boxplots}: \indexf{geom_boxplot}
+The plot has a discrete scale but you want to draw lines that connect *across* groups.  This is the strategy used in interaction plots, profile plots, and parallel coordinate plots, among others.  For example, we draw boxplots of height at each measurement occasion, as shown in the first figure in Figure \ref{fig:group-boxplots}: \indexf{geom_boxplot}
 
 ```{r layer20, eval = FALSE}
 boysbox <- ggplot(Oxboys, aes(Occasion, height)) + geom_boxplot()
 ```
 
-\noindent There is no need to specify the group aesthetic here; the default grouping works because occasion is a discrete variable.  To overlay individual trajectories we again need to override the default grouping for that layer with `aes(group = Subject)`, as shown in the second plot in the figure.
+There is no need to specify the group aesthetic here; the default grouping works because occasion is a discrete variable.  To overlay individual trajectories we again need to override the default grouping for that layer with `aes(group = Subject)`, as shown in the second plot in the figure.
 
 ```{r layer21, eval = FALSE}
 boysbox + geom_line(aes(group = Subject), colour = "#3366FF")
@@ -304,7 +304,7 @@ boysbox + geom_line(aes(group = Subject), colour = "#3366FF")
 
 We change the line colour in the second layer to make them distinct from the boxes.  This is another example of setting an aesthetic to a fixed value.  The colour is a rendering attribute, which has no corresponding variable in the data. \index{Aesthetics!setting}
 
-```{r group-boxplots, fig.show='hold', fig.cap="(Left) If boxplots are used to look at the distribution of heights at each occasion (a discrete variable), the default grouping works correctly.  (Right) If trajectories of individual boys are overlaid with \\texttt{geom\\_line()}, then \\texttt{aes(group = Subject)} is needed for the new layer."}
+```{r group-boxplots, echo = FALSE, fig.show='hold', fig.cap="(Left) If boxplots are used to look at the distribution of heights at each occasion (a discrete variable), the default grouping works correctly.  (Right) If trajectories of individual boys are overlaid with \\texttt{geom\\_line()}, then \\texttt{aes(group = Subject)} is needed for the new layer."}
 qplot(Occasion, height, data=Oxboys, geom="boxplot")
 qplot(Occasion, height, data=Oxboys, geom="boxplot") +
  geom_line(aes(group = Subject), colour="#3366FF")
@@ -333,9 +333,9 @@ qplot(Occasion, height, data=Oxboys, geom="boxplot") +
 
 Another important issue with collective geom is how the aesthetics of the individual observations are mapped to the aesthetics of the complete entity.  For individual geoms, this isn't a problem, because each observation is represented by a single graphical element.  However, high data densities can make it difficult (or impossible) to distinguish between individual points and in some sense the point geom becomes a collective geom, a single blob of points. \index{Aesthetics!matching to geoms}
 
-Lines and paths operate on an off-by-one principle: there is one more observation than line segment, and so the aesthetic for the first observation is used for the first segment, the second observation for the second segment and so on.  This means that the aesthetic for the last observation is not used, as shown in Figure~\ref{fig:matching-lines}.  An additional limitation for paths and lines is that that line type must be constant over each individual line, in R there is no way to draw a joined up line which has varying line type. \indexf{geom_line} \indexf{geom_path}
+Lines and paths operate on an off-by-one principle: there is one more observation than line segment, and so the aesthetic for the first observation is used for the first segment, the second observation for the second segment and so on.  This means that the aesthetic for the last observation is not used, as shown in Figure \ref{fig:matching-lines}.  An additional limitation for paths and lines is that that line type must be constant over each individual line, in R there is no way to draw a joined up line which has varying line type. \indexf{geom_line} \indexf{geom_path}
 
-```{r matching-lines, fig.show='hold', fig.height=3, fig.cap="For lines and paths, the aesthetics of the line segment are determined by the aesthetic of the beginning observation. If colour is categorical (left) there is no meaningful way to interpolate between adjacent colours. If colour is continuous (right), there is, but this is not done by default."}
+```{r matching-lines, echo = FALSE, fig.show='hold', fig.height=3, fig.cap="For lines and paths, the aesthetics of the line segment are determined by the aesthetic of the beginning observation. If colour is categorical (left) there is no meaningful way to interpolate between adjacent colours. If colour is continuous (right), there is, but this is not done by default."}
 df <- data.frame(x = 1:3, y = 1:3, colour = c(1,3,5))
 qplot(x, y, data=df, colour=factor(colour), size = I(5)) + 
   geom_line(aes(group = 1), size = 2)
@@ -344,7 +344,7 @@ qplot(x, y, data=df, colour=colour, size = I(5)) + geom_line(size = 2)
 
 You could imagine a more complicated system where segments smoothly blend from one aesthetic to another.  This would work for continuous variables like size or colour, but not for line type, and is not used in `ggplot`.  If this is the behaviour you want, you can perform the linear interpolation yourself, as shown below.  
 
-```{r matching-lines2, fig.height=3, prompt=TRUE}
+```{r matching-lines2, fig.height=3, prompt=TRUE, fig.align='left'}
 xgrid <- with(df, seq(min(x), max(x), length = 50))
 interp <- data.frame(
   x = xgrid,
@@ -357,7 +357,7 @@ qplot(x, y, data = df, colour = colour, size = I(5)) +
 
 For all other collective geoms, like polygons, the aesthetics from the individual components are only used if they are all the same, otherwise the default value is used.  This makes sense for fill as it is a property of the entire object: it doesn't make sense to think about having a different fill colour for each point on the border of the polygon. \indexf{geom_polygon}
 
-These issues are most relevant when mapping aesthetics to continuous variable, because, as described above, when you introduce a mapping to a discrete variable, it will by default split apart collective geoms into smaller pieces.  This works particularly well for bar and area plots, because stacking the individual pieces produces the same shape as the original ungrouped data.  This is illustrated in Figure~\ref{fig:bar-split}.
+These issues are most relevant when mapping aesthetics to continuous variable, because, as described above, when you introduce a mapping to a discrete variable, it will by default split apart collective geoms into smaller pieces.  This works particularly well for bar and area plots, because stacking the individual pieces produces the same shape as the original ungrouped data.  This is illustrated in Figure \ref{fig:bar-split}.
 
 ```{r bar-split, fig.show='hold', fig.cap="Splitting apart a bar chart (left) produces a plot (right) that has the same outline as the original."}
 qplot(color, data = diamonds)
@@ -366,20 +366,22 @@ qplot(color, data = diamonds, fill = cut)
 
 ## Geoms {#sec:geom}
 
-Geometric objects, or **geoms** for short, perform the actual rendering of the layer, control the type of plot that you create.  For example, using a point geom will create a scatterplot, while using a line geom will create a line plot.  Table~\ref{tbl:geoms} lists all of the geoms available in `ggplot`. 
+Geometric objects, or **geoms** for short, perform the actual rendering of the layer, control the type of plot that you create.  For example, using a point geom will create a scatterplot, while using a line geom will create a line plot.  Table \ref{tbl:geoms} lists all of the geoms available in `ggplot`. 
 
-Each geom has a set of aesthetics that it understands, and a set that are required for drawing.  For example, a point requires x and y position, and understands colour, size and shape aesthetics.  A bar requires height (`ymax`), and understands width, border colour and fill colour.  These are listed for all geoms in Table~\ref{tbl:geom-aesthetics}. \indexf{geom_bar}
+Each geom has a set of aesthetics that it understands, and a set that are required for drawing.  For example, a point requires x and y position, and understands colour, size and shape aesthetics.  A bar requires height (`ymax`), and understands width, border colour and fill colour.  These are listed for all geoms in Table \ref{tbl:geom-aesthetics}. \indexf{geom_bar}
 
-Some geoms differ primarily in the way that they are parameterised.  For example, the tile geom is specified in terms of the location of its centre and its height and width, while the rect geom is parameterised in terms of its top (`ymax`), bottom (`ymin`), left (`xmin`) and right (`right`) positions. \indexf{geom_rect}  Internally, the rect geom is described as a polygon, and it is parameters are the locations of the four corners.  This is useful for non-Cartesian coordinate systems, as you will learn in Chapter [position](#cha:position). \index{Geoms!parameterisation}
+Some geoms differ primarily in the way that they are parameterised.  For example, the tile geom is specified in terms of the location of its centre and its height and width, while the rect geom is parameterised in terms of its top (`ymax`), bottom (`ymin`), left (`xmin`) and right (`right`) positions. \indexf{geom_rect}  Internally, the rect geom is described as a polygon, and it is parameters are the locations of the four corners.  This is useful for non-Cartesian coordinate systems, as you will learn in [position](#cha:position). \index{Geoms!parameterisation}
 
-Every geom has a default statistic, and every statistic a default geom.  For example, the bin statistic defaults to using the bar geom to produce a histogram.  These defaults are listed in Table~\ref{tbl:geom-aesthetics}.  Overriding these defaults will still produce valid plots, but they may violate graphical conventions.  See examples in [combining geoms and stats](#sub:new-plot-types). \index{Geoms!defaults}
+Every geom has a default statistic, and every statistic a default geom.  For example, the bin statistic defaults to using the bar geom to produce a histogram.  These defaults are listed in Table \ref{tbl:geom-aesthetics}.  Overriding these defaults will still produce valid plots, but they may violate graphical conventions.  See examples in [combining geoms and stats](#sub:new-plot-types). \index{Geoms!defaults}
 
+<!-- 
 \input{tbls/geoms}
 \input{tbls/geom-aesthetics}
+-->
 
 ## Stat {#sec:stat}
 
-A statistical transformation, or **stat**, transforms the data, typically by summarising it in some manner.  For example, a useful stat is the smoother, which calculates the mean of y, conditional on x, subject to some restriction that ensures smoothness. All currently available stats are listed in Table~\ref{tbl:stats}.  To make sense in a graphic context a stat must be location-scale invariant: $\mbox{f}(x + a) = \mbox{f}(x) + a$ and $\mbox{f}(b \cdot x) = b \cdot \mbox{f}(x)$.  This ensures that the transformation stays the same when you change the scales of the plot.
+A statistical transformation, or **stat**, transforms the data, typically by summarising it in some manner.  For example, a useful stat is the smoother, which calculates the mean of y, conditional on x, subject to some restriction that ensures smoothness. All currently available stats are listed in Table \ref{tbl:stats}.  To make sense in a graphic context a stat must be location-scale invariant: $\mbox{f}(x + a) = \mbox{f}(x) + a$ and $\mbox{f}(b \cdot x) = b \cdot \mbox{f}(x)$.  This ensures that the transformation stays the same when you change the scales of the plot.
 
 \input{tbls/stats}
 
@@ -391,7 +393,7 @@ A stat takes a dataset as input and returns a dataset as output, and so a stat c
 
 These generated variables can be used instead of the variables present in the original dataset.  For example, the default histogram geom assigns the height of the bars to the number of observations (`count`), but if you'd prefer a more traditional histogram, you can use the density (`density`).   The following example shows a density histogram of `carat` from the diamonds dataset.
 
-```{r hist, fig.height=2, fig.width=4, out.width="\\linewidth", prompt=TRUE}
+```{r hist, fig.height=2, fig.width=4, out.width="\\linewidth", prompt=TRUE, fig.align='left'}
 ggplot(diamonds, aes(carat)) + 
   geom_histogram(aes(y = ..density..), binwidth = 0.1)
 ```
@@ -407,11 +409,11 @@ qplot(carat, ..density.., data = diamonds, geom="histogram",
 
 ## Position adjustments {#sec:position}
 
-Position adjustments apply minor tweaks to the position of elements within a layer.  Table~\ref{fig:position} lists all of the position adjustments available within `ggplot`.  Position adjustments are normally used with discrete data.  Continuous data typically doesn't overlap exactly, and when it does (because of high data density) minor adjustments, like jittering, are usually insufficient to fix the problem. \index{Position adjustments} \index{Adjustments!position}  \index{Positioning!position adjustments}
+Position adjustments apply minor tweaks to the position of elements within a layer.  Table \ref{fig:position} lists all of the position adjustments available within `ggplot`.  Position adjustments are normally used with discrete data.  Continuous data typically doesn't overlap exactly, and when it does (because of high data density) minor adjustments, like jittering, are usually insufficient to fix the problem. \index{Position adjustments} \index{Adjustments!position}  \index{Positioning!position adjustments}
 
 \input{tbls/position}
 
-The different types of adjustment are best illustrated with a bar chart.  Figure~\ref{fig:position-bar} shows stacking, filling and dodging.  Stacking puts bars on the same x on top of one another; filling does the same, but normalises height to 1; and dodging places the bars side-by-side.  Dodging is rather similar to faceting, and the advantages and disadvantages of each method are described in [dodging vs. faceting](#sub:dodge-vs-facet). For these operations to work, each bar must have the same width and not overlap with any others.  The identity adjustment (i.e., do nothing) doesn't make much sense for bars, but is shown in Figure~\ref{fig:position-identity} along with a line plot of the same data for reference. \index{Dodging} \index{Side-by-side|see{Dodging}} \index{Stacking} \indexf{position_dodge} \indexf{position_fill}  \indexf{position_stack} \indexf{geom_bar}
+The different types of adjustment are best illustrated with a bar chart.  Figure \ref{fig:position-bar} shows stacking, filling and dodging.  Stacking puts bars on the same x on top of one another; filling does the same, but normalises height to 1; and dodging places the bars side-by-side.  Dodging is rather similar to faceting, and the advantages and disadvantages of each method are described in [dodging vs. faceting](#sub:dodge-vs-facet). For these operations to work, each bar must have the same width and not overlap with any others.  The identity adjustment (i.e., do nothing) doesn't make much sense for bars, but is shown in Figure \ref{fig:position-identity} along with a line plot of the same data for reference. \index{Dodging} \index{Side-by-side|see{Dodging}} \index{Stacking} \indexf{position_dodge} \indexf{position_fill}  \indexf{position_stack} \indexf{geom_bar}
 
 ```{r position-bar, fig.show='hold', out.width="0.32\\linewidth", fig.cap="Three position adjustments applied to a bar chart.  From left to right, stacking, filling and dodging."}
 dplot <- ggplot(diamonds, aes(clarity, fill = cut))
@@ -432,20 +434,7 @@ Once you have become comfortable with combining layers, you will be able to crea
 
 ### Combining geoms and stats {#sub:new-plot-types}
 
-By connecting geoms with different statistics, you can easily create new graphics.  Figure~\ref{fig:hist-variations} shows three variations on a histogram.  They all use the same statistical transformation underlying a histogram (the bin stat), but use different geoms to display the results: the area geom, the point geom and the tile geom.  \index{Geoms!combining with stats} \index{Stats!combining with geoms}
-
-```{r layer23, eval = FALSE}
-d <- ggplot(diamonds, aes(carat)) + xlim(0, 3)
-d + stat_bin(aes(ymax = ..count..), binwidth = 0.1, geom = "area")
-d + stat_bin(
-  aes(size = ..density..), binwidth = 0.1, 
-  geom = "point", position="identity"
-)
-d + stat_bin(
-  aes(y = 1, fill = ..count..), binwidth = 0.1, 
-  geom = "tile", position="identity"
-)
-```
+By connecting geoms with different statistics, you can easily create new graphics.  Figure \ref{fig:hist-variations} shows three variations on a histogram.  They all use the same statistical transformation underlying a histogram (the bin stat), but use different geoms to display the results: the area geom, the point geom and the tile geom.  \index{Geoms!combining with stats} \index{Stats!combining with geoms}
 
 <!--
 % dfs: I can't see any difference whether you use scale_area or not, or scale_y_continous or not,
@@ -455,16 +444,16 @@ d + stat_bin(
 
 (The use of `xlim` will be discussed in [position scales](#sub:scale-position), in the presentation of the use of scales and axes, but you can already guess that it is used here to set the limits of the horizontal axis.)
 
-
 ```{r hist-variations, fig.show='hold', out.width="0.32\\linewidth", fig.cap="Three variations on the histogram. (Left) A frequency polygon; (middle) a scatterplot with both size and height mapped to frequency; (right) a heatmap representing frequency with colour."}
 d <- ggplot(diamonds, aes(carat)) + xlim(0, 3)
 d + stat_bin(aes(ymax = ..count..), binwidth = 0.1, geom = "area")
-d + stat_bin(aes(size = ..density..), binwidth = 0.1, geom = "point", position="identity")
-# new example!!!
-#d + stat_bin(aes(y = y, fill = ..count..), binwidth = 0.1, geom = "tile", position="identity") + scale_y_continuous()
+d + stat_bin(aes(size = ..density..), binwidth = 0.1, 
+  geom = "point", position="identity")
+d + stat_density(aes(y = factor(1), fill = ..count..), 
+  geom = "tile", position="identity")
 ```
 
-A number of the geoms available in `ggplot` were derived from other geoms in a process like the one just described, starting with an existing geom and making a few changes in the default aesthetics or stat.  For example, the jitter geom is simply the point geom with the default position adjustment set to jitter.  Once it becomes clear that a particular variant is going to be used a lot or used in a very different context, it makes sense to create a new geom. Table~\ref{tbl:aliased-geoms} lists these ``aliased'' geoms. \index{Geoms!aliases}
+A number of the geoms available in `ggplot` were derived from other geoms in a process like the one just described, starting with an existing geom and making a few changes in the default aesthetics or stat.  For example, the jitter geom is simply the point geom with the default position adjustment set to jitter.  Once it becomes clear that a particular variant is going to be used a lot or used in a very different context, it makes sense to create a new geom. Table  \ref{tbl:aliased-geoms} lists these ``aliased'' geoms. \index{Geoms!aliases}
 
 \begin{table}
   \begin{center}
@@ -494,12 +483,12 @@ If you have data which has already been summarised, and you just want to use it,
 
 One of the more powerful capabilities of `ggplot` is the ability to plot different datasets on different layers.  This may seem strange: Why would you want to plot different data on the same plot?  In practice, you often have related datasets that should be shown together.  A very common example is supplementing the data with predictions from a model.  While the smooth geom can add a wide range of different smooths to your plot, it is no substitute for an external quantitative model that summarises your understanding of the data.
 
-Let's look again at the `Oxboys` dataset which was used in [grouping](#sub:grouping).  In Figure~\ref{fig:group-smooths}, we showed linear fits for individual boys (left) and for the whole group (right).  Neither model is particularly appropriate: The group model ignores the within-subject correlation and the individual model doesn't use information about the typical growth pattern to more accurately predict individuals.  In practice we might use a mixed model to do better.  This section explores how we can combine the output from this more sophisticated model with the original data to gain more insight into both the data and the model. \index{Model!diagnostics}
+Let's look again at the `Oxboys` dataset which was used in [grouping](#sub:grouping).  In Figure \ref{fig:group-smooths}, we showed linear fits for individual boys (left) and for the whole group (right).  Neither model is particularly appropriate: The group model ignores the within-subject correlation and the individual model doesn't use information about the typical growth pattern to more accurately predict individuals.  In practice we might use a mixed model to do better.  This section explores how we can combine the output from this more sophisticated model with the original data to gain more insight into both the data and the model. \index{Model!diagnostics}
 
-First we'll load the **nlme** package, and fit a model with varying intercepts and slopes.  (Exploring the fit of individual models shows that this is a reasonable first pass.)  We'll also create a plot to use as a template.  This regenerates the first plot in Figure~\ref{fig:group-lines}, but we're not going to render it until we've added data from the model.
+First we'll load the **nlme** package, and fit a model with varying intercepts and slopes.  (Exploring the fit of individual models shows that this is a reasonable first pass.)  We'll also create a plot to use as a template.  This regenerates the first plot in Figure \ref{fig:group-lines}, but we're not going to render it until we've added data from the model.
 
 ```{r layer24, prompt=TRUE}
-require(nlme, quiet = TRUE, warn.conflicts = FALSE)
+library("nlme")
 model <- lme(height ~ age, data = Oxboys, 
  random = ~ 1 + age | Subject)
 oplot <- ggplot(Oxboys, aes(age, height, group = Subject)) + 
@@ -518,13 +507,13 @@ preds$height <- predict(model, preds)
 
 Once we have the predictions we can display them along with the original data.  Because we have used the same variable names as the original `Oxboys` dataset, and we want the same group aesthetic, we don't need to specify any aesthetics; we only need to override the default dataset.  We also set two aesthetic parameters to make it a bit easier to compare the predictions to the actual values.
 
-```{r layer26, prompt=TRUE}
+```{r layer26, prompt=TRUE, fig.align='left'}
 oplot + geom_line(data = preds, colour = "#3366FF", size= 0.4)
 ```
 
 It seems that the model does a good job of capturing the high-level structure of the data, but it's hard to see the details: plots of longitudinal data are often called spaghetti plots, and with good reason.  Another way to compare the model to the data is to look at residuals, so let's do that.  We add the predictions from the model to the original data (`fitted`), calculate residuals (`resid`), and add the residuals as well.  The next plot is a little more complicated: We update the plot dataset (recall the use of `%+%` to update the default data), change the default y aesthetic to `resid`, and add a smooth line for all observations. \indexf{geom_smooth}
 
-```{r layer27, prompt=TRUE}
+```{r layer27, prompt=TRUE, fig.align='left'}
 Oxboys$fitted <- predict(model)
 Oxboys$resid <- with(Oxboys, fitted - height)
 
@@ -533,7 +522,7 @@ oplot %+% Oxboys + aes(y = resid) + geom_smooth(aes(group=1))
 
 The smooth line makes it evident that the residuals are not random, showing a deficiency in the model.  We add a quadratic term, refit the model, recalculate predictions and residuals, and replot.  There is now less evidence of model inadequacy.
 
-```{r layer28, prompt=TRUE}
+```{r layer28, prompt=TRUE, fig.align='left'}
 model2 <- update(model, height ~ age + I(age ^ 2))
 Oxboys$fitted2 <- predict(model2)
 Oxboys$resid2 <- with(Oxboys, fitted2 - height)

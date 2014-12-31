@@ -2,12 +2,14 @@ library("bookdown")
 library("rmarkdown")
 library("xtable")
 
-# Global options for tables -------------------------------------------
+# Set global options for tables and precompile time-intensive tables -----------
 options(xtable.include.rownames = FALSE)
 options(xtable.comment = FALSE)
-options(xtable.sanitize.text.function = function(x) x)
+# do we need to escape special LaTeX characters (I think knitr can do this for us)?
+# options(xtable.sanitize.text.function = identity)
 # function used in some chapters for displaying code in tables
 tex_code <- function(x) paste0("\\texttt{", x, "}")
+source("build-tbls.R")
 
 # Render chapters into tex  ----------------------------------------------------
 needs_update <- function(src, dest) {
@@ -26,6 +28,7 @@ render_chapter <- function(src) {
     plyr::defaults(list(message = FALSE,
                         warning = FALSE,
                         fig.show = 'hold',
+                        fig.align = 'center',
                         fig.height = 4,
                         fig.width = 4,
                         out.width = "0.49\\linewidth",
@@ -55,6 +58,7 @@ file.copy("figures/", "book/tex/", recursive = TRUE)
 # (build with Rstudio to find/diagnose errors)
 old <- setwd("book/tex")
 unlink("ggplot2-book.ind") # delete old index
+unlink("ggplot2-book.out")
 system("xelatex -interaction=batchmode ggplot2-book ")
 system("makeindex ggplot2-book")
 system("xelatex -interaction=batchmode ggplot2-book ")

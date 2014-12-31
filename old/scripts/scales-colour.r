@@ -15,4 +15,6 @@ cols <- subset(cols, r <= 1)
 cols$colour <- with(cols, hcl(h, c, l, fixup = FALSE))
 valid <- subset(cols, !is.na(colour))
 
-qplot(x, y, data=valid, facets = ~ l, colour = colour) + scale_colour_identity() + scale_x_continuous("", breaks=NA) + scale_y_continuous("", breaks=NA) + opts(aspect.ratio = 1)
+qplot(x, y, data=valid, facets = ~ l, colour = colour) + scale_colour_identity() + 
+  scale_x_continuous("", breaks=NULL) + scale_y_continuous("", breaks=NULL) + 
+  coord_equal()

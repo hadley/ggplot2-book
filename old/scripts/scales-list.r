@@ -18,7 +18,6 @@ names <- invert(compact(lapply(documented, aes_type)))
 scales <- lapply(names, function(x) lapply(x, get))
 
 
-
 type_table <- function(type) tabulate(ldply(scales[[type]], function(s) c(s$objname, s$desc)))
 
 labels <- c(

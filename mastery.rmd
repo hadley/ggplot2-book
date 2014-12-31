@@ -12,7 +12,7 @@ library("ggplot2")
 
 ## Introduction
 
-You can choose to use just `qplot()`, without any understanding of the underlying grammar, but if you do you will never be able to unlock the full power of **ggplot**.  By learning more about the grammar and its components, you will be able to create a wider range of plots, as well as being able to combine multiple sources of data, and customise to your heart's content.  You may want to skip this chapter in a first reading of the book, returning when you want a deeper understanding of how all the pieces fit together.
+You can choose to use just `qplot()`, without any understanding of the underlying grammar, but if you do you will never be able to unlock the full power of ggplot.  By learning more about the grammar and its components, you will be able to create a wider range of plots, as well as being able to combine multiple sources of data, and customise to your heart's content.  You may want to skip this chapter in a first reading of the book, returning when you want a deeper understanding of how all the pieces fit together.
 
 This chapter describes the theoretical basis of **ggplot**: the layered grammar of graphics.  The layered grammar is based on Wilkinson's grammar of graphics [@wilkinson:2006], but adds a number of enhancements that help it to be more expressive and fit seamlessly into the R environment.  The differences between the layered grammar and Wilkinson's grammar are described fully in [@wickham:2008], and a guide for converting between `GPL` (the encoding of the grammar used in `SPSS`) and **ggplot** is included in [translating](#cha:translating).  In this chapter you will learn a little bit about each component of the grammar and how they all fit together.  The next chapters discuss the components in more detail, and provide more examples of how you can use them in practice.
 
@@ -24,17 +24,17 @@ This chapter begins by describing in detail the process of drawing a simple plot
 
 ## Fuel economy data {#sec:fuel-economy-data}
 
-Consider the fuel economy dataset, `mpg`, a sample of which is illustrated in Table~\ref{tbl:mpg}. It records make, model, class, engine size, transmission and fuel economy for a selection of US cars in 1999 and 2008. It contains the 38 models that were updated every year, an indicator that the car was a popular model. These models include popular cars like the Audi A4, Honda Civic, Hyundai Sonata, Nissan Maxima, Toyota Camry and Volkswagen Jetta. This data comes from the EPA fuel economy website, <http://fueleconomy.gov>. \index{Data!mpg@\texttt{mpg}}
+Consider the fuel economy dataset, `mpg`, a sample of which is illustrated in Table \ref{tbl:mpg}. It records make, model, class, engine size, transmission and fuel economy for a selection of US cars in 1999 and 2008. It contains the 38 models that were updated every year, an indicator that the car was a popular model. These models include popular cars like the Audi A4, Honda Civic, Hyundai Sonata, Nissan Maxima, Toyota Camry and Volkswagen Jetta. This data comes from the EPA fuel economy website, <http://fueleconomy.gov>. \index{Data!mpg@\texttt{mpg}}
 
 ```{r mpg, echo=FALSE, results='asis'}
-xtable(mpg[1:10, -6], caption = "The first 10 cars in the `mpg` dataset, included in the **ggplot** package.  `cty` and `hwy` record miles per gallon (mpg) for city and highway driving, respectively, and `displ` is the engine displacement in litres.", label = "tbl:mpg")
+xtable(mpg[1:10, -6], caption = "The first 10 cars in the \\texttt{mpg} dataset, included in the ggplot2 package.  \\texttt{cty} and \\texttt{hwy} record miles per gallon (mpg) for city and highway driving, respectively, and \\texttt{displ} is the engine displacement in litres.", label = "tbl:mpg")
 ```
 
 This dataset suggests many interesting questions.  How are engine size and fuel economy related?  Do certain manufacturers care more about economy than others? Has fuel economy improved in the last ten years?  We will try to answer the first question and in the process learn more details about how the scatterplot is created.
 
 ## Building a scatterplot {#sec:simple-plot}
 
-Consider Figure~\ref{fig:mpgg}, one attempt to answer this question.  It is a scatterplot of two continuous variables (engine displacement and highway mpg), with points coloured by a third variable (number of cylinders).  From your experience in the previous chapter, you should have a pretty good feel for how to create this plot with `qplot()`.  But what is going on underneath the surface?  How does **ggplot** draw this plot? \index{Scatterplot!principles of}
+Consider Figure \ref{fig:mpgg}, one attempt to answer this question.  It is a scatterplot of two continuous variables (engine displacement and highway mpg), with points coloured by a third variable (number of cylinders).  From your experience in the previous chapter, you should have a pretty good feel for how to create this plot with `qplot()`.  But what is going on underneath the surface?  How does **ggplot** draw this plot? \index{Scatterplot!principles of}
 
 ```{r mpgg, fig.width = 8, out.width="\\linewidth", fig.cap = "A scatterplot of engine displacement in litres (displ) vs. average highway miles per gallon (hwy).  Points are coloured according to number of cylinders.  This plot summarises the most important factor governing fuel economy: engine size."}
 qplot(displ, hwy, data = mpg, colour = factor(cyl))
@@ -42,13 +42,13 @@ qplot(displ, hwy, data = mpg, colour = factor(cyl))
 
 ### Mapping aesthetics to data
 
-What precisely is a scatterplot? You have seen many before and have probably even drawn some by hand. A scatterplot represents each observation as a point, positioned according to the value of two variables. As well as a horizontal and vertical position, each point also has a size, a colour and a shape. These attributes are called **aesthetics**, and are the properties that can be perceived on the graphic. Each aesthetic can be mapped to a variable, or set to a constant value. In Figure~\ref{fig:mpgg} `displ` is mapped to horizontal position, `hwy` to vertical position and `cyl` to colour. Size and shape are not mapped to variables, but remain at their (constant) default values. \index{Mappings}
+What precisely is a scatterplot? You have seen many before and have probably even drawn some by hand. A scatterplot represents each observation as a point, positioned according to the value of two variables. As well as a horizontal and vertical position, each point also has a size, a colour and a shape. These attributes are called **aesthetics**, and are the properties that can be perceived on the graphic. Each aesthetic can be mapped to a variable, or set to a constant value. In Figure \ref{fig:mpgg} `displ` is mapped to horizontal position, `hwy` to vertical position and `cyl` to colour. Size and shape are not mapped to variables, but remain at their (constant) default values. \index{Mappings}
 
-Once we have these mappings we can create a new dataset that records this information. Table~\ref{tbl:mapping} shows the first 10 rows of the data behind Figure~\ref{fig:mpgg}. This new dataset is a result of applying the aesthetic mappings to the original data. We can create many different types of plots using this data. The scatterplot uses points, but were we instead to draw lines we would get a line plot. If we used bars, we'd get a bar plot. Neither of those examples makes sense for this data, but we could still draw them, as in Figure~\ref{fig:other-geoms}. In **ggplot** we can produce many  plots that don't make sense, yet are grammatically valid.  This is no different than English, where we can create senseless but grammatical sentences like the angry rock barked like a comma.
+Once we have these mappings we can create a new dataset that records this information. Table \ref{tbl:mapping} shows the first 10 rows of the data behind Figure \ref{fig:mpgg}. This new dataset is a result of applying the aesthetic mappings to the original data. We can create many different types of plots using this data. The scatterplot uses points, but were we instead to draw lines we would get a line plot. If we used bars, we'd get a bar plot. Neither of those examples makes sense for this data, but we could still draw them, as in Figure \ref{fig:other-geoms}. In ggplot, we can produce many plots that don't make sense, yet are grammatically valid.  This is no different than English, where we can create senseless but grammatical sentences like the angry rock barked like a comma.
 
 ```{r mapping, echo=FALSE, results='asis'}
 scatter <- with(mpg, data.frame(x = displ, y = hwy, colour = cyl))
-xtable(scatter[1:10, ], caption = "First 10 rows from `mpg` rearranged into the format required for a scatterplot.  This data frame contains all the data to be displayed on the plot.", label = "tbl:mapping")
+xtable(scatter[1:10, ], caption = "First 10 rows from \\texttt{mpg} rearranged into the format required for a scatterplot.  This data frame contains all the data to be displayed on the plot.", label = "tbl:mapping")
 ```
 
 ```{r other-geoms, fig.cap = "Instead of using points to represent the data, we could use other geoms like lines (left) or bars (right).  Neither of these geoms makes sense for this data, but they are still grammatically valid."}
@@ -59,7 +59,7 @@ qplot(displ, hwy, data = mpg, colour = factor(cyl), geom = "bar",
   theme(legend.position = "none")
 ```
 
-Points, lines and bars are all examples of geometric objects, or **geoms**. Geoms determine the ``type'' of the plot. Plots that use a single geom are often given a special name, a few of which are listed in Table~\ref{tbl:named-plots}. More complex plots with combinations of multiple geoms don't have a special name, and we have to describe them by hand. For example, Figure~\ref{fig:complex-plot} overlays a per group regression line on the existing plot. What would you call this plot?   Once you've mastered the grammar, you'll find that many of the plots that you produce are uniquely tailored to your problems and will no longer have special names. \index{Named plots}
+Points, lines and bars are all examples of geometric objects, or **geoms**. Geoms determine the ``type'' of the plot. Plots that use a single geom are often given a special name, a few of which are listed in Table \ref{tbl:named-plots}. More complex plots with combinations of multiple geoms don't have a special name, and we have to describe them by hand. For example, Figure \ref{fig:complex-plot} overlays a per group regression line on the existing plot. What would you call this plot?   Once you've mastered the grammar, you'll find that many of the plots that you produce are uniquely tailored to your problems and will no longer have special names. \index{Named plots}
 
 ```{r named-plots, echo=FALSE, results='asis'}
 plot <- c("scatterplot", "bubblechart", "barchart", "box-and-whisker plot", "line chart")
@@ -76,11 +76,11 @@ qplot(displ, hwy, data = mpg, colour = factor(cyl)) +
 
 ### Scaling
 
-The values in Table~\ref{tbl:mapping} have no meaning to the computer. We need to convert them from data units (e.g., litres, miles per gallon and number of cylinders) to physical units (e.g., pixels and colours) that the computer can display. This conversion process is called **scaling** and performed by scales. Now that these values are meaningful to the computer, they may not be meaningful to us: colours are represented by a six-letter hexadecimal string, sizes by a number and shapes by an integer.  These aesthetic specifications that are meaningful to R are described in [specifications](#cha:specifications). \index{Scales!introduction}
+The values in Table \ref{tbl:mapping} have no meaning to the computer. We need to convert them from data units (e.g., litres, miles per gallon and number of cylinders) to physical units (e.g., pixels and colours) that the computer can display. This conversion process is called **scaling** and performed by scales. Now that these values are meaningful to the computer, they may not be meaningful to us: colours are represented by a six-letter hexadecimal string, sizes by a number and shapes by an integer.  These aesthetic specifications that are meaningful to R are described in [specifications](#cha:specifications). \index{Scales!introduction}
 
 In this example, we have three aesthetics that need to be scaled: horizontal position (x), vertical position (y) and colour. Scaling position is easy in this example because we are using the default linear scales. We need only a linear mapping from the range of the data to $[0, 1]$. We use $[0, 1]$ instead of exact pixels because the drawing system that **ggplot** uses, **grid**, takes care of that final conversion for us. A final step determines how the two positions (x and y) are combined to form the final location on the plot. This is done by the coordinate system, or **coord**. In most cases this will be Cartesian coordinates, but it might be polar coordinates, or a spherical projection used for a map.
 
-The process for mapping the colour is a little more complicated, as we have a non-numeric result: colours. However, colours can be thought of as having three components, corresponding to the three types of colour-detecting cells in the human eye. These three cell types give rise to a three-dimensional colour space. Scaling then involves mapping the data values to points in this space. There are many ways to do this, but here since `cyl` is a categorical variable we map values to evenly spaced hues on the colour wheel, as shown in Figure~\ref{fig:colour-wheel}. A different mapping is used when the variable is continuous. \index{Colour!wheel}
+The process for mapping the colour is a little more complicated, as we have a non-numeric result: colours. However, colours can be thought of as having three components, corresponding to the three types of colour-detecting cells in the human eye. These three cell types give rise to a three-dimensional colour space. Scaling then involves mapping the data values to points in this space. There are many ways to do this, but here since `cyl` is a categorical variable we map values to evenly spaced hues on the colour wheel, as shown in Figure \ref{fig:colour-wheel}. A different mapping is used when the variable is continuous. \index{Colour!wheel}
 
 \begin{figure}[htbp]
   \centering
@@ -89,7 +89,7 @@ The process for mapping the colour is a little more complicated, as we have a no
   \label{fig:colour-wheel}
 \end{figure}
 
-The result of these conversions is Table~\ref{tbl:scaled}, which contains values that have meaning to the computer. As well as aesthetics that have been mapped to variable, we also include aesthetics that are constant. We need these so that the aesthetics for each point are completely specified and R can draw the plot.
+The result of these conversions is Table \ref{tbl:scaled}, which contains values that have meaning to the computer. As well as aesthetics that have been mapped to variable, we also include aesthetics that are constant. We need these so that the aesthetics for each point are completely specified and R can draw the plot.
 
 ```{r src, echo=FALSE, results='asis'}
 # rescaler was deprecated at some point -- https://github.com/hadley/ggplot2/issues/279
@@ -123,7 +123,7 @@ names(scaled) <- paste0("`", names(scaled), "`")
 xtable(scaled[1:10,], caption = "Simple dataset with variables mapped into aesthetic space. The description of colours is intimidating, but this is the form that R uses internally. Default values for other aesthetics are filled in: the points will be filled circles (shape 19 in R) with a 1-mm diameter.", label = "tbl:scaled")
 ```
 
-Finally, we need to render this data to create the graphical objects that are displayed on the screen.  To create a complete plot we need to combine graphical objects from three sources: the *data*, represented by the point geom; the *scales and coordinate system*, which generate axes and legends so that we can read values from the graph; and *plot annotations*, such as the background and plot title.  Figure~\ref{fig:empty} separates the contribution of the data from the contributions of the scales and plot annotations.
+Finally, we need to render this data to create the graphical objects that are displayed on the screen.  To create a complete plot we need to combine graphical objects from three sources: the *data*, represented by the point geom; the *scales and coordinate system*, which generate axes and legends so that we can read values from the graph; and *plot annotations*, such as the background and plot title.  Figure \ref{fig:empty} separates the contribution of the data from the contributions of the scales and plot annotations.
 
 \begin{figure}[htbp]
   \centering
@@ -134,7 +134,7 @@ Finally, we need to render this data to create the graphical objects that are di
 
 ## Adding complexity {#sec:complex-plot} 
 
-With a simple example under our belts, let's now turn to look at the slightly more complicated plot in Figure~\ref{fig:complex}. This plot adds three new components to the mix: facets, multiple layers and statistics. The facets and layers expand the data structure described above: each facet panel in each layer has its own dataset. You can think of this as a 3d array: the panels of the facets form a 2d grid, and the layers extend upwards in the 3rd dimension. In this case the data in the layers is the same, but in general we can plot different datasets on different layers. Table~\ref{tbl:data-complex} shows the first few rows of the data in each facet.
+With a simple example under our belts, let's now turn to look at the slightly more complicated plot in Figure \ref{fig:complex}. This plot adds three new components to the mix: facets, multiple layers and statistics. The facets and layers expand the data structure described above: each facet panel in each layer has its own dataset. You can think of this as a 3d array: the panels of the facets form a 2d grid, and the layers extend upwards in the 3rd dimension. In this case the data in the layers is the same, but in general we can plot different datasets on different layers. Table \ref{tbl:data-complex} shows the first few rows of the data in each facet.
 
 ```{r complex, fig.width = 8, out.width = "\\linewidth", fig.cap = "A more complex plot with facets and multiple layers."}
 qplot(displ, hwy, data=mpg, facets = . ~ year) + geom_smooth()
@@ -159,7 +159,7 @@ As well as adding an additional step to summarise the data, we also need some ex
   
 * Finally the scales map the data values into aesthetic values.  This is a local operation: the variables in each dataset are mapped to their aesthetic values producing a new dataset that can then be rendered by the geoms.
 
-Figure~\ref{fig:schematic} illustrates the complete process schematically.
+Figure \ref{fig:schematic} illustrates the complete process schematically.
 
 \begin{figure}[htbp]
   \centering
@@ -180,7 +180,7 @@ In the examples above, we have seen some of the components that make up a plot, 
 
 The following sections describe each of the higher level components more precisely, and point you to the parts of the book where they are documented.
 
-## Layers
+### Layers
 
 **Layers** are responsible for creating the objects that we perceive on the plot.  A layer is composed of four parts:  \index{Layers!components}
 
@@ -189,11 +189,11 @@ The following sections describe each of the higher level components more precise
 * a geometric object (geom)
 * and a position adjustment.
 
-\noindent The properties of a layer are described in [layers](#cha:layers) and how they can be used to visualise data in [toolbox](#cha:toolbox).
+The properties of a layer are described in [layers](#cha:layers) and how they can be used to visualise data in [toolbox](#cha:toolbox).
 
-## Scales {#sec:scales}
+### Scales {#sub:scales}
 
-A **scale** controls the mapping from data to aesthetic attributes, and we need a scale for every aesthetic used on a plot.  Each scale operates across all the data in the plot, ensuring a consistent mapping from data to aesthetics.  Some scales are illustrated in Figure~\ref{fig:scales}.
+A **scale** controls the mapping from data to aesthetic attributes, and we need a scale for every aesthetic used on a plot.  Each scale operates across all the data in the plot, ensuring a consistent mapping from data to aesthetics.  Some scales are illustrated in Figure \ref{fig:scales}.
 
 ```{r src5, echo = FALSE}
 # http://stackoverflow.com/questions/12539348/ggplot-separate-legend-and-plot
@@ -223,13 +223,13 @@ The inverse function is used to draw a guide so that you can read values from th
 
 For more details, see the [scales chapter](#cha:scales)
 
-## Coordinate system {#sec:coordinate-systems}
+### Coordinate system {#sub:coordinate-systems}
 
 A coordinate system, or **coord** for short, maps the position of objects onto the plane of the plot. Position is often specified by two coordinates $(x, y)$, but potential could be three or more (although this is not yet implemented in **ggplot**). The Cartesian coordinate system is the most common coordinate system for two dimensions, while polar coordinates and various map projections are used less frequently. \index{Coordinate systems!introduction}
 
-Coordinate systems affect all position variables simultaneously and differ from scales in that they also change the appearance of the geometric objects. For example, in polar coordinates, bar geoms look like segments of a circle. Additionally, scaling is performed before statistical transformation, while coordinate transformations occur afterward. The consequences of this are shown in [coordinate transformationa](#sub:coord-transformation).
+Coordinate systems affect all position variables simultaneously and differ from scales in that they also change the appearance of the geometric objects. For example, in polar coordinates, bar geoms look like segments of a circle. Additionally, scaling is performed before statistical transformation, while coordinate transformations occur afterward. The consequences of this are shown in [coordinate transformations](#sub:coord-transformation).
 
-Coordinate systems control how the axes and grid lines are drawn.  Figure~\ref{fig:coord} illustrates three different types of coordinate systems.  Very little advice is available for drawing these for non-Cartesian coordinate systems, so a lot of work needs to be done to produce polished output.  See [coordinate systems(#sec:coord) for more details.
+Coordinate systems control how the axes and grid lines are drawn.  Figure \ref{fig:coord} illustrates three different types of coordinate systems.  Very little advice is available for drawing these for non-Cartesian coordinate systems, so a lot of work needs to be done to produce polished output.  See [coordinate systems](#sec:coord) for more details.
 
 ```{r coord, echo = FALSE, fig.show = 'hold', out.width = "0.32\\linewidth", fig.cap = "Examples of axes and grid lines for three coordinate systems: Cartesian, semi-log and polar. The polar coordinate system illustrates the difficulties associated with non-Cartesian coordinates: it is hard to draw the axes well."}
 x1 <- c(1,10)
@@ -240,7 +240,7 @@ p + coord_trans(y="log10")
 p + coord_polar()
 ```
 
-## Faceting {#sec:intro-faceting}
+### Faceting {#sub:intro-faceting}
 
 There is also another thing that turns out to be sufficiently useful that we should include it in our general framework: faceting, a general case of the conditioned or trellised plots. This makes it easy to create small multiples each showing a different subset of the whole dataset. This is a powerful tool when investigating whether patterns hold across all conditions. The faceting specification describes which variables should be used to split up the data, and whether position scales should be free or constrained. Faceting is described in [position](#cha:position).
 
