@@ -115,7 +115,7 @@ hgram + theme(axis.line = element_line(colour = "red"))
 hgram + theme(axis.line = element_line(size = 0.5, linetype = "dashed"))
 ```
 
-* `theme_rect()` draws rectangles, mostly used for backgrounds, you can control the `fill` colour and border `colour`, `size` and `linetype`.  Examples shown in Figure \ref{fig:theme-background} are created with the code below: \index{Background} \index{Themes!background} \indexf{theme_rect}
+* `element_rect()` draws rectangles, mostly used for backgrounds, you can control the `fill` colour and border `colour`, `size` and `linetype`.  Examples shown in Figure \ref{fig:theme-background} are created with the code below: \index{Background} \index{Themes!background} \indexf{theme_rect}
   
 ```{r theme-background, out.width="0.32\\linewidth", fig.cap="Changing the appearance of the plot and panel background"}
 hgram + theme(plot.background = element_rect(fill = "grey80", colour = NA))
@@ -273,7 +273,7 @@ If you want to arrange multiple plots on a single page, you'll need to learn a l
 
 To begin, let's create three plots that we can experiment with. When arranging multiple plots on a page, it will usually be easiest to create them, assign them to variables and then plot them. This makes it easier to experiment with plot placement independent of content. The plots created by the code below are shown in Figure \ref{fig:layout}.
 
-```{r layout, fig.cap="Three simple graphics we'll use to experiment with sophisticated plot layouts."}
+```{r layout, out.width="0.32\\linewidth", fig.cap="Three simple graphics we'll use to experiment with sophisticated plot layouts."}
 (a <- qplot(date, unemploy, data = economics, geom = "line"))
 (b <- qplot(uempmed, unemploy, data = economics) + 
   geom_smooth(se = F))
@@ -310,7 +310,7 @@ vp5 <- viewport(x = 0, y = 0, just = c("right", "bottom"))
 To draw the plot in our new viewport, we use the `vp` argument of the `ggplot.print()` method.  This method is normally called automatically whenever you evaluate something on the command line, but because we want to customise the viewport, we need to call it ourselves.  The result of this is shown in Figure \ref{fig:subplot-1}.
 
 ```{r polish, results='hide'}
-pdf("diagrams/polishing-subplot-1.pdf", width = 4, height = 4)
+pdf("figures/polishing-subplot-1.pdf", width = 4, height = 4)
 subvp <- viewport(width = 0.4, height = 0.4, x = 0.75, y = 0.35)
 b
 print(c, vp = subvp)
@@ -323,9 +323,9 @@ This gives us what we want, but we need to make a few tweaks to the appearance: 
 csmall <- c + 
   theme_gray(9) + 
   labs(x = NULL, y = NULL) + 
-  theme(plot.margin = unit(rep(0, 4), "lines"))
+  theme(plot.margin = unit(c(1/4, 0, 0, 0), "lines"))
 
-pdf("diagrams/polishing-subplot-2.pdf", width = 4, height = 4)
+pdf("figures/polishing-subplot-2.pdf", width = 4, height = 4)
 b
 print(csmall, vp = subvp)
 dev.off()
@@ -334,11 +334,11 @@ dev.off()
 \begin{figure}[htbp]
   \centering
   \subfigure[Figure with subplot.]{
-    \includegraphics[width=0.5\textwidth]{diagrams/polishing-subplot-1}
+    \includegraphics[width=0.5\textwidth]{figures/polishing-subplot-1}
     \label{fig:subplot-1}
   }%
   \subfigure[Subplot tweaked for better display.]{
-    \includegraphics[width=0.5\textwidth]{diagrams/polishing-subplot-2}
+    \includegraphics[width=0.5\textwidth]{figures/polishing-subplot-2}
     \label{fig:subplot-2}
   }
   \caption{Two examples of a figure with subplot. It will usually be necessary to tweak the theme settings of the subplot for optimum display.}
@@ -353,8 +353,7 @@ A more complicated scenario is when you want to arrange a number of plots in a r
 
 The following example shows how this work.  We first create the layout, here a 2 by 2 grid, then assign it to a viewport and push that viewport on to the plotting device.  Now we are ready to draw each plot into its own position on the grid.  We create a small function to save some typing, and then draw each plot in the desired place on the grid.  You can supply a vector of rows or columns to span a plot over multiple cells.  The results are shown in Figure \ref{fig:layout-2}.
 
-```{r polish3}
-pdf("diagrams/polishing-layout.pdf", width = 8, height = 6)
+```{r layout-2, out.width="\\linewidth", fig.cap="Three plots laid out in a grid using \\texttt{grid.layout()}."}
 grid.newpage()
 pushViewport(viewport(layout = grid.layout(2, 2)))
 
@@ -363,14 +362,6 @@ vplayout <- function(x, y)
 print(a, vp = vplayout(1, 1:2))
 print(b, vp = vplayout(2, 1))
 print(c, vp = vplayout(2, 2))
-dev.off()
 ```
-
-\begin{figure}[htbp]
-  \centering
-    \includegraphics[width=\linewidth]{diagrams/polishing-layout}
-  \caption{Three plots laid out in a grid using `grid.layout()`.}
-  \label{fig:layout-2}
-\end{figure}
 
 By default `grid.layout()` makes each cell the same size, but you can use the `widths` and `heights` arguments to make them different sizes.  See the documentation for `grid.layout()` for more examples.
