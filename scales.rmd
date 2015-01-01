@@ -90,7 +90,7 @@ To add a different scale or to modify some features of the default scale, you mu
   \label{tbl:default-scales}
 \end{table}
 
-The following code illustrates this process.  We start with a plot that uses the default colour scale, and then modify it to adjust the appearance of the legend, and then use a different colour scale.  The results are shown in Figure \ref{fig:scale-adjust}.
+The following code illustrates this process.  We start with a plot that uses the default colour scale, modify it to adjust the appearance of the legend, and then use a different colour scale.  The results are shown in Figure \ref{fig:scale-adjust}.
 
 ```{r scale-adjust, fig.width=4, out.width="0.49\\linewidth", fig.cap="Adjusting the default parameters of a scale. (Top left) The plot with default scale. (Top right) Adding the default scale by hand doesn't change the appearance of the plot. (Bottom left) Adjusting the parameters of the scale to tweak the legend. (Bottom right) Using a different colour scale: Set1 from the ColorBrewer colours."}
 p <- qplot(sleep_total, sleep_cycle, data = msleep, colour = vore)
@@ -299,7 +299,7 @@ Discrete position scales map the unique values of their input to integers.  The 
 
 After position, probably the most commonly used aesthetic is colour. There are quite a few different ways of mapping values to colours: three different gradient based methods for continuous values, and two methods for mapping discrete values. But before we look at the details of the different methods, it's useful to learn a little bit of colour theory. Colour theory is complex because the underlying biology of the eye and brain is complex, and this introduction will only touch on some of the more important issues. An excellent more detailed exposition is available online at <http://tinyurl.com/clrdtls>. \index{Colour} \index{Scales!colour}
 
-At the physical level, colour is produced by a mixture of wavelengths of lights. To know a colour completely we need to know the complete mixture of wavelengths, but fortunately for us the human eye only has three different colour receptors, and so we can summarise any colour with just three numbers. You may be familiar with the rgb encoding of colour space, which defines a colour by the intensities of red, green and blue light needed to produce it. One problem with this space is that it is not perceptually uniform: the two colours that are one unit apart may look similar or very different depending on where in the colour space they. This makes it difficult to create a mapping from a continuous variable to a set of colours.  There have been many attempts to come up with colours spaces that are more perceptually uniform.  We'll use a modern attempt called the hcl colour space, which has three components of **h** ue, **c** hroma and **l** uminance: \index{Colour!spaces}
+At the physical level, colour is produced by a mixture of wavelengths of lights. To know a colour completely we need to know the complete mixture of wavelengths, but fortunately for us the human eye only has three different colour receptors, and so we can summarise any colour with just three numbers. You may be familiar with the rgb encoding of colour space, which defines a colour by the intensities of red, green and blue light needed to produce it. One problem with this space is that it is not perceptually uniform: the two colours that are one unit apart may look similar or very different depending on where they are in the colour space. This makes it difficult to create a mapping from a continuous variable to a set of colours.  There have been many attempts to come up with colours spaces that are more perceptually uniform.  We'll use a modern attempt called the hcl colour space, which has three components of **h** ue, **c** hroma and **l** uminance: \index{Colour!spaces}
 
 * Hue is a number between 0 and 360 (an angle) which gives the ``colour'' of the colour: like blue, red, orange, etc.
 * Luminance is the lightness of the colour.  A luminance of 0 produces black, and a luminance of 1 produces white.
@@ -404,31 +404,31 @@ plot + aes(shape = vore) +
   scale_shape_manual(values = c(1, 2, 6, 23))
 ```
 
-The following example shows a creative use `scale_colour_manual()`, when you want to display multiple variables on the same plot, and show a useful legend. In most other plotting systems, you'd just colour the lines as below, and then add a legend that describes which colour corresponds to which variable.  That doesn't work in `ggplot` because it's the scales that are responsible for drawing legends, and the scale doesn't know how the lines should be labelled.
+The following example shows a creative use of `scale_colour_manual()`, when you want to display multiple variables on the same plot, and show a useful legend. In most other plotting systems, you'd just colour the lines as below, and then add a legend that describes which colour corresponds to which variable.  That doesn't work in `ggplot` because it's the scales that are responsible for drawing legends, and the scale doesn't know how the lines should be labelled.
 
 ```{r huron, out.width="0.75\\linewidth", fig.width=7, prompt=TRUE, fig.align='left'}
 huron <- data.frame(year = 1875:1972, level = LakeHuron)
 ggplot(huron, aes(year)) +
-  geom_line(aes(y = level - 5), colour = "blue") + 
-  geom_line(aes(y = level + 5), colour = "red")
+  geom_line(aes(y = level + 5), colour = "red") +
+  geom_line(aes(y = level - 5), colour = "blue") 
 ```
 
 What you need to do is tell the colour scale about the two different lines by creating a mapping from the data to the colour aesthetic. There's no variable present in the data, so you'll have to create one:
 
 ```{r huron2, out.width="0.75\\linewidth", fig.width=7, prompt=TRUE, fig.align='left'}
 ggplot(huron, aes(year)) +
-  geom_line(aes(y = level - 5, colour = "below")) + 
-  geom_line(aes(y = level + 5, colour = "above"))
+  geom_line(aes(y = level + 5, colour = "above")) +
+  geom_line(aes(y = level - 5, colour = "below")) 
 ```
 
 This gets us basically what we want, but the legend isn't labelled correctly, and has the wrong colours.  That can be fixed with `scale_colour_manual()`:
 
 ```{r huron3, out.width="0.75\\linewidth", fig.width=7, prompt=TRUE, fig.align='left'}
 ggplot(huron, aes(year)) +
-  geom_line(aes(y = level - 5, colour = "below")) + 
   geom_line(aes(y = level + 5, colour = "above")) + 
+  geom_line(aes(y = level - 5, colour = "below")) + 
   scale_colour_manual("Direction", values =
-                      c("below" = "blue", "above" = "red"))
+                      c("above" = "red", "below" = "blue"))
 ```
 
 See [multiple time series](#sub:time-series) for an alternative approach to the problem.
