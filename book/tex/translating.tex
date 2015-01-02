@@ -1,0 +1,525 @@
+\chapter{Translating between different syntaxes}\label{cha:translating}
+
+\section{Introduction}
+
+\textbf{ggplot2} does not exist in isolation, but is part of a long
+history of graphical tools in R and elsewhere. This chapter describes
+how to convert between ggplot commands and other plotting systems:
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Within \textbf{ggplot2}, from \texttt{qplot()} to \texttt{ggplot()}
+  (\hyperref[sec:qplot-ggplot]{link to section}).
+\item
+  From base graphics (\hyperref[sec:translate-base]{link to section}).
+\item
+  From \textbf{lattice} graphics (\hyperref[sec:translate-lattice]{link
+  to section}).
+\item
+  From \textbf{gpl} (\hyperref[sec:translate-gpl]{link to section}).
+\end{itemize}
+
+Each section gives a general outline on how to convert between the
+difference types, followed by a number of examples.
+
+\section{Translating between \texttt{qplot()} and \texttt{ggplot()}}
+
+Within ggplot, there are two basic methods to create plots, with
+\texttt{qplot()} and \texttt{ggplot()}. \texttt{qplot()} is designed
+primarily for interactive use: it makes a number of assumptions that
+speed most cases, but when designing multi-layered plots with different
+data sources it can get in the way. This section describes what those
+defaults are, and how they map to the fuller \texttt{ggplot()} syntax.
+\index{qplot!translating to ggplot@translating to \texttt{ggplot()}}
+\index{Translating!from qplot} \indexf{qplot}
+\index{ggplot!translating from qplot@translating from \texttt{qplot()}}
+
+By default, \texttt{qplot()} assumes that you want a scatterplot, i.e.,
+you want to use \texttt{geom\_point()}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{data =} \NormalTok{data)}
+\KeywordTok{ggplot}\NormalTok{(data, }\KeywordTok{aes}\NormalTok{(x, y)) +}\StringTok{ }\KeywordTok{geom_point}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Aesthetics}
+
+If you map additional aesthetics, these will be added to the defaults.
+With \texttt{qplot()} there is no way to use different aesthetic
+mappings (or data) in different layers.
+\index{Aesthetics!translating from qplot}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{data =} \NormalTok{data, }\DataTypeTok{shape =} \NormalTok{shape, }\DataTypeTok{colour =} \NormalTok{colour)}
+\KeywordTok{ggplot}\NormalTok{(data, }\KeywordTok{aes}\NormalTok{(x, y, }\DataTypeTok{shape =} \NormalTok{shape, }\DataTypeTok{colour =} \NormalTok{colour)) +}\StringTok{ }
+\StringTok{  }\KeywordTok{geom_point}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+Aesthetic parameters in \texttt{qplot()} always try to map the aesthetic
+to a variable. If the argument is not a variable but a value,
+effectively a new column is added to the original dataset with that
+value. To set an aesthetic to a value and override the default
+appearance, you surround the value with \texttt{I()} in
+\texttt{qplot()}, or pass it as a parameter to the layer.
+\hyperref[sub:setting-mapping]{Setting vs.~mapping} expands on the
+differences between setting and mapping.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{data =} \NormalTok{data, }\DataTypeTok{colour =} \KeywordTok{I}\NormalTok{(}\StringTok{"red"}\NormalTok{))}
+\KeywordTok{ggplot}\NormalTok{(data, }\KeywordTok{aes}\NormalTok{(x, y)) +}\StringTok{ }\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{colour =} \StringTok{"red"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Layers}
+
+Changing the geom parameter changes the geom added to the plot:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{data =} \NormalTok{data, }\DataTypeTok{geom =} \StringTok{"line"}\NormalTok{)}
+\KeywordTok{ggplot}\NormalTok{(data, }\KeywordTok{aes}\NormalTok{(x, y)) +}\StringTok{ }\KeywordTok{geom_line}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+If a vector of multiple geom names is supplied to the geom argument,
+each geom will be added in turn:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{data =} \NormalTok{data, }\DataTypeTok{geom =} \KeywordTok{c}\NormalTok{(}\StringTok{"point"}\NormalTok{, }\StringTok{"smooth"}\NormalTok{))}
+\KeywordTok{ggplot}\NormalTok{(data, }\KeywordTok{aes}\NormalTok{(x, y)) +}\StringTok{ }\KeywordTok{geom_point}\NormalTok{() +}\StringTok{ }\KeywordTok{geom_smooth}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+Unlike the rest of ggplot, stats and geoms are independent:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{data =} \NormalTok{data, }\DataTypeTok{stat =} \StringTok{"bin"}\NormalTok{)}
+\KeywordTok{ggplot}\NormalTok{(data, }\KeywordTok{aes}\NormalTok{(x, y)) +}\StringTok{ }\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{stat =} \StringTok{"bin"}\NormalTok{)  }
+\end{Highlighting}
+\end{Shaded}
+
+Any layer parameters will be passed on to all layers. Most layers will
+ignore parameters that they don't need.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{data =} \NormalTok{data, }\DataTypeTok{geom =} \KeywordTok{c}\NormalTok{(}\StringTok{"point"}\NormalTok{, }\StringTok{"smooth"}\NormalTok{), }
+  \DataTypeTok{method =} \StringTok{"lm"}\NormalTok{)}
+\KeywordTok{ggplot}\NormalTok{(data, }\KeywordTok{aes}\NormalTok{(x, y)) +}\StringTok{ }
+\StringTok{  }\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{method =} \StringTok{"lm"}\NormalTok{) +}\StringTok{ }\KeywordTok{geom_smooth}\NormalTok{(}\DataTypeTok{method =} \StringTok{"lm"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Scales and axes}
+
+You can control basic properties of the x and y scales with the
+\texttt{xlim}, \texttt{ylim}, \texttt{xlab} and \texttt{ylab} arguments:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{data =} \NormalTok{data, }\DataTypeTok{xlim =} \KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{5}\NormalTok{), }\DataTypeTok{xlab =} \StringTok{"my label"}\NormalTok{)}
+\KeywordTok{ggplot}\NormalTok{(data, }\KeywordTok{aes}\NormalTok{(x, y)) +}\StringTok{ }\KeywordTok{geom_point}\NormalTok{() +}\StringTok{ }
+\StringTok{  }\KeywordTok{scale_x_continuous}\NormalTok{(}\StringTok{"my label"}\NormalTok{, }\DataTypeTok{limits =} \KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{5}\NormalTok{))}
+
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{data =} \NormalTok{data, }\DataTypeTok{xlim =} \KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{5}\NormalTok{), }\DataTypeTok{ylim =} \KeywordTok{c}\NormalTok{(}\DecValTok{10}\NormalTok{, }\DecValTok{20}\NormalTok{))}
+\KeywordTok{ggplot}\NormalTok{(data, }\KeywordTok{aes}\NormalTok{(x, y)) +}\StringTok{ }\KeywordTok{geom_point}\NormalTok{() +}\StringTok{ }
+\StringTok{  }\KeywordTok{scale_x_continuous}\NormalTok{(}\DataTypeTok{limits =} \KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{5}\NormalTok{))}
+  \KeywordTok{scale_y_continuous}\NormalTok{(}\DataTypeTok{limits =} \KeywordTok{c}\NormalTok{(}\DecValTok{10}\NormalTok{, }\DecValTok{20}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+Like \texttt{plot()}, \texttt{qplot()} has a convenient way of log
+transforming the axes. There are many other possible transformations
+that are not accessible from within \texttt{qplot()} see
+\hyperref[sub:scale-position]{position scales} for more details.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{data =} \NormalTok{data, }\DataTypeTok{log =} \StringTok{"xy"}\NormalTok{)}
+\KeywordTok{ggplot}\NormalTok{(data, }\KeywordTok{aes}\NormalTok{(x, y)) +}\StringTok{ }\KeywordTok{geom_point}\NormalTok{() +}\StringTok{ }
+\StringTok{  }\KeywordTok{scale_x_log10}\NormalTok{() +}\StringTok{ }\KeywordTok{scale_y_log10}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Plot options}
+
+\texttt{qplot()} recognises the same options as \texttt{plot()} does,
+and converts them to their ggplot equivalents.
+\hyperref[sec:themeux5felements]{Theme elements and element functions}
+lists all possible plot options and their effects.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{data =} \NormalTok{data, }\DataTypeTok{main=}\StringTok{"title"}\NormalTok{, }\DataTypeTok{asp =} \DecValTok{1}\NormalTok{)}
+\KeywordTok{ggplot}\NormalTok{(data, }\KeywordTok{aes}\NormalTok{(x, y)) +}\StringTok{ }\KeywordTok{geom_point}\NormalTok{() +}\StringTok{ }
+\StringTok{  }\KeywordTok{ggtitle}\NormalTok{(}\StringTok{"title"}\NormalTok{) +}\StringTok{ }\KeywordTok{coord_equal}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\hyperdef{}{sec:translate-base}{\section{Base
+graphics}\label{sec:translate-base}}
+
+There are two types of graphics functions in base graphics, those that
+draw complete graphics and those that add to existing graphics.
+\index{Base graphics!translating from}
+\index{Translating!from base graphics}
+
+\subsection{High-level plotting commands}
+
+\texttt{qplot()} has been designed to mimic \texttt{plot()}, and can do
+the job of all other high-level plotting commands. There are only two
+graph types from base graphics that cannot be replicated with ggplot:
+\texttt{filled.contour()} and \texttt{persp()}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{plot}\NormalTok{(x, y);  }\KeywordTok{dotchart}\NormalTok{(x, y); }\KeywordTok{stripchart}\NormalTok{(x, y)}
+\KeywordTok{qplot}\NormalTok{(x, y)}
+
+\KeywordTok{plot}\NormalTok{(x, y, }\DataTypeTok{type =} \StringTok{"l"}\NormalTok{)}
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{geom =} \StringTok{"line"}\NormalTok{)}
+
+\KeywordTok{plot}\NormalTok{(x, y, }\DataTypeTok{type =} \StringTok{"s"}\NormalTok{)}
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{geom =} \StringTok{"step"}\NormalTok{)}
+
+\KeywordTok{plot}\NormalTok{(x, y, }\DataTypeTok{type =} \StringTok{"b"}\NormalTok{)}
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{geom =} \KeywordTok{c}\NormalTok{(}\StringTok{"point"}\NormalTok{, }\StringTok{"line"}\NormalTok{))}
+
+\KeywordTok{boxplot}\NormalTok{(x, y)}
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{geom =} \StringTok{"boxplot"}\NormalTok{)}
+
+\KeywordTok{hist}\NormalTok{(x)}
+\KeywordTok{qplot}\NormalTok{(x, }\DataTypeTok{geom =} \StringTok{"histogram"}\NormalTok{)}
+
+\KeywordTok{cdplot}\NormalTok{(x, y)}
+\KeywordTok{qplot}\NormalTok{(x, }\DataTypeTok{fill =} \NormalTok{y, }\DataTypeTok{geom =} \StringTok{"density"}\NormalTok{, }\DataTypeTok{position =} \StringTok{"fill"}\NormalTok{)}
+
+\KeywordTok{coplot}\NormalTok{(y ~}\StringTok{ }\NormalTok{x |}\StringTok{ }\NormalTok{a +}\StringTok{ }\NormalTok{b)}
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{facets =} \NormalTok{a ~}\StringTok{ }\NormalTok{b)}
+\end{Highlighting}
+\end{Shaded}
+
+Many of the geoms are parameterised differently than base graphics. For
+example, \texttt{hist()} is parameterised in terms of the number of
+bins, while \texttt{geom\_histogram()} is parameterised in terms of the
+width of each bin.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{hist}\NormalTok{(x, }\DataTypeTok{bins =} \DecValTok{100}\NormalTok{)}
+\KeywordTok{qplot}\NormalTok{(x, }\DataTypeTok{geom =} \StringTok{"histogram"}\NormalTok{, }\DataTypeTok{binwidth =} \DecValTok{1}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\texttt{qplot()} often requires data in a slightly different format to
+the base graphics functions. For example, the bar geom works with
+untabulated data, not tabulated data like \texttt{barplot()}; the tile
+and contour geoms expect data in a data frame, not a matrix like
+\texttt{image()} and \texttt{contour()}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{barplot}\NormalTok{(}\KeywordTok{table}\NormalTok{(x))}
+\KeywordTok{qplot}\NormalTok{(x, }\DataTypeTok{geom =} \StringTok{"bar"}\NormalTok{)}
+
+\KeywordTok{barplot}\NormalTok{(x)}
+\KeywordTok{qplot}\NormalTok{(}\KeywordTok{names}\NormalTok{(x), x, }\DataTypeTok{geom =} \StringTok{"bar"}\NormalTok{, }\DataTypeTok{stat =} \StringTok{"identity"}\NormalTok{)}
+
+\KeywordTok{image}\NormalTok{(x)}
+\KeywordTok{qplot}\NormalTok{(X1, X2, }\DataTypeTok{data =} \KeywordTok{melt}\NormalTok{(x), }\DataTypeTok{geom =} \StringTok{"tile"}\NormalTok{, }\DataTypeTok{fill =} \NormalTok{value)}
+
+\KeywordTok{contour}\NormalTok{(x)}
+\KeywordTok{qplot}\NormalTok{(X1, X2, }\DataTypeTok{data =} \KeywordTok{melt}\NormalTok{(x), }\DataTypeTok{geom =} \StringTok{"contour"}\NormalTok{, }\DataTypeTok{fill =} \NormalTok{value)}
+\end{Highlighting}
+\end{Shaded}
+
+Generally, the base graphics functions work with individual vectors, not
+data frames like ggplot. \texttt{qplot()} will try to construct a data
+frame if one is not specified, but it is not always possible. If you get
+strange errors, you may need to create the data frame yourself.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{with}\NormalTok{(df, }\KeywordTok{plot}\NormalTok{(x, y))}
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{data =} \NormalTok{df)}
+\end{Highlighting}
+\end{Shaded}
+
+By default, \texttt{qplot()} maps values to aesthetics with a scale. To
+override this behaviour and set aesthetics, overriding the defaults, you
+need to use \texttt{I()}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{plot}\NormalTok{(x, y, }\DataTypeTok{col =} \StringTok{"red"}\NormalTok{, }\DataTypeTok{cex =} \DecValTok{1}\NormalTok{)}
+\KeywordTok{qplot}\NormalTok{(x, y, }\DataTypeTok{colour =} \KeywordTok{I}\NormalTok{(}\StringTok{"red"}\NormalTok{), }\DataTypeTok{size =} \KeywordTok{I}\NormalTok{(}\DecValTok{1}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Low-level drawing}
+
+The low-level drawing functions which add to an existing plot are
+equivalent to adding a new layer in ggplot, described in Table
+\ref{tbl:base-equiv}.
+
+\begin{table}
+  \begin{center}
+    \begin{tabular}{ll}
+      \toprule
+      Base function & \texttt{ggplot} layer \\
+      \midrule
+      \texttt{curve()}    & \texttt{geom\_curve()}      \\
+      \texttt{hline()}    & \texttt{geom\_hline()}      \\
+      \texttt{lines()}    & \texttt{geom\_line()}       \\
+      \texttt{points()}   & \texttt{geom\_point()}      \\
+      \texttt{polygon()}  & \texttt{geom\_polygon()}    \\
+      \texttt{rect()}     & \texttt{geom\_rect()}       \\
+      \texttt{rug()}      & \texttt{geom\_rug()}        \\
+      \texttt{segments()} & \texttt{geom\_segment()}    \\
+      \texttt{text()}     & \texttt{geom\_text()}       \\
+      \texttt{vline()}    & \texttt{geom\_vline()}      \\
+      \texttt{abline(lm(y ~ x))}  & \texttt{geom\_smooth(method = "lm")}  \\
+      \texttt{lines(density(x))}  & \texttt{geom\_density()}         \\
+      \texttt{lines(loess(x, y))} & \texttt{geom\_smooth()}          \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \caption{Equivalence between base graphics methods that add on to an existing plot, and layers in \texttt{ggplot}.}
+  \label{tbl:base-equiv}
+\end{table}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{plot}\NormalTok{(x, y)}
+\KeywordTok{lines}\NormalTok{(x, y)}
+
+\KeywordTok{qplot}\NormalTok{(x, y) +}\StringTok{ }\KeywordTok{geom_line}\NormalTok{()}
+
+\CommentTok{# Or, building up piece-meal}
+\KeywordTok{qplot}\NormalTok{(x, y)}
+\KeywordTok{last_plot}\NormalTok{() +}\StringTok{ }\KeywordTok{geom_line}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Legends, axes and grid lines}
+
+In ggplot, the appearance of legends and axes is controlled by the
+scales. Axes are produced by the x and y scales, while all other scales
+produce legends. See \hyperref[sec:themes]{plot themes}, to change the
+appearance of axes and legends, and, \hyperref[sec:guides]{scales}, to
+change their contents. The appearance of grid lines is controlled by the
+\texttt{grid.major} and \texttt{grid.minor} theme options, and their
+position by the breaks of the x and y scales.
+
+\subsection{Colour palettes}
+
+Instead of global colour palettes, ggplot has scales for individual
+plots. Much of the time you can rely on the default colour scale (which
+has somewhat better perceptual properties), but if you want to reuse an
+existing colour palette, you can use \texttt{scale\_colour\_manual()}.
+You will need to make sure that the colour is a factor for this to work.
+\index{Colour!palettes}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{palette}\NormalTok{(}\KeywordTok{rainbow}\NormalTok{(}\DecValTok{5}\NormalTok{))}
+\KeywordTok{plot}\NormalTok{(}\DecValTok{1}\NormalTok{:}\DecValTok{5}\NormalTok{, }\DecValTok{1}\NormalTok{:}\DecValTok{5}\NormalTok{, }\DataTypeTok{col =} \DecValTok{1}\NormalTok{:}\DecValTok{5}\NormalTok{, }\DataTypeTok{pch =} \DecValTok{19}\NormalTok{, }\DataTypeTok{cex =} \DecValTok{4}\NormalTok{)}
+
+\KeywordTok{qplot}\NormalTok{(}\DecValTok{1}\NormalTok{:}\DecValTok{5}\NormalTok{, }\DecValTok{1}\NormalTok{:}\DecValTok{5}\NormalTok{, }\DataTypeTok{col =} \KeywordTok{factor}\NormalTok{(}\DecValTok{1}\NormalTok{:}\DecValTok{5}\NormalTok{), }\DataTypeTok{size =} \KeywordTok{I}\NormalTok{(}\DecValTok{4}\NormalTok{))}
+\KeywordTok{last_plot}\NormalTok{() +}\StringTok{ }\KeywordTok{scale_colour_manual}\NormalTok{(}\DataTypeTok{values =} \KeywordTok{rainbow}\NormalTok{(}\DecValTok{5}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+In ggplot, you can also use palettes with continuous values, with
+intermediate values being linearly interpolated.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(}\DecValTok{0}\NormalTok{:}\DecValTok{100}\NormalTok{, }\DecValTok{0}\NormalTok{:}\DecValTok{100}\NormalTok{, }\DataTypeTok{col =} \DecValTok{0}\NormalTok{:}\DecValTok{100}\NormalTok{, }\DataTypeTok{size =} \KeywordTok{I}\NormalTok{(}\DecValTok{4}\NormalTok{)) +}
+\StringTok{  }\KeywordTok{scale_colour_gradientn}\NormalTok{(}\DataTypeTok{colours =} \KeywordTok{rainbow}\NormalTok{(}\DecValTok{7}\NormalTok{))}
+\KeywordTok{last_plot}\NormalTok{() +}
+\StringTok{  }\KeywordTok{scale_colour_gradientn}\NormalTok{(}\DataTypeTok{colours =} \KeywordTok{terrain.colors}\NormalTok{(}\DecValTok{7}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Graphical parameters}
+
+The majority of \texttt{par()} settings have some analogue within the
+theme system, or in the defaults of the geoms and scales. The appearance
+plot border drawn by \texttt{box()} can be controlled in a similar way
+by the \texttt{panel.background} and \texttt{plot.background} theme
+elements. Instead of using \texttt{title()}, the plot title is set with
+the \texttt{title} option.
+
+\hyperdef{}{sec:translate-lattice}{\section{Lattice
+graphics}\label{sec:translate-lattice}}
+
+The major difference between \textbf{lattice} and ggplot is that
+\textbf{lattice} uses a formula-based interface. ggplot does not because
+the formula does not generalise well to more complicated situations.
+\index{Lattice graphics!translating from}
+\index{Translating!from lattice}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{xyplot}\NormalTok{(rating ~}\StringTok{ }\NormalTok{year, }\DataTypeTok{data =} \NormalTok{movies)}
+\KeywordTok{qplot}\NormalTok{(year, rating, }\DataTypeTok{data =} \NormalTok{movies)}
+
+\KeywordTok{xyplot}\NormalTok{(rating ~}\StringTok{ }\NormalTok{year |}\StringTok{ }\NormalTok{Comedy +}\StringTok{ }\NormalTok{Action, }\DataTypeTok{data =} \NormalTok{movies)}
+\KeywordTok{qplot}\NormalTok{(year, rating, }\DataTypeTok{data =} \NormalTok{movies, }\DataTypeTok{facets =} \NormalTok{~}\StringTok{ }\NormalTok{Comedy +}\StringTok{ }\NormalTok{Action)}
+\CommentTok{# Or maybe}
+\KeywordTok{qplot}\NormalTok{(year, rating, }\DataTypeTok{data =} \NormalTok{movies, }\DataTypeTok{facets =} \NormalTok{Comedy ~}\StringTok{ }\NormalTok{Action)}
+\end{Highlighting}
+\end{Shaded}
+
+While \textbf{lattice} has many different functions to produce different
+types of graphics (which are all basically equivalent to setting the
+panel argument), ggplot has \texttt{qplot()}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{stripplot}\NormalTok{(~}\StringTok{ }\NormalTok{rating, }\DataTypeTok{data =} \NormalTok{movies, }\DataTypeTok{jitter.data =} \OtherTok{TRUE}\NormalTok{)}
+\KeywordTok{qplot}\NormalTok{(rating, }\DecValTok{1}\NormalTok{, }\DataTypeTok{data =} \NormalTok{movies, }\DataTypeTok{geom =} \StringTok{"jitter"}\NormalTok{)}
+
+\KeywordTok{histogram}\NormalTok{(~}\StringTok{ }\NormalTok{rating, }\DataTypeTok{data =} \NormalTok{movies)}
+\KeywordTok{qplot}\NormalTok{(rating, }\DataTypeTok{data =} \NormalTok{movies, }\DataTypeTok{geom =} \StringTok{"histogram"}\NormalTok{)}
+
+\KeywordTok{bwplot}\NormalTok{(Comedy ~}\StringTok{ }\NormalTok{rating, }\DataTypeTok{data =} \NormalTok{movies)}
+\KeywordTok{qplot}\NormalTok{(}\KeywordTok{factor}\NormalTok{(Comedy), rating, }\DataTypeTok{data =} \NormalTok{movies, }\DataTypeTok{geom =} \StringTok{"boxplot"}\NormalTok{)}
+
+\KeywordTok{xyplot}\NormalTok{(wt ~}\StringTok{ }\NormalTok{mpg, mtcars, }\DataTypeTok{type =} \KeywordTok{c}\NormalTok{(}\StringTok{"p"}\NormalTok{,}\StringTok{"smooth"}\NormalTok{))}
+\KeywordTok{qplot}\NormalTok{(mpg, wt, }\DataTypeTok{data =} \NormalTok{mtcars, }\DataTypeTok{geom =} \KeywordTok{c}\NormalTok{(}\StringTok{"point"}\NormalTok{,}\StringTok{"smooth"}\NormalTok{))}
+
+\KeywordTok{xyplot}\NormalTok{(wt ~}\StringTok{ }\NormalTok{mpg, mtcars, }\DataTypeTok{type =} \KeywordTok{c}\NormalTok{(}\StringTok{"p"}\NormalTok{,}\StringTok{"r"}\NormalTok{))}
+\KeywordTok{qplot}\NormalTok{(mpg, wt, }\DataTypeTok{data =} \NormalTok{mtcars, }\DataTypeTok{geom =} \KeywordTok{c}\NormalTok{(}\StringTok{"point"}\NormalTok{,}\StringTok{"smooth"}\NormalTok{),}
+  \DataTypeTok{method =} \StringTok{"lm"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+The capabilities for scale manipulations are similar in both ggplot and
+\textbf{lattice}, although the syntax is a little different.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{xyplot}\NormalTok{(wt ~}\StringTok{ }\NormalTok{mpg |}\StringTok{ }\NormalTok{cyl, mtcars, }\DataTypeTok{scales =} \KeywordTok{list}\NormalTok{(}\DataTypeTok{y =} \KeywordTok{list}\NormalTok{(}\DataTypeTok{relation =} \StringTok{"free"}\NormalTok{)))}
+\KeywordTok{qplot}\NormalTok{(mpg, wt, }\DataTypeTok{data =} \NormalTok{mtcars) +}\StringTok{ }\KeywordTok{facet_wrap}\NormalTok{(~}\StringTok{ }\NormalTok{cyl, }\DataTypeTok{scales =} \StringTok{"free"}\NormalTok{)}
+
+\KeywordTok{xyplot}\NormalTok{(wt ~}\StringTok{ }\NormalTok{mpg |}\StringTok{ }\NormalTok{cyl, mtcars, }\DataTypeTok{scales =} \KeywordTok{list}\NormalTok{(}\DataTypeTok{log =} \DecValTok{10}\NormalTok{))}
+\KeywordTok{qplot}\NormalTok{(mpg, wt, }\DataTypeTok{data =} \NormalTok{mtcars, }\DataTypeTok{log =} \StringTok{"xy"}\NormalTok{) +}\StringTok{ }\KeywordTok{facet_wrap}\NormalTok{(~}\StringTok{ }\NormalTok{cyl)}
+
+\KeywordTok{xyplot}\NormalTok{(wt ~}\StringTok{ }\NormalTok{mpg |}\StringTok{ }\NormalTok{cyl, mtcars, }\DataTypeTok{scales =} \KeywordTok{list}\NormalTok{(}\DataTypeTok{log =} \DecValTok{2}\NormalTok{))}
+\KeywordTok{qplot}\NormalTok{(mpg, wt, }\DataTypeTok{data =} \NormalTok{mtcars) +}\StringTok{ }
+\StringTok{  }\KeywordTok{scale_x_log2}\NormalTok{() +}\StringTok{ }\KeywordTok{scale_y_log2}\NormalTok{()}
+
+\KeywordTok{xyplot}\NormalTok{(wt ~}\StringTok{ }\NormalTok{mpg, mtcars, }\DataTypeTok{group =} \NormalTok{cyl, }\DataTypeTok{auto.key =} \OtherTok{TRUE}\NormalTok{)}
+\CommentTok{# Map directly to an aesthetic like colour, size, or shape.}
+\KeywordTok{qplot}\NormalTok{(mpg, wt, }\DataTypeTok{data =} \NormalTok{mtcars, }\DataTypeTok{colour =} \KeywordTok{factor}\NormalTok{(cyl))}
+
+\KeywordTok{xyplot}\NormalTok{(wt ~}\StringTok{ }\NormalTok{mpg, mtcars, }\DataTypeTok{xlim =} \KeywordTok{c}\NormalTok{(}\DecValTok{20}\NormalTok{, }\DecValTok{30}\NormalTok{))}
+\CommentTok{# Works like lattice, except you can't specify a different limit }
+\CommentTok{# for each panel/facet}
+\KeywordTok{qplot}\NormalTok{(mpg, wt, }\DataTypeTok{data =} \NormalTok{mtcars, }\DataTypeTok{xlim =} \KeywordTok{c}\NormalTok{(}\DecValTok{20}\NormalTok{, }\DecValTok{30}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+Both \textbf{lattice} and ggplot have similar options for controlling
+labels on the plot.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{xyplot}\NormalTok{(wt ~}\StringTok{ }\NormalTok{mpg, mtcars, }
+  \DataTypeTok{xlab =} \StringTok{"Miles per gallon"}\NormalTok{, }\DataTypeTok{ylab =} \StringTok{"Weight"}\NormalTok{, }
+  \DataTypeTok{main =} \StringTok{"Weight-efficiency tradeoff"}\NormalTok{)}
+\KeywordTok{qplot}\NormalTok{(mpg, wt, }\DataTypeTok{data =} \NormalTok{mtcars, }
+  \DataTypeTok{xlab =} \StringTok{"Miles per gallon"}\NormalTok{, }\DataTypeTok{ylab =} \StringTok{"Weight"}\NormalTok{, }
+  \DataTypeTok{main =} \StringTok{"Weight-efficiency tradeoff"}\NormalTok{)}
+
+\KeywordTok{xyplot}\NormalTok{(wt ~}\StringTok{ }\NormalTok{mpg, mtcars, }\DataTypeTok{aspect =} \DecValTok{1}\NormalTok{) }
+\KeywordTok{qplot}\NormalTok{(mpg, wt, }\DataTypeTok{data =} \NormalTok{mtcars, }\DataTypeTok{asp =} \DecValTok{1}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\texttt{par.settings()} is equivalent to \texttt{+ theme()} and
+\texttt{trellis.options.set()} and \texttt{trellis.par.get()} to
+\texttt{theme\_set()} and \texttt{theme\_get()}.
+
+More complicated \textbf{lattice} formulas are equivalent to rearranging
+the data before using ggplot.
+
+\hyperdef{}{sec:translate-gpl}{\section{GPL}\label{sec:translate-gpl}}
+
+The Grammar of Graphics uses two specifications. A concise format is
+used to caption figures, and a more detailed xml format stored on disk.
+The following example of the concise format is adapted from (Figure 1.5,
+page 13 in Wilkinson 2005). \index{GPL!translating from}
+\index{Translating!from GPL}
+
+\begin{verbatim}
+DATA: source("demographics")
+DATA: longitude, latitude = map(source("World"))
+TRANS: bd = max(birth - death, 0)
+COORD: project.mercator()
+ELEMENT: point(position(lon * lat), size(bd), color(color.red))
+ELEMENT: polygon(position(longitude * latitude))
+\end{verbatim}
+
+This is relatively simple to adapt to the syntax of ggplot:
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  \texttt{ggplot()} is used to specify the default data and default
+  aesthetic mappings.
+\item
+  Data is provided as standard R data.frames existing in the global
+  environment; it does not need to be explicitly loaded. We also use a
+  slightly different world dataset, with columns lat and long. This lets
+  us use the same aesthetic mappings for both datasets. Layers can
+  override the default data and aesthetic mappings provided by the plot.
+\item
+  We replace \texttt{TRANS} with an explicit transformation by R code.
+\item
+  \texttt{ELEMENT}s are replaced with layers, which explicitly specify
+  the data source. Each geom has a default statistic which is used to
+  transform the data prior to plotting. For the geoms in this example,
+  the default statistic is the identity function. Fixed aesthetics (the
+  colour red in this example) are supplied as additional arguments to
+  the layer, rather than as special constants.
+\item
+  \texttt{SCALE} component has been omitted from this example (so that
+  the defaults are used). In both the ggplot and GoG examples, scales
+  are defined by default. In ggplot you can override the defaults by
+  adding a scale object, e.g., \texttt{scale\_colour} or
+  \texttt{scale\_size}.
+\item
+  \texttt{COORD} uses a slightly different format. In general, most of
+  the components specifications in ggplot are slightly different to
+  those in GoG, in order to be more familiar to R users.
+\item
+  Each component is added together with \(+\) to create the final plot.
+\end{itemize}
+
+All up the equivalent ggplot code is:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{demographics <-}\StringTok{ }\KeywordTok{transform}\NormalTok{(demographics, }
+  \DataTypeTok{bd =} \KeywordTok{pmax}\NormalTok{(birth -}\StringTok{ }\NormalTok{death, }\DecValTok{0}\NormalTok{))}
+
+\KeywordTok{ggplot}\NormalTok{(demographic, }\KeywordTok{aes}\NormalTok{(lon, lat)) +}\StringTok{ }
+\StringTok{  }\KeywordTok{geom_polyogon}\NormalTok{(}\DataTypeTok{data =} \NormalTok{world) +}
+\StringTok{  }\KeywordTok{geom_point}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{size =} \NormalTok{bd), }\DataTypeTok{colour =} \StringTok{"red"}\NormalTok{) +}
+\StringTok{  }\KeywordTok{coord_map}\NormalTok{(}\DataTypeTok{projection =} \StringTok{"mercator"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+Wilkinson, Leland. 2005. \emph{The Grammar of Graphics}. 2nd ed.
+Statistics and Computing. Springer.

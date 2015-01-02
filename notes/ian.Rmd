@@ -1,0 +1,88 @@
+---
+title: "Notes on ggplot2 book"
+author: Ian Lyttle
+
+output: html_document
+---
+
+Some background: in 2012, I decided that I needed to teach myself R. I was progressing in fits and starts until I stumbled upon this one name that just kept popping up over and over (guess who). A simple googling of images for ggplot2 convinved me that I needed to learn this dark art. So I ordered the book, and then made the fateful decision that for one week, Schneider Electric was going pay me to read and code along with the book, cover-to-cover. I made a few notes in the margins along the way (not many, because the book was very well written). Here are those notes, along with a few observations from 2014.  
+
+I don't see any edition information on my copy, so I'll have to hope that the page numbers are meaningful.
+
+```{r}
+library(ggplot2)
+```
+
+#### p. 96
+
+At the bottom of the page, there is a description of limits. 
+
+> Any value not in the domain of the scale is discarded ... This discarding occurs before statistics are calculated.
+
+I made a star, and a note that this is "very important". Until I understood this point I was (frustratingly) getting results that I did not understand. Perhaps this point could be given more prominence.
+
+#### p. 101
+
+Bottom of page
+
+```{r}
+plot <- qplot(date, psavert, data = economics, geom = "line") + 
+  ylab("Personal savings rate") + 
+  geom_hline(xintercept = 0, colour = "grey50")
+
+plot
+
+plot + scale_x_date(breaks = "10 years")
+plot + scale_x_date(
+  limits = as.Date(c("2004-01-01", "2005-01-01")),
+  labels = date_format("%Y-%m-%d")  
+)
+```
+
+This brings up another point that I'll come back to later. Since the publication in 2009, we have had the introduction of `lubridate` (not to mention `dplyr`). Is it thought to update the examples accordingly (I know this is a lot of work)? Is it even a good idea?
+
+```{r}
+library(lubridate)
+
+plot + scale_x_date(
+  limits = as.Date(c("2004-01-01", "2005-01-01")), # can this be made easier?
+  labels = stamp("2004-12-31")  
+)
+```
+
+
+#### p. 129
+
+There is a discussion here including the quote:
+
+> one day I hope to add 3d graphics too.
+
+Given that ggplot2 is now in maintenance mode, could/should this package be rephrased?
+
+I don't know if this is the place for the larger discussion on the dangers of 3d. As I understand the arguement, 3d is a great way to hide difficult parts of your data, accidentally or otherwise. I remember one talk Hadley gave that touched on using heuristics, such as size and layering, to give the impression of 3d while still respecting the two dimensions being shown.
+
+I don't know, as well, if this is a good place (or if there is a good place) to talk about some common graphing techniques, such as 2nd y-axis, or 3d, that (by definition) are contrary to grammar-of-graphics, and what grammar-of-graphics techniques can be used to convey the same information, perhaps not quite as concisely, but with less abiguity.
+
+#### Chapter 9 
+
+Is it thought to convert to `dplyr` and `tidyr`?
+
+We have tidy tools for data transformation and visualization. I know it remains on the to-do list for modeling. Is this a place to discuss that, as well as some of the efforts made so far, including `broom` (which I sadly have not had time to look at yet)?
+
+```{r}
+library(plyr)
+# select the two smallest diamonds
+ddply(diamonds, .(color), subset, order(carat) <= 2)
+
+# I always get turned-around on this, but I think you want rank here.
+ddply(diamonds, .(color), subset, rank(carat) <= 2)
+
+# the problem is that rank seems to operate on the entire dataframe, not the group.
+```
+
+```{r}
+library(dplyr)
+diamonds %>%
+  group_by(color) %>%
+  top_n(2, desc(carat))
+```

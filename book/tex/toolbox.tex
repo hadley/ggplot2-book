@@ -1,0 +1,1097 @@
+\chapter{Toolbox}\label{cha:toolbox}
+
+\section{Introduction}
+
+The layered structure of ggplot encourages you to design and construct
+graphics in a structured manner. You have learned what a layer is and
+how to add one to your graphic, but not what geoms and statistics are
+available to help you build revealing plots. This chapter lists some of
+the many geoms and stats included in ggplot, broken down by their
+purpose. This chapter will provide a good overview of the available
+options, but it does not describe each geom and stat in detail. For more
+information about individual geoms, along with many more examples
+illustrating their use, see the online and electronic documentation. You
+may also want to consult the documentation to learn more about the
+datasets used in this chapter.
+
+This chapter is broken up into the following sections, each of which
+deals with a particular graphical challenge. This is not an exhaustive
+or exclusive categorisation, and there are many other possible ways to
+break up graphics into different categories. Each geom can be used for
+many different purposes, especially if you are creative. However, this
+breakdown should cover many common tasks and help you learn about some
+of the possibilities.
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Basic plot types to produce common, `named' graphics like scatterplots
+  and line charts (\hyperref[sec:basics]{link to section}).
+\item
+  Displaying distributions, continuous and discrete, 1d and 2d, joint
+  and conditional (\hyperref[sec:distributions]{link to section}).
+\item
+  Dealing with overplotting in scatterplots a challenge with large
+  datasets (\hyperref[sec:overplotting]{link to section}).
+\item
+  Surface plots display 3d surfaces in 2d (\hyperref[sec:surface]{link
+  to section}).
+\item
+  Statistical summaries display informative data summaries
+  (\hyperref[sec:summary]{link to section})
+\item
+  Drawing maps (\hyperref[sec:maps]{link to section}).
+\item
+  Revealing uncertainty and error, with various 1d and 2d intervals
+  (\hyperref[sec:uncertainty]{link to section}).
+\item
+  Annotating a plot to label, describe and explain with supplemental
+  information \hyperref[sec:annotating]{link to section}.
+\item
+  Weighted data \hyperref[sec:weighting]{link to section}.
+\end{itemize}
+
+The examples in this section use a mixture of \texttt{ggplot()} and
+\texttt{qplot()} calls, reflecting real-life use. If you need a reminder
+on how to translate between the two, see
+\hyperref[sec:qplot-ggplot]{translating between qplot and ggplot}. The
+examples do not go into much depth, but hopefully if you flick through
+this chapter, you'll be able to see a plot that looks like the one
+you're trying to create.
+
+\section{Overall layering strategy}\label{sec:strategy}
+
+It is useful to think about the purpose of each layer before it is
+added. In general, there are three purposes for a layer:
+\index{Layers!strategy}
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  To display the \textbf{data}. We plot the raw data for many reasons,
+  relying on our skills at pattern detection to spot gross structure,
+  local structure, and outliers. This layer appears on virtually every
+  graphic. In the earliest stages of data exploration, it is often the
+  only layer.
+\item
+  To display a statistical \textbf{summary} of the data. As we develop
+  and explore models of the data, it is useful to display model
+  predictions in the context of the data. We learn from the data
+  summaries and we evaluate the model. Showing the data helps us improve
+  the model, and showing the model helps reveal subtleties of the data
+  that we might otherwise miss. Summaries are usually drawn on top of
+  the data.
+\end{itemize}
+
+If you review the examples in the preceding chapter, you'll see many
+examples of plots of data with an added layer displaying a statistical
+summary.
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  To add additional \textbf{metadata}, context and annotations. A
+  metadata layer displays background context or annotations that help to
+  give meaning to the raw data. Metadata can be useful in the background
+  and foreground.
+\end{itemize}
+
+A map is often used as a background layer with spatial data. Background
+metadata should be rendered so that it doesn't interfere with your
+perception of the data, so is usually displayed underneath the data and
+formatted so that it is minimally perceptible. That is, if you
+concentrate on it, you can see it with ease, but it doesn't jump out at
+you when you are casually browsing the plot.
+
+Other metadata is used to highlight important features of the data. If
+you have added explanatory labels to a couple of inflection points or
+outliers, then you want to render them so that they pop out at the
+viewer. In that case, you want this to be the very last layer drawn.
+
+\hyperdef{}{sec:basics}{\section{Basic plot types}\label{sec:basics}}
+
+These geoms are the fundamental building blocks of \texttt{ggplot}. They
+are useful in their own right, but also to construct more complex geoms.
+Most of these geoms are associated with a named plot: when that geom is
+used by itself in a plot, that plot has a special name.
+
+Each of these geoms is two dimensional and requires both \texttt{x} and
+\texttt{y} aesthetics. All understand \texttt{colour} and \texttt{size}
+aesthetics, and the filled geoms (bar, tile and polygon) also understand
+\texttt{fill}. The point geom uses \texttt{shape} and line and path
+geoms understand \texttt{linetype}. The geoms are used for displaying
+data, summaries computed elsewhere, and metadata.
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  \texttt{geom\_area()} draws an \textbf{area plot}, which is a line
+  plot filled to the y-axis (filled lines). Multiple groups will be
+  stacked on top of each other. \index{Area plot} \indexf{geom_area}
+\item
+  \texttt{geom\_bar(stat = "identity")} makes a \textbf{barchart}. We
+  need \texttt{stat = "identity"} because the default stat automatically
+  counts values (so is essentially a 1d geom, see
+  \hyperref[sec:distributions]{displaying distributions}. The identity
+  stat leaves the data unchanged. \index{Barchart} \indexf{geom_bar}
+\end{itemize}
+
+By default, multiple bars in the same location will be stacked on top of
+one another.
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  \texttt{geom\_line()} makes a \textbf{line plot}. The \texttt{group}
+  aesthetic determines which observations are connected; see
+  \hyperref[sub:grouping]{grouping} for more details.
+  \texttt{geom\_path()} is similar to a \texttt{geom\_line()}, but lines
+  are connected in the order they appear in the data, not from left to
+  right. \index{Line plot} \indexf{geom_line} \indexf{geom_path}
+\item
+  \texttt{geom\_point()} produces a \textbf{scatterplot}.
+  \indexf{geom_point}
+\item
+  \texttt{geom\_polygon()} draws polygons, which are filled paths. Each
+  vertex of the polygon requires a separate row in the data. It is often
+  useful to merge a data frame of polygon coordinates with the data just
+  prior to plotting. \hyperref[sec:maps]{Drawing maps} illustrates this
+  concept in more detail for map data. \indexf{geom_polygon}
+\item
+  \texttt{geom\_text()} adds labels at the specified points. This is the
+  only geom in this group that requires another aesthetic:
+  \texttt{label}. It also has optional aesthetics \texttt{hjust} and
+  \texttt{vjust} that control the horizontal and vertical position of
+  the text; and \texttt{angle} which controls the rotation of the text.
+  See \hyperref[cha:specifications]{specifications} for more details.
+  \index{Labels} \indexf{geom_text}
+\item
+  \texttt{geom\_tile()} makes an image plot or level plot. The tiles
+  form a regular tessellation of the plane and typically have the
+  \texttt{fill} aesthetic mapped to another variable. \index{Image plot}
+  \index{Level plot} \indexf{geom_tile}
+\end{itemize}
+
+Each of these geoms is illustrated in Figure \ref{fig:geom-basic},
+created with the code below.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}
+  \DataTypeTok{x =} \KeywordTok{c}\NormalTok{(}\DecValTok{3}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{5}\NormalTok{), }
+  \DataTypeTok{y =} \KeywordTok{c}\NormalTok{(}\DecValTok{2}\NormalTok{, }\DecValTok{4}\NormalTok{, }\DecValTok{6}\NormalTok{), }
+  \DataTypeTok{label =} \KeywordTok{c}\NormalTok{(}\StringTok{"a"}\NormalTok{,}\StringTok{"b"}\NormalTok{,}\StringTok{"c"}\NormalTok{)}
+\NormalTok{)}
+\NormalTok{p <-}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(df, }\KeywordTok{aes}\NormalTok{(x, y, }\DataTypeTok{label =} \NormalTok{label)) +}\StringTok{ }
+\StringTok{  }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{x =} \StringTok{""}\NormalTok{, }\DataTypeTok{y =} \StringTok{""}\NormalTok{)}
+\NormalTok{p +}\StringTok{ }\KeywordTok{geom_point}\NormalTok{() +}\StringTok{ }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"geom_point"}\NormalTok{)}
+\NormalTok{p +}\StringTok{ }\KeywordTok{geom_bar}\NormalTok{(}\DataTypeTok{stat=}\StringTok{"identity"}\NormalTok{) +}\StringTok{ }
+\StringTok{  }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"geom_bar(stat=}\CharTok{\textbackslash{}"}\StringTok{identity}\CharTok{\textbackslash{}"}\StringTok{)"}\NormalTok{)}
+\NormalTok{p +}\StringTok{ }\KeywordTok{geom_line}\NormalTok{() +}\StringTok{ }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"geom_line"}\NormalTok{)}
+\NormalTok{p +}\StringTok{ }\KeywordTok{geom_area}\NormalTok{() +}\StringTok{ }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"geom_area"}\NormalTok{)}
+\NormalTok{p +}\StringTok{ }\KeywordTok{geom_path}\NormalTok{() +}\StringTok{ }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"geom_path"}\NormalTok{)}
+\NormalTok{p +}\StringTok{ }\KeywordTok{geom_text}\NormalTok{() +}\StringTok{ }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"geom_text"}\NormalTok{)}
+\NormalTok{p +}\StringTok{ }\KeywordTok{geom_tile}\NormalTok{() +}\StringTok{ }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"geom_tile"}\NormalTok{)}
+\NormalTok{p +}\StringTok{ }\KeywordTok{geom_polygon}\NormalTok{() +}\StringTok{ }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"geom_polygon"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.24\linewidth]{figures/toolboxgeom-basic-1} \includegraphics[width=0.24\linewidth]{figures/toolboxgeom-basic-2} \includegraphics[width=0.24\linewidth]{figures/toolboxgeom-basic-3} \includegraphics[width=0.24\linewidth]{figures/toolboxgeom-basic-4} \includegraphics[width=0.24\linewidth]{figures/toolboxgeom-basic-5} \includegraphics[width=0.24\linewidth]{figures/toolboxgeom-basic-6} \includegraphics[width=0.24\linewidth]{figures/toolboxgeom-basic-7} \includegraphics[width=0.24\linewidth]{figures/toolboxgeom-basic-8} 
+
+}
+
+\caption{The basic geoms applied to the same data. Many give rise to named plots (from top left to bottom right): scatterplot, bar chart, line chart, area chart, path plot, labelled scatterplot, image/level plot and polygon plot. Observe the different axis ranges for the bar, area and tile plots: these geoms take up space outside the range of the data, and so push the axes out.\label{fig:geom-basic}}
+\end{figure}
+
+\hyperdef{}{sec:distributions}{\section{Displaying
+distributions}\label{sec:distributions}}
+
+There are a number of geoms that can be used to display distributions,
+depending on the dimensionality of the distribution, whether it is
+continuous or discrete, and whether you are interested in conditional or
+joint distribution. \index{Distributions}
+
+For 1d continuous distributions the most important geom is the
+histogram. Figure \ref{fig:geom-1d-con} uses the histogram to display
+the distribution of diamond \texttt{depth}. It is important to
+experiment with bin placement to find a revealing view. You can change
+the \texttt{binwidth}, or specify the exact location of the
+\texttt{breaks}. \index{Histogram!choosing bins} \indexf{geom_histogram}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(depth, }\DataTypeTok{data=}\NormalTok{diamonds, }\DataTypeTok{geom=}\StringTok{"histogram"}\NormalTok{)}
+\KeywordTok{qplot}\NormalTok{(depth, }\DataTypeTok{data=}\NormalTok{diamonds, }\DataTypeTok{geom=}\StringTok{"histogram"}\NormalTok{, }
+      \DataTypeTok{xlim=}\KeywordTok{c}\NormalTok{(}\DecValTok{55}\NormalTok{, }\DecValTok{70}\NormalTok{), }\DataTypeTok{binwidth=}\FloatTok{0.1}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.49\linewidth]{figures/toolboxgeom-1d-con-1} \includegraphics[width=0.49\linewidth]{figures/toolboxgeom-1d-con-2} 
+
+}
+
+\caption{(Left) Never rely on the default parameters to get a revealing view of the distribution.  (Right) Zooming in on the x axis, \texttt{xlim = c(55, 70)}, and selecting a smaller bin width, \texttt{binwidth = 0.1}, reveals far more detail. We can see that the distribution is slightly skew-right. Don't forget to include information about important parameters (like bin width) in the caption.\label{fig:geom-1d-con}}
+\end{figure}
+
+If you want to compare the distribution between groups, you have a few
+options: create small multiples of the histogram,
+\texttt{facets = . \textasciitilde{} var}; use a frequency polygon,
+\texttt{geom = "freqpoly"}; or create a conditional density plot,
+\texttt{position = "fill"}. These options are illustrated in Figure
+\ref{fig:compare-dist}, created with the code below.
+\index{Frequency polygon} \index{Conditional density plot}
+\indexf{geom_freqpoly} \indexf{geom_density}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{depth_dist <-}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(diamonds, }\KeywordTok{aes}\NormalTok{(depth)) +}\StringTok{ }\KeywordTok{xlim}\NormalTok{(}\DecValTok{58}\NormalTok{, }\DecValTok{68}\NormalTok{)}
+\NormalTok{depth_dist +}\StringTok{ }
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{y =} \NormalTok{..density..), }\DataTypeTok{binwidth =} \FloatTok{0.1}\NormalTok{) +}
+\StringTok{  }\KeywordTok{facet_grid}\NormalTok{(cut ~}\StringTok{ }\NormalTok{.)}
+\NormalTok{depth_dist +}\StringTok{ }\KeywordTok{geom_histogram}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{fill =} \NormalTok{cut), }\DataTypeTok{binwidth =} \FloatTok{0.1}\NormalTok{, }
+  \DataTypeTok{position =} \StringTok{"fill"}\NormalTok{)}
+\NormalTok{depth_dist +}\StringTok{ }\KeywordTok{geom_freqpoly}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{y =} \NormalTok{..density.., }\DataTypeTok{colour =} \NormalTok{cut), }
+  \DataTypeTok{binwidth =} \FloatTok{0.1}\NormalTok{) }
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=\linewidth]{figures/toolboxcompare-dist-1} \includegraphics[width=\linewidth]{figures/toolboxcompare-dist-2} \includegraphics[width=\linewidth]{figures/toolboxcompare-dist-3} 
+
+}
+
+\caption{Three views of the distribution of depth and cut. From top to bottom: faceted histogram, a conditional density plot, and frequency polygons. All show an interesting pattern: as quality increases, the distribution shifts to the left and becomes more symmetric.\label{fig:compare-dist}}
+\end{figure}
+
+Both the histogram and frequency polygon geom use \texttt{stat\_bin()}.
+This statistic produces two output variables \texttt{count} and
+\texttt{density}. The count is the default as it is most interpretable.
+The density is basically the count divided by the total count, and is
+useful when you want to compare the shape of the distributions, not the
+overall size. You will often prefer this when comparing the distribution
+of subsets that have different sizes. \indexf{stat_bin}
+
+Many of the distribution-related geoms come in geom/stat pairs. Most of
+these geoms are aliases: a basic geom is combined with a stat to produce
+the desired plot. The boxplot may appear to be an exception to this
+rule, but behind the scenes \texttt{geom\_boxplot()} uses a combination
+of the basic bars, lines and points.
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  \texttt{geom\_boxplot} = \texttt{stat\_boxplot} +
+  \texttt{geom\_boxplot}: box-and-whisker plot, for a continuous
+  variable conditioned by a categorical variable. This is a useful
+  display when the categorical variable has many distinct values. When
+  there are few values, the techniques described above give a better
+  view of the shape of the distribution. This technique can also be used
+  for continuous variables, if they are first finely binned. Figure
+  \ref{fig:geom-boxplot} shows boxplots conditioned on both categorical
+  and continuous variables. \index{Boxplot} \indexf{geom_boxplot}
+  \indexf{stat_boxplot}
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(cut, depth, }\DataTypeTok{data=}\NormalTok{diamonds, }\DataTypeTok{geom=}\StringTok{"boxplot"}\NormalTok{)}
+\KeywordTok{qplot}\NormalTok{(carat, depth, }\DataTypeTok{data=}\NormalTok{diamonds, }\DataTypeTok{geom=}\StringTok{"boxplot"}\NormalTok{, }
+      \DataTypeTok{group =} \NormalTok{plyr::}\KeywordTok{round_any}\NormalTok{(carat, }\FloatTok{0.1}\NormalTok{, floor), }\DataTypeTok{xlim =} \KeywordTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{3}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.49\linewidth]{figures/toolboxgeom-boxplot-1} \includegraphics[width=0.49\linewidth]{figures/toolboxgeom-boxplot-2} 
+
+}
+
+\caption{The boxplot geom can be of use to see the distribution of a continuous variable conditional on a discrete varable like cut (left), or continuous variable like carat (right). For continuous variables, the group aesthetic must be set to get multiple boxplots. Here \texttt{group = plyr::round\_any(carat, 0.1, floor)} is used to get a boxplot for each 0.1 carat bin.\label{fig:geom-boxplot}}
+\end{figure}
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  \texttt{geom\_jitter()} = \texttt{position\_jitter()} +
+  \texttt{geom\_point()}: a crude way of looking at discrete
+  distributions by adding random noise to the discrete values so that
+  they don't overplot. An example is shown in Figure
+  \ref{fig:geom-jitter} created with the code below. \index{Jittering}
+  \indexf{geom_jitter} \indexf{position_jitter}
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(class, cty, }\DataTypeTok{data=}\NormalTok{mpg, }\DataTypeTok{geom=}\StringTok{"jitter"}\NormalTok{)}
+\KeywordTok{qplot}\NormalTok{(class, drv, }\DataTypeTok{data=}\NormalTok{mpg, }\DataTypeTok{geom=}\StringTok{"jitter"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.8\linewidth]{figures/toolboxgeom-jitter-1} \includegraphics[width=0.8\linewidth]{figures/toolboxgeom-jitter-2} 
+
+}
+
+\caption{The jitter geom can be used to give a crude visualisation of 2d distributions with a discrete component. Generally this works better for smaller datasets. Car class vs. continuous variable city mpg (top) and discrete variable drive train (bottom).\label{fig:geom-jitter}}
+\end{figure}
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  \texttt{geom\_density} = \texttt{stat\_density} + \texttt{geom\_area}:
+  a smoothed version of the frequency polygon based on kernel smoothers.
+  Also described in \hyperref[sub:distribution]{histogram and density
+  plots}. Use a density plot when you know that the underlying density
+  is smooth, continuous and unbounded. You can use the \texttt{adjust}
+  parameter to make the density more or less smooth. An example is shown
+  in Figure \ref{fig:geom-density} created with the code below.
+  \index{Density!plot} \indexf{geom_density} \indexf{stat_density}
+  \indexf{geom_area}
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(depth, }\DataTypeTok{data=}\NormalTok{diamonds, }\DataTypeTok{geom=}\StringTok{"density"}\NormalTok{, }\DataTypeTok{xlim =} \KeywordTok{c}\NormalTok{(}\DecValTok{54}\NormalTok{, }\DecValTok{70}\NormalTok{))}
+\KeywordTok{qplot}\NormalTok{(depth, }\DataTypeTok{data=}\NormalTok{diamonds, }\DataTypeTok{geom=}\StringTok{"density"}\NormalTok{, }\DataTypeTok{xlim =} \KeywordTok{c}\NormalTok{(}\DecValTok{54}\NormalTok{, }\DecValTok{70}\NormalTok{), }
+      \DataTypeTok{fill =} \NormalTok{cut, }\DataTypeTok{alpha =} \KeywordTok{I}\NormalTok{(}\FloatTok{0.2}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.49\linewidth]{figures/toolboxgeom-density-1} \includegraphics[width=0.49\linewidth]{figures/toolboxgeom-density-2} 
+
+}
+
+\caption{The density plot is a smoothed version of the histogram. It has desirable theoretical properties, but is more difficult to relate back to the data. A density plot of depth (left), coloured by cut (right).\label{fig:geom-density}}
+\end{figure}
+
+Visualising a joint 2d continuous distribution is described in the next
+section.
+
+\hyperdef{}{sec:overplotting}{\section{Dealing with
+overplotting}\label{sec:overplotting}}
+
+The scatterplot is a very important tool for assessing the relationship
+between two continuous variables. However, when the data is large, often
+points will be plotted on top of each other, obscuring the true
+relationship. In extreme cases, you will only be able to see the extent
+of the data, and any conclusions drawn from the graphic will be suspect.
+This problem is called overplotting and there are a number of ways to
+deal with it: \index{Overplotting}
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Small amounts of overplotting can sometimes be alleviated by making
+  the points smaller, or using hollow glyphs, as shown in Figure
+  \ref{fig:overp-glyph}. The data is 2000 points sampled from two
+  independent normal distributions, and the code to produce the graphic
+  is shown below. \indexf{geom_point}
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}\DataTypeTok{x =} \KeywordTok{rnorm}\NormalTok{(}\DecValTok{2000}\NormalTok{), }\DataTypeTok{y =} \KeywordTok{rnorm}\NormalTok{(}\DecValTok{2000}\NormalTok{))}
+\NormalTok{norm <-}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(df, }\KeywordTok{aes}\NormalTok{(x, y))}
+\NormalTok{norm +}\StringTok{ }\KeywordTok{geom_point}\NormalTok{()}
+\NormalTok{norm +}\StringTok{ }\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{shape =} \DecValTok{1}\NormalTok{)}
+\NormalTok{norm +}\StringTok{ }\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{shape =} \StringTok{"."}\NormalTok{) }\CommentTok{# Pixel sized}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.32\linewidth]{figures/toolboxoverp-glyph-1} \includegraphics[width=0.32\linewidth]{figures/toolboxoverp-glyph-2} \includegraphics[width=0.32\linewidth]{figures/toolboxoverp-glyph-3} 
+
+}
+
+\caption{Modifying the glyph used can help with mild to moderate overplotting.  From left to right: the default shape, \texttt{shape = 1} (hollow points), and \texttt{shape= "."} (pixel points).\label{fig:overp-glyph}}
+\end{figure}
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  For larger datasets with more overplotting, you can use alpha blending
+  (transparency) to make the points transparent. If you specify alpha as
+  a ratio, the denominator gives the number of points that must be
+  overplotted to give a solid colour. In R, the lowest amount of
+  transparency you can use is 1/256, so it will not be effective for
+  heavy overplotting. Figure \ref{fig:overp-alpha} demonstrates some of
+  these options with the following code. \indexc{alpha}
+  \index{Transparency} \index{Colour!transparency}
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{norm +}\StringTok{ }\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{alpha =} \DecValTok{1}\NormalTok{/}\DecValTok{3}\NormalTok{)}
+\NormalTok{norm +}\StringTok{ }\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{alpha =} \DecValTok{1}\NormalTok{/}\DecValTok{5}\NormalTok{)}
+\NormalTok{norm +}\StringTok{ }\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{alpha =} \DecValTok{1}\NormalTok{/}\DecValTok{10}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.32\linewidth]{figures/toolboxoverp-alpha-1} \includegraphics[width=0.32\linewidth]{figures/toolboxoverp-alpha-2} \includegraphics[width=0.32\linewidth]{figures/toolboxoverp-alpha-3} 
+
+}
+
+\caption{Using alpha blending to alleviate overplotting in sample data from a bivariate normal.  Alpha values from left to right: 1/3, 1/5, 1/10.\label{fig:overp-alpha}}
+\end{figure}
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  If there is some discreteness in the data, you can randomly jitter the
+  points to alleviate some overlaps. This is particularly useful in
+  conjunction with transparency. By default, the amount of jitter added
+  is 40\% of the resolution of the data, which leaves a small gap
+  between adjacent regions. In Figure \ref{fig:overp-jitter}, table is
+  recorded to the nearest integers, so we set a jitter width of half of
+  that. The complete code is shown below. \index{Jittering}
+  \indexf{geom_jitter} \indexf{position_jitter}
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{td <-}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(diamonds, }\KeywordTok{aes}\NormalTok{(table, depth)) +}\StringTok{ }
+\StringTok{  }\KeywordTok{xlim}\NormalTok{(}\DecValTok{50}\NormalTok{, }\DecValTok{70}\NormalTok{) +}\StringTok{ }\KeywordTok{ylim}\NormalTok{(}\DecValTok{50}\NormalTok{, }\DecValTok{70}\NormalTok{)}
+\NormalTok{td +}\StringTok{ }\KeywordTok{geom_point}\NormalTok{()}
+\NormalTok{td +}\StringTok{ }\KeywordTok{geom_jitter}\NormalTok{()}
+\NormalTok{jit <-}\StringTok{ }\KeywordTok{position_jitter}\NormalTok{(}\DataTypeTok{width =} \FloatTok{0.5}\NormalTok{)}
+\NormalTok{td +}\StringTok{ }\KeywordTok{geom_jitter}\NormalTok{(}\DataTypeTok{position =} \NormalTok{jit)}
+\NormalTok{td +}\StringTok{ }\KeywordTok{geom_jitter}\NormalTok{(}\DataTypeTok{position =} \NormalTok{jit, }\DataTypeTok{alpha =} \DecValTok{1}\NormalTok{/}\DecValTok{10}\NormalTok{)}
+\NormalTok{td +}\StringTok{ }\KeywordTok{geom_jitter}\NormalTok{(}\DataTypeTok{position =} \NormalTok{jit, }\DataTypeTok{alpha =} \DecValTok{1}\NormalTok{/}\DecValTok{50}\NormalTok{)}
+\NormalTok{td +}\StringTok{ }\KeywordTok{geom_jitter}\NormalTok{(}\DataTypeTok{position =} \NormalTok{jit, }\DataTypeTok{alpha =} \DecValTok{1}\NormalTok{/}\DecValTok{200}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.32\linewidth]{figures/toolboxoverp-jitter-1} \includegraphics[width=0.32\linewidth]{figures/toolboxoverp-jitter-2} \includegraphics[width=0.32\linewidth]{figures/toolboxoverp-jitter-3} \includegraphics[width=0.32\linewidth]{figures/toolboxoverp-jitter-4} \includegraphics[width=0.32\linewidth]{figures/toolboxoverp-jitter-5} \includegraphics[width=0.32\linewidth]{figures/toolboxoverp-jitter-6} 
+
+}
+
+\caption{A plot of table vs. depth from the diamonds data, showing the use of jitter and alpha blending to alleviate overplotting in discrete data. From left to right: geom point, geom jitter with default jitter, geom jitter with horizontal jitter of 0.5 (half the gap between bands), alpha of 1/10, alpha of 1/50, alpha of 1/200.\label{fig:overp-jitter}}
+\end{figure}
+
+Alternatively, we can think of overplotting as a 2d density estimation
+problem, which gives rise to two more approaches:
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Bin the points and count the number in each bin, then visualise that
+  count in some way (the 2d generalisation of the histogram). Breaking
+  the plot into many small squares can produce distracting visual
+  artefacts. (D. B. Carr et al. 1987) suggests using hexagons instead,
+  and this is implemented with \texttt{geom\_hexagon()}, using the
+  capabilities of the \textbf{hexbin} package (D. Carr, Lewin-Koh, and
+  Maechler 2008). Figure \ref{fig:overp-bin} compares square and
+  hexagonal bins, using parameters \texttt{bins} and \texttt{binwidth}
+  to control the number and size of the bins. The complete code is shown
+  below. \index{Binning!1d|see{Histogram}} \index{Binning!2d}
+  \indexf{geom_hexagon} \indexf{stat_binhex} \indexf{stat_bin2d}
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{d <-}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(diamonds, }\KeywordTok{aes}\NormalTok{(carat, price)) +}\StringTok{ }\KeywordTok{xlim}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{3}\NormalTok{) +}
+\StringTok{  }\KeywordTok{theme}\NormalTok{(}\DataTypeTok{legend.position =} \StringTok{"none"}\NormalTok{)}
+\NormalTok{d +}\StringTok{ }\KeywordTok{stat_bin2d}\NormalTok{()}
+\NormalTok{d +}\StringTok{ }\KeywordTok{stat_bin2d}\NormalTok{(}\DataTypeTok{bins =} \DecValTok{10}\NormalTok{)}
+\NormalTok{d +}\StringTok{ }\KeywordTok{stat_bin2d}\NormalTok{(}\DataTypeTok{binwidth=}\KeywordTok{c}\NormalTok{(}\FloatTok{0.02}\NormalTok{, }\DecValTok{200}\NormalTok{))}
+\NormalTok{d +}\StringTok{ }\KeywordTok{stat_binhex}\NormalTok{()}
+\NormalTok{d +}\StringTok{ }\KeywordTok{stat_binhex}\NormalTok{(}\DataTypeTok{bins =} \DecValTok{10}\NormalTok{)}
+\NormalTok{d +}\StringTok{ }\KeywordTok{stat_binhex}\NormalTok{(}\DataTypeTok{binwidth=}\KeywordTok{c}\NormalTok{(}\FloatTok{0.02}\NormalTok{, }\DecValTok{200}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.32\linewidth]{figures/toolboxoverp-bin-1} \includegraphics[width=0.32\linewidth]{figures/toolboxoverp-bin-2} \includegraphics[width=0.32\linewidth]{figures/toolboxoverp-bin-3} \includegraphics[width=0.32\linewidth]{figures/toolboxoverp-bin-4} \includegraphics[width=0.32\linewidth]{figures/toolboxoverp-bin-5} \includegraphics[width=0.32\linewidth]{figures/toolboxoverp-bin-6} 
+
+}
+
+\caption{Binning with, top row, square bins, and bottom row, hexagonal bins. Left column uses default parameters, middle column \texttt{bins = 10}, and right column \texttt{binwidth = c(0.02, 200)}. Legends have been omitted to save space.\label{fig:overp-bin}}
+\end{figure}
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Estimate the 2d density with \texttt{stat\_density2d()}, and overlay
+  contours from this distribution on the scatterplot, or display the
+  density by itself as coloured tiles, or points with size proportional
+  to density. Figure \ref{fig:overp-density} shows a few of these
+  options with the code below.\index{Density!2d} \indexf{stat_density2d}
+  \indexf{geom_density2d}
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{d <-}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(diamonds, }\KeywordTok{aes}\NormalTok{(carat, price)) +}\StringTok{ }\KeywordTok{xlim}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{3}\NormalTok{) +}\StringTok{ }
+\StringTok{  }\KeywordTok{theme}\NormalTok{(}\DataTypeTok{legend.position =} \StringTok{"none"}\NormalTok{)}
+\NormalTok{d +}\StringTok{ }\KeywordTok{geom_point}\NormalTok{() +}\StringTok{ }\KeywordTok{geom_density2d}\NormalTok{()}
+\NormalTok{d +}\StringTok{ }\KeywordTok{stat_density2d}\NormalTok{(}\DataTypeTok{geom =} \StringTok{"point"}\NormalTok{, }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{size =} \NormalTok{..density..), }
+                   \DataTypeTok{contour =} \NormalTok{F) +}\StringTok{ }\KeywordTok{scale_size}\NormalTok{(}\DataTypeTok{range =} \KeywordTok{c}\NormalTok{(}\FloatTok{0.2}\NormalTok{, }\FloatTok{1.5}\NormalTok{))}
+\NormalTok{d +}\StringTok{ }\KeywordTok{stat_density2d}\NormalTok{(}\DataTypeTok{geom =} \StringTok{"tile"}\NormalTok{, }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{fill =} \NormalTok{..density..), }
+                   \DataTypeTok{contour =} \NormalTok{F) }
+\KeywordTok{last_plot}\NormalTok{() +}\StringTok{ }\KeywordTok{scale_fill_gradient}\NormalTok{(}\DataTypeTok{limits =} \KeywordTok{c}\NormalTok{(}\FloatTok{1e-5}\NormalTok{,}\FloatTok{8e-4}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.4\linewidth]{figures/toolboxoverp-density-1} \includegraphics[width=0.4\linewidth]{figures/toolboxoverp-density-2} \includegraphics[width=0.4\linewidth]{figures/toolboxoverp-density-3} \includegraphics[width=0.4\linewidth]{figures/toolboxoverp-density-4} 
+
+}
+
+\caption{Using density estimation to model and visualise point densities.  (Top) Image displays of the density; (bottom) point and contour based displays.\label{fig:overp-density}}
+\end{figure}
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  If you are interested in the conditional distribution of y given x,
+  then the techniques of \hyperref[sub:distribution]{histogram and
+  density plots} will also be useful.
+\end{itemize}
+
+Another approach to dealing with overplotting is to add data summaries
+to help guide the eye to the true shape of the pattern within the data.
+For example, you could add a smooth line showing the centre of the data
+with \texttt{geom\_smooth}. \hyperref[sec:summary]{Statistical
+summaries} has more ideas.
+
+\hyperdef{}{sec:surface}{\section{Surface plots}\label{sec:surface}}
+
+\texttt{ggplot} currently does not support true 3d surfaces. However, it
+does support the common tools for representing 3d surfaces in 2d:
+contours, coloured tiles and bubble plots. These were used to
+illustrated the 2d density surfaces in the previous section. You may
+also want to look at RGL,
+\url{http://rgl.neoscientists.org/about.shtml}, for interactive 3d
+plots, including true 3d surfaces. \index{3d graphics}
+\index{Surface plots}
+
+\hyperdef{}{sec:maps}{\section{Drawing maps}\label{sec:maps}}
+
+\texttt{ggplot} provides some tools to make it easy to combine maps from
+the \textbf{maps} package with other \texttt{ggplot} graphics. Table
+\ref{tbl:maps} lists the available maps, which are unfortunately rather
+US centric. There are two basic reasons you might want to use map data:
+to add reference outlines to a plot of spatial data, or to construct a
+choropleth map by filling regions with colour. \index{Maps!drawing}
+
+\begin{table}
+  \begin{center}
+  \begin{tabular}{ll}
+    \toprule
+    Country & Map name \\
+    \midrule
+    France & france \\
+    Italy & italy \\
+    New Zealand & nz \\
+    USA at county level & county \\
+    USA at state level & state \\
+    USA borders & usa \\
+    Entire world & world \\ 
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \caption{Maps available in the maps package}
+  \label{tbl:maps}
+\end{table}
+
+Adding map border is performed by the \texttt{borders()} function. The
+first two arguments select the \texttt{map} and \texttt{region} within
+the map to display. The remaining arguments control the appearance of
+the borders: their \texttt{colour} and \texttt{size}. If you'd prefer
+filled polygons instead of just borders, you can set the \texttt{fill}
+colour. The following code uses \texttt{borders()} to display the
+spatial data shown in Figure \ref{fig:borders}. \index{Maps!borders}
+\indexf{geom_polygon}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(}\StringTok{"maps"}\NormalTok{)}
+\KeywordTok{data}\NormalTok{(us.cities)}
+\NormalTok{big_cities <-}\StringTok{ }\KeywordTok{subset}\NormalTok{(us.cities, pop >}\StringTok{ }\DecValTok{500000}\NormalTok{)}
+\KeywordTok{qplot}\NormalTok{(long, lat, }\DataTypeTok{data =} \NormalTok{big_cities) +}\StringTok{ }\KeywordTok{borders}\NormalTok{(}\StringTok{"state"}\NormalTok{, }\DataTypeTok{size =} \FloatTok{0.5}\NormalTok{)}
+
+\NormalTok{tx_cities <-}\StringTok{ }\KeywordTok{subset}\NormalTok{(us.cities, country.etc ==}\StringTok{ "TX"}\NormalTok{)}
+\KeywordTok{ggplot}\NormalTok{(tx_cities, }\KeywordTok{aes}\NormalTok{(long, lat)) +}
+\StringTok{  }\KeywordTok{borders}\NormalTok{(}\StringTok{"county"}\NormalTok{, }\StringTok{"texas"}\NormalTok{, }\DataTypeTok{colour =} \StringTok{"grey70"}\NormalTok{) +}
+\StringTok{  }\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{alpha =} \FloatTok{0.5}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.49\linewidth]{figures/toolboxborders-1} \includegraphics[width=0.49\linewidth]{figures/toolboxborders-2} 
+
+}
+
+\caption{Example using the borders function.  (Left) All cities with population (as of January 2006) of greater than half a million, (right) cities in Texas.\label{fig:borders}}
+\end{figure}
+
+Choropleth maps are a little trickier and a lot less automated because
+it is challenging to match the identifiers in your data to the
+identifiers in the map data. The following example shows how to use
+\texttt{map\_data()} to convert a map into a data frame, which can then
+be \texttt{merge()}d with your data to produce a choropleth map. The
+results are shown in Figure \ref{fig:choropleth}. The details for your
+data will probably be different, but the key is to have a column in your
+data and a column in the map data that can be matched.
+\index{Maps!choropleth}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(}\StringTok{"maps"}\NormalTok{)}
+\NormalTok{states <-}\StringTok{ }\KeywordTok{map_data}\NormalTok{(}\StringTok{"state"}\NormalTok{)}
+\NormalTok{arrests <-}\StringTok{ }\NormalTok{USArrests}
+\KeywordTok{names}\NormalTok{(arrests) <-}\StringTok{ }\KeywordTok{tolower}\NormalTok{(}\KeywordTok{names}\NormalTok{(arrests))}
+\NormalTok{arrests$region <-}\StringTok{ }\KeywordTok{tolower}\NormalTok{(}\KeywordTok{rownames}\NormalTok{(USArrests))}
+
+\NormalTok{choro <-}\StringTok{ }\KeywordTok{merge}\NormalTok{(states, arrests, }\DataTypeTok{by =} \StringTok{"region"}\NormalTok{)}
+\CommentTok{# Reorder the rows because order matters when drawing polygons}
+\CommentTok{# and merge destroys the original ordering}
+\NormalTok{choro <-}\StringTok{ }\NormalTok{choro[}\KeywordTok{order}\NormalTok{(choro$order), ]}
+\KeywordTok{qplot}\NormalTok{(long, lat, }\DataTypeTok{data =} \NormalTok{choro, }\DataTypeTok{group =} \NormalTok{group, }
+  \DataTypeTok{fill =} \NormalTok{assault, }\DataTypeTok{geom =} \StringTok{"polygon"}\NormalTok{)}
+\KeywordTok{qplot}\NormalTok{(long, lat, }\DataTypeTok{data =} \NormalTok{choro, }\DataTypeTok{group =} \NormalTok{group, }
+  \DataTypeTok{fill =} \NormalTok{assault /}\StringTok{ }\NormalTok{murder, }\DataTypeTok{geom =} \StringTok{"polygon"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.49\linewidth]{figures/toolboxchoropleth-1} \includegraphics[width=0.49\linewidth]{figures/toolboxchoropleth-2} 
+
+}
+
+\caption{Two choropleth maps showing number of assaults (left) and the ratio of assaults to murders (right).\label{fig:choropleth}}
+\end{figure}
+
+The \texttt{map\_data()} function is also useful if you'd like to
+process the map data in some way. In the following example we compute
+the (approximate) centre of each county in Iowa and then use those
+centres to label the map.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{>}\StringTok{ }\NormalTok{ia <-}\StringTok{ }\KeywordTok{map_data}\NormalTok{(}\StringTok{"county"}\NormalTok{, }\StringTok{"iowa"}\NormalTok{)}
+\NormalTok{>}\StringTok{ }\NormalTok{mid_range <-}\StringTok{ }\NormalTok{function(x) }\KeywordTok{mean}\NormalTok{(}\KeywordTok{range}\NormalTok{(x, }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{))}
+\NormalTok{>}\StringTok{ }\NormalTok{centres <-}\StringTok{ }\NormalTok{ia %>%}\StringTok{ }\NormalTok{tbl_df %>%}\StringTok{ }\KeywordTok{group_by}\NormalTok{(subregion) %>%}
+\NormalTok{+}\StringTok{   }\KeywordTok{summarise}\NormalTok{(}\DataTypeTok{lat =} \KeywordTok{mid_range}\NormalTok{(lat), }\DataTypeTok{long =} \KeywordTok{mid_range}\NormalTok{(long))}
+\NormalTok{>}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(ia, }\KeywordTok{aes}\NormalTok{(long, lat)) +}\StringTok{ }
+\NormalTok{+}\StringTok{   }\KeywordTok{geom_polygon}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{group =} \NormalTok{group), }
+\NormalTok{+}\StringTok{     }\DataTypeTok{fill =} \OtherTok{NA}\NormalTok{, }\DataTypeTok{colour =} \StringTok{"grey60"}\NormalTok{) +}
+\NormalTok{+}\StringTok{   }\KeywordTok{geom_text}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{label =} \NormalTok{subregion), }\DataTypeTok{data =} \NormalTok{centres, }
+\NormalTok{+}\StringTok{     }\DataTypeTok{size =} \DecValTok{2}\NormalTok{, }\DataTypeTok{angle =} \DecValTok{45}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{flushleft}\includegraphics[width=0.49\linewidth]{figures/toolboxiowa-1} \end{flushleft}
+
+\hyperdef{}{sec:uncertainty}{\section{Revealing
+uncertainty}\label{sec:uncertainty}}
+
+If you have information about the uncertainty present in your data,
+whether it be from a model or from distributional assumptions, it is
+often important to display it. There are four basic families of geoms
+that can be used for this job, depending on whether the x values are
+discrete or continuous, and whether or not you want to display the
+middle of the interval, or just the extent. These geoms are listed in
+Table \ref{tbl:interval}. These geoms assume that you are interested in
+the distribution of y conditional on x and use the aesthetics
+\texttt{ymin} and \texttt{ymax} to determine the range of the y values.
+If you want the opposite, see \hyperref[sub:cartesian]{cartesian
+coordinate systems}. \index{Uncertainty!visualising} \index{Error bar}
+\index{Error band} \indexf{geom_ribbon} \indexf{geom_smooth}
+\indexf{geom_errorbar} \indexf{geom_linerange} \indexf{geom_crossbar}
+\indexf{geom_pointrange}
+
+Because there are so many different ways to calculate standard errors,
+the calculation is up to you. \index{Standard errors} For very simple
+cases, \texttt{ggplot} provides some tools in the form of summary
+functions described in \hyperref[sec:summary]{statistical summaries},
+otherwise you will have to do it yourself. The \textbf{effects} package
+(Fox 2008) is particularly useful for extracting these values from
+linear models. The following example fits a two-way model with
+interaction, and shows how to extract and visualise marginal and
+conditional effects. Figure \ref{fig:model-cat} focusses on the
+categorical variable colour, and Figure \ref{fig:model-cont} focusses on
+the continuous variable carat. \index{Package!effects}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{>}\StringTok{ }\NormalTok{d <-}\StringTok{ }\KeywordTok{subset}\NormalTok{(diamonds, carat <}\StringTok{ }\FloatTok{2.5} \NormalTok{&}\StringTok{ }
+\NormalTok{+}\StringTok{   }\KeywordTok{rbinom}\NormalTok{(}\KeywordTok{nrow}\NormalTok{(diamonds), }\DecValTok{1}\NormalTok{, }\FloatTok{0.2}\NormalTok{) ==}\StringTok{ }\DecValTok{1}\NormalTok{)}
+\NormalTok{>}\StringTok{ }\NormalTok{d$lcarat <-}\StringTok{ }\KeywordTok{log10}\NormalTok{(d$carat)}
+\NormalTok{>}\StringTok{ }\NormalTok{d$lprice <-}\StringTok{ }\KeywordTok{log10}\NormalTok{(d$price)}
+\NormalTok{>}\StringTok{ }
+\ErrorTok{>}\StringTok{ }\CommentTok{# Remove overall linear trend}
+\ErrorTok{>}\StringTok{ }\NormalTok{detrend <-}\StringTok{ }\KeywordTok{lm}\NormalTok{(lprice ~}\StringTok{ }\NormalTok{lcarat, }\DataTypeTok{data =} \NormalTok{d)}
+\NormalTok{>}\StringTok{ }\NormalTok{d$lprice2 <-}\StringTok{ }\KeywordTok{resid}\NormalTok{(detrend)}
+\NormalTok{>}\StringTok{ }
+\ErrorTok{>}\StringTok{ }\NormalTok{mod <-}\StringTok{ }\KeywordTok{lm}\NormalTok{(lprice2 ~}\StringTok{ }\NormalTok{lcarat *}\StringTok{ }\NormalTok{color, }\DataTypeTok{data =} \NormalTok{d)}
+\NormalTok{>}\StringTok{ }
+\ErrorTok{>}\StringTok{ }\KeywordTok{library}\NormalTok{(}\StringTok{"effects"}\NormalTok{)}
+\NormalTok{>}\StringTok{ }\NormalTok{effectdf <-}\StringTok{ }\NormalTok{function(...) \{}
+\NormalTok{+}\StringTok{   }\KeywordTok{suppressWarnings}\NormalTok{(}\KeywordTok{as.data.frame}\NormalTok{(}\KeywordTok{effect}\NormalTok{(...)))}
+\NormalTok{+}\StringTok{ }\NormalTok{\}}
+\NormalTok{>}\StringTok{ }\NormalTok{color <-}\StringTok{ }\KeywordTok{effectdf}\NormalTok{(}\StringTok{"color"}\NormalTok{, mod)}
+\NormalTok{>}\StringTok{ }\NormalTok{both1 <-}\StringTok{ }\KeywordTok{effectdf}\NormalTok{(}\StringTok{"lcarat:color"}\NormalTok{, mod)}
+\NormalTok{>}\StringTok{ }
+\ErrorTok{>}\StringTok{ }\NormalTok{carat <-}\StringTok{ }\KeywordTok{effectdf}\NormalTok{(}\StringTok{"lcarat"}\NormalTok{, mod, }\DataTypeTok{default.levels =} \DecValTok{50}\NormalTok{)}
+\NormalTok{>}\StringTok{ }\NormalTok{both2 <-}\StringTok{ }\KeywordTok{effectdf}\NormalTok{(}\StringTok{"lcarat:color"}\NormalTok{, mod, }\DataTypeTok{default.levels =} \DecValTok{3}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.49\linewidth]{figures/toolboxldata-1} \includegraphics[width=0.49\linewidth]{figures/toolboxldata-2} 
+
+}
+
+\caption{Data transformed to remove most obvious effects. (Left) Both x and y axes are log10 transformed to remove non-linearity. (Right) The major linear trend is removed.\label{fig:ldata}}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.49\linewidth]{figures/toolboxmodel-cat-1} \includegraphics[width=0.49\linewidth]{figures/toolboxmodel-cat-2} 
+
+}
+
+\caption{Displaying uncertainty in model estimates for colour. (Left) Marginal effect of colour. (Right) conditional effects of colour for different levels of carat. Error bars show 95\% pointwise confidence intervals.\label{fig:model-cat}}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.49\linewidth]{figures/toolboxmodel-cont-1} \includegraphics[width=0.49\linewidth]{figures/toolboxmodel-cont-2} 
+
+}
+
+\caption{Displaying uncertainty in model estimates for carat. (Left) marginal effect of carat. (Right) conditional effects of carat for different levels of colour. Bands show 95\% point-wise confidence intervals.\label{fig:model-cont}}
+\end{figure}
+
+Note, when captioning such figures, you need to carefully describe the
+nature of the confidence intervals, and whether or not it is meaningful
+to look at the overlap. That is, are the standard errors for the means
+or for the differences between means? The packages \textbf{multcomp} and
+\textbf{multcompView} are useful for calculating and displaying these
+errors while correctly adjusting for multiple comparisons.
+\index{Package!multcomp} \index{Package!multcompView}
+
+\hyperdef{}{sec:summary}{\section{Statistical
+summaries}\label{sec:summary}}
+
+It's often useful to be able to summarise the y values for each unique x
+value. In \texttt{ggplot}, this role is played by
+\texttt{stat\_summary()}, which provides a flexible way of summarising
+the conditional distribution of y with the aesthetics \texttt{ymin},
+\texttt{y} and \texttt{ymax}. Figure \ref{fig:stat-summary} shows some
+of the variety of summaries that can be achieved with this tool.
+\index{Summary!statistical} \indexf{stat_summary} \index{Stats!summary}
+
+When using \texttt{stat\_summary()} you can either supply these the
+summary functions individually or altogether. These alternatives are
+described below.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{m <-}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(movies, }\KeywordTok{aes}\NormalTok{(year, rating))}
+\NormalTok{m +}\StringTok{ }\KeywordTok{stat_summary}\NormalTok{(}\DataTypeTok{fun.y =} \StringTok{"median"}\NormalTok{, }\DataTypeTok{geom =} \StringTok{"line"}\NormalTok{)}
+\NormalTok{m +}\StringTok{ }\KeywordTok{stat_summary}\NormalTok{(}\DataTypeTok{fun.data =} \StringTok{"median_hilow"}\NormalTok{, }\DataTypeTok{geom =} \StringTok{"smooth"}\NormalTok{)}
+\NormalTok{m +}\StringTok{ }\KeywordTok{stat_summary}\NormalTok{(}\DataTypeTok{fun.y =} \StringTok{"mean"}\NormalTok{, }\DataTypeTok{geom =} \StringTok{"line"}\NormalTok{)}
+\NormalTok{m +}\StringTok{ }\KeywordTok{stat_summary}\NormalTok{(}\DataTypeTok{fun.data =} \StringTok{"mean_cl_boot"}\NormalTok{, }\DataTypeTok{geom =} \StringTok{"smooth"}\NormalTok{)}
+\NormalTok{m2 <-}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(movies, }\KeywordTok{aes}\NormalTok{(}\KeywordTok{round}\NormalTok{(rating), }\KeywordTok{log10}\NormalTok{(votes)))}
+\NormalTok{m2 +}\StringTok{ }\KeywordTok{stat_summary}\NormalTok{(}\DataTypeTok{fun.y =} \StringTok{"mean"}\NormalTok{, }\DataTypeTok{geom =} \StringTok{"point"}\NormalTok{)}
+\NormalTok{m2 +}\StringTok{ }\KeywordTok{stat_summary}\NormalTok{(}\DataTypeTok{fun.data =} \StringTok{"mean_cl_normal"}\NormalTok{, }\DataTypeTok{geom =} \StringTok{"errorbar"}\NormalTok{)}
+\NormalTok{m2 +}\StringTok{ }\KeywordTok{stat_summary}\NormalTok{(}\DataTypeTok{fun.data =} \StringTok{"median_hilow"}\NormalTok{, }\DataTypeTok{geom =} \StringTok{"pointrange"}\NormalTok{)}
+\NormalTok{m2 +}\StringTok{ }\KeywordTok{stat_summary}\NormalTok{(}\DataTypeTok{fun.data =} \StringTok{"median_hilow"}\NormalTok{, }\DataTypeTok{geom =} \StringTok{"crossbar"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.24\linewidth]{figures/toolboxstat-summary-1} \includegraphics[width=0.24\linewidth]{figures/toolboxstat-summary-2} \includegraphics[width=0.24\linewidth]{figures/toolboxstat-summary-3} \includegraphics[width=0.24\linewidth]{figures/toolboxstat-summary-4} \includegraphics[width=0.24\linewidth]{figures/toolboxstat-summary-5} \includegraphics[width=0.24\linewidth]{figures/toolboxstat-summary-6} \includegraphics[width=0.24\linewidth]{figures/toolboxstat-summary-7} \includegraphics[width=0.24\linewidth]{figures/toolboxstat-summary-8} 
+
+}
+
+\caption{Examples of \texttt{stat\_summary()} in use. (Top) Continuous x with, from left to right, median and line, \texttt{median\_hilow()} and smooth, mean and line, and \texttt{mean\_cl\_boot()} and smooth. (Bottom) Discrete x with, from left to right, \texttt{mean()} and point, \texttt{mean\_cl\_normal()} and error bar, \texttt{median\_hilow()} and point range, and \texttt{median\_hilow()} and crossbar. Note that \texttt{ggplot} displays the full range of the data, not just the range of the summary statistics.\label{fig:stat-summary}}
+\end{figure}
+
+\subsection{Individual summary functions}
+
+The arguments \texttt{fun.y}, \texttt{fun.ymin} and \texttt{fun.ymax}
+accept simple numeric summary functions. You can use any summary
+function that takes a vector of numbers and returns a single numeric
+value: \texttt{mean()}, \texttt{median()}, \texttt{min()},
+\texttt{max()}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{>}\StringTok{ }\NormalTok{midm <-}\StringTok{ }\NormalTok{function(x) }\KeywordTok{mean}\NormalTok{(x, }\DataTypeTok{trim =} \FloatTok{0.5}\NormalTok{)}
+\NormalTok{>}\StringTok{ }\NormalTok{m2 +}\StringTok{ }
+\NormalTok{+}\StringTok{   }\KeywordTok{stat_summary}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{colour =} \StringTok{"trimmed"}\NormalTok{), }\DataTypeTok{fun.y =} \NormalTok{midm, }
+\NormalTok{+}\StringTok{     }\DataTypeTok{geom =} \StringTok{"point"}\NormalTok{) +}
+\NormalTok{+}\StringTok{   }\KeywordTok{stat_summary}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{colour =} \StringTok{"raw"}\NormalTok{), }\DataTypeTok{fun.y =} \NormalTok{mean, }
+\NormalTok{+}\StringTok{     }\DataTypeTok{geom =} \StringTok{"point"}\NormalTok{) +}\StringTok{ }
+\NormalTok{+}\StringTok{   }\KeywordTok{scale_colour_hue}\NormalTok{(}\StringTok{"Mean"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{flushleft}\includegraphics[width=0.49\linewidth]{figures/toolboxstat-trim-1} \end{flushleft}
+
+\subsection{Single summary function}
+
+\texttt{fun.data} can be used with more complex summary functions such
+as one of the summary functions from the \textbf{Hmisc} package (Harrell
+2008) described in Table \ref{tbl:hmisc}. You can also write your own
+summary function. This summary function should return a named vector as
+output, as shown in the following example.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{>}\StringTok{ }\NormalTok{iqr <-}\StringTok{ }\NormalTok{function(x, ...) \{}
+\NormalTok{+}\StringTok{   }\NormalTok{qs <-}\StringTok{ }\KeywordTok{quantile}\NormalTok{(}\KeywordTok{as.numeric}\NormalTok{(x), }\KeywordTok{c}\NormalTok{(}\FloatTok{0.25}\NormalTok{, }\FloatTok{0.75}\NormalTok{), }\DataTypeTok{na.rm =} \NormalTok{T)}
+\NormalTok{+}\StringTok{   }\KeywordTok{names}\NormalTok{(qs) <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"ymin"}\NormalTok{, }\StringTok{"ymax"}\NormalTok{)}
+\NormalTok{+}\StringTok{   }\NormalTok{qs}
+\NormalTok{+}\StringTok{ }\NormalTok{\}}
+\NormalTok{>}\StringTok{ }\NormalTok{m +}\StringTok{ }\KeywordTok{stat_summary}\NormalTok{(}\DataTypeTok{fun.data =} \StringTok{"iqr"}\NormalTok{, }\DataTypeTok{geom=}\StringTok{"ribbon"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{flushleft}\includegraphics[width=0.49\linewidth]{figures/toolboxiqr-1} \end{flushleft}
+
+\hyperdef{}{sec:annotating}{\section{Annotating a
+plot}\label{sec:annotating}}
+
+When annotating your plot with additional labels, the important thing to
+remember is that these annotations are just extra data. There are two
+basic ways to add annotations: one at a time, or many at once.
+\index{Annotation}
+
+Adding one at a time works best for small numbers of annotations with
+varying aesthetics. You just set all the values to give the desired
+properties. If you have multiple annotations with similar properties, it
+may make sense to put them all in a data frame and add them at once. The
+example below demonstrates both approaches by adding information about
+presidents to economic data.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{>}\StringTok{ }\NormalTok{(unemp <-}\StringTok{ }\KeywordTok{qplot}\NormalTok{(date, unemploy, }\DataTypeTok{data=}\NormalTok{economics, }\DataTypeTok{geom=}\StringTok{"line"}\NormalTok{, }
+\NormalTok{+}\StringTok{                 }\DataTypeTok{xlab =} \StringTok{""}\NormalTok{, }\DataTypeTok{ylab =} \StringTok{"No. unemployed (1000s)"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{flushleft}\includegraphics[width=\linewidth]{figures/toolboxumep-1} \end{flushleft}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{>}\StringTok{ }
+\ErrorTok{>}\StringTok{ }\NormalTok{presidential <-}\StringTok{ }\NormalTok{presidential[-(}\DecValTok{1}\NormalTok{:}\DecValTok{3}\NormalTok{), ]}
+\NormalTok{>}\StringTok{ }
+\ErrorTok{>}\StringTok{ }\NormalTok{yrng <-}\StringTok{ }\KeywordTok{range}\NormalTok{(economics$unemploy)}
+\NormalTok{>}\StringTok{ }\NormalTok{xrng <-}\StringTok{ }\KeywordTok{range}\NormalTok{(economics$date)}
+\NormalTok{>}\StringTok{ }\NormalTok{unemp +}\StringTok{ }\KeywordTok{geom_vline}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{xintercept =} \KeywordTok{as.numeric}\NormalTok{(start)), }\DataTypeTok{data =} \NormalTok{presidential)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{flushleft}\includegraphics[width=\linewidth]{figures/toolboxumep-2} \end{flushleft}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{>}\StringTok{ }\NormalTok{unemp +}\StringTok{ }\KeywordTok{geom_rect}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\OtherTok{NULL}\NormalTok{, }\OtherTok{NULL}\NormalTok{, }\DataTypeTok{xmin =} \NormalTok{start, }\DataTypeTok{xmax =} \NormalTok{end, }
+\NormalTok{+}\StringTok{                       }\DataTypeTok{fill =} \NormalTok{party), }\DataTypeTok{ymin =} \NormalTok{yrng[}\DecValTok{1}\NormalTok{], }\DataTypeTok{ymax =} \NormalTok{yrng[}\DecValTok{2}\NormalTok{], }
+\NormalTok{+}\StringTok{                   }\DataTypeTok{alpha =} \FloatTok{0.2}\NormalTok{, }\DataTypeTok{data =} \NormalTok{presidential) +}\StringTok{ }
+\NormalTok{+}\StringTok{   }\KeywordTok{scale_fill_manual}\NormalTok{(}\DataTypeTok{values =} \KeywordTok{c}\NormalTok{(}\StringTok{"blue"}\NormalTok{, }\StringTok{"red"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{flushleft}\includegraphics[width=\linewidth]{figures/toolboxumep-3} \end{flushleft}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{>}\StringTok{ }\KeywordTok{last_plot}\NormalTok{() +}\StringTok{ }\KeywordTok{geom_text}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{start, }\DataTypeTok{y =} \NormalTok{yrng[}\DecValTok{1}\NormalTok{], }\DataTypeTok{label =} \NormalTok{name), }
+\NormalTok{+}\StringTok{                         }\DataTypeTok{data =} \NormalTok{presidential, }\DataTypeTok{size =} \DecValTok{3}\NormalTok{, }\DataTypeTok{hjust =} \DecValTok{0}\NormalTok{, }\DataTypeTok{vjust =} \DecValTok{0}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{flushleft}\includegraphics[width=\linewidth]{figures/toolboxumep-4} \end{flushleft}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{>}\StringTok{ }
+\ErrorTok{>}\StringTok{ }\NormalTok{caption <-}\StringTok{ }\KeywordTok{paste}\NormalTok{(}\KeywordTok{strwrap}\NormalTok{(}\StringTok{"Unemployment rates in the US have }
+\StringTok{+   varied a lot over the years"}\NormalTok{, }\DecValTok{40}\NormalTok{), }\DataTypeTok{collapse=}\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\NormalTok{>}\StringTok{ }\NormalTok{unemp +}\StringTok{ }\KeywordTok{geom_text}\NormalTok{(}\KeywordTok{aes}\NormalTok{(x, y, }\DataTypeTok{label =} \NormalTok{caption), }
+\NormalTok{+}\StringTok{                   }\DataTypeTok{data =} \KeywordTok{data.frame}\NormalTok{(}\DataTypeTok{x =} \NormalTok{xrng[}\DecValTok{2}\NormalTok{], }\DataTypeTok{y =} \NormalTok{yrng[}\DecValTok{2}\NormalTok{]), }
+\NormalTok{+}\StringTok{                   }\DataTypeTok{hjust =} \DecValTok{1}\NormalTok{, }\DataTypeTok{vjust =} \DecValTok{1}\NormalTok{, }\DataTypeTok{size =} \DecValTok{4}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{flushleft}\includegraphics[width=\linewidth]{figures/toolboxumep-5} \end{flushleft}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{>}\StringTok{ }
+\ErrorTok{>}\StringTok{ }\NormalTok{highest <-}\StringTok{ }\KeywordTok{subset}\NormalTok{(economics, unemploy ==}\StringTok{ }\KeywordTok{max}\NormalTok{(unemploy))}
+\NormalTok{>}\StringTok{ }\NormalTok{unemp +}\StringTok{ }\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{data =} \NormalTok{highest, }
+\NormalTok{+}\StringTok{                    }\DataTypeTok{size =} \DecValTok{3}\NormalTok{, }\DataTypeTok{colour =} \StringTok{"red"}\NormalTok{, }\DataTypeTok{alpha =} \FloatTok{0.5}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{flushleft}\includegraphics[width=\linewidth]{figures/toolboxumep-6} \end{flushleft}
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  \texttt{geom\_text()} for adding text descriptions or labelling
+  points. Most plots will not benefit from adding text to every single
+  observation on the plot. However, pulling out just a few observations
+  (using subset) can be very useful. Typically you will want to label
+  outliers or other important points. \index{Labels}
+\item
+  \texttt{geom\_vline()}, \texttt{geom\_hline()}: add vertical or
+  horizontal lines to a plot. \indexf{geom_vline} \indexf{geom_hline}
+\item
+  \texttt{geom\_abline()}: add lines with arbitrary slope and intercept
+  to a plot. \indexf{geom_abline}
+\item
+  \texttt{geom\_rect()} for highlighting interesting rectangular regions
+  of the plot. \texttt{geom\_rect()} has aesthetics \texttt{xmin},
+  \texttt{xmax}, \texttt{ymin} and \texttt{ymax}. \indexf{geom_rect}
+\item
+  \texttt{geom\_line()}, \texttt{geom\_path()} and
+  \texttt{geom\_segment()} for adding lines. All these geoms have an
+  \texttt{arrow} parameter, which allows you to place an arrowhead on
+  the line. You create arrowheads with the \texttt{arrow()} function,
+  which has arguments \texttt{angle}, \texttt{length}, \texttt{ends} and
+  \texttt{type}. \indexf{geom_line}
+\end{itemize}
+
+\hyperdef{}{sec:weighting}{\section{Weighted data}\label{sec:weighting}}
+
+When you have aggregated data where each row in the dataset represents
+multiple observations, you need some way to take into account the
+weighting variable. We will use some data collected on Midwest states in
+the 2000 US census. The data consists mainly of percentages (e.g.,
+percent white, percent below poverty line, percent with college degree)
+and some information for each county (area, total population, population
+density). \index{Weighting}
+
+There are a few different things we might want to weight by:
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  nothing, to look at numbers of counties
+\item
+  total population, to work with absolute numbers
+\item
+  area, to investigate geographic effects
+\end{itemize}
+
+The choice of a weighting variable profoundly affects what we are
+looking at in the plot and the conclusions that we will draw. There are
+two aesthetic attributes that can be used to adjust for weights.
+Firstly, for simple geoms like lines and points, you can make the size
+of the grob proportional to the number of points, using the
+\texttt{size} aesthetic, as with the following code, whose results are
+shown in Figure \ref{fig:miss-basic}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(percwhite, percbelowpoverty, }\DataTypeTok{data =} \NormalTok{midwest)}
+\KeywordTok{qplot}\NormalTok{(percwhite, percbelowpoverty, }\DataTypeTok{data =} \NormalTok{midwest, }
+  \DataTypeTok{size =} \NormalTok{poptotal /}\StringTok{ }\FloatTok{1e6}\NormalTok{) +}\StringTok{ }\KeywordTok{scale_size_area}\NormalTok{(}\StringTok{"Population}\CharTok{\textbackslash{}n}\StringTok{(millions)"}\NormalTok{, }
+  \DataTypeTok{breaks =} \KeywordTok{c}\NormalTok{(}\FloatTok{0.5}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{, }\DecValTok{4}\NormalTok{))}
+\KeywordTok{qplot}\NormalTok{(percwhite, percbelowpoverty, }\DataTypeTok{data =} \NormalTok{midwest, }\DataTypeTok{size =} \NormalTok{area) +}\StringTok{ }
+\StringTok{  }\KeywordTok{scale_size_area}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.32\linewidth]{figures/toolboxmiss-basic-1} \includegraphics[width=0.32\linewidth]{figures/toolboxmiss-basic-2} \includegraphics[width=0.32\linewidth]{figures/toolboxmiss-basic-3} 
+
+}
+
+\caption{Using size to display weights. No weighting (left), weighting by population (centre) and by area (right).\label{fig:miss-basic}}
+\end{figure}
+
+For more complicated grobs which involve some statistical
+transformation, we specify weights with the \texttt{weight} aesthetic.
+These weights will be passed on to the statistical summary function.
+Weights are supported for every case where it makes sense: smoothers,
+quantile regressions, boxplots, histograms, and density plots. You can't
+see this weighting variable directly, and it doesn't produce a legend,
+but it will change the results of the statistical summary. Figure
+\ref{fig:weight-lm} shows how weighting by population density affects
+the relationship between percent white and percent below the poverty
+line.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lm_smooth <-}\StringTok{ }\KeywordTok{geom_smooth}\NormalTok{(}\DataTypeTok{method =} \NormalTok{lm, }\DataTypeTok{size =} \DecValTok{1}\NormalTok{)}
+\KeywordTok{qplot}\NormalTok{(percwhite, percbelowpoverty, }\DataTypeTok{data =} \NormalTok{midwest) +}\StringTok{ }\NormalTok{lm_smooth }
+\KeywordTok{qplot}\NormalTok{(percwhite, percbelowpoverty, }\DataTypeTok{data =} \NormalTok{midwest, }
+  \DataTypeTok{weight =} \NormalTok{popdensity, }\DataTypeTok{size =} \NormalTok{popdensity) +}\StringTok{ }\NormalTok{lm_smooth}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.49\linewidth]{figures/toolboxweight-lm-1} \includegraphics[width=0.49\linewidth]{figures/toolboxweight-lm-2} 
+
+}
+
+\caption{An unweighted line of best fit (left) and weighted by population size (right).\label{fig:weight-lm}}
+\end{figure}
+
+When we weight a histogram or density plot by total population, we
+change from looking at the distribution of the number of counties, to
+the distribution of the number of people. Figure \ref{fig:weight-hist}
+shows the difference this makes for a histogram of the percentage below
+the poverty line. \index{Histogram!weighted}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qplot}\NormalTok{(percbelowpoverty, }\DataTypeTok{data =} \NormalTok{midwest, }\DataTypeTok{binwidth =} \DecValTok{1}\NormalTok{)}
+\KeywordTok{qplot}\NormalTok{(percbelowpoverty, }\DataTypeTok{data =} \NormalTok{midwest, }\DataTypeTok{weight =} \NormalTok{poptotal, }
+  \DataTypeTok{binwidth =} \DecValTok{1}\NormalTok{) +}\StringTok{ }\KeywordTok{ylab}\NormalTok{(}\StringTok{"population"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.49\linewidth]{figures/toolboxweight-hist-1} \includegraphics[width=0.49\linewidth]{figures/toolboxweight-hist-2} 
+
+}
+
+\caption{The difference between an unweighted (left) and weighted (right) histogram. The unweighted histogram shows number of counties, while the weighted histogram shows population. The weighting considerably changes the interpretation!\label{fig:weight-hist}}
+\end{figure}
+
+Carr, D. B., R. J. Littlefield, W. L. Nicholson, and J. S. Littlefield.
+1987. ``Scatterplot Matrix Techniques for Large N.'' \emph{Journal of
+the American Statistical Association} 82 (398): 424--36.
+
+Carr, Dan, Nicholas Lewin-Koh, and Martin Maechler. 2008. \emph{Hexbin:
+Hexagonal Binning Routines}.
+
+Fox, John. 2008. \emph{Effects: Effect Displays for Linear and
+Generalized Linear Models}.
+\url{http://socserv.socsci.mcmaster.ca/jfox/}.
+
+Harrell, Jr, Frank E. 2008. \emph{Hmisc: Harrell Miscellaneous}.
+\url{http://biostat.mc.vanderbilt.edu/s/Hmisc}.

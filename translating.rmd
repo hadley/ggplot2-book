@@ -1,0 +1,410 @@
+---
+title: translating
+output: bookdown::html_chapter
+bibliography: references.bib
+---
+
+
+```{r translating, echo=FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+# Translating between different syntaxes {#cha:translating}
+
+## Introduction
+
+__ggplot2__ does not exist in isolation, but is part of a long history of graphical tools in R and elsewhere.  This chapter describes how to convert between ggplot commands and other plotting systems:
+
+* Within __ggplot2__, from `qplot()` to `ggplot()` ([link to section](#sec:qplot-ggplot)).
+* From base graphics ([link to section](#sec:translate-base)).
+* From __lattice__ graphics ([link to section](#sec:translate-lattice)).
+* From __gpl__ ([link to section](#sec:translate-gpl)).
+
+Each section gives a general outline on how to convert between the difference types, followed by a number of examples.
+
+## Translating between `qplot()` and `ggplot()` {#sec:qplot-ggplot}
+
+Within ggplot, there are two basic methods to create plots, with `qplot()` and `ggplot()`.  `qplot()` is designed primarily for interactive use: it makes a number of assumptions that speed most cases, but when designing multi-layered plots with different data sources it can get in the way.  This section describes what those defaults are, and how they map to the fuller 
+`ggplot()` syntax.  \index{qplot!translating to ggplot@translating to \texttt{ggplot()}} \index{Translating!from qplot} \indexf{qplot} \index{ggplot!translating from qplot@translating from \texttt{qplot()}}
+
+By default, `qplot()` assumes that you want a scatterplot, i.e., you want to use `geom_point()`.
+
+```{r }
+qplot(x, y, data = data)
+ggplot(data, aes(x, y)) + geom_point()
+```
+
+### Aesthetics
+
+If you map additional aesthetics, these will be added to the defaults.  With `qplot()` there is no way to use different aesthetic mappings (or data) in different layers. \index{Aesthetics!translating from qplot}
+
+```{r }
+qplot(x, y, data = data, shape = shape, colour = colour)
+ggplot(data, aes(x, y, shape = shape, colour = colour)) + 
+  geom_point()
+```
+
+Aesthetic parameters in `qplot()` always try to map the aesthetic to a variable.  If the argument is not a variable but a value, effectively a new column is added to the original dataset with that value.  To set an aesthetic to a value and override the default appearance, you surround the value with `I()` in `qplot()`, or pass it as a parameter to the layer.  [Setting vs. mapping](#sub:setting-mapping) expands on the differences between setting and mapping.
+
+```{r }
+qplot(x, y, data = data, colour = I("red"))
+ggplot(data, aes(x, y)) + geom_point(colour = "red")
+```
+
+### Layers
+
+Changing the geom parameter changes the geom added to the plot:
+
+```{r }
+qplot(x, y, data = data, geom = "line")
+ggplot(data, aes(x, y)) + geom_line()
+```
+
+If a vector of multiple geom names is supplied to the geom argument, each geom will be added in turn:
+
+```{r }
+qplot(x, y, data = data, geom = c("point", "smooth"))
+ggplot(data, aes(x, y)) + geom_point() + geom_smooth()
+```
+
+Unlike the rest of ggplot, stats and geoms are independent:
+
+```{r }
+qplot(x, y, data = data, stat = "bin")
+ggplot(data, aes(x, y)) + geom_point(stat = "bin")  
+```
+
+Any layer parameters will be passed on to all layers.  Most layers will ignore parameters that they don't need.
+
+```{r }
+qplot(x, y, data = data, geom = c("point", "smooth"), 
+  method = "lm")
+ggplot(data, aes(x, y)) + 
+  geom_point(method = "lm") + geom_smooth(method = "lm")
+```
+
+### Scales and axes
+
+You can control basic properties of the x and y scales with the `xlim`, `ylim`, `xlab` and `ylab` arguments:
+
+```{r }
+qplot(x, y, data = data, xlim = c(1, 5), xlab = "my label")
+ggplot(data, aes(x, y)) + geom_point() + 
+  scale_x_continuous("my label", limits = c(1, 5))
+
+qplot(x, y, data = data, xlim = c(1, 5), ylim = c(10, 20))
+ggplot(data, aes(x, y)) + geom_point() + 
+  scale_x_continuous(limits = c(1, 5))
+  scale_y_continuous(limits = c(10, 20))
+```
+
+Like `plot()`, `qplot()` has a convenient way of log transforming the axes.  There are many other possible transformations that are not accessible from within `qplot()` see [position scales](#sub:scale-position) for more details.
+
+```{r }
+qplot(x, y, data = data, log = "xy")
+ggplot(data, aes(x, y)) + geom_point() + 
+  scale_x_log10() + scale_y_log10()
+```
+
+### Plot options
+
+`qplot()` recognises the same options as `plot()` does, and converts them to their ggplot equivalents.  [Theme elements and element functions](#sec:theme_elements) lists all possible plot options and their effects.
+
+```{r }
+qplot(x, y, data = data, main="title", asp = 1)
+ggplot(data, aes(x, y)) + geom_point() + 
+  ggtitle("title") + coord_equal()
+```
+
+## Base graphics {#sec:translate-base}
+
+There are two types of graphics functions in base graphics, those that draw complete graphics and those that add to existing graphics.  \index{Base graphics!translating from} \index{Translating!from base graphics}
+
+### High-level plotting commands
+
+`qplot()` has been designed to mimic `plot()`, and can do the job of all other high-level plotting commands.  There are only two graph types from base graphics that cannot be replicated with ggplot: `filled.contour()` and `persp()`
+
+```{r }
+plot(x, y);  dotchart(x, y); stripchart(x, y)
+qplot(x, y)
+
+plot(x, y, type = "l")
+qplot(x, y, geom = "line")
+
+plot(x, y, type = "s")
+qplot(x, y, geom = "step")
+
+plot(x, y, type = "b")
+qplot(x, y, geom = c("point", "line"))
+
+boxplot(x, y)
+qplot(x, y, geom = "boxplot")
+
+hist(x)
+qplot(x, geom = "histogram")
+
+cdplot(x, y)
+qplot(x, fill = y, geom = "density", position = "fill")
+
+coplot(y ~ x | a + b)
+qplot(x, y, facets = a ~ b)
+```
+
+Many of the geoms are parameterised differently than base graphics.  For example, `hist()` is parameterised in terms of the number of bins, while `geom_histogram()` is parameterised in terms of the width of each bin.  
+
+```{r }
+hist(x, bins = 100)
+qplot(x, geom = "histogram", binwidth = 1)
+```
+
+`qplot()` often requires data in a slightly different format to the base graphics functions.  For example, the bar geom works with untabulated data, not tabulated data like `barplot()`; the tile and contour geoms expect data in a data frame, not a matrix like `image()` and `contour()`.
+
+```{r }
+barplot(table(x))
+qplot(x, geom = "bar")
+
+barplot(x)
+qplot(names(x), x, geom = "bar", stat = "identity")
+
+image(x)
+qplot(X1, X2, data = melt(x), geom = "tile", fill = value)
+
+contour(x)
+qplot(X1, X2, data = melt(x), geom = "contour", fill = value)
+```
+
+Generally, the base graphics functions work with individual vectors, not data frames like ggplot.  `qplot()` will try to construct a data frame if one is not specified, but it is not always possible.  If you get strange errors, you may need to create the data frame yourself.
+
+```{r }
+with(df, plot(x, y))
+qplot(x, y, data = df)
+```
+
+By default, `qplot()` maps values to aesthetics with a scale.  To override this behaviour and set aesthetics, overriding the defaults, you need to use `I()`.
+
+```{r }
+plot(x, y, col = "red", cex = 1)
+qplot(x, y, colour = I("red"), size = I(1))
+```
+
+### Low-level drawing
+
+The low-level drawing functions which add to an existing plot are equivalent to adding a new layer in ggplot, described in Table \ref{tbl:base-equiv}.
+
+\begin{table}
+  \begin{center}
+    \begin{tabular}{ll}
+      \toprule
+      Base function & \texttt{ggplot} layer \\
+      \midrule
+      \texttt{curve()}    & \texttt{geom\_curve()}      \\
+      \texttt{hline()}    & \texttt{geom\_hline()}      \\
+      \texttt{lines()}    & \texttt{geom\_line()}       \\
+      \texttt{points()}   & \texttt{geom\_point()}      \\
+      \texttt{polygon()}  & \texttt{geom\_polygon()}    \\
+      \texttt{rect()}     & \texttt{geom\_rect()}       \\
+      \texttt{rug()}      & \texttt{geom\_rug()}        \\
+      \texttt{segments()} & \texttt{geom\_segment()}    \\
+      \texttt{text()}     & \texttt{geom\_text()}       \\
+      \texttt{vline()}    & \texttt{geom\_vline()}      \\
+      \texttt{abline(lm(y ~ x))}  & \texttt{geom\_smooth(method = "lm")}  \\
+      \texttt{lines(density(x))}  & \texttt{geom\_density()}         \\
+      \texttt{lines(loess(x, y))} & \texttt{geom\_smooth()}          \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \caption{Equivalence between base graphics methods that add on to an existing plot, and layers in \texttt{ggplot}.}
+  \label{tbl:base-equiv}
+\end{table}
+
+```{r }
+plot(x, y)
+lines(x, y)
+
+qplot(x, y) + geom_line()
+
+# Or, building up piece-meal
+qplot(x, y)
+last_plot() + geom_line()
+```
+
+### Legends, axes and grid lines
+
+In ggplot, the appearance of legends and axes is controlled by the scales. Axes are produced by the x and y scales, while all other scales produce legends. See [plot themes](#sec:themes), to change the appearance of axes and legends, and, [scales](#sec:guides), to change their contents. The appearance of grid lines is controlled by the `grid.major` and `grid.minor` theme options, and their position by the breaks of the x and y scales.
+
+<!--
+% In base graphics, legends are never displayed automatically, and to gain more control over axes you typically do `xaxs = F} in the main plot call, and then add the axes yourself with \f{axis} or \f{Axis}.   The following arguments to the scale are most important when controlling the appearance of the axis or legend:
+% 
+% \begin{itemize}
+%   \item \code{limits} controls the range of the axis or legend.
+%   \item \code{breaks} controls which labels appear on the axis or legend.
+%   \item \code{labels} controls the text of each label.
+%   \item \code{name} controls the axis or legend title.
+% \end{itemize}
+% 
+% Because the legend is derived automatically from the plot, there is much less you can do to control it than in base graphics. 
+-->
+
+### Colour palettes
+
+Instead of global colour palettes, ggplot has scales for individual plots.  Much of the time you can rely on the default colour scale (which has somewhat better perceptual properties), but if you want to reuse an existing colour palette, you can use `scale_colour_manual()`.  You will need to make sure that the colour is a factor for this to work. \index{Colour!palettes}
+
+```{r }
+palette(rainbow(5))
+plot(1:5, 1:5, col = 1:5, pch = 19, cex = 4)
+
+qplot(1:5, 1:5, col = factor(1:5), size = I(4))
+last_plot() + scale_colour_manual(values = rainbow(5))
+```
+
+In ggplot, you can also use palettes with continuous values, with intermediate values being linearly interpolated.
+
+```{r }
+qplot(0:100, 0:100, col = 0:100, size = I(4)) +
+  scale_colour_gradientn(colours = rainbow(7))
+last_plot() +
+  scale_colour_gradientn(colours = terrain.colors(7))
+```
+
+### Graphical parameters
+
+The majority of `par()` settings have some analogue within the theme system, or in the defaults of the geoms and scales.  The appearance plot border drawn by `box()` can be controlled in a similar way by the `panel.background` and `plot.background` theme elements.  Instead of using `title()`, the plot title is set with the `title` option.
+
+## Lattice graphics {#sec:translate-lattice}
+
+The major difference between __lattice__ and ggplot is that __lattice__ uses a formula-based interface.  ggplot does not because the formula does not generalise well to more complicated situations. \index{Lattice graphics!translating from} \index{Translating!from lattice}
+
+```{r }
+xyplot(rating ~ year, data = movies)
+qplot(year, rating, data = movies)
+
+xyplot(rating ~ year | Comedy + Action, data = movies)
+qplot(year, rating, data = movies, facets = ~ Comedy + Action)
+# Or maybe
+qplot(year, rating, data = movies, facets = Comedy ~ Action)
+```
+
+While __lattice__ has many different functions to produce different types of graphics (which are all basically equivalent to setting the panel argument), ggplot has `qplot()`.
+
+```{r }
+stripplot(~ rating, data = movies, jitter.data = TRUE)
+qplot(rating, 1, data = movies, geom = "jitter")
+
+histogram(~ rating, data = movies)
+qplot(rating, data = movies, geom = "histogram")
+
+bwplot(Comedy ~ rating, data = movies)
+qplot(factor(Comedy), rating, data = movies, geom = "boxplot")
+
+xyplot(wt ~ mpg, mtcars, type = c("p","smooth"))
+qplot(mpg, wt, data = mtcars, geom = c("point","smooth"))
+
+xyplot(wt ~ mpg, mtcars, type = c("p","r"))
+qplot(mpg, wt, data = mtcars, geom = c("point","smooth"),
+  method = "lm")
+```
+
+The capabilities for scale manipulations are similar in both ggplot and __lattice__, although the syntax is a little different.
+
+```{r }
+xyplot(wt ~ mpg | cyl, mtcars, scales = list(y = list(relation = "free")))
+qplot(mpg, wt, data = mtcars) + facet_wrap(~ cyl, scales = "free")
+
+xyplot(wt ~ mpg | cyl, mtcars, scales = list(log = 10))
+qplot(mpg, wt, data = mtcars, log = "xy") + facet_wrap(~ cyl)
+
+xyplot(wt ~ mpg | cyl, mtcars, scales = list(log = 2))
+qplot(mpg, wt, data = mtcars) + 
+  scale_x_log2() + scale_y_log2()
+
+xyplot(wt ~ mpg, mtcars, group = cyl, auto.key = TRUE)
+# Map directly to an aesthetic like colour, size, or shape.
+qplot(mpg, wt, data = mtcars, colour = factor(cyl))
+
+xyplot(wt ~ mpg, mtcars, xlim = c(20, 30))
+# Works like lattice, except you can't specify a different limit 
+# for each panel/facet
+qplot(mpg, wt, data = mtcars, xlim = c(20, 30))
+```
+
+Both __lattice__ and ggplot have similar options for controlling labels on the plot.
+
+```{r }
+xyplot(wt ~ mpg, mtcars, 
+  xlab = "Miles per gallon", ylab = "Weight", 
+  main = "Weight-efficiency tradeoff")
+qplot(mpg, wt, data = mtcars, 
+  xlab = "Miles per gallon", ylab = "Weight", 
+  main = "Weight-efficiency tradeoff")
+
+xyplot(wt ~ mpg, mtcars, aspect = 1) 
+qplot(mpg, wt, data = mtcars, asp = 1)
+```
+
+`par.settings()` is equivalent to `+ theme()` and `trellis.options.set()` and `trellis.par.get()` to `theme_set()` and `theme_get()`.
+
+More complicated __lattice__ formulas are equivalent to rearranging the data before using ggplot.
+
+<!--
+% TODO: finish this section
+% 
+% group -> categorical value on any aesthetic, or if no styling desired, group
+% shingle -> no equivalent
+% y1 + y2 -> melt
+% 
+% From Jim Holtman:
+% 
+% require(reshape)
+% cases.melt <- melt(cases[, -ncol(cases)])
+% 
+% # plot cases/store/day on a box plot
+% boxplot(value ~ X2, data=cases.melt, main="Cases Per Day Per Store")
+% 
+% -----------------------------------------------------------------------------------------
+% 
+% # partition by section and show the number of picks from each location
+% x.m <- melt(table(Aisle, Quad, Section))
+% 
+% # add in the counts for each section
+% col.l <- colorRampPalette(c('white', 'green', 'red'))(100)
+% require(lattice)
+% x.m$counts <- paste(x.m$Section, " (", ave(x.m$value, x.m$Section,
+% FUN=sum), ")", sep="")
+% print(levelplot(value ~ Aisle + Quad | counts, x.m, col.regions=col.l,
+%    main="Visits Per Section Per Pick Slot (6 Days of Orders)"))
+-->
+
+## GPL {#sec:translate-gpl}
+
+The Grammar of Graphics uses two specifications.  A concise format is used to caption figures, and a more detailed xml format stored on disk.  The following example of the concise format is adapted from [Figure 1.5, page 13 in @wilkinson:2006]. \index{GPL!translating from} \index{Translating!from GPL}
+
+```
+DATA: source("demographics")
+DATA: longitude, latitude = map(source("World"))
+TRANS: bd = max(birth - death, 0)
+COORD: project.mercator()
+ELEMENT: point(position(lon * lat), size(bd), color(color.red))
+ELEMENT: polygon(position(longitude * latitude))
+```
+
+This is relatively simple to adapt to the syntax of ggplot:
+
+* `ggplot()` is used to specify the default data and default aesthetic mappings.
+* Data is provided as standard R data.frames existing in the global environment; it does not need to be explicitly loaded.  We also use a slightly different world dataset, with columns lat and long.  This lets us use the same aesthetic mappings for both datasets. Layers can override the default data and aesthetic mappings provided by the plot. 
+* We replace `TRANS` with an explicit transformation by R code.
+* `ELEMENT`s are replaced with layers, which explicitly specify the data source.  Each geom has a default statistic which is used to transform the data prior to plotting.  For the geoms in this example, the default statistic is the identity function.  Fixed aesthetics (the colour red in this example) are supplied as additional arguments to the layer, rather than as special constants.
+* `SCALE` component has been omitted from this example (so that the defaults are used).  In both the ggplot and GoG examples, scales are defined by default.  In ggplot you can override the defaults by adding a scale object, e.g., `scale_colour` or `scale_size`.
+* `COORD` uses a slightly different format.  In general, most of the components specifications in ggplot are slightly different to those in GoG, in order to be more familiar to R users.
+* Each component is added together with $+$ to create the final plot.
+
+All up the equivalent ggplot code is:
+
+```{r }
+demographics <- transform(demographics, 
+  bd = pmax(birth - death, 0))
+
+ggplot(demographic, aes(lon, lat)) + 
+  geom_polyogon(data = world) +
+  geom_point(aes(size = bd), colour = "red") +
+  coord_map(projection = "mercator")
+```
