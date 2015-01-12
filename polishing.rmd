@@ -183,17 +183,22 @@ When producing a consistent theme, you may also want to tune some of the scale a
 
 ### Scales {#sub:customise-scales}
 
-DEPRECATED!
-
-To change the default scale associated with an aesthetic, use `set_default_scale()`. (See Table~\ref{tbl:default-scales} for the defaults.)  This function takes three arguments: the name of the aesthetic, the type of variable (discrete or continuous) and the name of the scale to use as the default.  Further arguments override the default parameters of the scale.  The following example sets up colour and fill scales for black-and-white printing: \index{Scales!customising defaults} \indexf{set_default_scale}
+To change the default scale associated with an aesthetic, you can override the default by assigning a custom function to the appropriate default function (See Table~\ref{tbl:default-scales} for the defaults). The following example sets up continuous colour and fill scales for black-and-white printing: \index{Scales!customising defaults} \indexf{set_default_scale}
 
 ```{r eval=FALSE, echo=FALSE}
-set_default_scale("colour", "discrete", "grey")
-set_default_scale("fill", "discrete", "grey")
-set_default_scale("colour", "continuous", "gradient", 
-  low = "white", high = "black")
-set_default_scale("fill", "continuous", "gradient", 
-  low = "white", high = "black")
+scale_colour_gradient2 <- function(...) 
+  scale_colour_gradient2(..., low = "white", high = "black")
+scale_fill_gradient <- function(...)
+  scale_fill_gradient(..., low = "white", high = "black")
+```
+
+This example sets up discrete colour and fill scales to use ColorBrewer.
+
+```{r eval=FALSE, echo=FALSE}
+scale_colour_discrete <- function(...) 
+  scale_colour_brewer(..., palette = "Set1")
+scale_fill_discrete <- function(...) 
+  scale_fill_brewer(..., palette = "Set1")
 ```
 
 ### Geoms and stats {#sub:geoms-and-stats}
