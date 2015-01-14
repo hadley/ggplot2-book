@@ -3,10 +3,10 @@ library("rvest")
 library("plyr")
 library("dplyr")
 library("magrittr")
-library("xtable")
 
-
-tex_code <- function(x) paste0("\\texttt{", x, "}")
+# do we need to escape special LaTeX characters (I think knitr can do this for us)?
+# options(xtable.sanitize.text.function = identity)
+# function used in some chapters for displaying code in tables
 clean_txt <- function(x) gsub("\\s+", " ", gsub("\\n", "", x))
 
 # function to grab most recent geoms, stats, etc.
