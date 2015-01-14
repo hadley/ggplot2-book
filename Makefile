@@ -32,3 +32,5 @@ book/tex/ggplot2-book.pdf: book/tex/ggplot2-book.tex book/tex/krantz.cls book/te
 book/ggplot2-book.pdf: book/tex/ggplot2-book.pdf
 	cp book/tex/ggplot2-book.pdf book/ggplot2-book.pdf
 	Rscript -e 'embedFonts("book/ggplot2-book.pdf")'
+
+all: book/ggplot2-book.pdf

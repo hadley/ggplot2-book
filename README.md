@@ -9,8 +9,11 @@ You can build the pdf by cloning this repo and running make:
 ```
 $ git clone https://github.com/hadley/ggplot2-book.git
 $ cd ggplot2-book
-$ make book/ggplot2-book.pdf
+$ make
 ```
+
+If you use RStudio, you can press Cmd/Ctrl + Shift + B to run make.
+
 
 ## Internal links
 
