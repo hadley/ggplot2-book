@@ -17,15 +17,9 @@ if (!length(list.files("tbls"))) {
 }
 
 # Render chapters into tex  ----------------------------------------------------
-needs_update <- function(src, dest) {
-  if (!file.exists(dest)) return(TRUE)
-  mtime <- file.info(src, dest)$mtime
-  mtime[2] < mtime[1]
-}
 
 render_chapter <- function(src) {
   dest <- file.path("book/tex/", gsub("\\.rmd", "\\.tex", src))
-  #if (!needs_update(src, dest)) return()
   base <- bookdown::tex_chapter()
   chap <- sub("\\.rmd", "", src)
   # set some global knitr chunk options...
@@ -44,9 +38,5 @@ render_chapter <- function(src) {
                  file = "book/tex/render-log.txt")
 }
 
-# produce tex individually (useful for debugging)
-#render_chapter("scales.rmd")
-
-# produce all the tex!
-chapters <- dir(".", pattern = "\\.rmd$")
-lapply(chapters, render_chapter)
+args <- commandArgs(trailingOnly = TRUE)
+lapply(args, render_chapter)

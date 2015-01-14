@@ -2,9 +2,8 @@ RMD_CHAPTERS := $(shell find . -name '*.rmd')
 TEX_CHAPTERS := $(patsubst %.rmd, book/tex/%.tex, $(RMD_CHAPTERS))
 
 # rmd -> tex
-# why do I need to load methods? https://github.com/hadley/testthat/issues/122
 $(TEX_CHAPTERS): $(RMD_CHAPTERS)
-	Rscript -e 'library(methods); source("render-tex.R")'
+	Rscript render-tex.R $^
 
 # copy over LaTeX templates and style files
 book/tex/krantz.cls: $(TEX_CHAPTERS) book/krantz.cls
