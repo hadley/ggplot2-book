@@ -3,7 +3,7 @@ TEX_CHAPTERS := $(patsubst %.rmd, book/tex/%.tex, $(RMD_CHAPTERS))
 
 # rmd -> tex
 $(TEX_CHAPTERS): $(RMD_CHAPTERS)
-	Rscript render-tex.R $^
+	Rscript render-tex.R $?
 
 # copy over LaTeX templates and style files
 book/tex/krantz.cls: $(TEX_CHAPTERS) book/krantz.cls
