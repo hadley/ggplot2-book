@@ -14,6 +14,9 @@ $ make
 
 If you use RStudio, you can press Cmd/Ctrl + Shift + B to run make.
 
+## Installing dependencies
+
+The book depends on a number of R packages, which you may need to install. All of these are available on CRAN via `install.packages` except for [bookdown](https://github.com/hadley/bookdown) which you can install with `devtools::install_github("hadley/bookdown")`.
 
 ## Internal links
 
