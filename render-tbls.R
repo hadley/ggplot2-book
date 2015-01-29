@@ -3,6 +3,11 @@ library("rvest")
 library("plyr")
 library("dplyr")
 library("magrittr")
+library("xtable")
+library("methods")
+
+# This script places tex files here
+if (!file_test("-d", "tbls")) dir.create("tbls")
 
 # do we need to escape special LaTeX characters (I think knitr can do this for us)?
 # options(xtable.sanitize.text.function = identity)

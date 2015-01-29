@@ -11,7 +11,7 @@ book/ggplot2-book.pdf: $(TEXDIR)/ggplot2-book.pdf
 	
 # compile tex to pdf
 # http://stackoverflow.com/questions/3148492/makefile-silent-remove
-$(TEXDIR)/ggplot2-book.pdf: $(TEXDIR)/ggplot2-book.tex $(TEXDIR)/krantz.cls $(TEX_CHAPTERS)
+$(TEXDIR)/ggplot2-book.pdf: $(TEXDIR)/ggplot2-book.tex $(TEXDIR)/krantz.cls $(TEX_CHAPTERS) tbls diagrams figures
 	cp -r figures $(TEXDIR)/figures
 	cp -r tbls $(TEXDIR)/tbls
 	cp -r diagrams $(TEXDIR)/diagrams
@@ -24,15 +24,22 @@ $(TEXDIR)/ggplot2-book.pdf: $(TEXDIR)/ggplot2-book.tex $(TEXDIR)/krantz.cls $(TE
 	touch $(TEXDIR)/ggplot2-book.pdf
 
 # copy over LaTeX templates and style files
-$(TEXDIR)/krantz.cls: book/krantz.cls
+$(TEXDIR)/krantz.cls: book/krantz.cls $(TEXDIR)
 	cp book/krantz.cls $(TEXDIR)/krantz.cls
-$(TEXDIR)/ggplot2-book.tex: book/ggplot2-book.tex
+$(TEXDIR)/ggplot2-book.tex: book/ggplot2-book.tex $(TEXDIR)
 	cp book/ggplot2-book.tex $(TEXDIR)/ggplot2-book.tex
 
 # rmd -> tex
-$(TEX_CHAPTERS): render-tex.R $(RMD_CHAPTERS)
+$(TEX_CHAPTERS): $(RMD_CHAPTERS)
 	Rscript render-tex.R $?
 	touch $(TEX_CHAPTERS)
-	
-tbls: render-tbls.R
-	Rscript render-tbls.R && touch tbls/
+
+$(RMD_CHAPTERS): render-tex.R
+	touch $(RMD_CHAPTERS)
+
+$(TEXDIR):
+	mkdir $(TEXDIR)
+
+clean:
+	rm -r $(TEXDIR)
+	rm -r tbls

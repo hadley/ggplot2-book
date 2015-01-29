@@ -1,6 +1,7 @@
 library("bookdown")
 library("rmarkdown")
 library("xtable")
+library("methods")
 
 # Set global options for tables and precompile time-intensive tables -----------
 options(xtable.include.rownames = FALSE)
@@ -9,15 +10,13 @@ options(xtable.comment = FALSE)
 # 'global' convenience functions -----------------------------------------------
 tex_code <- function(x) paste0("\\texttt{", x, "}")
 
-# generate tables if they don't already exist  ---------------------------------
-# maybe `make` should take care of this part?
-if (!length(list.files("tbls"))) {
-  if (!file.exists("tbls")) dir.create("tbls")
-  source("render-tbls.R")
-}
+# generate tables, if necessary  -----------------------------------------------
+if (!file_test("-d", "tbls")) dir.create("tbls")
+# Is render-tbls.R newer than it's target? (essentially what make does)
+nt <- file_test("-nt", "render-tbls.R", list.files("tbls"))
+if (length(nt) == 0 || any(nt)) source("render-tbls.R")
 
 # Render chapters into tex  ----------------------------------------------------
-
 render_chapter <- function(src) {
   dest <- file.path("book/tex/", gsub("\\.rmd", "\\.tex", src))
   base <- bookdown::tex_chapter()
@@ -39,4 +38,5 @@ render_chapter <- function(src) {
 }
 
 args <- commandArgs(trailingOnly = TRUE)
-lapply(args, render_chapter)
+chaps <- dir(pattern = ".rmd")
+lapply(args[args %in% chaps], render_chapter)
