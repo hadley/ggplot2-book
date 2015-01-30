@@ -40,6 +40,9 @@ $(RMD_CHAPTERS): render-tex.R
 $(TEXDIR):
 	mkdir $(TEXDIR)
 
+figures:
+	mkdir figures
+
 clean:
 	rm -r $(TEXDIR)
 	rm -r tbls
