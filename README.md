@@ -18,7 +18,7 @@ If you use RStudio, you can press Cmd/Ctrl + Shift + B to run make.
 
 ## Installing dependencies
 
-There are a number of dependencies required to build this book. We have a full installation recipe for ubuntu 12.04 [here](https://github.com/hadley/ggplot2-book/blob/master/.travis.yml). Even if run you run a different operating system, please look there for R package requirements. Most of the R packages are available on CRAN via `install.packages` except for [bookdown](https://github.com/hadley/bookdown) and [captioner](https://github.com/adletaw/captioner). You can install both with:
+There are a number of dependencies required to build this book. We have a full installation recipe for ubuntu 12.04 [here](https://github.com/hadley/ggplot2-book/blob/master/.travis.yml). Even if you run a different operating system, please look there for R package requirements. Most of the R packages are available on CRAN via `install.packages` except for [bookdown](https://github.com/hadley/bookdown) and [captioner](https://github.com/adletaw/captioner). You can install both with:
 
 ```r
 devtools::install_github(c("adletaw/captioner/captioner", "hadley/bookdown"))
