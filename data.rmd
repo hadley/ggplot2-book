@@ -4,114 +4,138 @@ output: bookdown::html_chapter
 bibliography: references.bib
 ---
 
-```{r data, echo=FALSE}
+```{r data, echo = FALSE, message = FALSE}
 library("ggplot2")
 library("plyr")
 library("dplyr")
 library("tidyr")
+library("xtable")
 options(digits = 2, width = 60)
 ```
 
-# Manipulating data {#cha:data}
+# Data analysis {#cha:data}
 
-So far this book has assumed you have your data in a nicely structured data frame ready to feed to `ggplot()` or `qplot()`. If this is not the case, then you'll need to do some transformation.
+Visualisation is just one part of the data analysis process which also includes data tidying, manipuation and modelling. Indeed, in my experience, visualisation is often the easiest part of this process: once you have tidy data, aggregated to the most useful level and modelled to discover the most important trends, the right visualisation is often quite easy.
 
-In [an introduction to plyr](#sec:plyr), you will learn how to use the **plyr** package to reproduce the statistical transformations performed by the layers, and then in [converting data from wide to long](#sec:melting) you will learn a little about 'molten' (or long) data, which is useful for time series and parallel coordinates plots, among others.  [`ggplot()` methods](#sec:methods) shows you how to write methods that let you plot objects other than data frames, and demonstrates how `ggplot` can be used to re-create a more flexible version of the built in linear-model diagnostics.  
+The goal of this chapter is to show you how to integrate visualisation with ggplot2 with the other parts of the data analysis process:
+
+* ggplot2 makes it easy to map variables to visual properties, but it depends 
+  on a particular way of storing your data. This form (or shape) is called tidy
+  data. In XXX you'll learn the basics of tidy data and how you can make your
+  messy data tidy.
+  
+* Most visualisations also require some data transformation whether it's 
+  creating a new variable from existing variables, or performing simple 
+  aggregations so you can see the forest for the tree. Section XXX will teach 
+  how to use the __dplyr__ package to make this as easy as possible.
+  
+* If you're using R, you're almost certainly using it for it's fantastic
+  modelling capabilities. While there's an R package for almost every type
+  of model that you can think of, the results of these models can be hard to
+  visualise. The __broom__ package, by David Robinson, makes your life easier 
+  by converting model outputs into standard tidy datasets so you can easily
+  integrate with ggplot2.
 
 Data cleaning, manipulation and transformation is a big topic and this chapter only scratches the surface of topics closely related to `ggplot`.  I recommend the following references which go into considerably more depth on this topic:
 
-* _Data Manipulation with R_, by Phil Spector.  Published by Springer, 2008.
-* "plyr: divide and conquer for data analysis", Hadley Wickham.  Available from <http://had.co.nz/plyr>.  This is a full description of the package used in [an introduction to plyr](#sec:plyr).
-* "Reshaping data with the reshape package", Hadley Wickham. _Journal of Statistical Software_, 21(12), 2007. <http://www.jstatsoft.org/v21/i12/>.  This describes the complement of the melt function used in [converting data from wide to long](#sec:melting), which can be used like pivot tables to create a wide range of data summaries and rearrangements.
+* "[Tidy data](http://www.jstatsoft.org/v59/i10/)", an article in the _Journal
+  of Statistical Software_. It describes the ideas of tidy data in more depth
+  and shows other types of messy data. Unfortunately the paper was written
+  before tidyr existed, so to see how to use tidyr instead of reshape2, consult
+  the [tidyr vignette](http://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html).
 
-## An introduction to plyr {#sec:plyr}
+* The dplyr vignettes, which you can see with 
+  `browseVignettes(package = "dplyr")`, go into considerably more depth into
+  dplyr. There you'll learn how to also use dplyr with data frames, and how
+  to work with multiple tables of data.
 
-With faceting, `ggplot` makes it very easy to create identical plots for different subsets of your data. \index{Package!plyr} This section introduces `ddply()` from the **plyr** package, a function that makes it easy to do the same thing for numerical summaries. **plyr** provides a comprehensive suite of tools for breaking up complicated data structures into pieces, processing each piece and then joining the results back together. The **plyr** package as a whole provides tools for breaking and combining lists, arrays and data frames. Here we will focus on the `ddply()` function which breaks up a data frame into subsets based on row values, applies a function to each subset and then joins the results back into a data frame. The basic syntax is `ddply(.data, .variables, .fun, ...)`, where \indexf{ddply}
-
-* `.data` is the dataset to break up (e.g., the data that you are plotting).
-* `.variables` is a description of the grouping variables used to break up the dataset. This is written like `.(var1, var2)`, and to match the plot should contain all the grouping and faceting variables that you've used in the plot.
-* `.fun` is the summary function you want to use. The function can return a vector or data frame. The result does not need to contain the grouping variables: these will be added on automatically if they're needed. The result can be a much reduced aggregated dataset (maybe even one number), or the original data modified or expanded in some way.
-
-More information and examples are available in the documentation, `?ddply`, and on the package website, <http://had.co.nz/plyr>.  The following examples show a few useful summary functions that solve common data manipulation problems.
-
-* Using `subset()` allows you to select the top (or bottom) n (or x%) of observations in each group, or observations above (or below) some group-specific threshold: \indexf{subset}
+* The [broom README](https://github.com/dgrtwo/broom), gives a more detailed
+  overview of broom and points you to the latest resources on where to learn 
+  more.
   
-```{r eval = FALSE}
-# Select the smallest diamond in each colour
-ddply(diamonds, .(color), subset, carat == min(carat))
+* RStudio provides a number of cheatsheets at 
+  <http://www.rstudio.com/resources/cheatsheets/>. These are a great way to 
+  remember the most commonly used functions.
 
-# Select the two smallest diamonds
-ddply(diamonds, .(color), subset, order(carat) <= 2)
+## Tidy data {#sec:tidy-data}
 
-# Select the 1% largest diamonds in each group
-ddply(diamonds, .(color), subset, carat > 
-        quantile(carat, 0.99))
+The principle behind tidy data is simple: if you store your data in a consistent way, it's easier to work with it. There are only two key principles behind tidy data:
 
-# Select all diamonds bigger than the group average
-ddply(diamonds, .(color), subset, price > mean(price))
+1. Variables should go in columns.
+1. Observations should go in rows.
+
+Tidy data is particularly important for ggplot2 because the job of ggplot2 is to map variables to visual properties. Assuming a consistent way of accessing variables makes ggplot2 much easier to use, but sometimes you'll hit a dataset that you have no idea how to plot. That's normally because it's not tidy: the variables aren't provided as columns, so you have no way to tell ggplot2 what to plot.
+
+For example, take this data frame that contains monthly employment data for the United States. This data contains three variables: month, year and unemployment rate:
+
+```{r, echo = FALSE}
+library("lubridate")
+ec2 <- 
+  ggplot2::economics %>% 
+  tbl_df() %>%
+  transmute(year = year(date), month = month(date), rate = uempmed) %>%
+  filter(year > 2000) %>%
+  spread(year, rate)
+ec2
 ```
-  
-* Using `transform()` allows you to perform group-wise transformations with very little work.  This is particularly useful if you want to add new variables that are calculated on a per-group level, such as a per-group standardisation.  [Multiple time series](#sub:time-series) shows another use of this technique for standardising time series to a common scale. \index{Transformation!group-wise}  \indexf{transform}
-  
-```{r eval=FALSE}
-# Within each colour, scale price to mean 0 and variance 1
-ddply(diamonds, .(color), transform, price = scale(price))
 
-# Subtract off group mean
-ddply(diamonds, .(color), transform, 
-      price = price - mean(price))
+(If it looks familiar it's because it's dervied from the `economics` dataset included in ggplot2.)
+
+Imagine you want to plot a time series showing how unemployment has changed over the last 10 years? Or what if you want to focus on the seasonal component of unemployment by putting months on the x-axis and drawing one line for year? Those plots are difficult to do with this structure because each of the three variable is stored in a different way:
+
+* `month` is stored in the rows
+* `year` is spread across the columns
+* `rate` is the value of each cell
+
+To make it possible to plot this data we first need to tidy it. 
+
+### Tidying messy data {#sec:tidyr}
+
+We're going to use the __tidyr__ package. We're going to start with the `gather()` function. `gather()` takes variables that are spread across columns and values.
+
+```{r}
+ec3 <- 
+  ec2 %>% 
+  gather(year, rate, `2001`:`2007`, convert = TRUE, na.rm = TRUE)
 ```
 
-* If you want to apply a function to every column in the data frame, you might find the `colwise()` function handy. This function converts a function that operates on vectors to a function that operates column-wise on data frames. This is rather different than most functions: instead of returning a vector of numbers, `colwise()` returns a new function. The following example creates a function to count the number of missing values in a vector and then shows how we can use `colwise()` to apply it to every column in a data frame. \index{Transformation!column-wise} \indexf{colwise}
+We use `convert = TRUE` to automatically convert the years from character strings to numbers, and `na.rm = TRUE` to remove the months with no data. (In some sense the data isn't actually missing because it represents dates that haven't occured yet.)
 
-```{r }
-nmissing <- function(x) sum(is.na(x))
-nmissing(msleep$name)
-nmissing(msleep$brainwt)
+Now we can easily visualise this to emphasise either the long term trend:
 
-nmissing_df <- colwise(nmissing)
-nmissing_df(msleep)
-# This is shorthand for the previous two steps
-colwise(nmissing)(msleep)
+```{r}
+ggplot(ec3, aes(year + (month - 1) / 12, rate)) +
+  geom_line()
 ```
-  
-The specialised version `numcolwise()` does the same thing, but works only with numeric columns.  For example, `numcolwise(median)` will calculate a median for every numeric column, or `numcolwise(quantile)` will calculate quantiles for every numeric column.  Similarly, `catcolwise()` only works with categorical columns. \indexf{numcolwise} \indexf{catcolwise}
-  
-```{r }
-msleep2 <- msleep[, -6] # Remove a column to save space
-numcolwise(median)(msleep2, na.rm = T)
-numcolwise(quantile)(msleep2, na.rm = T)
-numcolwise(quantile)(msleep2, probs = c(0.25, 0.75), 
-                     na.rm = T)
-```
-  
-Combined with `ddply()`, this makes it easy to produce per-group summaries: \index{Summary!group-wise}
-  
-```{r }
-ddply(msleep2, .(vore), numcolwise(median), na.rm = T)
-ddply(msleep2, .(vore), numcolwise(mean), na.rm = T)
-```
-  
-* If none of the previous shortcuts is appropriate, make your own summary function which takes a data frame as input and returns an appropriately summarised data frame as output.  The following function calculates the rank correlation of price and carat and compares it to the regular correlation of the logged values.
-  
-```{r }
-my_summary <- function(df) {
-  with(df, data.frame(
-    pc_cor = cor(price, carat, method = "spearman"),
-    lpc_cor = cor(log(price), log(carat))
-    ))
-}
-ddply(diamonds, .(cut), my_summary)
-ddply(diamonds, .(color), my_summary)
-```
-  
-  Note how our summary function did not need to output the group variables.  This makes it much easier to aggregate over different groups.
 
-The common pattern of all these problems is that they are easy to solve if we have the right subset. Often the solution for a single case might be a single line of code. The difficulty comes when we want to apply the function to multiple subsets and then correctly join back up the results. This may take a lot of code, especially if you want to preserve group labels. `ddply()` takes care of all this for you.
+Or the seasonal patterns:
 
-The following case study shows how you can use **plyr** to reproduce the statistical summaries produced by `ggplot`.  This is useful if you want to save them to disk or apply them to other datasets.  It's also useful to be able to check that `ggplot` is doing exactly what you think!
+```{r}
+ggplot(ec3, aes(month, rate, group = year)) +
+  geom_line(aes(colour = year), size = 1)
+```
+
+## Data transformation with **dplyr** {#sec:dplyr}
+
+There are three verbs for data transformation that are very useful:
+
+### Filter observations
+
+* `filter()`
+
+### Create new variables
+
+* `mutate()`
+
+### Perform group-wise summarise
+
+* `summarise()`
+
+(Grouped mutates and filters are also useful, but more advanced. See the window function vignette for more details. )
 
 ### Fitting multiple models {#sub:multiple-models}
+
+`do()`
 
 In this section, we'll work through the process of generating the smoothed data produced by `stat_smooth()`.  This process will be the same for any other statistic, and should allow you to produce more complex summaries that `ggplot` can't produce by itself.  Figure~\ref{fig:smooth} shows the group-wise smoothes produced by the following code. \index{Model!fitting multiple models} \indexf{stat_smooth}
 
@@ -138,7 +162,10 @@ smooth <- function(df) {
   grid$se <- pred$se.fit
   grid
 }
-smoothes <- ddply(dense, .(color), smooth)
+smoothes <- dense %>% 
+  group_by(color) %>%
+  do(smooth(.))
+
 qplot(carat, price, data = smoothes, colour = color, 
   geom = "line")
 qplot(carat, price, data = smoothes, colour = color, 
@@ -159,120 +186,26 @@ qplot(carat, pred, data = grid, colour = color, geom = "line")
 
 See also [varying aesthetics and data](#sub:different-aesthetics) and [revealing uncertainty](#sec:uncertainty) for other ways of combining models and data.
 
-## Converting data from wide to long {#sec:melting}
+### Other verbs
 
-In `ggplot` graphics, groups are defined by rows, not by columns. This makes it easy to draw a line for each group defined by the value of a variable (or set of variables) but difficult to draw a separate line for each variable. In this section you will learn how to transform your data to a form in which you can draw a line for each variable. This transformation converts from 'wide' data to 'long' data, where each variable now occupies its own set of rows. \index{Data!wide-to-long} \index{Converting data!from wide to long}
+* `rename()`
 
-To perform this transformation we will use the `melt()` function from the **reshape** package [@wickham:2007b]. Reshape also provides the `cast()` function to flexibly reshape and aggregate data, which you may want to read about yourself. Table~\ref{tbl:melt} gives an example. The `melt()` function has three arguments: \index{Package!reshape} \indexf{melt}
+* `transmute()`
 
-* `data`: the data frame you want to convert to long form.
-* `id.vars`: Identifier (id) variables identify the unit that measurements take place on. Id variables are usually discrete, and are typically fixed by design. In `anova()` notation ($Y_{ijk}$), id variables are the indices on the variables ($i, j, k$); in database notation, id variables are a composite primary key.
-* `measure.vars`: Measured variables represent what is measured on that unit ($Y$). These will be the variables that you want to display simultaneously on the plot.
+There are two other verbs that are less useful for visualisation:
 
-If you're familiar with Wilkinson's grammar of graphics, you might wonder why there is no equivalent to the algebra.  There is no equivalent to the algebra within `ggplot` itself because there are many other facilities for transforming data in R, and it is in line with the `ggplot` philosophy of keeping data transformation and visualisation as separate as possible.
+* `arrange()`, that can be useful when you're looking at the data from the 
+  console. It doesn't affect visualisations because ggplot2 doesn't care about 
+  the order of the rows. 
+  
+* `select()` picks variables based on their names. Useful when you have 
+  very many variables and want to focus on just a few for analysis.
 
-```{r melt, results='asis', echo=FALSE}
-em <- tidyr::gather(economics, variable, value, -date)
-xtable(head(em), caption = "Economics data in wide, left, and long, right, formats. The data stored in each table is equivalent, just the arrangement is different. It it easy to use the wider format with \\texttt{ggplot} to produce a line for each variable.", label = "melt")
-```
+There are also verbs for working with two tables at a time.
 
-The following sections explore two important uses of molten data in more detail: plotting multiple time series and creating parallel coordinate plots. You will also see how to use `ddply()` to rescale the variables, and learn about the features of `ggplot` that are most useful in conjunction with this sort of data.
+## Visualising models with **broom** (#sec:broom)
 
-### Multiple time series {#sub:time-series}
-
-Take the `economics` dataset.  It contains information about monthly economic data like the number of people unemployed (`unemploy`) and the median length of unemployment (`uempmed`).  We might expect these two variables to be related.  Each of these variables is stored in a column, which makes it easy to compare them with a scatterplot, and draw individual time series, as shown in Figure~\ref{fig:series-wide}.  But what if we want to see the time series simultaneously? \index{Time series!multivariate} \indexf{geom_line}
-
-```{r series-wide, out.width="0.32\\linewidth", fig.cap="When the economics dataset is stored in wide format, it is easy to create separate time series plots for each variable (left and centre), and easy to create scatterplots comparing them (right)."}
-qplot(date, uempmed, data = economics, geom = "line")
-qplot(date, unemploy, data = economics, geom = "line")
-qplot(unemploy, uempmed, data = economics) + geom_smooth()
-```
-
-One way is to build up the plot with a different layer for each variable, as you saw in [the manual discrete scale](#sub:scale-manual). However, this quickly becomes tedious when you have many variables, and a better alternative is to melt the data into a long format and then visualise that. In the molten data the time series have their value stored in the `value` variable and we can distinguish between them with the `variable` variable. The code below shows these two alternatives. The plots they produce are very similar, and are shown in Figure~\ref{fig:series-methods}.
-
-```{r series-methods, fig.width=6, fig.height=3, fig.cap="The two methods of displaying both series on a single plot produce identical plots, but using long data is much easier when you have many variables.  The series have radically different scales, so we only see the pattern in the \\texttt{unemploy} variable. You might not even notice \\texttt{uempmed} unless you're paying close attention: it's the line at the bottom of the plot."}
-ggplot(economics, aes(date)) + 
-  geom_line(aes(y = unemploy, colour = "unemploy")) + 
-  geom_line(aes(y = uempmed, colour = "uempmed")) + 
-  scale_colour_hue("variable")
-
-emp <- tidyr::gather(economics, variable, value, uempmed, unemploy)
-qplot(date, value, data = emp, geom = "line", colour = variable)
-```
-
-There is a problem with these plots: the two variables have radically different scales, and so the series for `uempmed` appears as a flat line at the bottom of the plot. There is no way to produce a plot with two axes in `ggplot` because this type of plot is fundamentally misleading. Instead there are two perceptually well-founded alternatives: rescale the variables to have a common range, or use faceting with free scales. These alternatives are created with the code below and are shown in Figure~\ref{fig:series-scaling}.  \index{Axis!multiple}
-
-```{r series-scaling, fig.height=3, fig.width=6, fig.cap="When the series have very different scales we have two alternatives: left, rescale the variables to a common scale, or right, display the variables on separate facets and using free scales."}
-range01 <- function(x) {
-  rng <- range(x, na.rm = TRUE)
-  (x - rng[1]) / diff(rng)
-}
-emp2 <- ddply(emp, .(variable), transform, value = range01(value))
-qplot(date, value, data = emp2, geom = "line", 
-  colour = variable, linetype = variable)
-qplot(date, value, data = emp, geom = "line") + 
-  facet_grid(variable ~ ., scales = "free_y")
-```
-
-### Parallel coordinates plot {#sub:molten-data}
-
-In a similar manner, we can use molten data to create a parallel coordinates plot [@inselberg:1985; @wegman:1990], which has the 'variable' variable on the x axis and value on the y axis.  We need a new variable to record the row that each observation came from, which is used as a grouping variable for the lines (so we get one line per observation). The easiest value to use for this is the data frame `rownames`, and we give it an unusual name `.row`, so we don't squash any of the existing variables. Once we have the data in this form, creating a parallel coordinates plot is easy. \index{Parallel coordinates plot}
-
-The following code does exactly that for the ratings of 840 movies with over 10,000 votes. This dataset has a moderate number of variables (10) and many cases, and will allow us to experiment with a common technique for dealing with large data in parallel coordinates plots: transparency and clustering. Each variable gives the proportion of votes given to each rating between 0 (very bad) and 10 (very good). Since this data is already on a common scale we don't need to rescale it, but in general, we would need to use the technique from the previous section to ensure the variables are comparable. This is particularly important if we are going to use other multidimensional techniques to analyse the data. \index{Rescaling}
-
-```{r }
-popular <- subset(movies, votes > 1e4)
-ratings <- popular[, 7:16]
-ratings$.row <- rownames(ratings)
-molten <- tidyr::gather(ratings, variable, value, -.row)
-```
-
-Once the data is in this form, creating a parallel coordinates plot is easy. All we need is a line plot with `variable` on the x axis, `value` on the y axis and the lines grouped by `.row`. This data needs a few tweaks to the default because the values are highly discrete. In the following code, we experiment with jittering and alpha blending to better display where the bulk of the movies lie. The results are shown in Figure~\ref{fig:pcp}. Most are rated as sevens or eights by around 25% of voters, with a few exceptional movies getting 35% of more perfect 10s. However, the large number of lines makes it difficult to distinguish individual movies and it's hard to draw firm conclusions. \indexf{geom_line}
-
-```{r pcp, dev='png', fig.height=3, fig.cap="Variants on the parallel coordinates plot to better display the patterns in this highly discrete data.  To improve the default pcp (top left) we experiment with alpha blending (top right), jittering (bottom left) and then both together (bottom right)."}
-pcp <- ggplot(molten, aes(variable, value, group = .row))
-pcp + geom_line()
-pcp + geom_line(alpha = 1 / 20)
-jit <- position_jitter(width = 0.25, height = 2.5)
-pcp + geom_line(position = jit)
-pcp + geom_line(alpha = 1 / 20, position = jit)
-```
-
-To make the patterns more clear we will cluster the movies into groups of similar rating patterns. The following code uses kmeans clustering [@hartigan:1979] to produce six groups of similar movies.  To make the clusters a little more interpretable, they are relabelled so that cluster 1 has the lowest average rating and cluster six the highest. \index{Clustering}
-
-```{r }
-cl <- kmeans(ratings[1:10], 6)
-ratings$cluster <- reorder(factor(cl$cluster), popular$rating)
-levels(ratings$cluster) <- seq_along(levels(ratings$cluster))
-molten <- tidyr::gather(ratings, variable, value, r1:r10)
-```
-
-There are many different ways that we can visualise the result of this clustering. One popular method is shown in Figure~\ref{fig:pcp-colour} where line colour is mapped to group membership. This plot is supplemented with a plot that just shows averages for each group. These plots are both straightforward to create, as shown in the following code.
-
-```{r pcp-colour, dev='png', fig.height=3, fig.cap="Displaying cluster membership on a parallel coordinates plot. (Left) Individual movies coloured by group membership and (right) group means."}
-pcp_cl <- ggplot(molten, 
-  aes(variable, value, group = .row, colour = cluster)) 
-pcp_cl + geom_line(position = jit, alpha = 1/5)
-pcp_cl + stat_summary(aes(group = cluster), fun.y = mean, 
-  geom = "line")
-```
-
-These plots are good for showing the differences between groups, but they don't tell us a lot about whether we've done a good job clustering the data.  Figure~\ref{fig:pcp-facet} uses faceting to display each group in its own panel. This plot highlights the variation within many of the groups, suggesting that perhaps more clusters would be appropriate.
-
-```{r pcp-facet, dev='png', out.width="\\linewidth", fig.width=6, fig.cap="Faceting allows us to display each group in its own panel, highlighting the fact that there seems to be considerable variation within each group, and suggesting that we need more groups in our clustering."}
-pcp_cl + geom_line(position = jit, alpha = 1/5) +
-  facet_wrap(~ cluster)
-```
-
-## `ggplot()` methods {#sec:methods}
-
-`ggplot()` is a generic function, with different methods for different types of data. The most common input, and what we have used until now, is a data frame. As with base and lattice graphics, it is possible to extend `ggplot()` to work with other types of data. However, the way this works with `ggplot` is fundamentally different: `ggplot()` will not give you a complete plot, but instead will give you the tools you need to make any plot you desire.   \index{ggplot!methods}
-
-This process is mediated by the `fortify()` method, which takes an object, and optional data frame, and creates a version of the object in a form suitable for plotting with `ggplot`, i.e., as a data frame. The name fortify comes from thinking about combining a model with its data: the model fortifies the data, and the data fortifies the model, and the result can be used to simultaneously visualise the model and the data. An example will make this concrete, as you will see when we describe the fortify method for linear models. \index{Fortify} \indexf{fortify}
-
-This section describes how the `fortify()` method works, and how you can create new methods that are aligned with the `ggplot` philosophy.  The most important philosophical consideration is that data transformation and display should be kept as separate as possible.  This maximises reusability, as you are no longer trapped into the single display that the author envisaged.  
-
-These different types of input also work with `qplot()`: remember that `qplot()` is just a thin wrapper around `ggplot()`.
+(The previous version of the book discussed the `fortify()` generic. `fortify()` works with more than just models, but the most important uses of `fortify()` for non-model data now have better approaches, and **broom** wraps many more types of models that `fortify()`. It's also advantageous that it's a separate package because you can use it with other visualisation packages and it's easier to contribute to because the code is so much simpler. Currently broom development is very active.)
 
 ### Linear models
 
@@ -282,7 +215,6 @@ Currently, `ggplot` provides only one fortify method, for linear models. Here we
 mod <- lm(cty ~ displ, data = mpg)
 plot(mod)
 ```
-
 
 The `ggplot` approach completely separates data transformation and display. The `fortify()` method does the transformation, and then we use `ggplot` as usual to create the display that we want. Currently `fortify()` adds the variables listed in Table~\ref{tbl:fortify-vars} to the original dataset. These are basically all the variables that `plot.lm()` creates in order to produce its summary plots. The variables have a leading `.` (full stop) in their names, so there is little risk that they will clobber variables already in the dataset.
 
@@ -343,37 +275,3 @@ full <- basic %+% fortify(mod, mpg)
 full + aes(colour = factor(cyl))
 full + aes(displ, colour = factor(cyl))
 ```
-
-### Writing your own
-
-To write your own `fortify()` method, you will need to think about what variables are most useful for model diagnosis, and how they should be returned to the user. The method for linear models adds them on to the original data frame, but this might not be the best approach in other circumstances, and you may instead want to return a list of data frames giving information at different levels of aggregation.
-
-You can also use `fortify()` with non-model functions.  The following example shows how we could write a `fortify()` method to make it easier to add images to your plots.  The **EBImage** from bioconductor is used to get the image into R, and then the fortify method converts it into a form (a data frame) that `ggplot` can render.  Should you even need a picture of me on your plot, the following code will allow you to do so. \indexf{fortify.Image}
-
-```{r old, echo=FALSE, eval=FALSE}
-fortify.Image <- function(model, data, ...) {
-  colours <- channel(model, "x11")[,,]
-  colours <- colours[, rev(seq_len(ncol(colours)))]
-  melt(colours, c("x", "y"))
-}
-#NOTE: dependency ‘tiff’ is available as a source package but not as a binary
-library(EBImage)
-img <- readImage("http://had.co.nz/me.jpg", TrueColor)
-qplot(x, y, data = img, fill = value, geom="tile") + 
-  scale_fill_identity() + coord_equal()
-```
-
-```{r hadley, eval=FALSE}
-# This example can and should be improved. 
-# I'm not sure that fortifying an image is a great example anymore 
-# since we have annotation_custom:
-library("jpeg")
-tmp <- tempfile()
-download.file("http://had.co.nz/me.jpg", tmp)
-jpeg <- readJPEG(tmp)
-g <- rasterGrob(jpeg, interpolate=TRUE)
-qplot(1:10, 1:10, geom = "blank") + 
-  annotation_custom(g)
-```
-
-This approach cleanly separates the display of the data from its production, and dramatically improves reuse. However, it does not provide any conveniently pre-packaged functions. If you want to create a diagnostic plot for a linear model you have to assemble all the pieces yourself. Once you have the basic structure in place, so that people can always dig back down and alter the individual pieces, you can write a function that joins all the components together in a useful way. See [plot functions](#sec:functions) for some pointers on how to do this.
