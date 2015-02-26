@@ -1,33 +1,41 @@
-language: c
+language: r
 
 before_install:
-  - curl -OL http://raw.github.com/craigcitro/r-travis/master/scripts/travis-tool.sh
-  - chmod 755 ./travis-tool.sh
-  - ./travis-tool.sh bootstrap
-
-install:
-  # Install texlive suite
-  - sudo apt-get install texlive-latex-recommended
-  - sudo apt-get install texlive-latex-extra
-  - sudo apt-get install texlive-xetex
   # hyperref needs to be 6.83a or lower -- https://github.com/hadley/ggplot2-book/issues/32
   - head `kpsewhich hyperref.sty` -n 29 | tail -n 4
   - xelatex -version
+  - pandoc --version
+  - pandoc-citeproc --version
   # Install inconsolata
   - sudo apt-get install fonts-inconsolata
   - sudo fc-cache -fv
-  # Install binary pandoc from Rstudio
-  - mkdir -p $HOME/opt/pandoc
-  - curl -O http://s3.amazonaws.com/rstudio-buildtools/pandoc-1.12.3.zip
-  - unzip -j pandoc-1.12.3.zip pandoc-1.12.3/linux/debian/x86_64/* -d $HOME/opt/pandoc
-  - chmod +x $HOME/opt/pandoc/pandoc*
-  - rm pandoc-1.12.3.zip
-  - $HOME/opt/pandoc/pandoc --version
-  - $HOME/opt/pandoc/pandoc-citeproc --version
-  # Install R packages
-  - ./travis-tool.sh r_binary_install knitr ggplot2 jpeg mgcv
-  - ./travis-tool.sh r_install        lubridate rvest magrittr gridExtra dplyr plyr tidyr xtable nlme effects broom hexbin maps Hmisc
-  - ./travis-tool.sh github_package   rstudio/rmarkdown hadley/bookdown adletaw/captioner/captioner
+
+r_binary_packages:
+ - knitr
+ - ggplot2
+ - jpeg
+ - mgcv
+ 
+r_packages:
+  - lubridate 
+  - rvest 
+  - magrittr 
+  - gridExtra 
+  - dplyr 
+  - plyr 
+  - tidyr 
+  - xtable 
+  - nlme 
+  - effects 
+  - broom 
+  - hexbin 
+  - maps 
+  - Hmisc
+  
+r_github_packages:
+  - rstudio/rmarkdown 
+  - hadley/bookdown 
+  - adletaw/captioner
 
 script: make
 
