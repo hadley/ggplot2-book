@@ -15,14 +15,16 @@ options(digits = 2, width = 60)
 
 # Data analysis {#cha:data}
 
-Visualisation is just one part of the data analysis process which also includes data tidying, manipuation and modelling. Indeed, in my experience, visualisation is often the easiest part of this process: once you have tidy data, aggregated to the most useful level and modelled to discover the most important trends, the right visualisation is often quite easy.
+So far, every example in this book has started with a nice, tidy, dataset. This is great for learning ggplot2 because you don't want to struggle with getting data in the right shape at the same time as you learn how to use ggplot2. However, if you want to use ggplot2 with your own data, you'll need to learn some new techniques. In this chapter, you'll learn the principles of tidy data, which help you organise your data in a way that makes it easy for ggplot2 to work with. You'll also learn a little about about dplyr, which helps you manipulate tidy data, as is common during the course of a visualisation.
+
+Indeed, in my experience, visualisation is often the easiest part of this process: once you have tidy data, aggregated to the most useful level and modelled to discover the most important trends, the right visualisation is often quite easy.
 
 The goal of this chapter is to show you how to integrate visualisation with ggplot2 with the other parts of the data analysis process:
 
 * ggplot2 makes it easy to map variables to visual properties, but it depends 
   on a particular way of storing your data. This form (or shape) is called tidy
   data. In XXX you'll learn the basics of tidy data and how you can make your
-  messy data tidy.
+  messy data tidy with the __tidyr__ package.
   
 * Most visualisations also require some data transformation whether it's 
   creating a new variable from existing variables, or performing simple 
@@ -42,7 +44,8 @@ Data cleaning, manipulation and transformation is a big topic and this chapter o
   of Statistical Software_. It describes the ideas of tidy data in more depth
   and shows other types of messy data. Unfortunately the paper was written
   before tidyr existed, so to see how to use tidyr instead of reshape2, consult
-  the [tidyr vignette](http://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html).
+  the 
+  [tidyr vignette](http://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html).
 
 * The dplyr vignettes, which you can see with 
   `browseVignettes(package = "dplyr")`, go into considerably more depth into
@@ -59,7 +62,7 @@ Data cleaning, manipulation and transformation is a big topic and this chapter o
 
 ## Tidy data {#sec:tidy-data}
 
-The principle behind tidy data is simple: if you store your data in a consistent way, it's easier to work with it. There are only two key principles behind tidy data:
+The principle behind tidy data is simple: storing your data in a consistent way makes it easier to work with it. Tidy data is a mapping between statistical structure of a data frame (variables and observations) with the physical structure (columns and rows).
 
 1. Variables should go in columns.
 1. Observations should go in rows.
@@ -68,7 +71,7 @@ Tidy data is particularly important for ggplot2 because the job of ggplot2 is to
 
 For example, take this data frame that contains monthly employment data for the United States. This data contains three variables: month, year and unemployment rate:
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, message = FALSE}
 library("lubridate")
 ec2 <- 
   ggplot2::economics %>% 
@@ -89,7 +92,66 @@ Imagine you want to plot a time series showing how unemployment has changed over
 
 To make it possible to plot this data we first need to tidy it. 
 
-### Tidying messy data {#sec:tidyr}
+### Types of messiness {#sec:tidyr}
+
+A tidy variable is a variable that's in a column; a messy variable is stored in some other way. There are three fundamental types of messy variable: column-spread, combined and row-spread. Any other types of messiness are just combinations of the three:
+
+*   Col-spread: A pair of variables is spread across multiple columns. The 
+    column names give the value one variable (the __key__), and the cell values 
+    give the values of the other variable (the __value__).
+
+    For example, the following dataset has three variables: month, year,
+    and unemployment rate. Month is tidy, year and rate are spread across
+    columns. Year gives the column name, and rate is the cell values.
+    
+    ```{r}
+    ggplot2::economics %>% 
+      tbl_df() %>%
+      transmute(year = year(date), month = month(date), rate = uempmed) %>%
+      filter(year > 2000) %>%
+      spread(year, rate) %>% 
+      head()
+    ```
+
+*   Combined: Multiple variables are stored in one column.
+
+    ```{r, echo = FALSE}
+    dplyr::data_frame(
+      var = paste0(rep(c("start", "end"), each = 3), "_", rep(1:3, 2))
+    )
+    ```
+    
+    It's common to see a combination of row-spread and combine messiness 
+    where the column names are a combination of multiple variables.
+    
+*   Row-spread: The rarest form of messiness is when a column contains the 
+    variable names (the __key__) is paired with another column that gives the 
+    values of the variable (the __value__).
+    
+    ```{r}
+    dplyr::data_frame(
+      obs = rep(c("temp", "rain"), each = 3),
+      val = c(c(23, 22, 20), c(0, 0, 5))
+    )
+    ```
+
+### Tidying messy variables
+
+To tidy a messy data set, you first identify the variables, and the tidy them in the same order as above:
+
+* Use `gather()` to combine col-spread variables into key and value 
+  columns.
+
+* Use `separate()` to turn combined variables into individual variables.
+  
+* Use `spread()` to turn a key-value pair of row-spread variables into 
+  individual columns.
+
+You always perform the operations (`spread()`, `separate()` and `gather()`) in the same order, but not every dataset requires all three operations. I haven't said anything about observations: if you focus on making sure each variable is in a column, then the observations will take care of themselves. (That said, once you've tidied the data it's worth thinking about exactly what a row of data represents.)
+
+#### Spread
+
+The inverse of spread is gather. So to tidy a 
 
 We're going to use the __tidyr__ package. We're going to start with the `gather()` function. `gather()` takes variables that are spread across columns and values.
 
