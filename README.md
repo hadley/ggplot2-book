@@ -28,7 +28,7 @@ pkgs <- c("lubridate", "rvest", "magrittr", "gridExtra", "dplyr", "plyr",
           "maps", "Hmisc", "devtools")
 reqs <- vapply(pkgs, require, character.only = TRUE, FUN.VALUE = logical(1))
 # Install packages we require
-if(all(reqs)) install.packages(pkgs[!reqs])
+if(any(!reqs)) install.packages(pkgs[!reqs])
 
 devtools::install_github(c("adletaw/captioner", "hadley/bookdown"))
 ```
