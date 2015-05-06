@@ -18,7 +18,7 @@ $(TEXDIR)/ggplot2-book.pdf: $(TEXDIR)/ggplot2-book.tex $(TEXDIR)/krantz.cls $(TE
 	cd $(TEXDIR) && @rm ggplot2-book.ind 2> /dev/null || true
 	cd $(TEXDIR) && @rm ggplot2-book.out 2> /dev/null || true
 	cd $(TEXDIR) && xelatex ggplot2-book.tex
-	cd $(TEXDIR) && makeindex ggplot2-book
+	cd $(TEXDIR) && makeindex ggplot2-book.idx
 	cd $(TEXDIR) && xelatex ggplot2-book.tex 
 	cd $(TEXDIR) && xelatex ggplot2-book.tex
 	touch $(TEXDIR)/ggplot2-book.pdf
