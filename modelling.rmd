@@ -1,0 +1,136 @@
+---
+title: Modelling
+output: bookdown::html_chapter
+bibliography: references.bib
+---
+
+```{r data, echo = FALSE, message = FALSE}
+library(ggplot2)
+library(plyr)
+library(dplyr)
+options(digits = 2, width = 60)
+```
+
+### Fitting multiple models {#sub:multiple-models}
+
+In this section, we'll work through the process of generating the smoothed data produced by `stat_smooth()`.  This process will be the same for any other statistic, and should allow you to produce more complex summaries that `ggplot` can't produce by itself.  Figure~\ref{fig:smooth} shows the group-wise smoothes produced by the following code. \index{Model!fitting multiple models} \indexf{stat_smooth}
+
+```{r smooth, fig.cap="A plot showing the smoothed trends for price vs. carat for each colour of diamonds. With the full range of carats (left), the standard errors balloon after around two carats because there are relatively few diamonds of that size. Restricting attention to diamonds of less than two carats (right) focuses on the region where we have plenty of data."}
+qplot(carat, price, data = diamonds, geom = "smooth", 
+  colour = color)
+dense <- subset(diamonds, carat < 2)
+qplot(carat, price, data = dense, geom = "smooth", 
+  colour = color,  fullrange = TRUE)
+```
+
+How can we re-create this by hand?  First we read the `stat_smooth()` documentation to determine what the model is: for large data it's `gam(y ~ s(x, bs = "cs"))`.  To get the same output as `stat_smooth()`, we need to fit the model, then predict it on an evenly spaced grid of points. This task is performed by the `smooth()` function in the following code.  Once we have written this function it is straightforward to apply it to each diamond colour  using `ddply()`. \index{Package!mgcv}
+
+Figure~\ref{fig:smooth-by-hand} shows the results of this work, which are identical to what we got with `ggplot` doing all the work.
+
+```{r smooth-by-hand, fig.cap="Figure~\\ref{fig:smooth} with all statistical calculations performed by hand.  The predicted values (left), and with standard errors (right)."}
+library(mgcv)
+smooth <- function(df) {
+  mod <- gam(price ~ s(carat, bs = "cs"), data = df)
+  grid <- data.frame(carat = seq(0.2, 2, length = 50))
+  pred <- predict(mod, grid, se = T)
+  
+  grid$price <- pred$fit
+  grid$se <- pred$se.fit
+  grid
+}
+smoothes <- dense %>% 
+  group_by(color) %>%
+  do(smooth(.))
+
+qplot(carat, price, data = smoothes, colour = color, 
+  geom = "line")
+qplot(carat, price, data = smoothes, colour = color, 
+  geom = "smooth", ymax = price + 2 * se, ymin = price - 2 * se)
+```
+
+Doing the summary by hand gives you much more flexibility to fit models where the grouping factor is explicitly included as a covariate. For example, the following model models price as a non-linear function of carat, plus a constant term for each colour. It's not a very good model as it predicts negative prices for small, poor-quality diamonds, but it's a starting point for a better model.
+
+```{r gam, prompt=TRUE, fig.align='left'}
+mod <- gam(price ~ s(carat, bs = "cs") + color, data = dense)
+grid <- with(diamonds, expand.grid(
+  carat = seq(0.2, 2, length = 50),
+  color = levels(color)
+))
+grid$pred <- predict(mod, grid)
+qplot(carat, pred, data = grid, colour = color, geom = "line")
+```
+
+See also [varying aesthetics and data](#sub:different-aesthetics) and [revealing uncertainty](#sec:uncertainty) for other ways of combining models and data.
+
+## Visualising models with **broom** (#sec:broom)
+
+(The previous version of the book discussed the `fortify()` generic. `fortify()` works with more than just models, but the most important uses of `fortify()` for non-model data now have better approaches, and **broom** wraps many more types of models than `fortify()`. It's also advantageous that it's a separate package because you can use it with other visualisation packages and it's easier to contribute to because the code is so much simpler. Currently broom development is very active.)
+
+### Linear models
+
+Currently, `ggplot` provides only one fortify method, for linear models. Here we'll show how this method works, and how you can use it to create tailored plots for better understanding your data and models. Figure~\ref{fig:plot-lm} shows the output of `plot.lm()` for a simple model. The graphics are a set of pre-chosen model summary plots. These are useful for particular problems, but are completely inflexible: there is no way to modify them apart from opening up the source code for `plot.lm()` and modifying it. This is hard because the data transformation and display are inextricably entangled, making the code difficult to understand. \index{Model!diagnostics} \index{Model!linear} \index{Linear models} \indexf{fortify.lm}
+
+```{r plot-lm, out.width="0.4\\linewidth", fig.cap="The output from \\texttt{plot.lm()} for a simple model."}
+mod <- lm(cty ~ displ, data = mpg)
+plot(mod)
+```
+
+The `ggplot` approach completely separates data transformation and display. The `fortify()` method does the transformation, and then we use `ggplot` as usual to create the display that we want. Currently `fortify()` adds the variables listed in Table~\ref{tbl:fortify-vars} to the original dataset. These are basically all the variables that `plot.lm()` creates in order to produce its summary plots. The variables have a leading `.` (full stop) in their names, so there is little risk that they will clobber variables already in the dataset.
+
+\begin{table}
+  \centering
+  \begin{tabular}{lp{2.5in}}
+    \toprule
+    Variable & Description \\
+    \midrule
+    \texttt{.cooksd}   & Cook's distances \\
+    \texttt{.fitted}   & Fitted values \\
+    \texttt{.hat}      & Diagonal of the hat matrix \\
+    \texttt{.resid}    & Residuals \\
+    \texttt{.sigma}    & Estimate of residual standard deviation when corresponding observation is dropped from model \\
+    \texttt{.stdresid} & Standardised residuals \\
+    \bottomrule
+  \end{tabular}
+  \caption{The diagnostic variables that \texttt{fortify.lm} assembles and adds to the model data.}
+  \label{tbl:fortify-vars}
+\end{table}
+
+<!--
+% If we just supply \f{fortify} with the model, it will add the diagnostic columns to the model data frame (which just contains the variables used in the model), or we can also supply the full original dataset.  
+-->
+
+To demonstrate these techniques, we're going to fit the very simple model with code below, which also creates the plot in Figure~\ref{fig:fortify-mod}. This model clearly doesn't fit the data well, so we should be able to use model diagnostics to figure out how to improve it. A sample of the output from fortifying this model is shown in Table~\ref{tbl:fortify-out}. Because we didn't supply the original data frame, it contains the two variables used in the model as well as the six diagnostic variables. It's easy to see exactly what data our plot will be working with and we could easily add more variables if we wanted.
+
+```{r fortify-mod, fig.cap="A simple linear model that doesn't fit the data very well."}
+qplot(displ, cty, data = mpg) + geom_smooth(method = "lm")
+mpgmod <- lm(cty ~ displ, data = mpg)
+```
+
+```{r fortify-out, echo=FALSE, results='hide', eval=FALSE}
+xtable(head(fortify(mpgmod)), caption = "The output of \\texttt{fortify(mpgmod)} contains the two variables used in the model (\\texttt{cty} and \\texttt{displ}), and the six diagnostic variables described above.", label = "fortify-out")
+```
+
+<!--
+% You may notice some similarity between this approach and the transformations performed by stats.  The major difference is that \f{fortify} is global, while statistical transformations are local to the facet and group.
+-->
+
+With a fortified dataset in hand we can easily re-create the plots produced by `plot.lm()`, and even better, we can adapt them to our needs. The example below shows how we can re-create and then extend the first plot produced by `plot.lm()`. Once we have the basic plot we can easily enhance it: use standardised residuals instead of raw residuals, or make size proportional to Cook's distance. The results are shown in Figure~\ref{fig:fortify-fr}.
+
+```{r fortify-fr, out.width="0.32\\linewidth", fig.cap="(Left) Basic fitted values-residual plot. (Middle) With standardised residuals. (Right) With size proportional to Cook's distance. It is easy to modify the basic plots when we have access to all of the data."}
+mod <- lm(cty ~ displ, data = mpg)
+basic <- ggplot(mod, aes(.fitted, .resid)) +
+  geom_hline(yintercept = 0, colour = "grey50", size = 0.5) + 
+  geom_point() + 
+  geom_smooth(size = 0.5, se = F)
+basic
+basic + aes(y = .stdresid)
+basic + aes(size = .cooksd) + scale_size_area("Cook's distance")
+```
+
+Additionally, we can fortify the whole dataset and add to the plot variables that are in the original data but not in the model. This helps us to understand what variables are useful to improve the model. Figure~\ref{fig:fortify-full} colours the residuals by the number of cylinders, and suggests that this variable would be good to add to the model: within each cylinder group, the pattern is close to linear.
+
+```{r fortify-full, fig.cap="Adding variables from the original data can be enlightening. Here when we add the number of cylinders we see that instead of a curvi-linear relationship between displacement and city mpg, it is essentially linear, conditional on the number of cylinders."}
+full <- basic %+% fortify(mod, mpg)
+full + aes(colour = factor(cyl))
+full + aes(displ, colour = factor(cyl))
+```

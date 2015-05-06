@@ -34,14 +34,15 @@ render_chapter <- function(src) {
                         fig.path = paste0("figures/", chap),
                         cache.path = paste0("_cache/", chap)),
                    base$knitr$opts_chunk)
-  capture.output(render(src, base, output_dir = "book/tex", env = globalenv()),
+  capture.output(render(src, base, output_dir = "book/tex", envir = globalenv()),
                  file = "book/tex/render-log.txt")
 }
 
 # list the chapters in order they should appear
 # this is necessary to handle figure/table bumping properly
 chap_order <- c("introduction", "qplot", "mastery", "layers", "toolbox",
-                "scales", "position", "polishing", "data", "duplication",
+                "scales", "position", "polishing", "duplication",
+                "data",  "data-transformation", "modelling",
                 "translating", "specifications", "grid")
 chap_ord <- paste0(chap_order, ".rmd")
 if (!setequal(chap_ord, dir(pattern = ".rmd"))) 
