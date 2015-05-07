@@ -34,7 +34,7 @@ render_chapter <- function(src) {
                         fig.path = paste0("figures/", chap),
                         cache.path = paste0("_cache/", chap)),
                    base$knitr$opts_chunk)
-  capture.output(render(src, base, output_dir = "book/tex", envir = globalenv()),
+  capture.output(render(src, base, output_dir = "book/tex", envir = new.env()),
                  file = "book/tex/render-log.txt")
 }
 
@@ -70,6 +70,4 @@ bumper <- function(times, chap, ...) {
   render_chapter(chap)
 }
 
-mapply(bumper, bump_n, chap_ord[chap_id], SIMPLIFY = FALSE)
-
-
+res <- mapply(bumper, bump_n, chap_ord[chap_id], SIMPLIFY = FALSE)
