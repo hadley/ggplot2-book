@@ -31,8 +31,6 @@ $(TEXDIR)/ggplot2-book.tex: book/ggplot2-book.tex $(TEXDIR)
 # rmd -> tex
 $(TEX_CHAPTERS): $(RMD_CHAPTERS)
 	Rscript render-tex.R $?
-$(RMD_CHAPTERS): render-tex.R
-	touch $(RMD_CHAPTERS)
 
 $(TEXDIR):
 	mkdir -p $(TEXDIR)
