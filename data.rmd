@@ -13,51 +13,28 @@ options(digits = 2, width = 60)
 
 # Data analysis {#cha:data}
 
-So far, every example in this book has started with a nice, tidy, dataset. This is great for learning ggplot2 because you don't want to struggle with getting data in the right shape at the same time as you learn how to use ggplot2. However, if you want to use ggplot2 with your own data, you'll need to learn some new techniques. In this chapter, you'll learn the principles of tidy data, which help you organise your data in a way that makes it easy for ggplot2 to work with. You'll also learn a little about about dplyr, which helps you manipulate tidy data, as is common during the course of a visualisation, and about broom, a package that turns models into tidy data.
+So far, every example in this book has started with a nice dataset that's easy to plot. That's great for learning (because you don't want to struggle with getting data handling while you're learning visualisation) but in real-life data hardly ever comes in exactly the right sturcture. To use ggplot2 in practice, you also need to learn some data wrangling skills. Indeed, in my experience, visualisation is often the easiest part of the data analysis process: once you have the right data, in the right format, aggregated in the right way, the right visualisation is often obvious.
 
-Indeed, in my experience, visualisation is often the easiest part of this process: once you have tidy data, aggregated to the most useful level and modelled to discover the most important trends, the right visualisation is often quite easy.
+The goal of this part of the book is to show you how to integrate ggplot2 with other tools needed for a complete data analysis:
 
-The goal of this and the following two chapters is to show you how to integrate ggplot2 with other tools needed for a complete data analysis:
-
-* ggplot2 makes it easy to map variables to visual properties, but it depends 
-  on a particular way of storing your data. This form (or shape) is called tidy
-  data. In XXX you'll learn the basics of tidy data and how you can make your
-  messy data tidy with the __tidyr__ package.
+* In this chapter, you'll learn the principles of tidy data, which help you
+  organise your data in a way that makes it easy for ggplot2 to work with. 
+  This chapter will teach you how to use __tidyr__ to tidy messy dataset into
+  a form that's easier to work with.
   
 * Most visualisations also require some data transformation whether it's 
   creating a new variable from existing variables, or performing simple 
-  aggregations so you can see the forest for the tree. Section XXX will teach 
+  aggregations so you can see the forest for the tree. Chapter XXX will teach 
   how to use the __dplyr__ package to make this as easy as possible.
   
 * If you're using R, you're almost certainly using it for it's fantastic
   modelling capabilities. While there's an R package for almost every type
   of model that you can think of, the results of these models can be hard to
-  visualise. The __broom__ package, by David Robinson, makes your life easier 
-  by converting model outputs into standard tidy datasets so you can easily
-  integrate with ggplot2.
+  visualise. In Chapter YYY, you'll learn about the __broom__ package, by David 
+  Robinson, which makes your life easier by converting model outputs into 
+  standard tidy datasets so you can easily integrate them with ggplot2.
 
-Data cleaning, manipulation and transformation is a big topic and this book only scratches the surface. I recommend the following references which go into considerably more depth on this topic:
-
-* The documentation. I'll describe the most important arguments, but most
-  functions have other arguments that help deal with less common situations.
-  If you're struggling, make sure to read the documentation to see if there's
-  an argument that might help you.
-
-* "[Tidy data](http://www.jstatsoft.org/v59/i10/)", an article in the _Journal
-  of Statistical Software_. It describes the ideas of tidy data in more depth
-  and shows other types of messy data. Unfortunately the paper was written
-  before tidyr existed, so to see how to use tidyr instead of reshape2, consult
-  the 
-  [tidyr vignette](http://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html).
-
-* The dplyr vignettes, which you can see with 
-  `browseVignettes(package = "dplyr")`, go into considerably more depth into
-  dplyr. There you'll learn how to also use dplyr with data frames, and how
-  to work with multiple tables of data.
-
-* The [broom README](https://github.com/dgrtwo/broom), gives a more detailed
-  overview of broom and points you to the latest resources on where to learn 
-  more.
+Tidy data is the foundation for both data manipulation and visualising models. In the following sections, you'll learn the precise definition of tidy data, and the tools you need to make messy data tidy. The chapter concludes with two case studies that show how to apply the tools in sequence to work with real(istic) data.
 
 ## Tidy data {#sec:tidy-data}
 
@@ -68,9 +45,7 @@ The principle behind tidy data is simple: storing your data in a consistent way 
 
 If you store data in this way, you'll find most data analysis tasks become easier.
 
-Tidy data is particularly important for ggplot2 because the job of ggplot2 is to map variables to visual properties. ggplot2 assumes that variables are stored in columns, so if your data isn't tidy, you'll have a hard time visualising it.
-
-Sometimes you'll find a dataset that you have no idea how to plot. That's normally because it's not tidy: the variables aren't provided as columns, so you can't tell ggplot2 what to plot. For example, take this data frame that contains monthly employment data for the United States:
+Tidy data is particularly important for ggplot2 because the job of ggplot2 is to map variables to visual properties. ggplot2 assumes that variables are stored in columns, so if your data isn't tidy, you'll have a hard time visualising it. Sometimes you'll find a dataset that you have no idea how to plot. That's normally because it's not tidy: the variables aren't provided as columns, so you can't tell ggplot2 what to plot. For example, take this data frame that contains monthly employment data for the United States:
 
 ```{r, echo = FALSE, message = FALSE}
 library("lubridate")
@@ -153,7 +128,7 @@ economics <- gather(ec2, year, rate, `2001`:`2007`, convert = TRUE, na.rm = TRUE
 
 We use `convert = TRUE` to automatically convert the years from character strings to numbers, and `na.rm = TRUE` to remove the months with no data. (In some sense the data isn't actually missing because it represents dates that haven't occured yet.)
 
-Now we can easily visualise this to emphasise either the long term trend:
+When the data is in this form, it's easy to visualise in many different ways. We can emphasise the long term trend:
 
 ```{r}
 ggplot(economics, aes(year + (month - 1) / 12, rate)) +
@@ -177,6 +152,8 @@ weather <- dplyr::data_frame(
 )
 spread(weather, key = obs, value = val)
 ```
+
+This form of data is less common, but it does crop up.
 
 ## Separate and unite {#sec:separate-unite}
 
@@ -212,23 +189,45 @@ separate(trt, var, c("time", "treatment"), "_")
 
 For most real datasets, you'll need to use more than one tidying verb. There many be multiple ways to get there, but as long as each step makes the data tidier, you'll eventually get to a tidy dataset. However, as a general rule, typically you apply the functions in the same order: you might not use all of them, but most of time you use them in order of `gather()`, `separate()` and `tidy()`.
 
+### Blood pressure
+
+The first step when tidying a new dataset is always to identify the variables. Take the following simulated medical data. What are the variables here?
+
 ````{r}
-# Pending OK from Barry Rowlingston
-
-bpd <- readr::read_table("Name Age      Start  Week1  Week2  Week3  Week4
-Anne  35 2014-03-27 100/80 140/70 100/75 120/90
- Ben  41 2014-03-09 110/65 115/80 100/65 135/70
-Carl  33 2014-04-02 125/80 140/90   <NA>   <NA>
-Debs  27 2014-04-01 100/65 115/85 120/80   <NA>
-  Ed  22 2014-04-02 115/75  90/75 110/65 120/75
+bpd <- readr::read_table("name age      start  week1  week2  week3
+Anne  35 2014-03-27 100/80 100/75 120/90
+ Ben  41 2014-03-09 110/65 100/65 135/70
+Carl  33 2014-04-02 125/80   <NA>   <NA>
 ", na = "<NA>")
-
-bpd %>%
-  gather(week, bp, Week1:Week4) %>%
-  separate(bp, c("sys", "dia"), "/", extra = "drop") %>%
-  extract(week, "week", "(\\d+)", convert = TRUE)
 ```
 
+There are seven: name, age, start date, week, systolic & diastolic blood pressure. The first step is to gather columns that aren't variables into a week-bp (key-value) pair:
+
+```{r}
+bpd_1 <- gather(bpd, week, bp, week1:week3)
+bpd_1
+```
+
+This is tidier, but we have two variables combined together in the `bp` variable. This is a common way of writing down the blood pressure, but analysis is easier if we break into two variables.  That's the job of separate:
+
+```{r}
+bpd_2 <- separate(bpd_1, bp, c("sys", "dia"), "/", extra = "drop")
+bpd_2
+```
+
+This dataset is now tidy, but we could do a little more to make it easier to use. The following code uses extract to pull the week number out into its own variable (using regular expressions is beyond the scope of the book, but `\\d` stands for any digit). I also use arrange (which you'll learn about in the next chapter) to order the rows to keep the records for each person together.
+
+```{r}
+bpd_3 <- extract(bpd_2, week, "week", "(\\d)", convert = TRUE)
+bpd_4 <- arrange(bpd_3, name, start)
+bpd_4
+```
+
+You might notice that there's some repetition in this dataset: if you know the name, then you also know the age and start date. This reflects a third condition of tidyness that I don't discuss here: each data frame should contain one and only one data set. Here there are really two datasets: information about each person that doesn't change over time, and their weekly blood pressure measurements. You can learn more about this sort of messiness in the resources mentioned at the end of the chapter.
+
+### Test scores
+
+Imagine you're intersted in the effect of an intervention on test scores. You've collected the folllowing data. What are the variables?
 
 ```{r}
 # Adapted from http://stackoverflow.com/questions/29775461
@@ -236,12 +235,44 @@ scores <- data_frame(
   person = rep(c("Greg", "Sally", "Sue"), each = 2),
   time   = rep(c("pre", "post"), 3),
   test1  = round(rnorm(6, mean = 80, sd = 4), 0),
-  test2  = round(jitter(test1, 15), 0),
-  test3  = round(5 + (test1 + test2) / 2)
+  test2  = round(jitter(test1, 15), 0)
 )
-
-scores %>% 
-  gather(test, value, test1:test3) %>%
-  spread(time, value) %>% 
-  mutate(diff = post - pre)
 ```
+
+The variables are person, test, pre-test score and post-test score. As usual, we start by gathering columns who's names represent variable values:
+
+```{r}
+scores_1 <- gather(scores, test, score, test1:test2)
+scores_1
+```
+
+Now we need to do the opposite: pre and post should be variables, so we need to spread time and value:
+
+```{r}
+scores_2 <- spread(scores_1, time, score)
+scores_2
+```
+
+A good indication that we have done this correctly is that it's now easier to calculate the statistic of interest: the difference between pre- and post-intervention scores:
+
+```{r}
+mutate(scores_2, diff = post - pre)
+```
+
+(Again, you'll learn about `mutate()` in the next chapter.)
+
+## Learning more
+
+Data cleaning, manipulation and transformation is a big topic and this book only scratches the surface. I recommend the following references which go into considerably more depth on this topic:
+
+* The documentation. I'll describe the most important arguments, but most
+  functions have other arguments that help deal with less common situations.
+  If you're struggling, make sure to read the documentation to see if there's
+  an argument that might help you.
+
+* "[Tidy data](http://www.jstatsoft.org/v59/i10/)", an article in the _Journal
+  of Statistical Software_. It describes the ideas of tidy data in more depth
+  and shows other types of messy data. Unfortunately the paper was written
+  before tidyr existed, so to see how to use tidyr instead of reshape2, consult
+  the 
+  [tidyr vignette](http://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html).
