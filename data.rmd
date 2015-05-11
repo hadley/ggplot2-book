@@ -76,43 +76,55 @@ To make it possible to plot this data we first need to tidy it. There are two im
 Take a look at the two tables below:
 
 ```{r, echo = FALSE}
-keyed <- data.frame(
+indexed <- data.frame(
   w = c(1, 2, 3, 4, 3),
   x = c("a", "b", "c", "d", "c"),
   y = c("A", "D", "A", "C", "B"),
   z = c(1, 5, 4, 9, 10)
 ) %>% arrange(x, y)
-matrix <- keyed %>% spread(y, z)
+matrix <- indexed %>% spread(y, z)
 
-knitr::kable(keyed)
+knitr::kable(indexed)
 knitr::kable(matrix)
 ```
 
-If you study them for a little while, you'll notice that they contain the same data, but in a different form. The first form is called __keyed__ data. The second form is called __matrix__ form.
+If you study them for a little while, you'll notice that they contain the same data, but in a different form. The first form is called __indexed__ data, because you look up a value using an index. The second form is called __Cartesian__ form, because it's you find a value by looking for intersection of a row and a column.
 
 (Note that we can't tell if these datasets are tidy or not. Either form could be tidying depending on what the values "A", "B", "C", "D" mean. Also note the missing values: missing values that are explicit in one form, maybe implicit in the other. An `NA` is the presence of an absense; but sometimes a missing value is the absense of a presence.)
 
-Transforming from one form to the other always requires a _key_ and a _value_. When spreading, going from keyed to indexed forms, the key is the column that will become column names, and the value is the column that fills in the values. When gathering, going from indexed to keyed, the key is the name of the column that will be created from the row names, and the value is the name of the column that will be created from the cell values. To help you remember the verbs, gather takes many columns and gathers into a pair, spread takes a pair of variables and spreads into many.
+Transforming from one form to the other always requires a pair: a _key_ and a _value_. When spreading, going from indexed to matrix forms, the key is the column that will become column names, and the value is the column that fills in the values. When gathering, going from matrix to indexed, the key is the name of the column that will be created from the row names, and the value is the name of the column that will be created from the cell values. To help you remember the verbs, generally:
 
-The tidyr package provides the `spread()` and `gather()` functions to perform these operations. You also need to tell `gather()` which columns are in matrix form, and here I use `na.rm = TRUE` to make the missing values implicit.
+* gather reduces the number of columns: n -> 2.
+* spread increases the number of columns: 2 -> n.
 
-```{r}
-library(tidyr)
-spread(keyed, key = y, value = z)
-gather(matrix, key = y, value = z, A:D, na.rm = TRUE)
-```
+(You could imagine generalising spread and gather to higher dimensions. However, data is almost always stored in 2d (rows & columns), so these generalisations, while fun to think about, are not that practical. @wickham:2007b explores this idea in more detail.)
 
 Don't worry if this seems a bit confusing at first. You'll get the hang of it as you work through some concrete examples.
 
-To tidy the economics dataset shown above, you first need to identify the variables. Note that there's a pair of variables that are stored in the column names and in the cell values. This data is in matrix form and we need to put it in keyed form to make it tidy. This is the job of `gather()`. It takes four arguments:
+The tidyr package provides the `spread()` and `gather()` functions to perform these operations. The first three arguments to `spread()` and `gather()` are the same:
 
 * `data`: the dataset to modify
-* `key`: the name of the variable in the column names
-* `value`: the name of the variable in the cell values
-* `...`: the columns to gather up. You can specify individually, `A, B, C, D`,
-   or as a range `A:D`.
+* `key` & `value`: the key-value pair
 
-In this example, the key is `year`, the value is `unemp` and we want to select columns from `2001` to `2007`:
+`gather()` has two additional arguments:
+
+* `...` allows you to specify gather up. You can specify individually, 
+   `A, B, C, D`, or as a range `A:D`. Alternatively, you can specify which
+   columns are _not_ to be gather with `-`:  `-E, -F`.
+   
+* `na.rm`, if `TRUE` this will convert explicit missing values in matrix
+  form into _implicit_ missing values in indexed form. In other words, 
+  `na.rm = TRUE` makes missing values go missing.
+
+To convert between the two forms of sample data above:
+
+```{r}
+library(tidyr)
+spread(indexed, key = y, value = z)
+gather(matrix, key = y, value = z, A:D, na.rm = TRUE)
+```
+
+To tidy the economics dataset shown above, you first need to identify the variables. Note that there's a pair of variables that are stored in the column names and in the cell values. This data is in matrix form and we need to put it in indexed form to make it tidy. In this example, the key is `year`, the value is `unemp` and we want to select columns from `2001` to `2007`:
 
 ```{r}
 gather(ec2, key = year, value = unemp, `2001`:`2007`)
@@ -142,7 +154,7 @@ ggplot(economics, aes(month, rate, group = year)) +
   geom_line(aes(colour = year), size = 1)
 ```
 
-Spreading is the opposite of gathering. You use it when you have a pair of columns that contain the name of a variable and its value. The following example dataset contains three variables (day, rain and temp), but rain and temp are stored in the obs-val pair. Spread allows us to turn the keyed form into a tidy matrix form:
+Spreading is the opposite of gathering. You use it when you have a pair of columns that contain the name of a variable and its value. The following example dataset contains three variables (day, rain and temp), but rain and temp are stored in the obs-val pair. Spread allows us to turn the indexed form into a tidy matrix form:
 
 ```{r}
 weather <- dplyr::data_frame(
@@ -191,7 +203,7 @@ For most real datasets, you'll need to use more than one tidying verb. There man
 
 ### Blood pressure
 
-The first step when tidying a new dataset is always to identify the variables. Take the following simulated medical data. What are the variables here?
+The first step when tidying a new dataset is always to identify the variables. Take the following simulated medical data. There are seven variable in this dataset: name, age, start date, week, systolic & diastolic blood pressure. Can you see how they're stored?
 
 ````{r}
 bpd <- readr::read_table("name age      start  week1  week2  week3
@@ -201,7 +213,7 @@ Carl  33 2014-04-02 125/80   <NA>   <NA>
 ", na = "<NA>")
 ```
 
-There are seven: name, age, start date, week, systolic & diastolic blood pressure. The first step is to gather columns that aren't variables into a week-bp (key-value) pair:
+The first step is to gather columns that aren't variables into a key-value (week-bp) pair:
 
 ```{r}
 bpd_1 <- gather(bpd, week, bp, week1:week3)
@@ -239,8 +251,7 @@ scores <- data_frame(
 )
 ```
 
-The variables are person, test, pre-test score and post-test score. As usual, we start by gathering columns who's names represent variable values:
-
+The variables are person, test, pre-test score and post-test score. As usual, we start by converting columns in matrix form (test1 and test2) in to indexed form (test and score):
 ```{r}
 scores_1 <- gather(scores, test, score, test1:test2)
 scores_1
