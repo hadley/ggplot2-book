@@ -3,37 +3,129 @@ title: Data transformation
 output: bookdown::html_chapter
 bibliography: references.bib
 ---
-  
+
+```{r data, echo = FALSE, message = FALSE}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+options(digits = 2, width = 60)
+```
+
 # Data transformation {#sec:dplyr}
 
-There are three verbs for data transformation that are very useful:
+During the course of creating a visualisation you'll often discover that data doesn't quite have the variables you need, or maybe it's aggregated in a slightly awkward way. To go along with your visualistion skills, you also need some basic data manipulation skills. For this data manipulation problems, I recommend learning `dplyr()` which is designed in a very similar way to ggplot2: it works with tidy data.
+
+In this chapter you'll learn the most important components of dplyr for visualisation:
+
+* `filter()`
+* `mutate()`
+* `group_by()` + `summarise()`
+
+You'll also learn about `%>%` the tool in dplyr (and other packages) that plays an analogous role to `+` in ggplot2: it allows you to solve complex problems by combining small pieces that are easily understood in isolation.
   
 ### Filter observations
 
 * `filter()`
 
+```{r, dev = "png"}
+qplot(x, y, data = diamonds)
+
+diamonds <- diamonds %>% tbl_df()
+diamonds %>% filter(x == 0 | y == 0 | z == 0)
+
+diamonds_ok <- filter(diamonds,
+  x > 0, y > 0, z > 0,
+  y < 20, z < 10
+)
+```
+
+Comparison operators:
+
+* `==`
+* `!=`
+* `>`, `<`, `>=`, `<=`
+* `x %in% c("a", "b", "c")`
+
+Logical
+
+* `x & y` and
+* `x | y` or
+* `!x`, not x
+* `xor(x, y)` x or y, but not both (e__x__clusive or)
+
+Beware missing values: missing values always propagate. The answer to any question involving a missing value will always be a missing value. One common trap is to try and remove missing values by doing `NA != NA`. But this won't work:
+
+```{r}
+NA == NA
+NA != NA
+is.na(NA)
+```
+
+A little thought reveals why: there's no just one measurement who's value we don't know. There are an infinite set. Just because two values are missing does not imply they have the same value. Instead you'll need to use `is.na(X)` to determine if a value is missing.
+
 ### Create new variables
 
-diamonds is x & y more useful, or aspect ratio and size? Do you want
-location and time, or velocity, or acceleration? For basketball shot
-data, do you want x & y or distance and angle? For colour, do you want
-rgb or hcl?
+```{r, dev = "png"}
 
 
-* `mutate()`
+diamonds <- diamonds %>% 
+  mutate(
+    x = ifelse(x == 0, NA, x),
+    y = ifelse(y == 0, NA, y),
+    z = ifelse(z == 0, NA, z)
+  )
 
-### Perform group-wise summarise
+diamonds_ok <- diamonds_ok <- mutate(diamonds_ok,
+    vol = x * y * z,
+    density = vol / carat,
+    sym = log(x / y)
+  )
 
-* `summarise()`
+qplot(x, y, data = diamonds_ok)
+qplot(x, y, data = diamonds_ok, colour = abs(sym))
+
+diamonds_ok2 <- diamonds_ok %>% filter(abs(sym) < 0.05)
+qplot(sym, data = diamonds_ok2, binwidth = 0.001) 
+table(sign(diamonds_ok2$sym))
+```
+
+Often useful to think about decomposing a variable (or pair of variables) into an alternative form. Many transformations are domain specific, but there are many that are useful in a suprisingly wide range of circumstances.
+
+* `sign(x)` + `abs(x)`
+
+* Log-transformations in general are extremely useful - they convert
+  additive relationships to multiplicative. The squish extremely long-tails.
+  Convert power relationships to linear. 
+  Good examples at <http://stats.stackexchange.com/questions/27951>
+
+* If you're interested in the relative difference between two variables, the 
+  best summary to use is `log(x / y)`. It's the only symmetric, additive 
+  and normed measurement (@tornqvist:1985).
+  
+* Sometimes changing to polar coordiantes, distance (`sqrt(x^2 + y^2)`) and 
+  angle (`atan2(y, x)`) can be useful.
+  
+* Sometimes integrals or derivative might be more useful - if you have
+  distance and time, would speed or acceleration be more useful? (or vice versa)
+ 
+Always worthwhile to think about potential transformations that may make more clear interesting signals in your data. If you focus on interpretible transformations, i.e. things that make it easier to understand, and not on randomly apply every transformationt that you can think of you are less likely to run into statisitcal problems ("torturing the data until it confesses" -- Tukey.)
+
+### Group-wise summarise
+
+`group_by()` + `summarise()`
 
 (Grouped mutates and filters are also useful, but more advanced. See the window function vignette for more details. )
 
+Useful summary functions:
+
+* counts: `n()`, `n_distinct()`, `sum(x > 10)`.
+* central tendency: `mean()`, `median()`.
+* spread: `sd()`, `mad()`
+* extremes: `quartile()`, `min()`, `max()`
+
+Convert counts to proportions by using `mean()` instead of `sum()` or with `prop.table()`.
 
 ### Other verbs
-
-* `rename()`
-
-* `transmute()`
 
 There are two other verbs that are less useful for visualisation:
 
@@ -44,12 +136,26 @@ There are two other verbs that are less useful for visualisation:
 * `select()` picks variables based on their names. Useful when you have 
   very many variables and want to focus on just a few for analysis.
 
-There are also verbs for working with two tables at a time.
+There are two that are variations on `mutate()` and `select()`:
 
+* `rename()`
+
+* `transmute()`
 
 ## Learning more
+
+This has given you the basics for doing single table data manip in R. Learn more:
+
+* About using dplyr with databases.
+
+* The verbs that work with two tables at a time: mutating joins, filtering
+  joins and the set operations.
+  
+* Group-wise filters and mutate can also be useful, particularly in
+  conjunction with window functions.
 
 * The dplyr vignettes, which you can see with 
   `browseVignettes(package = "dplyr")`, go into considerably more depth into
   dplyr. There you'll learn how to also use dplyr with data frames, and how
   to work with multiple tables of data.
+
