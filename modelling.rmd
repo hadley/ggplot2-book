@@ -11,6 +11,22 @@ library(dplyr)
 options(digits = 2, width = 60)
 ```
 
+## Remove trend
+
+```{r, dev = "png"}
+mod <- lm(log(price) ~ log(carat), data = diamonds)
+diamonds2 <- mutate(diamonds,
+  est_price = exp(predict(mod)),
+  resid = resid(mod)
+)
+qplot(carat, resid, data = filter(diamonds2, carat < 2))
+
+ggplot(filter(diamonds2, carat < 2), aes(carat, resid)) + 
+  geom_abline(slope = 0, colour = "white", size = 2) + 
+  geom_point() + 
+  facet_grid(clarity ~ color)
+```
+
 ### Fitting multiple models {#sub:multiple-models}
 
 In this section, we'll work through the process of generating the smoothed data produced by `stat_smooth()`.  This process will be the same for any other statistic, and should allow you to produce more complex summaries that `ggplot` can't produce by itself.  Figure~\ref{fig:smooth} shows the group-wise smoothes produced by the following code. \index{Model!fitting multiple models} \indexf{stat_smooth}
