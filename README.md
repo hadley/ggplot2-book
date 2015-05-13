@@ -30,11 +30,6 @@ There are also a couple GitHub packages which we depend on:
 devtools::install_github(c("adletaw/captioner", "hadley/bookdown"))
 ```
 
-There are also a few system requirements:
-  * [pandoc and pandoc-citeproc](http://pandoc.org/installing.html)
-  * [make](http://www.gnu.org/software/make/)
-  * [Inconsolata font](http://www.ctan.org/tex-archive/fonts/inconsolata/).
-
 ## Internal links
 
 To link between sections, use internal links of the form `#header-id`.
