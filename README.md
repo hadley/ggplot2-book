@@ -18,26 +18,24 @@ If you use RStudio, you can press Cmd/Ctrl + Shift + B to run make.
 
 ## Installing dependencies
 
-There are a number of dependencies required to build this book. We have a full installation recipe for Ubuntu 12.04 [here](https://github.com/hadley/ggplot2-book/blob/master/.travis.yml). Even if you run a different operating system, please look there for R package requirements. 
-All of the R packages are available on CRAN via `install.packages` except for [bookdown](https://github.com/hadley/bookdown) and [captioner](https://github.com/adletaw/captioner). You can install both
-sets of packages with:
+To successfully build this book, you'll need R [package development prerequisites](https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites), [pandoc and pandoc-citeproc](http://pandoc.org/installing.html), potentially the [Inconsolata font](http://www.ctan.org/tex-archive/fonts/inconsolata/), and a number of R packages. The CRAN packages we depend on are listed in the DESCRIPTION, so you can install them quickly via [devtools](http://cran.r-project.org/web/packages/devtools/):
 
 ```r
-pkgs <- c("lubridate", "rvest", "magrittr", "gridExtra", "dplyr", "plyr",
-          "tidyr", "xtable", "nlme", "effects", "broom", "hexbin", "maps",
-          "maps", "Hmisc", "devtools")
-reqs <- vapply(pkgs, require, character.only = TRUE, FUN.VALUE = logical(1))
-# Install packages we require
-if(any(!reqs)) install.packages(pkgs[!reqs])
+devtools::install_deps("path/to/ggplot2-book", dependencies = TRUE)
+```
 
+There are also a couple GitHub packages which we depend on:
+
+```r
 devtools::install_github(c("adletaw/captioner", "hadley/bookdown"))
 ```
 
-You might also need to install the [inconsolata](http://www.ctan.org/tex-archive/fonts/inconsolata/) font.
+There are also a few system requirements:
+  * [pandoc and pandoc-citeproc](http://pandoc.org/installing.html)
+  * [make](http://www.gnu.org/software/make/)
+  * [Inconsolata font](http://www.ctan.org/tex-archive/fonts/inconsolata/).
 
 ## Internal links
 
 To link between sections, use internal links of the form `#header-id`.
 All header references are listed in `toc.yaml`.
-
-
