@@ -1,47 +1,26 @@
 language: r
+sudo: false
 
 env:
  global:
    - CRAN: http://cran.rstudio.com
 
-r_binary_packages:
- - knitr
- - ggplot2
- - jpeg
- - mgcv
- 
-r_packages:
-  - lubridate 
-  - rvest 
-  - magrittr 
-  - gridExtra 
-  - dplyr 
-  - plyr 
-  - tidyr 
-  - xtable 
-  - nlme 
-  - effects 
-  - broom 
-  - hexbin 
-  - maps 
-  - Hmisc
-  
 r_github_packages:
-  - rstudio/rmarkdown 
   - hadley/bookdown 
   - adletaw/captioner
 
 script: 
-    # hyperref needs to be 6.83a or lower -- https://github.com/hadley/ggplot2-book/issues/32
+  # hyperref needs to be 6.83a or lower -- https://github.com/hadley/ggplot2-book/issues/32
   - head `kpsewhich hyperref.sty` -n 29 | tail -n 4
-  - xelatex -version
   - pandoc --version
   - pandoc-citeproc --version
+  # Install xelatex
+  - sudo apt-get install texlive-xetex
+  - xelatex -version
   # Install inconsolata
   - sudo apt-get install fonts-inconsolata
   - sudo fc-cache -fv
-  
-after_script:
+  # Build book
   - make
 
 notifications:
