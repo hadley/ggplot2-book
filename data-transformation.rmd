@@ -353,19 +353,42 @@ ggplot(by_cut, aes(color, med, group = 1)) +
 
 In only the simplest of cases will you apply just one dplyr verbs. In most real analyses, you'll end up stringing together multiple `mutate()`s, `filter()`s, and `group_by()`s `summarise()`s. There are two basic ways you can create such a sequence.
 
-```{r}
+```{r, results = "none"}
 # By "composing" functions
-
+mutate(
+  filter(
+    summarise(
+      group_by(
+        diamonds, 
+        cut, 
+        depth
+      ), 
+      n = n()
+    ), 
+    depth > 55, 
+    depth < 70
+  ), 
+  prop = n / sum(n)
+)
 
 # By using intermediate values
-
+cut_depth <- group_by(diamonds, cut, depth)
+cut_depth <- summarise(cut_depth, n = n())
+cut_depth <- filter(cut_depth, depth > 55, depth < 70)
+cut_depth <- mutate(cut_depth, prop = n / sum(n))
 ```
 
 Both approaches have problems. Function composition is hard to read...
 
-
 To make this easier, dplyr provides the __pipe__, `%>%`. It allows you to turn function composition into a sequence of transformations.
 
+```{r, results = "none"}
+cut_depth <- diamonds %>% 
+  group_by(cut, depth) %>% 
+  summarise(n = n()) %>% 
+  filter(depth > 55, depth < 70) %>% 
+  mutate(prop = n / sum(n))
+```
 
 
 ### Exercises
