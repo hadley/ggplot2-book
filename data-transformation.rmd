@@ -38,7 +38,7 @@ It's common to only want to explore one part of a dataset. A great data analysis
 
 Filtering is also useful for extracting outliers. Generally, you don't want to just throw outliers away (often they are were the action is), but it's useful to think about partioning the data into the common and the unusual. You summarise the common to look at the broad trends; you examine the outliers individually to see if you can figure out what's going on.
 
-For example, look at this pair of plots that show how the x and y dimensions of the diamonds are related:
+For example, look at this plot that shows how the x and y dimensions of the diamonds are related:
 
 ```{r, dev = "png", fig.show = "hold", fig.width = 3, fig.height = 3}
 qplot(x, y, data = diamonds) + theme(aspect.ratio = 1)
@@ -50,7 +50,7 @@ There are around 50,000 points in this dataset: most of them lie along the diago
 filter(diamonds, x == 0 | y == 0)
 ```
 
-This is equivalent to the base R code `diamonds[diamonds$x == 0 | diamonds$y == 0, ]`, but is less repitious because you can `filter()` allows you to refer to bare variable names. 
+This is equivalent to the base R code `diamonds[diamonds$x == 0 | diamonds$y == 0, ]`, but is less repitious because `filter()` allows you to refer to bare variable names. 
 
 (If you've used `subset()` before, you'll notice that it has very similar behaviour. The biggest difference is that `subset()` can select both observations and variables, where in dplyr, `filter()` works with exclusuively with observations and `select()` with variables. There are some other subtle differences, but the main advantage to using `filter()` is that it behaves identically to the other dplyr verbs)
 
@@ -63,11 +63,19 @@ qplot(x, y, data = diamonds_ok) +
   geom_abline(slope = 1, colour = "red")
 ```
 
-This plot is now more informative - we can see a very strong relationship between x and y. There are two related challenges with this plot: most of the plot region is empty, because most of the data lies along the diagonal. Additionally, there are some clear bivariate outliers. These outliers are hard to extract because we need some non-obvious function of x and y. We'll solve both of these problem in the next section by adding a new variable that's a transformation of x and y. But before we can do that we need to talk a little more about the details of `filter()`.
+This plot is now more informative - we can see a very strong relationship between x and y (and the reference abline helps us see exactly what that relationship is). However, this plot still has problems: 
+
+* Most of the plot region is empty, because most of the data lies along the 
+  diagonal. 
+  
+* There are some clear bivariate outliers, but it's hard to select those
+  outliers with a simple filter need a non-obvious function of x and y. 
+  
+We'll solve both of these problem in the next section by adding a new variable that's a transformation of x and y. But before we continue on to that, lets talk more about the details of `filter()`.
 
 ### Useful tools
 
-Filter requires a logical vector. You can create a logical vector from characater and numeric variables with the comparison operators:
+The two most important arguments to `filter()` a data frame and an expression that creates a logical vector. The logical vector must always be the same length as the data frame: if not, you'll get an error. Typically you create the logical vector with the comparison operators:
 
 * `x == y`: x and y are equal.
 * `x != y`: x and y are not equal.
@@ -75,18 +83,21 @@ Filter requires a logical vector. You can create a logical vector from characate
 * `x > y`, `x >= y`, `x < y`, `x <= y`: greater than, greater than or equal to,
   less than, less than or equal to.
 
-Comparison operators return a logical vector that contains either TRUE, FALSE, or NA. `filter()` keeps only those observations where the vector contains TRUE (i.e. both FALSE and NA values are dropped). You can convert:
+There are three possible values in a logical vector: TRUE, FALSE, or NA. `filter()` keeps the observations corresponding to TRUE values (i.e. both FALSE and NA values are dropped). Change this behaviour by modifying the logical vector:
 
-* TRUE to FALSE and FALSE to TRUE with `!x`
-* NA to FALSE and TRUE/FALSE to TRUE with `is.na(x)` (more on this shortly).
+* `!x` (pronounced not x), flips TRUE and FALSE so it keeps all the values 
+  where `x` is FALSE.
+  
+* `is.na(x)` is TRUE when x is NA, and FALSE otherwise, so it keeps all the 
+  values where `x` is NA. 
 
-The logical operators allow you to combine multiple values:
+Use logical operators to combine the results of multiple expressions:
 
 * `x & y`: TRUE if both x and y are TRUE.
 * `x | y`: TRUE if either x or y are TRUE.
 * `xor(x, y)`: TRUE if either x or y are TRUE, but not both (e__x__clusive or).
 
-Some examples:
+Most real queries require some combination of comparison and logical operators:
 
 * Price less than $500: `price < 500`
 * Size between 1 and 2 carats: `carat >=1 & carat < 2`
@@ -94,20 +105,20 @@ Some examples:
   `cut %in% c("Premium", "Ideal")` (note that R is case sensitive)
 * Worst colour, cut and clarify: `cut == "Fair" & color == "J" & clarity == "SI2"`
   
-As well as filter based on the raw values, you can also filter based on functions:
+You can also use functions in the filtering expression:
 
 * Size is between 1 and 2 carats: `floor(carat) == 1`
-* An average dimension of greater than 3: `(x + y + z) > 3` 
+* An average dimension greater than 3: `(x + y + z) > 3` 
 
-This is useful for simple expression, but as you get more complicated it's better to create a new variable first so you can check that you've done the computation correctly before doing the subsetting.
+This is useful for simple expressions, but as things get more complicated it's better to create a new variable first so you can check that you've done the computation correctly before doing the subsetting. You'll learn how to do that in the next section.
 
 The rules for NA are a bit trickier, so I'll explain them next.
 
 ### Missing values
 
-NA, R's missing value indicator, can be frustrating to work with. R's underlying philosophy is to force you to recognise that you have missing values, and make a deliberate choice to deal with them. In other words missing values never go missing. This is a pain because you almost always want to just get rid of them, but it's a good principle to force you to think about the correct option.  
+NA, R's missing value indicator, can be frustrating to work with. R's underlying philosophy is to force you to recognise that you have missing values, and make a deliberate choice to deal with them: missing values never silently go missing. This is a pain because you almost always want to just get rid of them, but it's a good principle to force you to think about the correct option.  
 
-The most important thing to understand about missing values is that they tend to infect all operations. A missing value means that you don't know what the value is, and if you combine something you don't know with something you do know, you don't know what the answer is:
+The most important thing to understand about missing values is that they are infectious: with few exceptions, the result of any operation that includes a missing value will be a missing value. This happens because NA represents an unknown value, and there are few operations that turn an unknown value into a known value.NA 
 
 ```{r}
 x <- c(1, NA, 2)
@@ -123,13 +134,13 @@ x == NA
 x != NA
 ```
 
-But that doesn't work! A little thought reveals why: there's no just one measurement who's value we don't know. There are an infinite set. Just because two values are missing does not imply they have the same value. Instead you'll need to use `is.na(X)` to determine if a value is missing:
+But that doesn't work! A little thought reveals why: there's no reason why unknown values should be the same. Instead, you use `is.na(X)` to determine if a value is missing:
 
 ```{r}
 is.na(x)
 ```
 
-`filter()` only includes observations where the logical is TRUE, so NA values are automatically dropped (this turns out to be the most useful default for filtering). If you want to include missing values, be explicit: `x > 10 | is.na(x)`. In other parts of R, you'll sometimes need to convert missing values into FALSE. You can do that with `x > 10 & !is.na(x)`
+`filter()` only includes observations where the logical is TRUE, so NA values are automatically dropped. If you want to include missing values, be explicit: `x > 10 | is.na(x)`. In other parts of R, you'll sometimes need to convert missing values into FALSE. You can do that with `x > 10 & !is.na(x)`
 
 ### Exercises
 
@@ -141,6 +152,17 @@ is.na(x)
     * Cost more than $10,000 per carat
     * Are of good or better quality
 
+1.  Complete the missing pieces in this table:
+
+    Expression       | TRUE   | FALSE | NA 
+    -----------------|--------|-------|------
+    `x`              | ✓      |       | 
+    ?                |        | ✓     | 
+    `is.na(x)`       |        |       | ✓
+    `!is.na(x)`      | ?      | ?     | ?
+    ?                | ✓      |       | ✓
+    ?                |        | ✓     | ✓ 
+
 1.  Repeat the analysis of outlying values to include the z dimension. Compared
     to x and y, how would you characterise the relationship of x and z, or y and 
     z?
@@ -150,62 +172,66 @@ is.na(x)
     `colour = is.na(budget)`.)
 
 1.  What is `NA & FALSE` and `NA | TRUE`? Why? Why doesn't `NA * 0` equal zero? 
-    What number times zero does not equal 0?
+    What number times zero does not equal 0? What do you expect `NA ^ 0` to 
+    equal? Why?
 
 ### Create new variables
 
-To better explore the relationship between x and y, it's useful to "rotate" the plot around so that the data no longer lies along the diagonal. We can do that by creating two new variables: one the represent the relative different between x and y (or in this context the symmetry of the diamond), and its size: the average of x and y.
+To better explore the relationship between x and y, it's useful to "rotate" the plot so that the data is flat, not diagonal. We can do that by creating two new variables: one that represents the difference between x and y (which in this context represents the symmetry of the diamond) and one that represents its size (the length of the diagonal).
 
-```{r}
-diamonds_ok <- mutate(diamonds_ok,
-  sym = log(x / y),
-  size = (x + y) / 2
-)
-diamonds_ok
-```
-
-To create new variables we can use `mutate()`. Like `filter()` it takes a data frame as its first argument and returns a data frame. It's second and subsequent arguments are named expressions to generate new variables. Like `filter()` you can refer to variables just by their name, you don't need to also include the name of the dataset.
+To create new variables we can use `mutate()`. Like `filter()` it takes a data frame as its first argument and returns a data frame. It's second and subsequent arguments are named expressions that generate new variables. Like `filter()` you can refer to variables just by their name, you don't need to also include the name of the dataset.
 
 ```{r, dev = "png"}
+diamonds_ok <- mutate(diamonds_ok,
+  sym = x - y,
+  size = sqrt(x ^ 2 + y ^ 2)
+)
+
+diamonds_ok
 qplot(size, sym, data = diamonds_ok)
 ```
 
-This plot has two advantages: we can more easily see the pattern that the bulk on the points lie on, and we can easily select outliers. Here, it doesn't seem important whether the outliers are positive (i.e. x is bigger than y) or negative (i.e. y is bigger x). So we can use the absolute value of the symmetry variable to pull out the outliers. 0.05 seems a reasonable threshold. We'll check out the results with a histogram.
+This plot has two advantages: we can more easily see the pattern that the bulk on the points lie on, and we can easily select outliers. Here, it doesn't seem important whether the outliers are positive (i.e. x is bigger than y) or negative (i.e. y is bigger x). So we can use the absolute value of the symmetry variable to pull out the outliers. 0.25 seems a reasonable threshold. We'll check out the results with a histogram.
 
 ```{r}
 qplot(size, abs(sym), data = diamonds_ok)
-diamonds_ok2 <- filter(diamonds_ok, abs(sym) < 0.05)
-qplot(sym, data = diamonds_ok2, binwidth = 0.001) 
+diamonds_ok2 <- filter(diamonds_ok, abs(sym) < 0.25)
+qplot(sym, data = diamonds_ok2, binwidth = 0.01) 
 ```
 
-That's an interesting histogram! While most diamonds are close to being symmetric there are very very few that are perfectly symmetric (i.e. `x == y`.)
+That's an interesting histogram! While most diamonds are close to being symmetric there are very few that are perfectly symmetric (i.e. `x == y`.)
 
 ### Useful tools
 
-Often useful to think about decomposing a variable (or pair of variables) into an alternative form. Many transformations are domain specific, but there are many that are useful in a suprisingly wide range of circumstances.
+Typically, the transformations will be suggested by your domain knowledge. However, there are a number of transformations that are useful in a surprisingly wide domain range of circumstances. 
 
-* `sign(x)` + `abs(x)`
+* Log-transformations are often useful. They additive relationships into 
+  multiplicative relationships; they compress data that varies over orders of 
+  magnitude; they conver power relationships to linear relationship.
+  See examples at <http://stats.stackexchange.com/questions/27951>
 
-* Log-transformations in general are extremely useful - they convert
-  additive relationships to multiplicative. The squish extremely long-tails.
-  Convert power relationships to linear. 
-  Good examples at <http://stats.stackexchange.com/questions/27951>
-
-* If you're interested in the relative difference between two variables, the 
-  best summary to use is `log(x / y)`. It's the only symmetric, additive 
-  and normed measurement (@tornqvist:1985).
+* Relative difference: If you're interested in the relative difference between 
+  two variables, use `log(x / y)`. It's better than `x / y` because it's 
+  symmetric: if x < y, `x / y` takes values [0, 1), but if x > y, `x / y` takes
+  values (1, Inf). See @tornqvist:1985 for more details.
   
-* Another useful transformation is to partition into trend and residuals
-  with a linear model or otherwise. You'll learn more about that in the
-  next chapter on modelling.
-  
-* Sometimes changing to polar coordiantes, distance (`sqrt(x^2 + y^2)`) and 
-  angle (`atan2(y, x)`) can be useful.
-  
-* Sometimes integrals or derivative might be more useful - if you have
-  distance and time, would speed or acceleration be more useful? (or vice versa)
+* Sometimes integrating of differentiating might make the data more 
+  interpretable: if you have distance and time, would speed or acceleration be 
+  more useful? (or vice versa). (Note that integration makes data more 
+  smooth; differentiation makes it less smooth.)
 
-It's always worthwhile to think about potential transformations that may make more clear interesting signals in your data. If you focus on interpretible transformations, i.e. things that make it easier to understand, and not on randomly apply every transformationt that you can think of you are less likely to run into statisitcal problems ("torturing the data until it confesses" -- Tukey.)
+* Partition a number into magnitude and direction with `abs(x)` and `sign(x)`.
+
+There are also a few useful ways to transform pairs of variables:
+
+* Partitioning into overall size and difference is often useful, as seen
+  above.
+
+* If you see a strong trend, use a model to partition it into pattern and 
+  residuals is often useful. You'll learn more about that in the next chapter.
+  
+* Sometimes its useful to change positions to polar coordinates: distance 
+  (`sqrt(x^2 + y^2)`) and angle (`atan2(y, x)`).
 
 ### Exercises
 
@@ -216,39 +242,71 @@ It's always worthwhile to think about potential transformations that may make mo
     * The price per carat.
     * Log transformation of carat and price.
     
+1.  How can you improve the data density of `qplot(x, z, data = diamonds)`.
+    What transformation makes it easier to extract outliers?
+
 1.  The depth variable is just the width of the diamond (average of x and y)
     divided by its height (z) multiplied by 100 and round to the nearest 
     integer. Compute the depth yourself and compare it to the existing depth
     variable. Summarise your findings with a plot.
 
-### Group-wise summarise
+1.  Compare the distribution of diamond symmetry based for diamonds where 
+    $x > y$ vs $y < x$.
 
-Many insightful visualisations require that you reduce the full dataset down to a meaningful summary. Two functions from dplyr allow you to do that: `group_by()` describes how you want to break your data down into groups, and `summarise()` reduces each group to a single row. For example, to look at the average price per colour:
+### Group-wise summaries
 
-```{r}
-by_cut <- diamonds %>%
-  group_by(color, cut) %>%
-  summarise(n = n(), price = mean(price))
-by_cut
-ggplot(by_cut, aes(color, n, group = cut, colour = cut)) + 
-  geom_line() + 
-  geom_point()
+Many insightful visualisations require that you reduce the full dataset down to a meaningful summary. ggplot2 provides a number of geoms that will do summaries for you. But it's often useful to do summaries by hand because you have more flexibility and you can use the summaries for purposes other than visualisation.
+
+Dplyr does summaries in two steps:
+
+1. Define the grouping variables with `group_by()`.
+2. Describe how to summarise each group with a single row with `summarise()`
+
+For example, to look at the average price per clarity, we first group by clarity, then summarise 
+
+```{r, fig.height = 2}
+by_clarity <- group_by(diamonds, clarity)
+sum_clarity <- summarise(by_clarity, price = mean(price))
+sum_clarity
+
+ggplot(sum_clarity, aes(clarity, price)) + 
+  geom_line(aes(group = 1), colour = "grey80") +
+  geom_point(size = 4)
 ```
 
-### Grouping
+You might be surprised by this pattern - diamonds with better clarity tend to have lower average prices. We'll see why this is the case and what to do about it in the next chapter.
+
+We can form groups with multiple variables by supplying additional variables to `group_by()`. The next example shows how we can compute a frequency polygon that shows how cut and depth interact by hand. The special summary function `n()` counts the number of observations in each group.
+
+```{r, fig.height = 2}
+cut_depth <- summarise(group_by(diamonds, cut, depth), n = n())
+cut_depth <- filter(cut_depth, depth > 55, depth < 70)
+cut_depth
+
+ggplot(cut_depth, aes(depth, n, colour = cut)) + 
+  geom_line()
+```
+
+We can use a grouped `mutate()` to convert counts to proportions, so it's easier to compare across the cuts. `summarise()` strips one level of grouping off, so `cut_depth()` will be grouped by cut.
+
+```{r, fig.height = 2}
+cut_depth <- mutate(cut_depth, prop = n / sum(n))
+ggplot(cut_depth, aes(depth, prop, colour = cut)) + 
+  geom_line()
+```
+
+### Useful tools
 
 (Grouped mutates and filters are also useful, but more advanced. See the window function vignette for more details. )
 
 Useful summary functions:
 
-* counts: `n()`, `n_distinct()`
-* central tendency: `mean()`, `median()`.
-* spread: `sd()`, `mad()`
-* extremes: `quartile()`, `min()`, `max()`
+* counts: `n()`, `n_distinct(x)`.
+* central tendency: `mean(x)`, `median(x)`.
+* spread: `sd(x)`, `mad(x)`
+* extremes: `quartile(x)`, `min(x)`, `max(x)`
 
-Another extremely useful technique is to use `sum()` or `mean()` with logical vectors. When logical vectors are treated as numeric, TRUE becomes 1 and FALSE becomes 0. This means that `sum()` tells you the number of true elements, and `mean()` tells you the proportion of true elements. 
-
-For example, the following code counts the number of diamonds with carat greater than or equal to 4, and the proportion of diamonds that cost less than $1000.
+Another extremely useful technique is to use `sum()` or `mean()` with logical vectors. When logical vectors are treated as numeric, TRUE becomes 1 and FALSE becomes 0. This means that `sum()` tells you the number of true elements, and `mean()` tells you the proportion of true elements. For example, the following code counts the number of diamonds with carat greater than or equal to 4, and the proportion of diamonds that cost less than $1000.
 
 ```{r}
 summarise(diamonds, 
@@ -261,7 +319,7 @@ Most summary functions have a `na.rm` argument: `na.rm = TRUE` tells the summary
 
 ### Statistical considerations
 
-When summarising with the mean, it's always a good idea to include a count and some measure of uncertainty. This helps you calibrate your assessments - if you don't include them you're likely to think that the data is less variable than it really is, and potentially draw unwarranted conclusions.
+When summarising with the mean or median, it's always a good idea to include a count and some measure of uncertainty. This helps you calibrate your assessments - if you don't include them you're likely to think that the data is less variable than it really is, and potentially draw unwarranted conclusions.
 
 ```{r}
 by_cut <- diamonds %>%
@@ -289,6 +347,7 @@ ggplot(by_cut, aes(color, med, group = 1)) +
     count the number of diamonds, the average price and the average size. 
     Visualise the results.
 
+1.  Compute a histogram of carat "by" hand. Use a binwidth of 0.1.
 
 ## Transformation pipelines
 
