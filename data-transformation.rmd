@@ -302,10 +302,11 @@ ggplot(cut_depth, aes(depth, prop, colour = cut)) +
 
 Useful summary functions:
 
-* counts: `n()`, `n_distinct(x)`.
-* central tendency: `mean(x)`, `median(x)`.
-* spread: `sd(x)`, `mad(x)`
-* extremes: `quartile(x)`, `min(x)`, `max(x)`
+* Count: `n()`, `n_distinct(x)`.
+* Middle: `mean(x)`, `median(x)`.
+* Spread: `sd(x)`, `mad(x)`, `IQR(x)`.
+* Extremes: `quartile(x)`, `min(x)`, `max(x)`.
+* Position: `first(x)`, `last(x)`, `nth(x, 2)`.
 
 Another extremely useful technique is to use `sum()` or `mean()` with logical vectors. When logical vectors are treated as numeric, TRUE becomes 1 and FALSE becomes 0. This means that `sum()` tells you the number of true elements, and `mean()` tells you the proportion of true elements. For example, the following code counts the number of diamonds with carat greater than or equal to 4, and the proportion of diamonds that cost less than $1000.
 
@@ -320,7 +321,7 @@ Most summary functions have a `na.rm` argument: `na.rm = TRUE` tells the summary
 
 ### Statistical considerations
 
-When summarising with the mean or median, it's always a good idea to include a count and some measure of uncertainty. This helps you calibrate your assessments - if you don't include them you're likely to think that the data is less variable than it really is, and potentially draw unwarranted conclusions.
+When summarising with the mean or median, it's always a good idea to include a count and a measure of spread. This helps you calibrate your assessments - if you don't include them you're likely to think that the data is less variable than it really is, and potentially draw unwarranted conclusions.
 
 ```{r}
 by_cut <- diamonds %>%
@@ -339,20 +340,67 @@ ggplot(by_cut, aes(color, med, group = 1)) +
   scale_size_area()
 ```
 
+Another example of this comes from baseball. Let's take the MLB batting data from the Lahman package and calculate the batting average, the number of hits divded by the number of at bats. This is the proportion that a batter hits the ball. Who's the best batter according to this metric?
+
+```{r}
+data(Batting, package = "Lahman")
+batters <- filter(Batting, AB > 0)
+per_player <- group_by(batters, playerID)
+ba <- summarise(per_player, ba = sum(H, na.rm = TRUE) / sum(AB, na.rm = TRUE))
+ggplot(ba, aes(ba)) + 
+  geom_histogram()
+```
+
+Wow, there are a lot of players who can hit the ball every single time! Would you want them on your fantasy baseball team?  Let's double check they're really that good by calibrating also showing the total number of at bats:
+
+```{r, dev = "png"}
+ba <- summarise(per_player, 
+  ba = sum(H, na.rm = TRUE) / sum(AB, na.rm = TRUE),
+  ab = sum(AB))
+ggplot(ba, aes(ab, ba)) + 
+  geom_point(alpha = 1/5) + 
+  geom_smooth()
+```
+
+The highest batting averages occur for the players with the smallest number of at bats - it's not hard to hit the ball every time if you've only had two pitches.  We can make the pattern a little more clear by getting rid of the players with less than 10 at bats.
+
+```{r, dev = "png"}
+ggplot(filter(ba, ab >= 10), aes(ab, ba)) + 
+  geom_point(alpha = 1/5) + 
+  geom_smooth()
+```
+
+You'll often see a similar pattern whenever you plot number of observations vs. an average. 
+This shows a typical conical pattern - our estimate of average runs per at-bat is very noisy when we have few data points, and less noisy when we have more. There's also a moderate increasing trend here - as the number of games increases, so too appears the average 
+
 ### Exercises
 
 1.  For each year in the movies data, determine the percent of movies with 
     missing budgets. Visualise the result.
-
+    
+1.  How does the average length of a movie change over time? Display your 
+    answer with a plot, including some display of uncertainty.
+    
 1.  For each combination of diamond quality (e.g. cut, colour and clarity), 
     count the number of diamonds, the average price and the average size. 
     Visualise the results.
 
-1.  Compute a histogram of carat "by" hand. Use a binwidth of 0.1.
+1.  Compute a histogram of carat by "hand". Use a binwidth of 0.1. 
+    (Hint: you might need to create a new variable first).
 
 ## Transformation pipelines
 
-In only the simplest of cases will you apply just one dplyr verbs. In most real analyses, you'll end up stringing together multiple `mutate()`s, `filter()`s, and `group_by()`s `summarise()`s. There are two basic ways you can create such a sequence.
+In only the simplest of cases will you apply just one dplyr verbs. In most real analyses, you'll end up stringing together multiple `mutate()`s, `filter()`s, and `group_by()`s `summarise()`s. For example, above, we created a frequency polygon by hand by with a combination of all four verbs:
+
+```{r, results = "none"}
+# By using intermediate values
+cut_depth <- group_by(diamonds, cut, depth)
+cut_depth <- summarise(cut_depth, n = n())
+cut_depth <- filter(cut_depth, depth > 55, depth < 70)
+cut_depth <- mutate(cut_depth, prop = n / sum(n))
+```
+
+This sequence of operations is a bit painful because we repeated the name of the data frame many times. An alternative is just to do it with one sequence of function calls:
 
 ```{r, results = "none"}
 # By "composing" functions
@@ -371,17 +419,9 @@ mutate(
   ), 
   prop = n / sum(n)
 )
-
-# By using intermediate values
-cut_depth <- group_by(diamonds, cut, depth)
-cut_depth <- summarise(cut_depth, n = n())
-cut_depth <- filter(cut_depth, depth > 55, depth < 70)
-cut_depth <- mutate(cut_depth, prop = n / sum(n))
 ```
 
-Both approaches have problems. Function composition is hard to read...
-
-To make this easier, dplyr provides the __pipe__, `%>%`. It allows you to turn function composition into a sequence of transformations.
+But this is also hard to read because the sequence of operations is inside out, and the arguments to each function can be quite far apart.  dplyr provides a better approach with the __pipe__, `%>%`. With the pipe, we can write the above sequence of operations as:
 
 ```{r, results = "none"}
 cut_depth <- diamonds %>% 
@@ -391,6 +431,17 @@ cut_depth <- diamonds %>%
   mutate(prop = n / sum(n))
 ```
 
+This makes it easier to understand what's going on as we can read it almost like an English sentence: first group, then summarise, then filter, then mutate. In fact, the best way to pronounce `%>%` when reading a sequence of code is as "then".
+
+`%>%` works by taking the thing on the left hand side (LHS) and supplying it as the first argument to the function on the righ hand side (RHS). Each of these pairs of calls is equivalent:
+
+```{r, eval = FALSE}
+f(x, y)
+x %>% f(y)
+
+g(f(x, y), z)
+x %>% f(y) %>% g(z)
+```
 
 ### Exercises
 
@@ -409,7 +460,19 @@ cut_depth <- diamonds %>%
       sqrt()
     ```
 
-## Other verbs
+1.  Convert each of these examples to either use the pipe or to use function 
+    composition:
+    
+    *
+    *
+    *
+    *
+
+1.  Data analysis challenge.
+
+1.  Data analysis challenge.
+
+## Learning more
 
 There are two other verbs that are less useful for visualisation:
 
@@ -420,23 +483,19 @@ There are two other verbs that are less useful for visualisation:
 * `select()` picks variables based on their names. Useful when you have 
   very many variables and want to focus on just a few for analysis.
 
-There are two that are variations on `mutate()` and `select()`:
-
-* `rename()`
-
-* `transmute()`
-
-## Learning more
+* `rename()` allows you to change the name of variables.
 
 This has given you the basics for doing single table data manip in R. Learn more:
 
 * Cheatsheet
 
-* About using dplyr with databases.
-
 * The verbs that work with two tables at a time: mutating joins, filtering
   joins and the set operations.
   
+* Dplyr can work directly with data stored in a database - you use the same
+  R code as you do for local data and dplyr generates SQL to send to the
+  database.
+
 * Group-wise filters and mutate can also be useful, particularly in
   conjunction with window functions.
 
