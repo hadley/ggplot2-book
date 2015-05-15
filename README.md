@@ -27,7 +27,7 @@ devtools::install_deps("path/to/ggplot2-book", dependencies = TRUE)
 There are also a couple GitHub packages which we depend on:
 
 ```r
-devtools::install_github(c("adletaw/captioner", "hadley/bookdown"))
+devtools::install_github(c("adletaw/captioner", "hadley/bookdown", "hadley/devtools"))
 ```
 
 ## Internal links
