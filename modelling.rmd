@@ -93,7 +93,7 @@ knitr::kable(data.frame(logx = xgrid, x = exp(xgrid)))
 
 Now that we have the relative price, it's much easier to see the impact of the cut, colour and clarity of the diamonds. The pattern of the price isn't terribly strong, but it suggests that as the quality decreases, the average price _increases_. This is driven by lower quality diamonds tending to be larger. If instead we look at the relative price, you see the pattern that you expect: as the quality of the diamonds decreases, the relative price decreases.
 
-```{r, dev = "png"}
+```{r}
 color_cut <- diamonds2 %>% 
   group_by(color, cut) %>%
   summarise(
@@ -127,12 +127,112 @@ This technique can be employed in a wide range of situations. Wherever you can e
 
 1.  How do depth and table relate to the relative price? How do the patterns
     compare to the untransformed price?
+
+## Texas housing data
+
+To explore one connection between modelling and visualisation in more depth, we're going to use a new dataset: TX housing data. This data was collected from the pages provided by the Real Estate Center at Texas A&M University, <http://recenter.tamu.edu/Data/hs/>.
+
+```{r}
+# Will be added to ggplot2 in due course
+tx <- readRDS("tx-housing.rds")
+
+tx <- tx %>%
+  mutate(date = year + (month - 1) / 12) %>%
+  filter(!(city %in% c("Texas Totals", "Palestine")))
+```
+
+The data contains information about 46 Texas cities, recording the number of house sales (`sales`), the total volume of sales (`volume`), the `average` and `median` sale prices, the number of houses listed for sale (`listings`) and the average number of months a house has been listed (`inventory`). Data is recorded monthly from Jan 1990 to Apr 2015, 304 entries for each city.
+
+We're going to explore how sales have varied over time for each city. This shows some interesting trends and poses some interesting challenges. Let's start with an overview: plotting sales across time for each city.
+
+```{r, fig.height = 2, fig.width = 4}
+ggplot(tx, aes(date, sales)) + 
+  geom_line(aes(group = city))
+```
+
+Two factors make this plot difficult to understand: 
+
+1.  The range of sales varies over multiple orders of magnitude. The 
+    biggest city, Houston, has over averages over 4000 sales per month; 
+    the smallest city, San Marcos, only averages 20 sales per month.
     
+1.  There is a strong seasonal trend within the year: sales are 
+    highest in the summer and lowest in the winter.
+
+We can ameliorate the first problem by switching to log scales:
+    
+```{r, fig.height = 2, fig.width = 4}
+ggplot(tx, aes(date, log(sales))) + 
+  geom_line(aes(group = city), alpha = 1/2)
+```
+
+We can use the same technique as for diamonds to remove the seasonal (month) effect. First we check that it works by applying it to a single city:
+
+```{r, fig.keep="hold"}
+abilene <- tx %>% filter(city == "Abilene")
+ggplot(abilene, aes(date, log(sales))) + geom_line()
+
+mod <- lm(log(sales) ~ factor(month), data = abilene)
+ggplot(abilene, aes(date, resid(mod))) + geom_line()
+```
+
+To apply this to every city, we can use `mutate()`. Now that we have log-transformed the data and removed the strong seasonal affects we can see there is a strong common pattern: a consistent increase from 1990-2007, a drop until 2010 (with quite some noise), and then a gradual rebound.
+
+```{r}
+options(na.action = na.exclude)
+tx <- tx %>% 
+  group_by(city) %>% 
+  mutate(resid = resid(lm(log(sales) ~ factor(month))))
+
+average <- tx %>% 
+  group_by(date) %>% 
+  summarise(resid = mean(resid, na.rm = TRUE))
+
+ggplot(tx, aes(date, resid)) + 
+  geom_line(aes(group = city), alpha = 1/5) + 
+  geom_line(data = average, colour = "red")
+```
+
+### Exercises
+
+1.  What other variables in the TX housing data show strong 
+    seasonal effects? Does this technique help to remove them?
+  
+1.  Not all the cities in this data set have complete time series.
+    Use your dplyr skills to figure out how much data each city
+    is missing. Display the results with a visualisation.
+
 ## Visualising models {#sub:modelvis}
 
-In the example above we used a linear model as a tool for removing trend. We didn't care about the model itself, just what it could do for us. Another way of using models is to pay more attention to the model, and display it in the plot. To do that, we need some way of turning a model into a data frame so that we can apply everything we've learned about ggplot2 so far.
+In the example above we used a linear model as a tool for removing trend. We didn't care about the model itself, just what it could do for us. We used the model and immediately threw it away. But the model itself contains useful information:
 
-We're going to do that with the __broom__ package, which provides three key verbs for converting models into data frames:
+* We might be interested in cities for which them model did not fit well:
+  a badly fitting model might not actually not do a good job of 
+  removing the seasonal effect.
+  
+* The coefficients themselves might be of interest. In this case,
+  it might be interesting to see how the seasonal pattern varies between
+  cities.
+  
+* We may want to dive into the details of the model itself, and
+  see exactly what it says about each observation. In this data,
+  it might help us find suspicious data points that might reflect
+  data entries errors.
+  
+To take advantage of this model data, we need to store the models. We can do this using a new dplyr verb: `do()`. It allows us to store the result of arbitrary computation in a column in our data frame. Here we'll use it to store that linear model:
+
+```{r}
+models <- tx %>% 
+  group_by(city) %>%
+  do(mod = lm(log(sales) ~ factor(month), data = .))
+models
+```
+
+Note the use of `.` - it's a special pronoun used for `do()` and refers to the data frame that represents the current group. In this case, `do()` executes the `lm(log(sales) ~ factor(month), data = .)` once for each of the 46 cities, replacing `.` with the appropriate city each time. 
+
+The mod column of the models is a special type of column: it's a list. Lists can hold anything so you can put a linear model inside of them.
+
+To visualise these models, we need to turn them into data frames so you can apply everything you already know about visualising data with ggplot2. We're going to do that with the __broom__ package by David Robinson. It provides threee key verbs that correspond to each of the challenges outlined above:
 
 * `augment()`: one row for each row in the original data set. Variables are
   observation level summaries like residuals and influence metrics.
@@ -142,13 +242,59 @@ We're going to do that with the __broom__ package, which provides three key verb
 * `glance()`: one observation for each model. It's not that useful when you
   only have one model - we'll see it used more in the next section.
 
+The advantage of using broom instead of computing these summaries ourselves is that broom abstracts over many types of models. When this book was written, broom new handle to handle including `lm`, `glm`, `lme4`, `survival`, `lfe`, `multcomp` and the list will only grow with time.
+
+## Model level summaries
+
 ```{r}
 library(broom)
-tbl_df(augment(mod))
-tidy(mod)
-glance(mod)
+model_sum <- models %>% glance(mod)
+model_sum
 
+ggplot(model_sum, aes(r.squared, reorder(city, r.squared))) + 
+  geom_point()
+
+bad <- filter(tx, city %in% c("Midland", "Irving", "Denton County", "McAllen", "Harlingen", "Brownsville"))
+ggplot(bad, aes(date, log(sales))) + 
+  geom_line() + 
+  facet_wrap(~city)
+ggplot(bad, aes(month, log(sales))) + 
+  geom_line(aes(group = year)) + 
+  facet_wrap(~city)
 ```
+
+The cities with low $R^2$ indeed have weak seasonal patterns. The data for Harlingen in particular seem to be very noisy.
+
+## Coefficients
+
+```{r}
+coefs <- models %>% tidy(mod)
+
+months <- coefs %>%
+  filter(grepl("factor", term)) %>%
+  extract(term, "month", "(\\d+)", convert = TRUE)
+
+ggplot(months, aes(month, estimate)) +
+  geom_point() +
+  geom_line(aes(group = city))
+
+coef_sum <- months %>%
+  group_by(city) %>%
+  summarise(max = max(estimate)) %>%
+  arrange(desc(max))
+ggplot(coef_sum, aes(max, reorder(city, max))) + 
+  geom_point()
+
+months %>%
+  filter(city %in% c("Bryan-College Station", "San Antonio", "Brownsville")) %>%
+  ggplot(aes(month, estimate, colour = city)) +
+  geom_point() +
+  geom_line()
+```
+
+The cities with the strongest seasonal effect are College Station and San Marcos (both college towns) and Galveston and South Padre Island (beach cities). 
+
+## Observation data
 
 \begin{table}
   \centering
@@ -167,9 +313,6 @@ glance(mod)
   \caption{The diagnostic variables that \texttt{fortify.lm} assembles and adds to the model data.}
   \label{tbl:fortify-vars}
 \end{table}
-
-
-## Fitting multiple models {#sub:multiple-models}
 
 ## Learning more
 
