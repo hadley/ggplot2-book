@@ -147,32 +147,32 @@ To explore one connection between modelling and visualisation in more depth, we'
 tx
 ```
 
-We're going to explore how sales have varied over time for each city. This shows some interesting trends and poses some interesting challenges. Let's start with an overview: plotting sales across time for each city.
+We're going to explore how sales have varied over time for each city as it shows some interesting trends and poses some interesting challenges. Let's start with an overview: a time series of sales for each city:
 
-```{r, fig.height = 2, fig.width = 4}
+```{r, fig.width = 5, fig.height = 3}
 ggplot(tx, aes(date, sales)) + 
   geom_line(aes(group = city))
 ```
 
-Two factors make this plot difficult to understand: 
+Two factors make it hard to see the long-term trend in this plot:
 
-1.  The range of sales varies over multiple orders of magnitude. The 
-    biggest city, Houston, has over averages over 4000 sales per month; 
-    the smallest city, San Marcos, only averages 20 sales per month.
+1.  The range of sales varies over multiple orders of magnitude. The biggest 
+    city, Houston, averages over ~4000 sales per month; the smallest city, San 
+    Marcos, only averages ~20 sales per month.
     
-1.  There is a strong seasonal trend within the year: sales are 
-    highest in the summer and lowest in the winter.
+1.  There is a strong seasonal trend: sales are much higher in the summer than
+    in the winter.
 
-We can fix the first problem by logging sales:
+We can fix the first problem by plotting the log of sales:
     
-```{r, fig.height = 2, fig.width = 4}
+```{r, fig.width = 5, fig.height = 3}
 ggplot(tx, aes(date, log(sales))) + 
   geom_line(aes(group = city), alpha = 1/2)
 ```
 
-We can fix the second problem using the same basic technique as the previous section. We'll fit a linear model and look at the residuals. This time we'll use a categorical predictor to remove the month effect. First we check that the technique works by applying it to a single city. It's always a good idea to start simple so that if something goes wrong you can more easily pin-point the problem.
+We can fix the second problem using the same technique we used for removing the trend in the diamonds data: we'll fit a linear model and look at the residuals. This time we'll use a categorical predictor to remove the month effect. First we check that the technique works by applying it to a single city. It's always a good idea to start simple so that if something goes wrong you can more easily pinpoint the problem.
 
-```{r, fig.keep="hold"}
+```{r, fig.show="hold", fig.width = 3, fig.height = 2}
 abilene <- tx %>% filter(city == "Abilene")
 ggplot(abilene, aes(date, log(sales))) + 
   geom_line()
@@ -192,13 +192,22 @@ tx <- tx %>%
 
 With this data in hand, we can re-plot the data. Now that we have log-transformed the data and removed the strong seasonal affects we can see there is a strong common pattern: a consistent increase from 1990-2007, a drop until 2010 (with quite some noise), and then a gradual rebound. To make that more clear, I included a summary line that shows the mean residual for each date across all cities. 
 
-```{r}
+```{r, fig.width = 5, fig.height = 3}
 ggplot(tx, aes(date, resid)) +
   geom_line(aes(group = city), alpha = 1/5) + 
   geom_line(stat = "summary", fun.y = "mean", colour = "red")
 ```
 
+(Note that removing the seasonal effect also removed the intercept - we see the trend for each city relative to the average number of sales.)
+
 ### Exercises
+
+1.  The final plot shows a lot of short-term noise in the overall trend. How
+    could you smooth this further to focus on long-term changes?
+    
+1.  If you look closely (e.g. `+ xlim(2005, 2015)`) at the long-term trend 
+    you'll notice a weird pattern in 2009-2011. It looks like there was a big dip in 2010. Is this dip "real"?
+    (i.e. can you spot it in the original data)
 
 1.  What other variables in the TX housing data show strong 
     seasonal effects? Does this technique help to remove them?
@@ -212,107 +221,120 @@ ggplot(tx, aes(date, resid)) +
 
 ## Visualising models {#sub:modelvis}
 
-In the example above we used a linear model as a tool for removing trend. We didn't care about the model itself, just what it could do for us. We used the model and immediately threw it away. But the model itself contains useful information! If we kept the models around, there is a lot of interesting questions we can answer:
+In the previous examples we used the linear model just as a tool for removing trend. We used the model and immediately threw it away. We didn't care about the model itself, just what it could do for us. But the models themselves contain useful information and if we keep them around, there are many new problems that we can solve:
 
 * We might be interested in cities where the model didn't not fit well:
   a poorly fitting model suggests that there isn't much of a seasonal pattern,
-  which contradicts our initial hypothesis that all cities share a similar 
+  which contradicts our implicit hypothesis that all cities share a similar 
   pattern.
 
 * The coefficients themselves might be interesting. In this case, looking
   at the coefficients will show us how the seasonal pattern varies between
   cities.
   
-* We may want to dive into the details of the model itself, and
-  see exactly what it says about each observation. In this data,
-  it might help us find suspicious data points that might reflect
-  data entries errors.
+* We may want to dive into the details of the model itself, and see exactly 
+  what it says about each observation. In this data, it might help us find 
+  suspicious data points that might reflect data entries errors.
   
 To take advantage of this data, we need to store the models. We can do this using another dplyr verb: `do()`. It allows us to store the result of arbitrary computation in a column. Here we'll use it to store that linear model:
 
 ```{r}
 models <- tx %>% 
   group_by(city) %>%
-  do(mod = lm(log(sales) ~ factor(month), data = ., na.action = na.exclude))
+  do(mod = lm(
+    log(sales) ~ factor(month), 
+    data = ., 
+    na.action = na.exclude
+  ))
 models
 ```
 
 There are two important things to note in this code:
 
-* `.` is a special pronoun used by `do()`. It refers to a data frame containing
-  a single group. In this case, `do()` fits the model 46 times (once for each 
-  city), each time replacing `.` with a data frame containing just one city.
+* `do()` creates a new column called `mod.` This is special type of column: 
+  rather than containing an atomic vector (a logical, integer, numeric, 
+  or character) like usual, it's a list. Lists are R's most flexible data 
+  structure and can hold anything, including linear models.
+
+* `.` is a special pronoun used by `do()`. It refers to the "current" data 
+  frame. In this example, `do()` fits the model 46 times (once for each 
+  city), each time replacing `.` with the data for one city.
   
-* The `do()` command create a new column called mod. This is special type of 
-  column: rather than containing an atomic vector (a logical, integer, numeric, 
-  or character) like most data frame columns, it's a list. Lists are R's 
-  flexible data structure which can hold anything, including linear models.
-
-To visualise these models, we need to turn them into data frames so you can apply everything you already know about visualising data with ggplot2. We're going to do that with the __broom__ package by David Robinson. It provides three key verbs, each corresponding to a challenge outlined above:
-
-* `glance()` makes one row of data for each model. It contains summary 
-  statistics like the $R^2$ and degrees of freedom.
-
-* `tidy()` makes one row of data for each coefficient in each model. It contains
-  information about individual coefficients like their estimate and standard 
-  error.
-
-* `augment()` makes one row of data for each observation in each model. It 
-  includes variables like the residual and influence metrics useful for 
-  diagnosing outliers.
-
-We'll learn more about each of these functions in the following three sections. We're only going to use broom with linear models, but it can handle many others including `glm`, `lme4`, `survival` and `multcomp`. Check the documentation to see if it handles your data.
-
-## Model level summaries
-
-We'll begin by looking at how well the model fit to each city. We use `glance()` on our model data frame, giving it the column that contains the model:
+If you're an experienced modeller, you might wonder why I didn't fit one model to all cities simultaneously. That's a great next step, but it's often useful to start off simple. Once we have a model that works for each city individually, you can figure out how to generalise it to fit all cities simultaneously.
+  
+To visualise these models, we'll turn them into tidy data frames. We'll do that with the __broom__ package by David Robinson. 
 
 ```{r}
 library(broom)
+```
+
+Broom provides three key verbs, each corresponding to one of the challenges outlined above:
+
+* `glance()` makes __model__-level summaries with one row of data for each 
+  model. It contains summary statistics like the $R^2$ and degrees of freedom.
+
+* `tidy()` makes __coefficient__-level summaries with one row of data for each 
+  coefficient in each model. It contains information about individual 
+  coefficients like their estimate and standard error.
+
+* `augment()` makes __observation__-level summaries with one row of data for 
+  each observation in each model. It includes variables like the residual and 
+  influence metrics useful for diagnosing outliers.
+
+We'll learn more about each of these functions in the following three sections.
+
+## Model-level summaries
+
+We'll begin by looking at how well the model fit to each city with `glance()`:
+
+```{r}
 model_sum <- models %>% glance(mod)
 model_sum
 ```
 
-Each model summary either summarises the model complexity (e.g. `df`) or model fit (e.g. `r.squared`, `p.value`, `AIC`). Since all the models we fit have the same complexity (12 terms: one for each month), we'll focus on the model fit summaries, and $R^2$ is a reasonable place to start because it's well known. We can use a dot plot to see the variation across cities:
+This creates a variable with one row for each city, and variables that either summarises complexity (e.g. `df`) or fit (e.g. `r.squared`, `p.value`, `AIC`). Since all the models we fit have the same complexity (12 terms: one for each month), we'll focus on the model fit summaries. $R^2$ is a reasonable place to start because it's well known. We can use a dot plot to see the variation across cities:
 
-```{r}
+```{r, fig.width = 4, fig.height = 6}
 ggplot(model_sum, aes(r.squared, reorder(city, r.squared))) + 
   geom_point()
 ```
 
-To help picture what this means, I next pick out the three cities with the highest and lowest $R^2$:
+It's hard to picture exactly what those values of $R^2$ mean for this data, so I pick out the three cities with the highest and lowest $R^2$:
 
-```{r}
+```{r, fig.width = 6, fig.height = 6}
 top3 <- c("Midland", "Irving", "Denton County")
-bottom3 <- c("McAllen", "Harlingen", "Brownsville")
-extreme <- filter(tx, city %in% c(top3, bottom3))
+bottom3 <- c("Brownsville", "Harlingen", "McAllen")
+extreme <- tx %>% ungroup() %>%
+  filter(city %in% c(top3, bottom3), !is.na(sales)) %>%
+  mutate(city = factor(city, c(top3, bottom3)))
+
 ggplot(extreme, aes(month, log(sales))) + 
   geom_line(aes(group = year)) + 
   facet_wrap(~city)
 ```
 
-The cities with low $R^2$ indeed have weak seasonal patterns. The data for Harlingen in particular seem to be very noisy.
+The cities with low $R^2$ have weaker seasonal patterns and more variations between years. The data for Harlingen seems particularly noisy.
 
 ### Exercises
 
-1.  Do your conclusions change if you use a different model fit measure?
+1.  Do your conclusions change if you use a different measurement of model fit?
     Why/why not?
     
-1.  One possible hypothesis to explain why McAllen, Harlingen and Brownsville
-    have less seasonal pattern is that they're smaller towns so there are
-    fewer sales and more noise. Confirm or refute this hypothesis.
+1.  One possible hypothesis that explains why McAllen, Harlingen and Brownsville
+    have lower $R^2$ is that they're smaller towns so there are fewer sales and 
+    more noise. Confirm or refute this hypothesis.
     
 1.  McAllen, Harlingen and Brownsville seem to have much more year-to-year
     variation than Midland, Irving and Denton County. How does the model
-    fit change if you also include a linear trend for year in the model?
-    (i.e. `log(sales) ~ factor(month) + year`).
+    change if you also include a linear trend for year? (i.e. 
+    `log(sales) ~ factor(month) + year`). 
 
 1.  Create a faceted plot that shows the seasonal patterns for all cities.  
     Order the facets by the $R^2$ for the city.
 
-## Coefficients
+## Coefficient-level summaries
 
-The model fit summaries suggest that there are some important differences in seasonality between the different cities. Lets dive into those differences by using `tidy()` to extract the coefficient level data:
+The model fit summaries suggest that there are some important differences in seasonality between the different cities. Lets dive into those differences by using `tidy()` to extract detail about each individual coefficient:
 
 ```{r}
 coefs <- models %>% tidy(mod)
@@ -328,7 +350,7 @@ months <- coefs %>%
 months
 ```
 
-This is a common pattern. You need to use your data tidying skills at many points in an analysis. Once you have the correct tidy dataset, creating the plot is usually easier. Here we'll put month on the x axis, and estimate on the y-axis, drawing one line for each city. I've back-transformed (exponentiated) to make the coefficients more interpretable: these are now ratios of sales compared to January.
+This is a common pattern. You need to use your data tidying skills at many points in an analysis. Once you have the correct tidy dataset, creating the plot is usually easy. Here we'll put month on the x axis, estimate on the y-axis, and draw one line for each city. I've back-transformed (exponentiated) to make the coefficients more interpretable: these are now ratios of sales compared to January.
 
 ```{r}
 ggplot(months, aes(month, exp(estimate))) +
@@ -337,7 +359,7 @@ ggplot(months, aes(month, exp(estimate))) +
 
 The pattern seems similar across the cities. The main difference is the strength of the seasonal effect. Let's pull that out and plot it:
 
-```{r}
+```{r, fig.width = 4, fig.height = 6}
 coef_sum <- months %>%
   group_by(city) %>%
   summarise(max = max(estimate))
@@ -370,24 +392,47 @@ The cities with the strongest seasonal effect are College Station and San Marcos
     
 ## Observation data
 
-Observation level data, which include residual diagnostics, is most useful in the traditional model fitting scenario. It's less useful in conjunction with visualisation, but we can still find interesting patterns. It's particularly useful if we want to track down individual values that seem particularly odd.
+Observation level data, which include residual diagnostics, is most useful in the traditional model fitting scenario. It's less useful in conjunction with visualisation, but we can still find interesting patterns. It's particularly useful if we want to track down individual values that seem particularly odd. Extracting observation level data is the job of the `augment()` function. This adds one row for each observation. It includes the variables used in the original model, and a number of common influence statistics (see `?augment.lm` for more details):
 
 ```{r, warning=FALSE}
 obs_sum <- models %>% augment(mod)
-
-ggplot(obs_sum, aes(.fitted, .resid)) + 
-  geom_point()
-
-obs_sum %>% 
-  filter(abs(.resid) > 1.5) %>%
-  group_by(city) %>%
-  summarise(n = n())
+obs_sum
 ```
 
-Often useful as prequel to fitting a single model that encompasses all cities.
+For example, it might be interesting to look at the distribution of standardised residuals. (These are residuals standardised to have a variance of one in each model, making them more comparable). We're looking for unusual values that we might have nt o dive into in more detail.
+
+```{r}
+ggplot(obs_sum, aes(.std.resid)) + 
+  geom_histogram(binwidth = 0.1)
+ggplot(obs_sum, aes(abs(.std.resid))) + 
+  geom_histogram(binwidth = 0.1)
+```
+
+A threshold of 2 seems like a reasonable threshold to explore in more detail. 
+
+```{r}
+obs_sum %>% 
+  filter(abs(.std.resid) > 2) %>%
+  group_by(city) %>%
+  summarise(n = n(), avg = mean(abs(.std.resid))) %>%
+  arrange(desc(n))
+```
+
+This is a quick high level summary that suggests cities that we might want to look at into more detail.
+
+### Exercises
+
+1.  A common diagnotic plot is fitted values (`.fitted`) vs. residuals 
+    (`.resid`). Do you see any patterns? What if you include the city 
+    or month on the same plot?
+    
+1.  Create a time series of log(sales) for each city. Highlight points that have
+    a standardised residual of greater than 2.
 
 ## Learning more
 
-* The [broom README](https://github.com/dgrtwo/broom), gives a more detailed
-  overview of broom and points you to the latest resources on where to learn 
-  more.
+This chapter has only scratched the surface of the intersection between visualisation and modelling. In my opinion, mastering the combination of visualisations and models is key being an effective data scientist. Unfortunately most books (like this one!) only focus on either visualisation or modelling, but not both. There's a lot of interesting work to be done.
+
+ We're only going to use broom with linear models, but it can handle many others including `glm`, `lme4`, `survival` and `multcomp`. Check the documentation to see if it handles your data.
+ 
+I'd also recommend you learn more about the broom package. We've only used it for linear models, but it supports many other types of model as well, and support will continue to grow over time. Start at the README on <https://github.com/dgrtwo/broom>.
