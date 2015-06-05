@@ -34,7 +34,7 @@ render_chapter <- function(src) {
                         fig.path = paste0("figures/", chap),
                         cache.path = paste0("_cache/", chap)),
                    base$knitr$opts_chunk)
-  capture.output(render(src, base, output_dir = "book/tex", envir = new.env()),
+  capture.output(render(src, base, output_dir = "book/tex", envir = globalenv()),
                  file = "book/tex/render-log.txt")
 }
 
