@@ -8,29 +8,29 @@ bibliography: references.bib
 
 ## Introduction
 
-The goal of this chapter is to get you producing useful graphics with ggplot2 as quickly as possible. You'll learn the basics of `ggplot()` and how to use it to make a wide variety of plots. `ggplot()` allows you to make complex plots with just a few lines of code because it's based on rich underlying theory, the grammar of graphics. You'll learn how to use the full expressive power of the grammar in later chapters. Here, we'll focus on some basic "recipes" so you can start using ggplot2 with a minimum of fuss.
+The goal of this chapter is to teach you how to produce useful graphics with ggplot2 as quickly as possible. You'll learn the basics of `ggplot()` and how to use it to make a wide variety of plots. `ggplot()` allows you to make complex plots with just a few lines of code because it's based on rich underlying theory, the grammar of graphics. You'll learn how to use the full expressive power of the grammar in later chapters. Here, we'll focus on some basic "recipes" so you can start using ggplot2 with a minimum of fuss.
 
 In this chapter you'll learn:
 
-* The basics of the diamonds dataset included with ggplot2, 
-  [diamonds](#diamonds).
+* About the mpg mpg dataset included with ggplot2, [mpg](#mpg).
 
-* The three key components of every plot: data, aesthetics and layers; 
-  [Key components](#sec:basic-use).
+* The three key components of every plot: data, aesthetics and geoms;
+  [key components](#sec:basic-use).
   
-* Using aesthetics to add additional variables to a plot, 
+* How to add additional variables to a plot with aesthetics, 
   [aesthetics](#aesthetics).
+  
+* How to add addtional categorical variables to a plot by using
+  small multiples created by facetting, [faceting](#sec:qplot-faceting).
 
-* How to create many different types of plots by specifying different geoms, 
-  and how to combine multiple types in a single plot, 
-  [geoms](#sec:plot-geoms).
-
-* The use of faceting to repeat the same display for multiple subsets of your 
-  data, [faceting](#sec:qplot-faceting).
+* A variety of different geoms that you can use to create different
+  types of plots, [geoms](#sec:plot-geoms).
 
 ## Fuel economy data {#sec:fuel-economy-data}
 
-In this chapter we'll focus primarily on one data source bundled with ggplot2. The `mpg` dataset includes information about the fuel economy of popular car models in 1999 and 2008. You can access it by loading ggplot2:
+In this chapter we'll focus mostly on one data set that's bundled with ggplot2: `mpg`. It includes information about the fuel economy of popular car models in 1999 and 2008, collected by the US Environment Protection Agency, <http://fueleconomy.gov>.
+
+You can access the data by loading ggplot2:
 
 ```{r}
 library(ggplot2)
@@ -38,15 +38,15 @@ dim(mpg)
 head(mpg)
 ```
 
-It records make, model, class, engine size, transmission and fuel economy for a selection of US cars in 1999 and 2008. It contains the 38 models that were updated every year, an indicator that the car was a popular model. These models include popular cars like the Audi A4, Honda Civic, Hyundai Sonata, Nissan Maxima, Toyota Camry and Volkswagen Jetta. This data comes from the EPA fuel economy website, <http://fueleconomy.gov>. \index{Data!mpg@\texttt{mpg}}
-
 The variables are mostly self-explanatory:
 
 * `cty` and `hwy` record miles per gallon (mpg) for city and highway driving.
 * `displ` is the engine displacement in litres
 * `drv` is the drive train: front wheel (f), rear wheel (r) or four wheel (4)
 
-This dataset suggests many interesting questions.  How are engine size and fuel economy related?  Do certain manufacturers care more about economy than others? Has fuel economy improved in the last ten years?  We will try to answer some of these questions and in the process learn how to create some basic plots with ggplot2.
+It contains 38 models, selected because they had an update every year between 1999 and 2008. Most of the models should look familiar. \index{Data!mpg@\texttt{mpg}}
+
+This dataset suggests many interesting questions. How are engine size and fuel economy related?  Do certain manufacturers care more about economy than others? Has fuel economy improved in the last ten years? We will try to answer some of these questions and in the process learn how to create some basic plots with ggplot2.
 
 ### Exercises
 
@@ -56,26 +56,27 @@ This dataset suggests many interesting questions.  How are engine size and fuel 
 1.  Apart from the US, most countries use fuel consumption (amount of fuel 
     needed to travel a fixed distance) rather than fuel economy (distance that
     fixed amount of fuel gets you). How could you convert `cty` and `hwy` into
-    the European standard `l/100km`? 
+    the European standard l/100km? 
 
 ## Key components {#sec:basic-use}
 
-Every ggplot2 plot has three key components: a dataset, a set of __aesthetic__ mappings between variables in the data and visual properties, and some layers. Here's a simple example: \index{Scatterplot}
+Every ggplot2 plot has three key components: some __data__, a set of __aesthetic mappings__ between variables in the data and visual properties, at least one __geom__, or geometric object.
+
+Here's a simple example: \index{Scatterplot}
 
 ```{r qscatter}
 ggplot(mpg, aes(x = displ, y = hwy)) + 
   geom_point()
 ```
 
-This produces a scatterplot:
+This produces a scatterplot with:
 
-* It uses the `mpg` data frame.
-* It maps engine displacement to x position and fuel consumption to y position.
-* It uses a layer of points. __Geom__ is short for geometric object.
+* Data: `mpg`.
+* Aesthetic mapping: engine displacement mapped to x position, 
+  fuel economy to y position.
+* Geom: points.
 
-Pay attention to the structure of this function call: data and aesthetic mappings are supplied in the ggplot, and then layers (geoms) are added on with `+`. As you learn more about ggplot2 you'll construct increasingly sophisticated plots by adding more components.
-
-The plot shows a strong correlation: as the engine size gets bigger, the fuel economy gets worse. There are also some interesting outliers: some cars with large engines get higher fuel economy than average.  What sort of cars do you think they are?
+Pay attention to the structure of this function call: data and aesthetic mappings are supplied in `ggplot()`, then geoms are added on with `+`. This is an important pattern and as you learn more about ggplot2 you'll construct increasingly sophisticated plots by adding on more types of components.
 
 Almost every plot maps a variable to `x` and `y`, so naming these aesthetics is going to get tedious fast. For that reason, the first two unnamed arguments to `aes()` will be mapped to `x` and `y`. That means that following code is identical to the example above:
 
@@ -86,92 +87,106 @@ ggplot(mpg, aes(displ, hwy) +
 
 I'll stick to that style throughout the book, so remember that the first two arguments are mapped to position.
 
+The plot shows a strong correlation: as the engine size gets bigger, the fuel economy gets worse. There are also some interesting outliers: some cars with large engines get higher fuel economy than average.  What sort of cars do you think they are?
+
 ### Exercises
 
 1.  How would you describe the relationship between `cty` and `hwy`?
   
+1.  What does `ggplot(mpg, aes(model, manufacturer)) + geom_point()` show?
+    Is it useful? How could you modify the data to more it more informative?
+  
 1.  Describe the data, aesthetic mappings and layers used for each of the 
     following plots. You'll need to guess a little because you haven't learned
-    what each of the different functions do, but you should be able to make
-    an educated guess!
+    what all of the functions do; use your common sense! See if you can
+    predict what the plot will look like before running the code.
     
     1. `ggplot(mpg, aes(cty, hwy)) + geom_point()`
     1. `ggplot(diamonds, aes(carat, price)) + geom_point()`
-    1. `ggplot(economics, aes(date, unemply)) + geom_line()`
+    1. `ggplot(economics, aes(date, unemploy)) + geom_line()`
     1. `ggplot(mpg, aes(cty)) + geom_histogram()`
-
 
 ## Colour, size, shape and other aesthetic attributes {#aesthetics}
 
-To add additional variables to a plot, we need to use other aesthetics like colour, shape, or size. ggplot2 takes care of the details of converting a categorical variable in your data (e.g., 'apples', 'bananas', 'pears') into something that the graphics device knows how to display (e.g., 'red', 'yellow', 'green'). It also adds a legend to that gives the inverse mapping, showing how the displayed attributes can be converted back to the data values. This makes it particularly easier to add additional variables to a plot. \index{Aesthetics}
+To add additional variables to a plot, we can use other aesthetics like colour, shape, and size. These work just like `x` and `y`, you just add them into the `aes()` call:
 
-We could use the colour aesthetic to also display the categorical "class" variable:
+* `aes(displ, hwy, colour = class)`
+* `aes(displ, hwy, shape = drv)`
+* `aes(displ, hwy, size = cyl)`
+
+(Note that while I use British spelling throughout this book, ggplot2 also accepts American spellings.)
+
+ggplot2 takes care of the details of converting a categorical variable in your data (e.g., 'f', 'r', '4') into something that the graphics device knows how to display (e.g., 'red', 'yellow', 'green'). It also adds a legend gives the inverse mapping, showing how the displayed attributes can be converted back to the data values. \index{Aesthetics}
+
+To learn more about those outlying variables in the previous scatterplot, we could map the class variable to colour:
 
 ```{r qplot-aesthetics}
 ggplot(mpg, aes(displ, cty, colour = class)) + 
   geom_point()
 ```
 
-(Note that while I use British spelling throughout this book, ggplot2 also accepts American spellings.)
+This gives each point a unique colour corresponding to its class. The legend allows us to map back from colour to data value, shows us that the group of cars with unusually high fuel economy for their engine size are two-seaters: cars with big engines, but lightweight bodies. 
 
-This shows that the group of cars with unusually high fuel economy for their engine size are two seaters: cars with big engines, but lighter bodies. 
+For every aesthetic attribute, there is a function, called a _scale_, which maps data values to valid values for that aesthetic. It is this scale that controls the appearance of the points and associated legend. For example, in the above plot, the colour scale maps 2seater to pink and midsize to green. You can easily override ggplot2's default choices, as you'll learn in [the scales chapter](#cha:scales). 
 
-For every aesthetic attribute, there is a function, called a _scale_, which maps data values to valid values for that aesthetic. It is this scale that controls the appearance of the points and associated legend. For example, in the above plot, the colour scale maps I1 to red and VS2 to green. You'll learn more about how to overide the default scales with your own choices in [the scales chapter](#cha:scales). 
-
-If you want to set an aesthetic to a fixed value, without scaling it, do so outside of `aes()`. Compare the following two plots:
+If you want to set an aesthetic to a fixed value, without scaling it, do so in the individual geom. Compare the following two plots:
 
 ```{r}
-ggplot(dsmall, aes(carat, price)) + 
-  geom_point(aes(colour = "blue"))
-ggplot(dsmall, aes(carat, price)) + 
+ggplot(mpg, aes(displ, hwy, colour = "blue")) + 
+  geom_point()
+ggplot(mpg, aes(displ, hwy)) + 
   geom_point(colour = "blue")
 ```
 
-In the first plot, the value "blue" is scaled to a pinkish colour, and a legend is added. In the second plot, the points are given the R colour blue. This is explained in more detail in [setting vs. mapping](#sub:setting-mapping).
+In the first plot, the value "blue" is scaled to a pinkish colour, and a legend is added. In the second plot, the points are given the R colour blue. This is an important technique and is explained in more detail in [setting vs. mapping](#sub:setting-mapping).
 
-One aesthetic that it's useful to set (rather than map with a scale), is `alpha`, which controls transparency. For large datasets, like the diamonds data, semi-transparent points are often useful to alleviate some of the overplotting. To make a semi-transparent colour you can use the alpha aesthetic, which takes a value between 0 (completely transparent) and 1 (complete opaque).  It's often useful to specify the transparency as a fraction, e.g., `1/10` or `1/20`, as the denominator specifies the number of points that must overplot to get a completely opaque colour. \index{Aesthetics!setting} \indexf{I}
+Different types of aesthetic attributes work better with different types of variables. For example, colour and shape work well with categorical variables, while size works better with continuous variables. The amount of data also makes a difference: if there is a lot of data, like in the plots above, it can be hard to distinguish the different groups. An alternative solution is to use faceting, as described next.
 
-```{r qplot-set, fig.show = "hold", dev = "png", out.width = "0.32\\linewidth", fig.weight = 4, fig.height = 4}
-ggplot(diamonds, aes(carat, price)) + 
-  geom_point(alpha = 1 / 10)
-ggplot(diamonds, aes(carat, price)) + 
-  geom_point(alpha = 1 / 100)
-ggplot(diamonds, aes(carat, price)) + 
-  geom_point(alpha = 1 / 200)
-```
-
-Different types of aesthetic attributes work better with different types of variables. For example, colour and shape work well with categorical variables, while size works better with continuous variables. The amount of data also makes a difference: if there is a lot of data, like in the plots above, it can be hard to distinguish the different groups. An alternative solution is to use faceting.
+When using aesthetics in a plot, less is usually more. It's difficult to see the simultaneously relationship between colour and size and size, so exercise restraint when using aesthetics. Instead trying to make one very complex plot that shows everything, see if you can create a series of simple plots that tell a story.
 
 ### Exercises
 
-1.  Experiemnt with the colour, shape and size aesthetics.
+1.  Experiemnt with the colour, shape and size aesthetics. What happens
+    if you use more than one aesthetic in a plot?
 
 1.  What happens if you map a continuous variable to shape? Why? What happens
-    if you map clarity to shape? Why?
+    if you map trans to shape? Why?
+    
+1.  How does the drive train related to fuel economy? How is it 
+    related to engine size and class?
 
 ## Faceting {#sec:qplot-faceting}
 
-Another way of displaying additional categorical variables on a plot is facetting. Faceting creates tables of graphics by splitting the data into subsets and displaying the same graph for each subset in an arrangement that facilitates comparison. You'll learn more about faceting in [Faceting](#sec:faceting), but it's such a useful technique that it's worth learning right away.  \index{Faceting}
+Another way of displaying additional categorical variables on a plot is facetting. Faceting creates tables of graphics by splitting the data into subsets and displaying the same graph for each subset in an arrangement that facilitates comparison. You'll learn more about faceting in [Faceting](#sec:faceting), but it's such a useful technique that it's worth learning right away.  \index{Faceting}. You'll learn more about the relative advantages and disadvantages of using faceting instead of aesthetics in [grouping vs. faceting](#sub:group-vs-facet).
 
 There are two types of facetting: grid and wrapped. Wrapped is the most useful, so we'll discuss it here, and you can learn about grid facetting later. To facet a plot you simply add a facetting specification:
 
-```{r facet-hist, dev = "png"}
-ggplot(diamonds, aes(log(carat), log(price))) + 
+```{r facet}
+ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
-  facet_wrap(~color)
+  facet_wrap(~class)
 ```
 
-To add facetting you either use `facet_grid(row_var ~ col_var)` or `facet_wrap(~ var)`. To facet on only one of columns or rows, use `.` as a place holder.  For example, `row_var ~ .` will create a single column with multiple rows. \indexf{facet_grid}
+`facet_wrap()` takes the name of a variable preceded by `~`. (You'll learn why it uses this special syntax later). \indexf{facet_wrap}
 
-The following code illustrates this technique with two plots, sets of histograms showing the distribution of carat conditional on colour. 
+### Exericses
 
-You can learn more about the relatively advantages and disadvantages of using faceting instead of aesthetics in [grouping vs. faceting](#sub:group-vs-facet).
+1.  What happens if you try to facet by a continuous variable like 
+    `hwy`? What about `cyl`?  What's the key difference?
+  
+1.  Use facetting to explore the 3-way relationship between fuel economy,
+    engine size and number of cylinders. How does facetting by number of
+    cylinders change your assessement of the relationship between
+    engine size and fuel economy?
+
+1.  Read the documentation for `facet_wrap()`. What arguments can you use
+    to control how many rows and columns in the output?
 
 ## Plot geoms {#sec:plot-geoms}
 
-`?geom_smooth`.
+You might guess that by substituting `geom_point()` for a different geom function, you'd get a different plot. That's a great guess!
 
-`ggplot()` is not limited to scatterplots, but can produce almost any kind of plot by varying the `geom`. Geom, short for geometric object, describes the type of object that is used to display the data. Some geoms have an associated statistical transformation, for example, a histogram is a binning statistic plus a bar geom. These different components are described in the next chapter. Here we'll introduce the most common and useful geoms, organised by the dimensionality of data that they work with. The following geoms enable you to investigate two-dimensional relationships:
+Some geoms have an associated statistical transformation, for example, a histogram is a binning statistic plus a bar geom. Those different components are described in the next chapter. Here we'll introduce the most common and useful geoms, organised by the dimensionality of data that they work with. The following geoms enable you to investigate two-dimensional relationships:
 
 * `geom_smooth()` fits a smoother to the data and displays the smooth and its 
   standard error, see [adding a smoother to a plot](#sub:smooth).
@@ -192,22 +207,22 @@ For 1d distributions, your choice of geoms is guided by the variable type:
   `geom_freqpoly()` a frequency polygon, 
   [histogram and frequency polygons](#sub:distribution).
 
-* For discrete variables, use `geom_bar()` to make a bar chart, see 
+* For discrete variables, use `geom_bar()` to make a bar chart, 
   [bar charts](#sub:bar).
 
-### Adding a smoother to a plot {#sub:smooth}
+## Adding a smoother to a plot {#sub:smooth}
 
-If you have a scatterplot with many data points, it can be hard to see exactly what trend is shown by the data. In this case you may want to add a smoothed line to the plot. This is easily done using the `smooth` geom as shown below. The geoms will be overlaid in the order in which they appear.  \index{Smoothing} \indexf{geom_smooth}
+If you have a scatterplot with many data points, it can be hard to see exactly what trend is shown by the data. In this case you may want to add a smoothed line to the plot. This is easily done using `geom_smooth()`: \index{Smoothing} \indexf{geom_smooth}
 
-```{r qplot-smooth, fig.show = "hold", dev = "png"}
-ggplot(diamonds, aes(carat, price)) + 
+```{r qplot-smooth}
+ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
   geom_smooth()
 ```
 
-Despite overplotting, our impression of an exponential relationship between price and carat was correct. There are few diamonds bigger than three carats, and our uncertainty in the form of the relationship increases as illustrated by the point-wise confidence interval shown in grey. If you want to turn the confidence interval off, use `geom_smooth(se = FALSE)`.
+This overlays the scatterplot with a smooth curve, including an assessment of uncertainty in the form point-wise confidence interval shown in grey. If you're not interested in the confidence interval, turn it off with `geom_smooth(se = FALSE)`.
 
-There are many different smoothers you can choose between by using the `method` argument:
+Another important argument to `geom_smooth()` is method, which allows you to choose the type of model used for smoothing:
 
 *   `method = "loess"`, the default for small n, uses a smooth local 
     regression.  More details about the algorithm used can be found in `?loess`.  
@@ -215,11 +230,11 @@ There are many different smoothers you can choose between by using the `method` 
     ranges from 0 (exceedingly wiggly) to 1 (not so wiggly). \index{Model!loess}
       
     ```{r smooth-loess, fig.show = "hold"}
-    ggplot(dsmall, aes(carat, price)) + 
+    ggplot(mpg, aes(displ, hwy)) + 
       geom_point() + 
       geom_smooth(span = 0.2)
-    
-    ggplot(dsmall, aes(carat, price)) + 
+
+    ggplot(mpg, aes(displ, hwy)) + 
       geom_point() + 
       geom_smooth(span = 1)
     ```
@@ -227,38 +242,26 @@ There are many different smoothers you can choose between by using the `method` 
     Loess does not work well for large datasets (it's $O(n^2)$ in memory), so
     an alternative smoothing algorithm is used when $n$ is greater than 1,000. 
 
-*   You could load the __mgcv__ library and use `method = "gam"` and 
+*   You could load the __mgcv__ package and use `method = "gam"` and 
     `formula = y ~ s(x)` to fit a generalised additive model. For large data, 
-    use the formula `y ~ s(x, bs = "cs")`. This is used by default when there 
-    are more than 1,000 points. 
-    \index{Package!mgcv} \index{Model!generalised additive}
+    use the formula `y ~ s(x, bs = "cs")`. This is what ggplot2 uses when 
+    there are more than 1,000 points. \index{Package!mgcv}
+    \index{Model!generalised additive}
 
     ```{r smooth-gam}
     library(mgcv)
-    ggplot(dsmall, aes(carat, price)) + 
+    ggplot(mpg, aes(displ, hwy)) + 
       geom_point() + 
       geom_smooth(method = "gam", formula = y ~ s(x))
     ```
 
-*   `method = "lm"` fits a linear model.  The default will fit a straight line 
-    to your data, or you can specify `formula = y ~ poly(x, 2)` to specify a 
-    2nd-degree polynomial, or better, load the __splines__ package and use a 
-    natural spline: `formula = y ~ ns(x, 2)`. The second parameter is the 
-    degrees of freedom: a higher number will create a wigglier curve. You are 
-    free to specify any formula involving $x$ and $y$.  \index{Model!linear}
+*   `method = "lm"` fits a linear model, giving the line of best fit.     
+    \index{Model!linear}
 
     ```{r smooth-lm, fig.show = "hold"}
-    library(splines)
-    
-    # A linear model
-    ggplot(dsmall, aes(carat, price)) + 
+    ggplot(mpg, aes(displ, hwy)) + 
       geom_point() + 
       geom_smooth(method = "lm")
-    
-    # A natural spline with 5 degrees of freedom
-    ggplot(dsmall, aes(carat, price)) + 
-      geom_point() + 
-      geom_smooth(method = "lm", formula = y ~ ns(x, 5))
     ```
 
   * `method = "rlm"` works like `lm()`, but uses a robust fitting algorithm so 
@@ -266,94 +269,147 @@ There are many different smoothers you can choose between by using the `method` 
     package, so remember to load that first. \index{Model!robust} 
     \index{Package!MASS}
 
-### Boxplots and jittered points {#sub:boxplot}
+### Exercises
 
-When a set of data includes a categorical variable and one or more continuous variables, you will probably be interested to know how the values of the continuous variables vary with the levels of the categorical variable.  Box-plots and jittered points offer two ways to do this.  The following code explores how the distribution of price per carat varies with the colour of the diamond using jittering (`geom = "jitter"`, left) and box-and-whisker plots (`geom = "boxplot"`, right). \index{Boxplot} \index{Jittering} \indexf{geom_boxplot}
+## Boxplots and jittered points {#sub:boxplot}
 
-```{r jitter-boxplot, fig.show = "hold", dev = "png"}
-# As the colour improves (from left to right) the spread of values decreases, 
-# but there is little change in the centre of the distribution.
-ggplot(diamonds, aes(color, price / carat)) + 
+When a set of data includes a categorical variable and one or more continuous variables, you will probably be interested to know how the values of the continuous variables vary with the levels of the categorical variable. There are three useful techniques that help see the distribution:
+
+* Jittering, `geom_jitter()`, adds a little random noise to the data.
+  \index{Jittering}  \indexf{geom_jitter}
+  
+* Boxplots, `geom_boxplot()`, summarise the shape of the distribution
+  with a handful of summary statistics. \index{Boxplot}  \indexf{geom_boxplot}
+  
+* Violin plots, `geom_violin()`, show a compact representation of the
+  "density" of the distribution, highlighting the areas where more points
+  are found.
+
+Say we're interested in seeing how fuel economy varies within car class. We might start with a scatterplot like this:
+
+```{r}
+ggplot(mpg, aes(class, hwy)) + 
+  geom_point()
+```
+
+But because there are few unique values of both class and hwy, there is a lot of overplotting. Many points are plotted in the same location, and it's difficult to see the distribution.
+
+```{r jitter-boxplot, fig.show = "hold"}
+ggplot(mpg, aes(class, hwy)) + 
   geom_jitter()
 
-ggplot(diamonds, aes(color, price / carat)) + 
+ggplot(mpg, aes(class, hwy)) + 
   geom_boxplot()
 
-ggplot(diamonds, aes(color, price / carat)) + 
+ggplot(mpg, aes(class, hwy)) + 
   geom_violin()
 ```
 
-Each method has its strengths and weaknesses. Boxplots summarise the bulk of the distribution with only five numbers, while jittered plots show every point but can suffer from overplotting. In the example here, both plots show the dependency of the spread of price per carat on diamond colour, but the boxplots are more informative, indicating that there is very little change in the median and adjacent quartiles.
+Each method has its strengths and weaknesses. Boxplots summarise the bulk of the distribution with only five numbers, while jittered plots show every point but can suffer from overplotting. Violin plots are the richest, but relying on the calculation of a density estimate, which can be hard to interpret.
 
 For jittered points, `geom_jitter()` offers the same control over aesthetics as `geom_point()`: `size`, `colour`, `shape` and `alpha`. For `geom_boxplot()` and `geom_violin()`, you can control the outline `colour`, the internal `fill` colour and the `size` of the lines.
 
-Another way to look at conditional distributions is to use faceting (described in [faceting](#sec:qplot-faceting)) to plot a separate histogram or density plot for each value of the categorical variable.
+### Exercises
 
-### Histograms and frequency polygons {#sub:distribution}
+1.  What's the problem with the plot created by 
+    `ggplot(mpg, aes(cty, hwy)) + geom_point()`? Which of the three geoms 
+    described above is most effective a remedying?
 
-Histogram and freqency polygons show the distribution of a single variable.  They provide more information about the distribution of a single group than boxplots do, but it is harder to compare many groups (although we will look at one way to do so). \index{Histogram} \index{Density!plot} \indexf{geom_histogram} \indexf{geom_density}
+1.   One challenge with the plots shown above is that the ordering of
+    `class` is alphabetic, and not terrible useful. How would you change the 
+    levels of the factor to be most informative? 
+   
+    Rather than reordering the factor by hand, you can do it automatically
+    based on the data:
+    `ggplot(mpg, aes(reorder(class, hwy), hwy)) + geom_boxplot()`.
+    What does `reorder()` do? Read the documentation.
+
+## Histograms and frequency polygons {#sub:distribution}
+
+Histograms and freqency polygons show the distribution of a single variable. They provide more information about the distribution of a single group than boxplots do, but also take up more space so it's harder to show many groups at once. \index{Histogram} \indexf{geom_histogram}
 
 ```{r dist, fig.show = "hold", fig.width = 4, fig.height = 3}
-ggplot(diamonds, aes(carat)) + 
+ggplot(mpg, aes(hwy)) + 
   geom_histogram()
-ggplot(diamonds, aes(carat)) + 
+ggplot(mpg, aes(hwy)) + 
   geom_freqpoly()
 ```
 
-Both both geoms, you can can controls the amount of smoothing by setting the bin width. (Break points can also be specified explicitly, using the `breaks` argument.) It is __very important__ to experiment with the bin width  You should always try many bin widths: You may find that gross features of the data show up well at a large bin width, while finer features require a very narrow width.
+Both histograms and frequency polygons work in the same way: they divide the data up into bins and count the number of observations in each bin. The only difference is the display: histograms use bars and frequency polygons use lines. You can how the data is divided into bins with the `binwidth` argument (if you don't want evenly spaced bins you can use the `breaks` argument). It is __very important__ to experiment with the bin width. The default just splits your data into 30 bins, which is unlikely to be the best choice. You should always try many bin widths: You may find that gross features of the data show up well at a large bin width, while finer features require a very narrow width.
 
-Below we experiment with three values of `binwidth`: 1.0, 0.1 and 0.01. It is only in the plot with the smallest bin width (right) that we see the striations we noted in an earlier scatterplot, most diamonds have a 'nice' numbers of carats:
-
-```{r hist-binwidth, fig.show = "hold", fig.width = 4, fig.height = 3, out.width = "0.32\\linewidth"}
-ggplot(diamonds, aes(carat)) + 
-  geom_histogram(binwidth = 1) + 
-  xlim(0, 3)
-
-ggplot(diamonds, aes(carat)) + 
-  geom_histogram(binwidth = 0.1) + 
-  xlim(0, 3)
-
-ggplot(diamonds, aes(carat)) + 
-  geom_histogram(binwidth = 0.01) + 
-  xlim(0, 3)
+```{r}
+ggplot(mpg, aes(hwy)) + 
+  geom_freqpoly(binwidth = 1)
+ggplot(mpg, aes(displ)) + 
+  geom_freqpoly(binwidth = 0.5)
 ```
 
-To compare the distributions of different subgroups, just add an aesthetic mapping, as in the following code:
+(An alternative to the frequency polygon is the density plot, `geom_density()`. I generally avoid density plots because they are harder to interpret since the underlying computations are more complex. They also make assumptions that are not true for all data, namely that the underlying distribution is continuous, unbounded, and smooth.)
+
+To compare the distributions of different subgroups, you can map a categorical variable to either fill (for `geom_histogram()`) or colour (for `geom_freqpoly()`). It's better to compare distributions with using the frequency polygon because the perceptual task is easier: you can compare the heights against a common baseline.
 
 ```{r dist-fill, fig.show = "hold", fig.width = 4, fig.height = 3}
-ggplot(diamonds, aes(price / carat)) + 
-  geom_histogram(binwidth = 500)
-
-ggplot(diamonds, aes(price / carat)) + 
-  geom_histogram(aes(fill = color), binwidth = 500)
-ggplot(diamonds, aes(price / carat)) + 
-  geom_freqpoly(aes(color = color), binwidth = 500)
+ggplot(mpg, aes(displ, colour = drv)) + 
+  geom_freqpoly(binwidth = 0.5)
+ggplot(mpg, aes(displ, fill = drv)) + 
+  geom_histogram(binwidth = 0.5)
 ```
 
-Mapping a categorical variable to an aesthetic will automatically split up the geom by that variable, so these commands instruct ggplot2 to draw a histogram and frequency polygon for each colour of diamond. It's easier to compare distributions when using the frequency polygon because the perceptual task is easier: you can compare the heights against a common baseline.
+### Exercises
 
-### Bar charts {#sub:bar}
+1.  Explore the distribution of the carat variable in the dimaonds 
+    dataset. What binwidth reveals the most interesting patterns?
+    
+1.  Explore the distribution of the price variable in the diamonds
+    data. How does the distribution vary by cut.
 
-The discrete analogue of histogram is the bar chart, `geom_bar()`. The bar geom counts the number of instances of each class so that you don't need to tabulate your values beforehand, as with `barplot()` in base R. If the data has already been tabulated or if you'd like to tabulate class members in some other way, such as by summing up a continuous variable, you can use the `weight` aesthetic. The first plot is a simple bar chart of diamond colour, and the second is a bar chart of diamond colour weighted by carat. \index{Barchart} \indexf{geom_bar}
+1.  You now know three ways to compare the distributions of subgroups:
+    with `geom_violin()`, with `geom_freqpoly()` and the colour aesthetic,
+    and with `geom_freqpoly()` and faceting. What are the strengths 
+    and weaknesses of each approach?
 
-```{r dist-bar, fig.show = "hold", fig.width = 4, fig.height = 2.4}
-# Raw counts
-ggplot(diamonds, aes(color)) + 
+## Bar charts {#sub:bar}
+
+The discrete analogue of the histogram is the bar chart, `geom_bar()`. It's easy to use: \index{Barchart} \indexf{geom_bar}
+
+```{r dist-bar}
+ggplot(mpg, aes(manufacturer)) + 
   geom_bar()
-
-# Weighted by carat
-ggplot(diamonds, aes(color)) + 
-  geom_bar(aes(weight = carat)) + 
-  scale_y_continuous("carat")
 ```
 
-(Mention the other type of bar plot where the data is already summarised)
+Bar charts can be confusing because there are two rather different plots that are both commonly called bar charts. The above form expects you to have unsummarised data - each row contributes 1 to the overall count. The other form of bar chart is when you have presummarised data. For you might have three drugs along with their mean effect:
 
-### Time series with line and path plots {#sub:line}
+```{r}
+drugs <- data.frame(
+  drug = c("a", "b", "c"),
+  effect = c(4.2, 9.7, 6.1)
+)
+```
 
-Line and path plots are typically used for time series data. Line plots join the points from left to right, while path plots join them in the order that they appear in the dataset (a line plot is just a path plot of the data sorted by x value).  Line plots usually have time on the x-axis, showing how a single variable has changed over time.  Path plots show how two variables have simultaneously changed over time, with time encoded in the way that the points are joined together.
+To display this sort of data, you need to tell `geom_bar()` to not run the default statistical transformation which bins and counts the data:.
 
-Because there is no time variable in the diamonds data, we use the `economics` dataset, which contains economic data on the US measured over the last 40 years. The figure below shows two plots of unemployment over time, both produced using `geom = "line"`. The first shows an unemployment rate and the second shows the median number of weeks unemployed. We can already see some differences in these two variables, particularly in the last peak, where the unemployment percentage is lower than it was in the preceding peaks, but the length of unemployment is high. \index{Time series!bivariate} \indexf{geom_line} \indexf{geom_path}
+```{r}
+ggplot(drugs, aes(drug, effect)) +
+  geom_bar(stat = "identity")
+```
+
+But if you have this sort of data, you should seriously consider using `geom_point()` instead.
+
+### Exercises
+
+1.  Read the documentation for `geom_bar()`. What does the `weight` 
+    aesthetic do? 
+
+1.  Using the techniques already discusssed in this chapter, come up with
+    three ways to visualise of 2 categorical variables simultaneously.
+    Try them out to visualise the distribution of `model` and `manufacturer`, 
+    `trans` and `class`, and `cyl` and `trans`.
+
+## Time series with line and path plots {#sub:line}
+
+Line and path plots are typically used for time series data. Line plots join the points from left to right, while path plots join them in the order that they appear in the dataset (in other words, a line plot is a path plot of the data sorted by x value). Line plots usually have time on the x-axis, showing how a single variable has changed over time. Path plots show how two variables have simultaneously changed over time, with time encoded in the way that observations are connected.
+
+Because the year variable in the mpg dataset only has twov values, we'll show some timeseries plots using the `economics` dataset, which contains economic data on the US measured over the last 40 years. The figure below shows two plots of unemployment over time, both produced using `geom_line()`. The first shows an unemployment rate and the second shows the median number of weeks unemployed. We can already see some differences in these two variables, particularly in the last peak, where the unemployment percentage is lower than it was in the preceding peaks, but the length of unemployment is high. \index{Time series!bivariate} \indexf{geom_line} \indexf{geom_path}
 
 ```{r line-employment, fig.show = "hold", fig.width = 4, fig.height = 2.4}
 ggplot(economics, aes(date, unemploy / pop)) +
@@ -364,7 +420,7 @@ ggplot(economics, aes(date, uempmed)) +
 
 To examine this relationship in greater detail, we would like to draw both time series on the same plot. We could draw a scatterplot of unemployment rate vs. length of unemployment, but then we could no longer see the evolution over time. The solution is to join points adjacent in time with line segments, forming a _path_ plot.
 
-Below we plot unemployment rate vs. length of unemployment and join the individual observations with a path. Because of the many line crossings, the direction in which time flows isn't easy to see in the first plot. In the second plot, we apply the `colour` aesthetic to the line to make it easier to see the direction of time.
+Below we plot unemployment rate vs. length of unemployment and join the individual observations with a path. Because of the many line crossings, the direction in which time flows isn't easy to see in the first plot. In the second plot, we colour the points to make it easier to see the direction of time.
 
 ```{r path-employ, fig.show = "hold", fig.width = 4, fig.height = 2.4}
 ggplot(economics, aes(unemploy / pop, uempmed)) + 
@@ -373,18 +429,10 @@ ggplot(economics, aes(unemploy / pop, uempmed)) +
 
 year <- function(x) as.POSIXlt(x)$year + 1900
 ggplot(economics, aes(unemploy / pop, uempmed)) + 
-  geom_path() +
+  geom_path(colour = "grey50") +
   geom_point(aes(colour = year(date))) 
 ```
 
-We can see that percent unemployed and length of unemployment are highly correlated, although in recent years the length of unemployment has been increasing relative to the unemployment rate.
+We can see that percent unemployed and length of unemployment are highly correlated, but in recent years the length of unemployment has been increasing relative to the unemployment rate.
 
 With longitudinal data, you often want to display multiple time series on each plot, each series representing one individual. To do this you need to map the `group` aesthetic to a variable encoding the group membership of each observation. This is explained in more depth in [grouping](#sub:grouping). \index{Longitudinal data|see{Time series}} \index{Data!longitudinal}
-
-### Exercises
-
-1.  Facetting vs. aesthetics.
-
-## `qplot()` shortcut
-
-
