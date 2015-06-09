@@ -238,7 +238,7 @@ p <- ggplot(df, aes(x1, y1)) +
   scale_y_continuous(NULL) + 
   theme_linedraw()
 p 
-p + coord_trans(y = "log10")
+p + coord_trans(ytrans = "log10")
 p + coord_polar()
 ```
 
@@ -246,46 +246,38 @@ p + coord_polar()
 
 There is also another thing that turns out to be sufficiently useful that we should include it in our general framework: faceting, a general case of conditioned or trellised plots. This makes it easy to create small multiples each showing a different subset of the whole dataset. This is a powerful tool when investigating whether patterns hold across all conditions. The faceting specification describes which variables should be used to split up the data, and whether position scales should be free or constrained. Faceting is described in [position](#cha:position).
 
-## Data structures {#sec:data-structures}
+## Exercises 
 
-This grammar is encoded into R data structures in a fairly straightforward way. A plot object is a list with components `data`, `mapping` (the default aesthetic mappings), `layers`, `scales`, `coordinates` and `facet`. The plot object has one other component we haven't discussed yet: the `theme`. This is used to store the plot-specific theme options described in [Polishing](#cha:polishing). \index{ggplot!data structures}
+1.  One of the best ways to get a handle on how the grammar works is to apply
+    it to the analysis of existing graphics. For each of the graphics listed 
+    below, write down the components of the graphic. Don't worry if you don't
+    know what the corresponding functions in ggplot2 are called (or if they even
+    exist!), instead focussing on recording the key elements of a plot so you
+    could communicate it to someone else.
+    
+    1.  "Napoleon's march" by Charles John Minard: 
+        <http://www.datavis.ca/gallery/re-minard.php>
 
-Most of the time you create a plot object and immediately plot it. But you can also save a plot to a variable and manipulate it. Once you have a plot object, there are a few things you can do with it:
-
-* Render it on screen, with `print()`.  This happens automatically when
-  running interactively, but inside a loop or function, you'll need to
-  `print()` it yourself. \indexf{print}
+    1.  "Where the Heat and the Thunder Hit Their Shots", by Jeremy White, 
+        Joe Ward, and Matthew Ericson at The New York Times. 
+        <http://nyti.ms/1duzTvY>
+    
+    1.  "London Cycle Hire Journeys", by James Cheshire. <http://bit.ly/1S2cyRy>
+    
+    1.  The Pew Research Center's favorite data visualizations of 2014:
+        <http://pewrsr.ch/1KZSSN6>
+       
+    1.  "The Tony's Have Never Been so Dominated by Women", by 
+        Joanna Kao at FiveThirtyEight: <http://53eig.ht/1cJRCyG>.
+    
+    1. "In Climbing Income Ladder, Location Matters" by the Mike Bostock, 
+        Shan Carter, Amanda Cox, Matthew Ericson, Josh Keller, Alicia 
+        Parlapiano, Kevin Quealy and Josh Williams at the New York Times:
+        <http://nyti.ms/1S2dJQT>
+        
+    1. "Dissecting a Trailer: The Parts of the Film That Make the Cut",
+        by Shan Carter, Amanda Cox, and Mike Bostock at the New York Times:
+        <http://nyti.ms/1KTJQOE> 
+        
   
-* Save it to disk, with `ggsave()`, described in [saving your output](#sec:saving).
-
-* Briefly describe its structure with `summary()`. \indexf{summary}
-  
-* Save a cached copy of it to disk, with `saveRDS()`. This saves a complete
-  copy of the plot object, so you can easily re-create that exact plot with 
-  `readRDS()`. Note that data is stored inside the plot, so that if you change 
-  the data outside of the plot, and then redraw a saved plot, it will not be
-  updated.  \indexf{saveRDS} \indexf{readRDS}
-
-The following code illustrates some of these tools:
-
-```{r summary}
-p <- ggplot(mpg, aes(displ, hwy, colour = factor(cyl))) +
-  geom_point()
-
-# Save plot object to disk
-saveRDS(p, "plot.rds")
-# Load from disk
-q <- readRDS("plot.rds")
-# Plot it
-q
-
-# Save png to disk
-ggsave("plot.png", width = 5, height = 5)
-```
-
-```{r echo = FALSE}
-unlink("plot.png")
-unlink("plot.rds")
-```
-
-You'll learn more about how to manipulate these objects in [programming with ggplot2](#cha:duplication).
+    

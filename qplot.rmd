@@ -30,6 +30,9 @@ In this chapter you'll learn:
 * A variety of different geoms that you can use to create different
   types of plots, [geoms](#sec:plot-geoms).
 
+* Things you can do with a plot object other than display it, like 
+  save it to disk, [output](#sec:output).
+
 * `qplot()`, a handy shortcut for when you just want to quickly bang out
   a simple plot without thinking about the grammar at all, [qplot](#qplot)
 
@@ -457,6 +460,48 @@ With longitudinal data, you often want to display multiple time series on each p
     three ways to visualise the a 2d categorical distribution. Try them out 
     by visualising the distribution of `model` and `manufacturer`, `trans` and 
     `class`, and `cyl` and `trans`.
+
+## Output {#sec:output}
+
+Most of the time you create a plot object and immediately plot it. But you can also save a plot to a variable and manipulate it. Once you have a plot object, there are a few things you can do with it:
+
+* Render it on screen, with `print()`.  This happens automatically when
+  running interactively, but inside a loop or function, you'll need to
+  `print()` it yourself. \indexf{print}
+  
+* Save it to disk, with `ggsave()`, described in [saving your output](#sec:saving).
+
+* Briefly describe its structure with `summary()`. \indexf{summary}
+  
+* Save a cached copy of it to disk, with `saveRDS()`. This saves a complete
+  copy of the plot object, so you can easily re-create that exact plot with 
+  `readRDS()`. Note that data is stored inside the plot, so that if you change 
+  the data outside of the plot, and then redraw a saved plot, it will not be
+  updated.  \indexf{saveRDS} \indexf{readRDS}
+
+The following code illustrates some of these tools:
+
+```{r summary}
+p <- ggplot(mpg, aes(displ, hwy, colour = factor(cyl))) +
+  geom_point()
+
+# Save plot object to disk
+saveRDS(p, "plot.rds")
+# Load from disk
+q <- readRDS("plot.rds")
+# Plot it
+q
+
+# Save png to disk
+ggsave("plot.png", width = 5, height = 5)
+```
+
+```{r echo = FALSE}
+unlink("plot.png")
+unlink("plot.rds")
+```
+
+You'll learn more about how to manipulate these objects in [programming with ggplot2](#cha:duplication).
 
 ## qplot {#qplot}
 
