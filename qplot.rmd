@@ -1,8 +1,12 @@
 ---
 title: qplot
-output: bookdown::html_chapter
 bibliography: references.bib
 ---
+
+```{r, echo = FALSE}
+source("common.r")
+columns(1, 2 / 3)
+```
 
 # Getting started with ggplot2 {#cha:qplot}
 
@@ -141,9 +145,9 @@ ggplot(mpg, aes(displ, cty, colour = class)) +
 ```
 
 This gives each point a unique colour corresponding to its class. The legend allows us read data values from the colour, showing us that the group of cars with unusually high fuel economy for their engine size are two seaters: cars with big engines, but lightweight bodies. 
-
 If you want to set an aesthetic to a fixed value, without scaling it, do so in the individual geom. Compare the following two plots:
 
+`r columns(2)`
 ```{r}
 ggplot(mpg, aes(displ, hwy, colour = "blue")) + 
   geom_point()
@@ -175,6 +179,7 @@ Another technique for displaying additional categorical variables on a plot is f
 
 There are two types of facetting: grid and wrapped. Wrapped is the most useful, so we'll discuss it here, and you can learn about grid facetting later. To facet a plot you simply add a facetting specification:
 
+`r columns(1, 2 / 3)`
 ```{r facet}
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
@@ -243,7 +248,8 @@ An important argument to `geom_smooth()` is the `method`, which allows you to ch
     controlled by the `span` parameter, which ranges from 0 (exceedingly wiggly) 
     to 1 (not so wiggly). \index{Model!loess}
       
-    ```{r smooth-loess, fig.show = "hold"}
+    `r columns(2, 2/3)`
+    ```{r smooth-loess}
     ggplot(mpg, aes(displ, hwy)) + 
       geom_point() + 
       geom_smooth(span = 0.2)
@@ -262,6 +268,7 @@ An important argument to `geom_smooth()` is the `method`, which allows you to ch
     there are more than 1,000 points. \index{Package!mgcv}
     \index{Model!generalised additive}
 
+    `r columns(1, 2/3)`
     ```{r smooth-gam, message = FALSE}
     library(mgcv)
     ggplot(mpg, aes(displ, hwy)) + 
@@ -272,7 +279,7 @@ An important argument to `geom_smooth()` is the `method`, which allows you to ch
 *   `method = "lm"` fits a linear model, giving the line of best fit.     
     \index{Model!linear}
 
-    ```{r smooth-lm, fig.show = "hold"}
+    ```{r smooth-lm}
     ggplot(mpg, aes(displ, hwy)) + 
       geom_point() + 
       geom_smooth(method = "lm")
@@ -300,20 +307,21 @@ When a set of data includes a categorical variable and one or more continuous va
 Say we're interested in seeing how fuel economy varies within car class. We might start with a scatterplot like this:
 
 ```{r}
-ggplot(mpg, aes(class, hwy)) + 
+ggplot(mpg, aes(drv, hwy)) + 
   geom_point()
 ```
 
 But because there are few unique values of both class and hwy, there is a lot of overplotting. Many points are plotted in the same location, and it's difficult to see the distribution.
 
-```{r jitter-boxplot, fig.show = "hold"}
-ggplot(mpg, aes(class, hwy)) + 
+`r columns(3, 2/3)`
+```{r jitter-boxplot}
+ggplot(mpg, aes(drv, hwy)) + 
   geom_jitter()
 
-ggplot(mpg, aes(class, hwy)) + 
+ggplot(mpg, aes(drv, hwy)) + 
   geom_boxplot()
 
-ggplot(mpg, aes(class, hwy)) + 
+ggplot(mpg, aes(drv, hwy)) + 
   geom_violin()
 ```
 
@@ -325,7 +333,8 @@ For jittered points, `geom_jitter()` offers the same control over aesthetics as 
 
 Histograms and freqency polygons show the distribution of a single variable. They provide more information about the distribution of a single group than boxplots do, at the expense of needing more space. \index{Histogram} \indexf{geom_histogram}
 
-```{r dist, fig.show = "hold", fig.width = 4, fig.height = 3}
+`r columns(2, 2/3)`
+```{r dist}
 ggplot(mpg, aes(hwy)) + 
   geom_histogram()
 ggplot(mpg, aes(hwy)) + 
@@ -347,7 +356,7 @@ ggplot(mpg, aes(displ)) +
 
 To compare the distributions of different subgroups, you can map a categorical variable to either fill (for `geom_histogram()`) or colour (for `geom_freqpoly()`). It's better to compare distributions with using the frequency polygon because the perceptual task is easier: you can compare the heights against a common baseline. You can also use facetting: this makes comparisons it a bit more difficult, but it's easier to see the distribution of each group.
 
-```{r dist-fill, fig.show = "hold", fig.width = 4, fig.height = 3}
+```{r dist-fill}
 ggplot(mpg, aes(displ, colour = drv)) + 
   geom_freqpoly(binwidth = 0.5)
 ggplot(mpg, aes(displ, fill = drv)) + 
@@ -358,6 +367,7 @@ ggplot(mpg, aes(displ, fill = drv)) +
 
 The discrete analogue of the histogram is the bar chart, `geom_bar()`. It's easy to use: \index{Barchart} \indexf{geom_bar}
 
+`r columns(1, 2/3)`
 ```{r dist-bar}
 ggplot(mpg, aes(manufacturer)) + 
   geom_bar()
@@ -387,24 +397,22 @@ Line and path plots are typically used for time series data. Line plots join the
 
 Because the year variable in the mpg dataset only has two values, we'll show some timeseries plots using the `economics` dataset, which contains economic data on the US measured over the last 40 years. The figure below shows two plots of unemployment over time, both produced using `geom_line()`. The first shows an unemployment rate and the second shows the median number of weeks unemployed. We can already see some differences in these two variables, particularly in the last peak, where the unemployment percentage is lower than it was in the preceding peaks, but the length of unemployment is high. \index{Time series!bivariate} \indexf{geom_line} \indexf{geom_path}
 
-```{r line-employment, fig.show = "hold", fig.width = 4, fig.height = 2.4}
+`r columns(2, 2.4 / 4)`
+```{r line-employment}
 ggplot(economics, aes(date, unemploy / pop)) +
   geom_line()
 ggplot(economics, aes(date, uempmed)) +
   geom_line()
-
-
 ```
 
 To examine this relationship in greater detail, we would like to draw both time series on the same plot. We could draw a scatterplot of unemployment rate vs. length of unemployment, but then we could no longer see the evolution over time. The solution is to join points adjacent in time with line segments, forming a _path_ plot.
 
 Below we plot unemployment rate vs. length of unemployment and join the individual observations with a path. Because of the many line crossings, the direction in which time flows isn't easy to see in the first plot. In the second plot, we colour the points to make it easier to see the direction of time.
 
-```{r path-employ, fig.show = "hold", fig.width = 4, fig.height = 2.4}
+```{r path-employ}
 ggplot(economics, aes(unemploy / pop, uempmed)) + 
   geom_path() +
   geom_point()
-
 
 year <- function(x) as.POSIXlt(x)$year + 1900
 ggplot(economics, aes(unemploy / pop, uempmed)) + 
@@ -454,7 +462,8 @@ With longitudinal data, you often want to display multiple time series on each p
 
 In some cases, you will want to create a quick, simple plot that uses all of the ggplot2 defaults. In these cases you may prefer to use `qplot()` over `ggplot()`. `qplot()` let's you define a plot in a single call, picking a geom by default if you don't supply on. To use it, provide a set of aesthetics and a data set: \indexf{qplot}
 
-```{r, fig.show="hold"}
+`r columns(3, 2 / 3)`
+```{r}
 qplot(displ, hwy, data = mpg)
 qplot(displ, hwy, colour = class, data = mpg)
 qplot(displ, data = mpg)
