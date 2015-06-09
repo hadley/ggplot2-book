@@ -9,13 +9,45 @@ library("ggplot2")
 options(digits = 2)
 ```
 
-# Reducing duplication {#cha:duplication}
+# Programming with ggplot2 {#cha:duplication}
 
 ## Introduction
 
 A major requirement of a good data analysis is flexibility. If the data changes, or you discover something that makes you rethink your basic assumptions, you need to be able to easily change many plots at once. The main inhibitor of flexibility is duplication. If you have the same plotting statement repeated over and over again, you have to make the same change in many different places. Often just the thought of making all those changes is exhausting!
 
 This chapter describes three ways of reducing duplication. In [iteration](#sec:iteration), you will learn how to iteratively modify the previous plot, allowing you to build on top of your previous work without having to retype a lot of code. [Plot templates](#sec:templates) will show you how to produce plot 'templates' that encapsulate repeated components that are defined once and used in many different places. Finally, [plot functions](#sec:functions) talks about how to create functions that create or modify plots.  \index{Duplication!reducing} \index{Reducing duplication}
+
+## Saving layers
+
+You've seen that plot objects can be stored as variables. The summary function can be helpful for inspecting the structure of a plot without plotting it, as seen in the following example. \index{Summary!of plot object} The summary shows information about the plot defaults, and then each layer. In later chapters, you will learn about [scales](#cha:scales) and [faceting](#cha:position).
+
+```{r layer8}
+p <- ggplot(mpg, aes(displ, hwy)) + 
+  geom_point()
+summary(p)
+
+p <- p + geom_smooth()
+summary(p)
+```
+
+Layers are regular R objects and so can be stored as variables, making it easy to write clean code that reduces duplication. \index{Layers!saving as variables} For example, a set of plots can be initialised using different data then enhanced with the same layer.  If you later decide to change that layer, you only need to do so in one place.  The following shows a simple example, where we create a layer that displays a translucent thick blue line of best fit.
+
+```{r layer9}
+bestfit <- geom_smooth(
+  method = "loess", 
+  se = FALSE, 
+  colour = alpha("steelblue", 0.5), 
+  size = 2
+)
+ggplot(mpg, aes(cty, hwy)) + 
+  geom_point() + 
+  bestfit
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() + 
+  bestfit
+```
+
+Using a list of components
 
 ## Iteration {#sec:iteration}
 
@@ -71,6 +103,8 @@ qplot(mpg, wt, data = mtcars) + geom_lm(y ~ ns(x, 3))
 ```
 
 Depending on how complicated your function is, it might even return multiple components in a vector. You can build up arbitrarily complex plots this way, reducing duplication wherever you find it.  If you want to create a plot that combines together many different components in a pre-specified way, you might need to write a function that produces the entire plot. This is described in the next section.
+
+## Picking variables in arguments
 
 ## Plot functions {#sec:functions}
 
