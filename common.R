@@ -12,7 +12,6 @@ is_latex <- function() {
 }
 
 columns <- function(n, aspect_ratio = 1, max_width = if (n == 1) 0.65 else 1) {
-
   if (is_latex()) {
     out_width <- paste0(round(max_width / n, 3), "\\linewidth")
   } else {
@@ -23,7 +22,7 @@ columns <- function(n, aspect_ratio = 1, max_width = if (n == 1) 0.65 else 1) {
     fig.width = 8 / n * max_width,
     fig.height = 8 / n * aspect_ratio * max_width,
     fig.align = if (n == 1) "center" else "default",
-    fig.show = "hold",
+    fig.show = if (n == 1) "asis" else "hold",
     out.width = out_width
   )
 }

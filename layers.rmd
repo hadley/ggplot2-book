@@ -1,35 +1,36 @@
 ---
-title: layers
-output: bookdown::html_chapter
 bibliography: references.bib
 ---
 
 ```{r layers, echo=FALSE}
-library("ggplot2")
+source("common.r")
+columns(1, 2 / 3)
 ```
 
 # Build a plot layer by layer {#cha:layers}
 
 ## Introduction
 
-Layering is the mechanism by which additional data elements are added to a plot. Each layer can come from a different dataset and have a different aesthetic mapping, making it possible to create sophisticated plots that display data from multiple sources.
+One of the key ideas behind ggplot2 is that it allows you to easy iterate, building up a complex plot a layer at a time. Each layer can come from a different dataset and have a different aesthetic mappings, making it possible to create sophisticated plots that display data from multiple sources.
 
-This chapter focusses on the basics of how layers, geoms, statistics and position adjustments work: how you call and customise them. The next chapter, the "toolbox", describes how you can use different geoms and stats to solve particular visualisation problems. These two chapters are companions, with this chapter explaining the theory and the next chapter explaining the practical aspects of using layers to achieve your graphical goals.
+You've already created many layers with tools like `geom_point()` and `geom_histogram()`. In this chapter, we'll dive into the details of a layer, and how you can control all five components: data, the aesthetic mappings, the geom, stat, and position adjustments. The goal here is to give you the tools to build sophisticated plots tailored to the problem at hand. The next chapter, the "toolbox", uses these basic principles to solve specific visualisation problems. These two chapters are companions, with this chapter explaining the theory and the next chapter explaining the practical aspects of using layers to achieve your graphical goals.
 
-So far, whenever we've created a plot with `ggplot()`, we've immediately added on a geom. But it's possible to break that up into two steps: first defining the plot, then adding layers:
+## Building a plot
+
+So far, whenever we've created a plot with `ggplot()`, we've immediately added on a layer with a geom function. But it's important to realise that there really are two distinct steps. First we create a plot with default dataset and aesthetic mappings:
 
 ```{r layer1, error = TRUE}
 p <- ggplot(mpg, aes(displ, hwy))
 p
 ```
 
-This plot object cannot be displayed until we add a layer: there is nothing to see!
+The plot can't be displayed until we add a layer: there is nothing to see!
 
 ```{r}
 p + geom_point()
 ```
 
-The above code is a shortcut. Behind the scenes, `geom_point()` calls the `layer()` function to create a new layer:
+The `geom_point()` code is a shortcut. Behind the scenes, `geom_point()` calls the `layer()` function to create a new layer:
 
 ```{r layer2, eval = FALSE}
 p + layer(
@@ -68,31 +69,66 @@ This fully specifies the five components to the layer:
 *   __position__: Choose a method for adjusting overlapping objects, 
     as described in [position](#sec:position).
 
-It's useful to understand the `layer()` function so you have a better mental model of the layer object itself. The full specification is verbose, so you'll rarely use it. Instead, you'll use the shortcut `geom_` functions.
-
-## Specifying layers
-
-Note that the order of `data` and `mapping` arguments is switched between `ggplot()` and the layer functions. This is because you almost always specify data for the plot, and almost always specify aesthetics---but *not* data---for the layers. I recommend naming all other arguments rather than relying on positional matching. This makes the code more readable and is the style followed in this book.
+It's useful to understand the `layer()` function so you have a better mental model of the layer object. But because the full `layer()` call is so verbose, so you'll rarely use it. Instead, you'll use the shortcut `geom_` functions. `geom_point(mapping, data, ...)` is exactly equivalent to `layer(mapping, data, geom = "point", ...)`.
 
 ## Data {#sec:data}
 
-The restriction on the data is simple: it must be a data frame. \index{Data} \indexc{data.frame} This is restrictive, and unlike other graphics packages in R.  Lattice functions can take an optional data frame or use vectors directly from the global environment.  Base methods often work with vectors, data frames or other R objects.  However, there are good reasons for this restriction. Your data is very important, and it's better to be explicit about exactly what is done with it.  It also allows a cleaner separation of concerns so that `ggplot()` deals only with plotting data, not wrangling it into different forms, for which you might find the dplyr, tidyr and broom packages helpful. A single data frame is also easier to save than a multitude of vectors, which means it's easier to reproduce your results or send your data to someone else.  
+Every layer must have some data associated with it, and that data must always be in a data frame. This is a strong restriction, but there are good reasons for it: \index{Data} \indexc{data.frame}
 
-If you use two datasets in a plot, there are two basic ways to specify the plot:
+* Your data is very important, and it's best to be explicit about it
 
-```{r, eval = FALSE}
-ggplot(df1, aes(x, y)) + 
-  geom_point() + 
-  geom_point(data = df2)
+* A single data frame is also easier to save than a multitude of vectors, which 
+  means it's easier to reproduce your results or send your data to someone else.  
 
-ggplot(mapping = aes(x, y)) + 
-  geom_point(data = df1) + 
-  geom_point(data = df2)
+* It enforces a clean separation of concerns: ggplot2 turns data frames into
+  visualisations. Other packages can make data frames in the right format.
+  
+The data on each layer doesn't need to be the same, and it's often useful to combine multiple datasets in a single plot. To illustrate that idea I'm going to generate two new datasets related to the mpg dataset. First I'll fit a loess model and generate predictions from it. (This is what `geom_smooth()` does behind the scenes)
+
+```{r loess-pred}
+mod <- loess(hwy ~ displ, data = mpg)
+grid <- data.frame(displ = seq(min(mpg$displ), max(mpg$displ), length = 50))
+grid$hwy <- predict(mod, newdata = grid)
+
+head(grid)
 ```
 
-If you have multiple layers, use the first form, and set the default dataset to the most commonly used plot. Otherwise, I think it's clearer to use the second form. If the default dataset is omitted, every layer must supply its own data.
+Next, I'll isolate observations that are particularly far away from their predicted value:
 
-One caveat is relate to faceting: you must specify a default dataset when you use faceting. Faceting is a global operation (i.e., it works on all layers) so it needs to have a base dataset that defines the set of facets for all datasets.  See [missing faceting variables](#sub:missing-faceting-columns) for more details. 
+```{r loess-outlier}
+std_resid <- resid(mod) / mod$s
+outlier <- subset(mpg, abs(std_resid) > 1.5)
+```
+
+I've generated these datasets because it's common to enhance the display of raw data with a statistical summary and some annotations. With these new datasets, I can improve our initial scatterplot by overlaying a smoothed line, and labelling the particularly outlying points:
+
+```{r}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() + 
+  geom_line(data = grid) + 
+  geom_text(data = outlier, aes(label = model))
+```
+
+(The text labels aren't particularly easy to read, but you'll learn how to improve those in [polishing]{#cha:polishing}.)
+
+In this example, every layer uses a different dataset. We could define it another way, omitting the default dataset:
+
+```{r, eval = FALSE}
+ggplot(mapping = aes(displ, hwy)) + 
+  geom_point(data = mpg) + 
+  geom_line(data = grid) + 
+  geom_text(data = outlier, aes(label = model))
+```
+
+However, I don't particularly like this style because here it makes it less clear what the primary dataset is (and because of the way that the arguments to `ggplot()` are ordered, it actually requires more keypresses!).  However, you may prefer it in cases where there isn't clearly one primary datasets, or where the aesthetics also vary from layer to layer. Just remember that if you omit the data set in the call to `ggplot()` you must explicitly supply a dataset for every layer.
+
+One caveat is related to faceting: you must specify a default dataset when you use faceting. Faceting is a global operation (i.e., it works on all layers) so it needs to have a base dataset that defines the set of facets for all datasets.  See [missing faceting variables](#sub:missing-faceting-columns) for more details. 
+
+Note that the order of `data` and `mapping` arguments is switched between `ggplot()` and the layer functions. This is because you almost always specify data for the plot, and almost always specify aesthetics---but *not* data---for the layers. I recommend naming all other arguments rather than relying on positional matching. This makes the code more readable and is the style followed in this book.
+
+### Exercises
+
+1. 
 
 ## Aesthetic mappings {#sec:aes}
 
@@ -111,6 +147,8 @@ aes(displ, hwy, colour = class)
 (And if you're American, you can use _color_, behind the scenes ggplot2 will correct your spelling ;)
 
 Avoid referring to variables outside the layer data (e.g., with `diamonds$carat`). This breaks containment, so that the plot no longer contains everything it needs. Generally, it's good practice to minimise data manipulation inside the plot. If you're doing complex transformations in the `aes()` call it's better to move them outside and explicitly create news (which you'll learn more about in XYZ). This is often faster (because you need only do the transformation once, not every time the plot is drawn), and makes it easier to check your work.
+
+(This is a slight simplification: every ggplot object also has an environment associated with it, so you can use objects in that environment. However, it's best not to rely on this as it prevents the plot from being self-contained which can cause problems if you later re-use the plot in a different environment. Also ggplot2 was written before I fully understood non-standard evaluation in R, which means it's not as reliable as it could be.)
 
 ### Map in the plot vs. mapping in layers {#sub:plots-and-layers}
 
@@ -137,6 +175,8 @@ You can add, override, or remove mappings:
 
 If you only have one layer in the plot, the way you specify aesthetics doesn't make any difference. However, the distinction is important when you started adding additional layers. These two plots are both valid and interesting, but focus on quite different aspects of the data:
 
+`r columns(2, 2 / 3)`
+
 ```{r, message = FALSE, warning = FALSE}
 ggplot(mpg, aes(displ, hwy, colour = class)) + 
   geom_point() + 
@@ -153,6 +193,7 @@ Generally, you want to set up the mappings to illuminate the structure underlyin
 
 Instead of mapping an aesthetic property to a variable, you can set it to a _single_ value by specifying it in the layer parameters. Aesthetics can vary for each observation being plotted, while parameters do not. We **map** an aesthetic to a variable (e.g., `aes(colour = cut)`) or **set**  it to a constant (e.g., `colour = "red"`).  For example, the following layer sets the colour of the points, using the colour parameter of the layer: \index{Aesthetics!setting|textbf}
 
+`r columns(1, 1)`
 ```{r layer15}
 ggplot(mpg, aes(cty, hwy)) + 
   geom_point(colour = "darkblue") 
@@ -205,6 +246,7 @@ head(Oxboys)
 
 In many situations, you want to separate your data into groups, but render them in the same way.  When looking at the data in aggregate you want to be able to distinguish individual subjects, but not identify them.  This is common in longitudinal studies with many subjects, where the plots are often descriptively called spaghetti plots. For example, the following plot shows the growth trajectory for each boy (each `Subject`): \index{Data!longitudinal}    \indexf{geom_line}
 
+`r columns(1, 2 / 3)`
 ```{r oxboys-line}
 ggplot(Oxboys, aes(age, height, group = Subject)) + 
   geom_line()
@@ -274,6 +316,7 @@ Another important issue with collective geom is how the aesthetics of the indivi
 
 Lines and paths operate on an off-by-one principle: there is one more observation than line segment, and so the aesthetic for the first observation is used for the first segment, the second observation for the second segment and so on.  This means that the aesthetic for the last observation is not used, as shown in Figure \ref{fig:matching-lines}.  An additional limitation for paths and lines is that that line type must be constant over each individual line, in R there is no way to draw a line which has varying line type. \indexf{geom_line} \indexf{geom_path}
 
+`r columns(2, 2 / 3)`
 ```{r}
 df <- data.frame(x = 1:3, y = 1:3, colour = c(1,3,5))
 
@@ -288,6 +331,7 @@ ggplot(df, aes(x, y, colour = colour)) +
 
 You could imagine a more complicated system where segments smoothly blend from one aesthetic to another. This would work for continuous variables like size or colour, but not for line type, and is not used in ggplot2. If this is the behaviour you want, you can perform the linear interpolation yourself:
 
+`r columns(1, 2 / 3)`
 ```{r matching-lines2}
 xgrid <- with(df, seq(min(x), max(x), length = 50))
 interp <- data.frame(
@@ -304,6 +348,7 @@ For all other collective geoms, like polygons, the aesthetics from the individua
 
 These issues are most relevant when mapping aesthetics to continuous variables, because, as described above, when you introduce a mapping to a discrete variable, it will by default split apart collective geoms into smaller pieces. This works particularly well for bar and area plots, because stacking the individual pieces produces the same shape as the original ungrouped data:
 
+`r columns(2, 2 / 3)`
 ```{r bar-split}
 ggplot(mpg, aes(class)) + 
   geom_bar()
@@ -363,7 +408,6 @@ A statistical transformation, or **stat**, transforms the data, typically by sum
   \label{tbl:aliased-geoms}
 \end{table}
 
-
 ### Generated variables
 
 A stat takes a dataset as input and returns a dataset as output, and so a stat can add new variables to the original dataset.  It is possible to map aesthetics to these new variables.  For example, `stat_bin`, the statistic used to make histograms, produces the following variables: \index{Stats!creating new variables} \indexf{stat_bin}
@@ -389,8 +433,10 @@ Position adjustments apply minor tweaks to the position of elements within a lay
 
 The different types of adjustment are best illustrated with a bar chart.  Figure \ref{fig:position-bar} shows stacking, filling and dodging.  Stacking puts bars on the same x on top of one another; filling does the same, but normalises height to 1; and dodging places the bars side-by-side.  Dodging is rather similar to faceting, and the advantages and disadvantages of each method are described in [dodging vs. faceting](#sub:dodge-vs-facet). For these operations to work, each bar must have the same width and not overlap with any others.  The identity adjustment (i.e., do nothing) doesn't make much sense for bars, but is shown in Figure \ref{fig:position-identity} along with a line plot of the same data for reference. \index{Dodging} \index{Side-by-side|see{Dodging}} \index{Stacking} \indexf{position_dodge} \indexf{position_fill}  \indexf{position_stack} \indexf{geom_bar}
 
+`r columns(3, 2 / 3)`
 ```{r position-bar}
-dplot <- ggplot(diamonds, aes(clarity, fill = cut))
+dplot <- ggplot(diamonds, aes(clarity, fill = cut)) + 
+  theme(legend.position = "none")
 dplot + geom_bar(position = "stack")
 dplot + geom_bar(position = "fill")
 dplot + geom_bar(position = "dodge")
@@ -398,11 +444,13 @@ dplot + geom_bar(position = "dodge")
 
 The identity positon adjustment is not useful for bars, because each bar obscures the bars behind. A frequency polygon is a better technique here.
 
+`r columns(2, 2 / 3)`
 ```{r position-identity}
 dplot + geom_bar(position = "identity")
 
 ggplot(diamonds, aes(clarity, colour = cut)) + 
-  geom_freqpoly(aes(group = cut))
+  geom_freqpoly(aes(group = cut)) + 
+  theme(legend.position = "none")
 ```
 
 ## Pulling it all together {#sec:pull-together}
@@ -413,7 +461,7 @@ Once you have become comfortable with combining layers, you will be able to crea
 
 By connecting geoms with different statistics, you can easily create new graphics. The code below creates three variations on a histogram. They all use the same statistical transformation underlying a histogram (the bin stat), but use different geoms to display the results: the area geom, the point geom and the tile geom.  \index{Geoms!combining with stats} \index{Stats!combining with geoms}
 
-A number of the geoms available in `ggplot` were derived from other geoms in a process like the one just described, starting with an existing geom and making a few changes in the default aesthetics or stat.  For example, the jitter geom is simply the point geom with the default position adjustment set to jitter.  Once it becomes clear that a particular variant is going to be used a lot or used in a very different context, it makes sense to create a new geom. Table  \ref{tbl:aliased-geoms} lists these ``aliased'' geoms. \index{Geoms!aliases}
+A number of the geoms available in `ggplot` were derived from other geoms in a process like the one just described, starting with an existing geom and making a few changes in the default aesthetics or stat.  For example, the jitter geom is simply the point geom with the default position adjustment set to jitter.  Once it becomes clear that a particular variant is going to be used a lot or used in a very different context, it makes sense to create a new geom. Table \ref{tbl:aliased-geoms} lists these ``aliased'' geoms. \index{Geoms!aliases}
 
 ### Varying aesthetics and data {#sub:different-aesthetics}
 
