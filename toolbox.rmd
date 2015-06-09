@@ -171,6 +171,145 @@ qplot(depth, data=diamonds, geom="density", xlim = c(54, 70),
 
 Visualising a joint 2d continuous distribution is described in the next section.
 
+## Displaying groups {#sub:grouping}
+
+Geoms can be roughly divided into individual and collective geoms. An individual geom has a distinct graphical object for each row (observation). For example, the point geom has a single point for each observation. On the other hand, collective geoms display multiple observations with one geometric object. This may be a result of a statistical summary, or may be fundamental to the display of the geom, as with polygons.  Lines and paths fall somewhere in between:  each overall line is composed of a set of straight segments, but each segment represents two points. How do we control which observations go in which individual graphical element?  This is the job of the `group` aesthetic.  \index{Grouping}
+
+By default, the `group` is set to the interaction of all discrete variables in the plot.  This often partitions the data correctly, but when it does not, or when no discrete variable is used in the plot, you will need to explicitly define the grouping structure, by mapping group to a variable that has a different value for each group.
+
+There are three common cases where the default is not enough, and we will consider each one below. In the following examples, we will use a simple longitudinal dataset, `Oxboys`, from the **nlme** package.  It records the heights (`height`) and centered ages (`age`) of 26 boys (`Subject`), measured on nine occasions (`Occasion`). \index{Package!nlme}
+
+```{r oxboys}
+data(Oxboys, package = "nlme")
+head(Oxboys)
+```
+
+### Multiple groups, one aesthetic
+
+In many situations, you want to separate your data into groups, but render them in the same way.  When looking at the data in aggregate you want to be able to distinguish individual subjects, but not identify them.  This is common in longitudinal studies with many subjects, where the plots are often descriptively called spaghetti plots. For example, the following plot shows the growth trajectory for each boy (each `Subject`): \index{Data!longitudinal}    \indexf{geom_line}
+
+`r columns(1, 2 / 3)`
+```{r oxboys-line}
+ggplot(Oxboys, aes(age, height, group = Subject)) + 
+  geom_line()
+```
+
+If you incorrectly specify the grouping variable, you'll get a characteristic sawtooth appearance:
+
+```{r oxboys-line-bad}
+ggplot(Oxboys, aes(age, height)) + 
+  geom_line()
+```
+
+If a group isn't defined by a single variable, but instead by a combination of multiple variables, you can use `interaction()` to combine them, e.g. `aes(group = interaction(school_id, student_id))`.
+
+### Different groups on different layers
+
+Sometimes we want to plot summaries based on different levels of aggregation. Different layers might have different group aesthetics, so that some display individual level data while others display summaries of larger groups. \indexf{geom_smooth}
+
+Building on the previous example, suppose we want to add a single smooth line to the plot just created, based on the ages and heights of *all* the boys.  If we use the same grouping in both layers, we get one smooth per boy:
+
+```{r layer18}
+ggplot(Oxboys, aes(age, height, group = Subject)) + 
+  geom_line() + 
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+This is not what we wanted; we have inadvertently added a smoothed line for each boy. Instead of setting the grouping aesthetic in `ggplot()`, where it will apply to all layers, we instead set it in `geom_line()` so it affects the lines, but not the smooths:
+
+```{r layer19, eval = FALSE}
+ggplot(Oxboys, aes(age, height)) + 
+  geom_line(aes(group = Subject)) + 
+  geom_smooth(method = "lm", size = 2, se = FALSE)
+```
+
+### Overriding the default grouping
+
+The plot has a discrete scale but you want to draw lines that connect *across* groups. This is the strategy used in interaction plots, profile plots, and parallel coordinate plots, among others.
+
+For example, imagine we've drawn boxplots of height at each measurement occasion: \indexf{geom_boxplot}
+
+```{r oxbox}
+ggplot(Oxboys, aes(Occasion, height)) + 
+  geom_boxplot()
+```
+
+There is no need to specify the group aesthetic here; the default grouping works because occasion is a discrete variable. Now we want to overlay lines that connect each individual boy. Simply adding `geom_line()` does not work:
+
+```{r oxbox-line-bad}
+ggplot(Oxboys, aes(Occasion, height)) + 
+  geom_boxplot() +
+  geom_line(colour = "#3366FF", alpha = 0.5)
+```
+
+The default grouping uses `Occasion` because it's categorical. To get the plot we want, we need to override the grouping:
+
+```{r oxbox-line}
+ggplot(Oxboys, aes(Occasion, height)) + 
+  geom_boxplot() +
+  geom_line(aes(group = Subject), colour = "#3366FF", alpha = 0.5)
+```
+
+I changed the line colour in the second layer to make it easier to distinguish lines from boxplots. This is another example of setting an aesthetic to a fixed value. \index{Aesthetics!setting}
+
+### Matching aesthetics to graphic objects {#sub:matching}
+
+Another important issue with collective geom is how the aesthetics of the individual observations are mapped to the aesthetics of the complete entity.  For individual geoms, this isn't a problem, because each observation is represented by a single graphical element.  However, high data densities can make it difficult (or impossible) to distinguish between individual points and in some sense the point geom becomes a collective geom, a single blob of points. \index{Aesthetics!matching to geoms}
+
+Lines and paths operate on an off-by-one principle: there is one more observation than line segment, and so the aesthetic for the first observation is used for the first segment, the second observation for the second segment and so on.  This means that the aesthetic for the last observation is not used, as shown in Figure \ref{fig:matching-lines}.  An additional limitation for paths and lines is that that line type must be constant over each individual line, in R there is no way to draw a line which has varying line type. \indexf{geom_line} \indexf{geom_path}
+
+`r columns(2, 2 / 3)`
+```{r}
+df <- data.frame(x = 1:3, y = 1:3, colour = c(1,3,5))
+
+ggplot(df, aes(x, y, colour = factor(colour))) + 
+  geom_line(aes(group = 1), size = 2) +
+  geom_point(size = 5)
+
+ggplot(df, aes(x, y, colour = colour)) + 
+  geom_line(aes(group = 1), size = 2) +
+  geom_point(size = 5)
+```
+
+You could imagine a more complicated system where segments smoothly blend from one aesthetic to another. This would work for continuous variables like size or colour, but not for line type, and is not used in ggplot2. If this is the behaviour you want, you can perform the linear interpolation yourself:
+
+`r columns(1, 2 / 3)`
+```{r matching-lines2}
+xgrid <- with(df, seq(min(x), max(x), length = 50))
+interp <- data.frame(
+  x = xgrid,
+  y = approx(df$x, df$y, xout = xgrid)$y,
+  colour = approx(df$x, df$colour, xout = xgrid)$y  
+)
+ggplot(interp, aes(x, y, colour = colour)) + 
+  geom_line(size = 2) +
+  geom_point(data = df, size = 5)
+```
+
+For all other collective geoms, like polygons, the aesthetics from the individual components are only used if they are all the same, otherwise the default value is used. This makes sense for fill as it is a property of the entire object: it doesn't make sense to think about having a different fill colour for each point on the border of the polygon. \indexf{geom_polygon}
+
+These issues are most relevant when mapping aesthetics to continuous variables, because, as described above, when you introduce a mapping to a discrete variable, it will by default split apart collective geoms into smaller pieces. This works particularly well for bar and area plots, because stacking the individual pieces produces the same shape as the original ungrouped data:
+
+`r columns(2, 2 / 3)`
+```{r bar-split}
+ggplot(mpg, aes(class)) + 
+  geom_bar()
+ggplot(mpg, aes(class, fill = drv)) + 
+  geom_bar()
+```
+
+### Exercises
+
+1.  Simplify
+
+1.  When illustrating the difference between mapping continuous and discrete
+    colours to a line, the discrete example needed `aes(group = 1)`. Why?
+    What happens if that is ommitted?
+
+1.  Create a bar chart of class, with filled by highway mpg. What two aesthetics
+    do you need to set?
+
+
 ## Dealing with overplotting {#sec:overplotting}
 
 The `diamonds` dataset consists of price and quality information for about 54,000 diamonds. You can access it by loading ggplot2:
