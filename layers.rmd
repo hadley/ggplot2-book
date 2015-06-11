@@ -286,127 +286,239 @@ The default legend title isn't very useful, but you can easily override it as yo
 Geometric objects, or **geoms** for short, perform the actual rendering of the layer, controlling the type of plot that you create. For example, using a point geom will create a scatterplot, while using a line geom will create a line plot. 
 
 * Graphical primitives:
-    * `geom_blank()`:
-    * `geom_point()`:
-    * `geom_path()`:
-    * `geom_ribbon()`:
-    * `geom_segment()`:
-    * `geom_rect()`:
-    * `geom_text()`:
+    * `geom_blank()`: display nothing. Most useful for adjusting axes limits using data.
+    * `geom_point()`: points.
+    * `geom_path()`: paths.
+    * `geom_ribbon()`: ribbons, a path with vertical thickness.
+    * `geom_segment()`: a line segment, specified by start and end position.
+    * `geom_rect()`: rectangles.
+    * `geom_polyon()`: filled polygons.
+    * `geom_text()`: text.
   
 * One variable:
     * Discrete: 
-        * `geom_bar()`:
+        * `geom_bar()`: display distribution of discrete variable.
     * Continuous
-        * `geom_histogram()`:
-        * `geom_density()`:
-        * `geom_dotplot()`:
-        * `geom_freqpoly()`:
+        * `geom_histogram()`: bin and count continuous variable, display with bars.
+        * `geom_density()`: smoothed density estimate
+        * `geom_dotplot()`: stack individual points into a dot plot.
+        * `geom_freqpoly()`: bin and count continuous variable, display with lines.
 
 * Two variables:
     * Both continuous:
-        * `geom_jitter()`:
-        * `geom_point()`:
-        * `geom_quantile()`:
-        * `geom_rug()`:
-        * `geom_smooth()`:
-        * `geom_text()`:
+        * `geom_point()`: scatterplot.
+        * `geom_quantile()`: smoothed quantile regression.
+        * `geom_rug()`: marginal rug plots.
+        * `geom_smooth()`: smoothed line of best fit.
+        * `geom_text()`: text labels.
     * Show distribution:
-        * `geom_bin2d():`
-        * `geom_density2d()`:
-        * `geom_hex()`:
-    * Both discrete:
-        * `geom_count()`:
-        * `geom_jitter()`:
+        * `geom_bin2d()`: bin into rectangles and count.
+        * `geom_density2d()`: smoothed 2d density estimate.
+        * `geom_hex()`: bin into hexagons and count.
+    * At least one discrete:
+        * `geom_count()`: count number of point at distinct locations
+        * `geom_jitter()`: randomly jitter overlapping points.
     * One continuous, one discrete:
-        * `geom_bar(stat = "identity")`
-        * `geom_boxplot()`:
-        * `geom_dotplot()`:
-        * `geom_violin()`:
+        * `geom_bar(stat = "identity")`: a bar chart of precomputed summaries
+        * `geom_boxplot()`: boxplots.
+        * `geom_dotplot()`: carefully adjust location of overlapping points.
+        * `geom_violin()`: show density of values in each group.
     * One time, one continuous
-        * `geom_area()`:
-        * `geom_line()`:
-        * `geom_step()`:
+        * `geom_area()`: area plot.
+        * `geom_line()`: line plot.
+        * `geom_step()`: step plot.
     * Display error:
-        * `geom_crossbar()`:
-        * `geom_errorbar()`:
-        * `geom_linerange()`:
-        * `geom_pointrange()`:
+        * `geom_crossbar()`: vertical bar with center.
+        * `geom_errorbar()`: error bars.
+        * `geom_linerange()`: vertical line.
+        * `geom_pointrange()`: vertical line with center.
     * Spatial
-        * `geom_map()`:
+        * `geom_map()`: fast version of `geom_polygon()` for map data.
 
 * Three variables:
-    * `geom_contour()`
-    * `geom_tile()`:
-    * `geom_raster()`:
+    * `geom_contour()`: contours.
+    * `geom_tile()`: tile the plane with rectangles.
+    * `geom_raster()`: fast version of `geom_tile()` for equal sized tiles.
   
-Each geom has a set of aesthetics that it understands, some of which _must_ be provided. For example, the point geoms requires x and y position, and understands colour, size and shape aesthetics. A bar requires height (`ymax`), and understands width, border colour and fill colour. Each geom lists the aesthetics that can use in its docuementation.
+Each geom has a set of aesthetics that it understands, some of which _must_ be provided. For example, the point geoms requires x and y position, and understands colour, size and shape aesthetics. A bar requires height (`ymax`), and understands width, border colour and fill colour. Each geom lists its aesthetics in the docuementation.
 
-Some geoms differ primarily in the way that they are parameterised.  For example, the tile geom is specified in terms of the location of its centre and its height and width, while the rect geom is parameterised in terms of its top (`ymax`), bottom (`ymin`), left (`xmin`) and right (`right`) positions. \indexf{geom_rect}  Internally, the rect geom is described as a polygon, and its parameters are the locations of the four corners. This is useful for non-Cartesian coordinate systems, as you will learn in [position](#cha:position). \index{Geoms!parameterisation}
+Some geoms differ primarily in the way that they are parameterised. For example, you can draw a square in three ways:
 
-Every geom has a default statistic, and every statistic a default geom. For example, the bin statistic defaults to using the bar geom to produce a histogram. These defaults are listed in Table \ref{tbl:geom-aesthetics}.  Overriding these defaults will still produce valid plots, but they may violate graphical conventions. See examples in [combining geoms and stats](#sub:new-plot-types). \index{Geoms!defaults}
+* By giving `geom_tile()` the location (`x` and `y`) and dimensions 
+  (`width` and `height`). \indexf{geom_tile}
 
-## Stat {#sec:stat}
+* By giving `geom_rect()` top (`ymax`), bottom (`ymin`), left (`xmin`) and 
+  right (`xmax`) positions. \indexf{geom_rect}
+  
+* By giving `geom_polygon()` a four row data frame with the `x` and `y` 
+  positions of each corner.
 
-A statistical transformation, or **stat**, transforms the data, typically by summarising it in some manner.  For example, a useful stat is the smoother, which calculates the mean of y, conditional on x, subject to some restriction that ensures smoothness. All currently available stats are listed in Table \ref{tbl:stats}.  To make sense in a graphic context a stat must be location-scale invariant: $\mbox{f}(x + a) = \mbox{f}(x) + a$ and $\mbox{f}(b \cdot x) = b \cdot \mbox{f}(x)$.  This ensures that the transformation stays the same when you change the scales of the plot.
+Other related geoms are:
 
-\input{tbls/stats}
+* `geom_segment()`, and `geom_line()`
+* `geom_area()` and `geom_ribbon()`. 
 
-\begin{table}
-  \begin{center}
-  \begin{tabular}{lll}
-    \toprule
-    Aliased geom & Base geom & Changes in default \\
-    \midrule
-    area      & ribbon & \verb!aes(min = 0, max = y), position = "stack"!  \\
-    density   & area   & \verb!stat = "density"!    \\
-    freqpoly  & line   & \verb!stat = "bin"!        \\
-    histogram & bar    & \verb!stat = "bin"!        \\
-    jitter    & point  & \verb!position = "jitter"! \\
-    quantile  & line   & \verb!stat = "quantile"!   \\
-    smooth    & ribbon & \verb!stat = "smooth"!     \\
-    \bottomrule
-  \end{tabular}
-  \end{center}
-  \caption{Geoms that were created by modifying the defaults of another geom.}
-  \label{tbl:aliased-geoms}
-\end{table}
+If alternative parameterisations are available, picking the right one for your data will usually make it much easier to draw a plot you want.
+
+### Exercises
+
+1.  Download and print out the ggplot2 cheatsheet from 
+    <http://www.rstudio.com/resources/cheatsheets/> so you have a handy visual
+    reference for all the geoms.
+    
+1.  Look at the documentation for the graphical primitive geoms. Which
+    aesthetics do they use? How you can summarise them in a compact form?
+    
+1.  What's the best way to master an unfamiliar geom? List three resources
+    to help you get started.
+    
+1.  For each of the plots below, identify the geom used to draw it.
+
+    `r columns(2, 2 /3)`
+    ```{r, echo = FALSE}
+    ggplot(mpg, aes(drv, displ)) + geom_violin()
+    ggplot(mpg, aes(hwy, cty)) + geom_count(alpha = 1/3)
+    ggplot(mpg, aes(hwy, cty)) + geom_hex()
+    ggplot(mpg, aes(cyl, drv)) + geom_jitter(width = 0.2, height = 0.2)
+    ggplot(economics, aes(date, psavert)) + geom_area()
+    ggplot(economics, aes(uempmed, psavert)) + geom_path()
+    ```
+
+1.  For each of the following problems, suggest a useful geom:
+
+    * Display how a variable has changed over time.
+    * Show the detailed distribution of a single variable.
+    * Focus attention on the overall trend in a large dataset.
+    * Draw a map.
+    * Label outlying points.
+
+## Stats {#sec:stat}
+
+A statistical transformation, or **stat**, transforms the data, typically by summarising it in some manner. For example, a useful stat is the smoother, which calculates the smoothed mean of y, conditional on x. You've already used many of ggplot2's stats because they're used behind the scenes for to generate many important geoms:
+
+* `stat_bin()`: `geom_bar()`, `geom_freqpoly()`, `geom_histogram()`
+* `stat_bin2d()`: `geom_bin2d()`
+* `stat_bindot()`: `geom_dotplot()`
+* `stat_binhex()`: `geom_hex()`
+* `stat_boxplot()`: `geom_boxplot()`
+* `stat_contour()`: `geom_contour()`
+* `stat_quantile()`: `geom_quantile()`
+* `stat_smooth()`: `geom_smooth()`
+* `stat_sum()`: `geom_count()`
+
+You'll rarely call these functions directly, but they are useful to know about because their documentation often provides more detail about the corresponding statistical transformation.
+
+Other stats can't be created with a `geom_` function:
+
+* `stat_ecdf()`: compute a empirical cumulative distribution plot.
+* `stat_function()`: compute y values from a function of x values.
+* `stat_summary()`: summarise y values at distinct x values.
+* `stat_summary2d()`, `stat_summary_hex()`: summarised binned values.
+* `stat_qq()`: perform calculations for a quantile-qunatile plot.
+* `stat_spoke()`: convert angle and radius to position.
+* `stat_unique()`: remove duplicated rows.
+
+There are two ways to use these functions. You can either add a `stat_()` function and override the default geom, or add a `geom_()` function and override the default stat:
+
+`r columns(1, 1 / 2, 0.75)`
+```{r, fig.keep="last"}
+ggplot(mpg, aes(trans, cty)) + 
+  geom_point() + 
+  stat_summary(geom = "point", fun.y = "mean", colour = "red", size = 4)
+
+ggplot(mpg, aes(trans, cty)) + 
+  geom_point() + 
+  geom_point(stat = "summary", fun.y = "mean", colour = "red", size = 4)
+```
+
+I think it's best to use the second form because it makes it more clear that you're displaying a summary, not the raw data.
 
 ### Generated variables
 
-A stat takes a dataset as input and returns a dataset as output, and so a stat can add new variables to the original dataset.  It is possible to map aesthetics to these new variables.  For example, `stat_bin`, the statistic used to make histograms, produces the following variables: \index{Stats!creating new variables} \indexf{stat_bin}
+Internally, a stat takes a data frame as input and returns a data frame as output, and so a stat can add new variables to the original dataset.  It is possible to map aesthetics to these new variables.  For example, `stat_bin`, the statistic used to make histograms, produces the following variables: \index{Stats!creating new variables} \indexf{stat_bin}
 
 * `count`, the number of observations in each bin
 * `density`, the density of observations in each bin (percentage of total / bar width)
 * `x`, the centre of the bin
 
-These generated variables can be used instead of the variables present in the original dataset.  For example, the default histogram geom assigns the height of the bars to the number of observations (`count`), but if you'd prefer a more traditional histogram, you can use the density (`density`).   The following example shows a density histogram of `carat` from the diamonds dataset.
+These generated variables can be used instead of the variables present in the original dataset. For example, the default histogram geom assigns the height of the bars to the number of observations (`count`), but if you'd prefer a more traditional histogram, you can use the density (`density`). The following example shows a density histogram of `carat` from the diamonds dataset.
 
 ```{r hist}
-ggplot(diamonds, aes(carat)) + 
-  geom_histogram(aes(y = ..density..), binwidth = 0.1)
+ggplot(diamonds, aes(price)) + 
+  geom_histogram(aes(y = ..density..), binwidth = 500)
 ```
 
-The names of generated variables must be surrounded with `..` when used.  This prevents confusion in case the original dataset includes a variable with the same name as a generated variable, and it makes it clear to any later reader of the code that this variable was generated by a stat.  Each statistic lists the variables that it creates in its documentation. \indexc{..}
+This technique is particularly useful when you want to compare the distribution of multiple groups that have very different sizes. For example, it's hard to compare the the distribution of `price` within `cut` because some groups are quite small. It's easier to compare if we standardise each group to take up the same area:
+
+`r columns(2, 1/2)`
+```{r freqpoly}
+ggplot(diamonds, aes(price, colour = cut)) + 
+  geom_freqpoly(binwidth = 500)
+ggplot(diamonds, aes(price, colour = cut)) + 
+  geom_freqpoly(aes(y = ..density..), binwidth = 500)
+```
+
+The result of this plot is rather surprising: low quality diamonds seem to be more expensive on average. We'll come back to this surprising result in [removing trend](#sub:trend).
+
+The names of generated variables must be surrounded with `..` when used. This prevents confusion in case the original dataset includes a variable with the same name as a generated variable, and it makes it clear to any later reader of the code that this variable was generated by a stat. Each statistic lists the variables that it creates in its documentation. \indexc{..}
+
+### Exercises
+
+1.  The code below creates a similar dataset to `stat_smooth()`. Use 
+    the appropriate geoms to mimic the default `geom_smooth()` display.
+    
+    ```{r}
+    mod <- loess(hwy ~ displ, data = mpg)
+    smoothed <- data.frame(displ = seq(1.6, 7, length = 50))
+    pred <- predict(mod, newdata = smoothed, se = TRUE) 
+    smoothed$hwy <- pred$fit
+    smoothed$hwy_lwr <- pred$fit - 1.96 * pred$se.fit
+    smoothed$hwy_upr <- pred$fit + 1.96 * pred$se.fit
+    ```
+    
+1.  What stats were used to create the following plots?
+
+    `r columns(3, 3/4)`
+    ```{r, echo = FALSE}
+    ggplot(mpg, aes(displ)) + stat_ecdf()
+    ggplot(mpg, aes(sample = displ)) + stat_qq()
+    ggplot(mpg, aes(displ)) + 
+      geom_density(aes(colour = "data"), show_guide = FALSE, adjust = 3/4) + 
+      stat_function(
+        aes(colour = "normal"),
+        fun = "dnorm", 
+        args = list(mean = mean(mpg$displ), sd = sd(mpg$displ))
+      ) + 
+      labs(colour = "Dist")
+    ```
+
+1.  Read the help for `stat_sum()` then use `geom_count()` to create a plot
+    that shows the proportion of cars that have each combination of `drv` and 
+    `trans`.
 
 ## Position adjustments {#sec:position}
 
-Position adjustments apply minor tweaks to the position of elements within a layer.  Table \ref{fig:position} lists all of the position adjustments available within `ggplot`.  Position adjustments are normally used with discrete data.  Continuous data typically doesn't overlap exactly, and when it does (because of high data density) minor adjustments, like jittering, are usually insufficient to fix the problem. \index{Position adjustments} \index{Adjustments!position}  \index{Positioning!position adjustments}
+Position adjustments apply minor tweaks to the position of elements within a layer. Three adjustments apply primarily to bars: \index{Position adjustments} \index{Adjustments!position}  \index{Positioning!position adjustments} \indexf{geom_bar}
 
-\input{tbls/position}
-
-The different types of adjustment are best illustrated with a bar chart.  Figure \ref{fig:position-bar} shows stacking, filling and dodging.  Stacking puts bars on the same x on top of one another; filling does the same, but normalises height to 1; and dodging places the bars side-by-side.  Dodging is rather similar to faceting, and the advantages and disadvantages of each method are described in [dodging vs. faceting](#sub:dodge-vs-facet). For these operations to work, each bar must have the same width and not overlap with any others.  The identity adjustment (i.e., do nothing) doesn't make much sense for bars, but is shown in Figure \ref{fig:position-identity} along with a line plot of the same data for reference. \index{Dodging} \index{Side-by-side|see{Dodging}} \index{Stacking} \indexf{position_dodge} \indexf{position_fill}  \indexf{position_stack} \indexf{geom_bar}
+* `position_dodge()`: place overlapping bars (or boxplots) side-by-side.
+   \index{Dodging} \index{Side-by-side|see{Dodging}} \indexf{position_dodge} 
+* `position_stack()`: stack overlapping bars (or areas) on top of each other.
+  \index{Stacking} \indexf{position_stack}
+* `position_fill()`: stack overlapping bars, scaling so the top is always at 1.
+  \indexf{position_fill}   
 
 `r columns(3, 2 / 3)`
 ```{r position-bar}
 dplot <- ggplot(diamonds, aes(clarity, fill = cut)) + 
   theme(legend.position = "none")
-dplot + geom_bar(position = "stack")
+dplot + geom_bar()
 dplot + geom_bar(position = "fill")
 dplot + geom_bar(position = "dodge")
 ```
 
-The identity positon adjustment is not useful for bars, because each bar obscures the bars behind. A frequency polygon is a better technique here.
+Stacking is the default position adjustment for bars, so `geom_bar()` is equivalent to `geom_bar(positio = "stack")`. Dodging is rather similar to faceting, and the advantages and disadvantages of each method are described in [dodging vs. faceting](#sub:dodge-vs-facet)
+
+There's also a position adjustment that does nothing: `position_identity()`. The identity positon adjustment is not useful for bars, because each bar obscures the bars behind. A frequency polygon is a better technique here:
 
 `r columns(2, 2 / 3)`
 ```{r position-identity}
@@ -417,16 +529,38 @@ ggplot(diamonds, aes(clarity, colour = cut)) +
   theme(legend.position = "none")
 ```
 
-## Pulling it all together {#sec:pull-together}
+There are three position adjustments that are primarily useful for points:
 
-Once you have become comfortable with combining layers, you will be able to create graphics that are both intricate and useful.  The following examples demonstrate some of the ways to use the capabilities of layers that have been introduced in this chapter.  These are just to get you started. You are limited only by your imagination!
+* `position_nudge()`: move points by a fixed offset.
+* `position_jitter()`: add a little random noise to every position.
+* `position_jitterdodge()`: dodge points within groups, then add a little 
+  random noise.
 
-### Combining geoms and stats {#sub:new-plot-types}
+Note that the way you pass parameters to position adjustments differs to stats and geoms. Instead of including additional arguments in `...`, you construct a position adjustment object, supplying additional arguments in the call:
+  
+`r columns(2, 1)`
+```{r position-point}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point(position = "jitter")
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point(position = position_jitter(width = 0.02, height = 0.2))
+```
 
-By connecting geoms with different statistics, you can easily create new graphics. The code below creates three variations on a histogram. They all use the same statistical transformation underlying a histogram (the bin stat), but use different geoms to display the results: the area geom, the point geom and the tile geom.  \index{Geoms!combining with stats} \index{Stats!combining with geoms}
+This is rather verbose, so `geom_jitter()` provides a convenient shortcut.
 
-A number of the geoms available in `ggplot` were derived from other geoms in a process like the one just described, starting with an existing geom and making a few changes in the default aesthetics or stat.  For example, the jitter geom is simply the point geom with the default position adjustment set to jitter.  Once it becomes clear that a particular variant is going to be used a lot or used in a very different context, it makes sense to create a new geom. Table \ref{tbl:aliased-geoms} lists these ``aliased'' geoms. \index{Geoms!aliases}
+Position adjustments are normally used with discrete data. Continuous data typically doesn't overlap exactly, and when it does (because of high data density) minor adjustments, like jittering, are usually insufficient to fix the problem.
 
-### Varying aesthetics and data {#sub:different-aesthetics}
+### Exercises
 
-One of the more powerful capabilities of `ggplot` is the ability to plot different datasets on different layers. This may seem strange: Why would you want to plot different data on the same plot?  In practice, you often have related datasets that should be shown together.  A very common example is supplementing the data with predictions from a model.  While the smooth geom can add a wide range of different smooths to your plot, it is no substitute for an external quantitative model that summarises your understanding of the data.
+1.  When might you use `position_nudge()`? Read the documentation.
+
+1.  Many position adjustments can only be used with a few geoms. For example,
+    you can't stack boxplots or errors bars. Why not? What properties must a 
+    geom possess in order to be stackable? What properties must it possess
+    to be dodgeable?
+    
+1.  Why might you use `geom_jitter()` instead of `geom_count()`? What are
+    the advantages and disadvantages of each technique?
+    
+1.  When might you use a stacked area plot? What are the advantages and
+    disadvantages compared to a line plot?
