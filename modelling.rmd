@@ -139,6 +139,62 @@ This technique can be employed in a wide range of situations. Wherever you can e
 1.  How do depth and table relate to the relative price? How do the patterns
     compare to the untransformed price?
 
+## effects
+
+The **effects** package [@effects] is particularly useful for extracting these values from linear models.  The following example fits a two-way model with interaction, and shows how to extract and visualise marginal and conditional effects.  Figure \ref{fig:model-cat} focusses on the categorical variable colour, and Figure \ref{fig:model-cont} focusses on the continuous variable carat. \index{Package!effects}
+
+```{r effects, prompt=TRUE, fig.align='left'} 
+d <- subset(diamonds, carat < 2.5
+d$lcarat <- log10(d$carat)
+d$lprice <- log10(d$price)
+
+# Remove overall linear trend
+detrend <- lm(lprice ~ lcarat, data = d)
+d$lprice2 <- resid(detrend)
+
+mod <- lm(lprice2 ~ lcarat * color, data = d)
+
+library("effects")
+effectdf <- function(...) {
+  suppressWarnings(as.data.frame(effect(...)))
+}
+color <- effectdf("color", mod)
+both1 <- effectdf("lcarat:color", mod)
+
+carat <- effectdf("lcarat", mod, default.levels = 50)
+both2 <- effectdf("lcarat:color", mod, default.levels = 3)
+
+qplot(lcarat, lprice, data=d, colour = color)
+qplot(lcarat, lprice2, data=d, colour = color)
+
+```
+
+```{r ldata, echo=FALSE, dev='png', fig.show='hold', fig.cap="Data transformed to remove most obvious effects. (Left) Both x and y axes are log10 transformed to remove non-linearity. (Right) The major linear trend is removed."} 
+```
+
+```{r model-cat, echo=FALSE, fig.show='hold', fig.cap="Displaying uncertainty in model estimates for colour. (Left) Marginal effect of colour. (Right) conditional effects of colour for different levels of carat. Error bars show 95\\% pointwise confidence intervals."} 
+fplot <- ggplot(mapping = aes(y = fit, ymin = lower, ymax = upper)) +
+  ylim(range(both2$lower, both2$upper))
+fplot %+% color + aes(x = color) + geom_point() + geom_errorbar()
+fplot %+% both2 + 
+  aes(x = color, colour = lcarat, group = interaction(color, lcarat)) +
+  geom_errorbar() + geom_line(aes(group=lcarat)) +
+  scale_colour_gradient()
+```
+
+```{r model-cont, echo=FALSE, fig.show='hold', fig.cap="Displaying uncertainty in model estimates for carat. (Left) marginal effect of carat. (Right) conditional effects of carat for different levels of colour. Bands show 95\\% point-wise confidence intervals."} 
+fplot %+% carat + aes(x = lcarat) + geom_smooth(stat="identity")
+
+ends <- subset(both1, lcarat == max(lcarat))
+fplot %+% both1 + aes(x = lcarat, colour = color) +
+ geom_smooth(stat="identity") + 
+ scale_colour_hue() + theme(legend.position = "none") +
+ geom_text(aes(label = color, x = lcarat + 0.02), ends)
+```
+
+Note, when captioning such figures, you need to carefully describe the nature of the confidence intervals, and whether or not it is meaningful to look at the overlap.  That is, are the standard errors for the means or for the differences between means?  The packages **multcomp** and **multcompView** are useful for calculating and displaying these errors while correctly adjusting for multiple comparisons. \index{Package!multcomp} \index{Package!multcompView}
+
+
 ## Texas housing data
 
 To explore one connection between modelling and visualisation in more depth, we're going to use a new dataset: TX housing data. This data was collected from the pages provided by the Real Estate Center at Texas A&M University, <http://recenter.tamu.edu/Data/hs/>. The data contains information about 46 Texas cities, recording the number of house sales (`sales`), the total volume of sales (`volume`), the `average` and `median` sale prices, the number of houses listed for sale (`listings`) and the average number of months a house has been listed (`inventory`). Data is recorded monthly from Jan 1990 to Apr 2015, 304 entries for each city.

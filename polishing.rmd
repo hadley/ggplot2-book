@@ -217,6 +217,97 @@ Table~\ref{tbl:geom-defaults} lists all of the common aesthetic defaults.  If yo
 \input{tbls/geom-defaults}
 -->
 
+
+## Annotations {#sec:annotating}
+
+When annotating your plot with additional labels, the important thing to remember is that these annotations are just extra data. There are two basic ways to add annotations: one at a time, or many at once. \index{Annotation}
+
+We'll start with a time series of unemployment over time:
+
+`r columns(1, 3 / 8, 1)`
+```{r umep} 
+ggplot(economics, aes(date, unemploy)) + 
+  geom_line()
+```
+
+We can annotate this plot with which president was in power at the time. There is little new in this code - it's a straightforward manipulation of existing geoms. There is one special thing to note: the use of `-Inf` and `Inf` as positions. These refer to the top and bottom (or left and right) limits of the plot.
+
+```{r unemp-pres}
+presidential <- subset(presidential, start > economics$date[1])
+
+ggplot(economics) + 
+  geom_rect(
+    aes(xmin = start, xmax = end, fill = party), 
+    ymin = -Inf, ymax = Inf, 
+    alpha = 0.2, 
+    data = presidential
+  ) + 
+  geom_vline(
+    aes(xintercept = as.numeric(start)), 
+    data = presidential,
+    colour = "grey50", 
+    alpha = 0.5
+  ) + 
+  geom_text(
+    aes(x = start, y = 2500, label = name), 
+    data = presidential, 
+    size = 3,
+    vjust = 0,
+    hjust = 0
+  ) + 
+  geom_line(aes(date, unemploy)) + 
+  scale_fill_manual(values = c("blue", "red"))
+```
+
+You can use the same technique to add a single annotation to a plot, but it's a bit fiddly because you have to create a one row data frame:
+
+```{r}
+yrng <- range(economics$unemploy)
+xrng <- range(economics$date)
+caption <- paste(strwrap("Unemployment rates in the US have 
+  varied a lot over the years", 40), collapse="\n")
+
+ggplot(economics, aes(date, unemploy)) + 
+  geom_line() + 
+  geom_text(
+    aes(x, y, label = caption), 
+    data = data.frame(x = xrng[2], y = yrng[2], caption = caption), 
+    hjust = 1, vjust = 1, size = 4
+  )
+```
+
+Alternatively, you can use the `annotate()` function which wraps up this common pattern:
+
+```{r}
+ggplot(economics, aes(date, unemploy)) + 
+  geom_line() + 
+  annotate("text", x = xrng[2], y = yrng[2], label = caption,
+    hjust = 1, vjust = 1, size = 4
+  )
+```
+
+
+
+* `geom_text()` for adding text descriptions or labelling points.  Most plots 
+  will not benefit from adding text to every single observation on the plot.
+  However, pulling out just a few observations (using subset) can be very useful.
+  Typically you will want to label outliers or other important points. \index{Labels}
+
+* `geom_vline()`, `geom_hline()`: add vertical or horizontal lines to a plot. 
+   \indexf{geom_vline} \indexf{geom_hline}
+
+* `geom_abline()`: add lines with arbitrary slope and intercept to a plot. 
+  \indexf{geom_abline}
+
+* `geom_rect()` for highlighting interesting rectangular regions of the plot.
+  `geom_rect()` has aesthetics `xmin`, `xmax`, `ymin` and `ymax`. \indexf{geom_rect}
+
+* `geom_line()`, `geom_path()` and `geom_segment()` for adding lines.  All 
+  these geoms have an `arrow` parameter, which allows you to place an arrowhead 
+  on the line.  You create arrowheads with the `arrow()` function, which has 
+  arguments `angle`, `length`, `ends` and `type`. \indexf{geom_line}
+
+
 ## Saving your output {#sec:saving}
 
 You have two basic choices of output: raster or vector.  Vector graphics are procedural.  This means that they are essentially 'infinitely' zoomable; there is no loss of detail.  Raster graphics are stored as an array of pixels and have a fixed optimal viewing size.  Figure \ref{fig:vector-raster} illustrates the basic differences for a basic circle.  A good description is available at <http://tinyurl.com/rstrvctr>. \index{Saving} \index{Exporting} \index{Publication!saving output}
