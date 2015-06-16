@@ -110,14 +110,6 @@ Each of these geoms is two dimensional and requires both `x` and `y` aesthetics.
     [Drawing maps](#sec:maps) illustrates this concept in more detail for map 
     data. \indexf{geom_polygon}
 
-*   `geom_text()` adds labels at the specified points. It requires another 
-    aesthetic: `label`.  It also has optional aesthetics `hjust` and `vjust` 
-    that control the horizontal and vertical position of the text; `angle` 
-    which controls the rotation of the text; and `family`, `fontface`, and 
-    `size` to control the apperance of the font. See 
-    [specifications](#cha:specifications) for more details. 
-    \index{Labels} \indexf{geom_text}
-
 *   `geom_tile()` and `geom_raster()` make an image plot (aka a level plot). 
     The tiles form a regular tessellation of the plane and typically have the 
     `fill` aesthetic mapped to another variable. `geom_raster()` is a faster
@@ -158,6 +150,105 @@ p + geom_polygon() + labs(title = "geom_polygon")
 
 1.  What low-level geoms are used to draw `geom_smooth()`? 
     What about `geom_boxplot()` and `geom_violin()`? 
+
+## Labels {#sec:grouping}
+
+\index{Labels} \indexf{geom_text}
+
+`geom_text()` adds labels at the specified points. It requires the `x`, `y` and `label` aesthetics.
+
+These combinations are illustrated below:
+
+`r columns(1, 2/3)`
+```{r, echo = FALSE}
+library(grid)
+draw.text <- function(just, i, j) {
+  grid.points(x[j], y[i], gp = gpar(fill = "grey50"), pch = 20, size = unit(0.5, "char"))
+  abcd <- textGrob(
+    "ABCD", 
+    x = x[j], y = y[i], 
+    just = just, 
+    gp = gpar(fontsize = 16, colour = "black")
+  )
+  
+  grid.draw(abcd)
+  grid.text(
+    deparse(substitute(just)), 
+    x = grobX(abcd, "north"), y = grobY(abcd, "north") + unit(0.5, "lines"), just = c(0.5, 0),
+    gp = gpar(col = "grey30", fontsize = 8, fontface = "bold")
+  )
+}
+
+grid.newpage()
+grid.rect(gp= gpar(fill="grey93", col=NA))
+pos <- c(0.2, 0.5, 0.8)
+x <- unit(pos, "npc")
+y <- unit(pos, "npc")
+grid.grill(h=y, v=x, gp=gpar(col="white"))
+draw.text(c(0,   0), 1, 1)
+draw.text(c(0.5, 0), 2, 1)
+draw.text(c(1,   0), 3, 1)
+
+draw.text(c(0,   0.5), 1, 2)
+draw.text(c(0.5, 0.5), 2, 2)
+draw.text(c(1,   0.5), 3, 2)
+
+draw.text(c(0,   1), 1, 3)
+draw.text(c(0.5, 1), 2, 3)
+draw.text(c(1,   1), 3, 3)
+```
+
+*   Horizontal and verticle alignment: `hjust` ("bottom", "middle", "top", 
+    "inward", "outward") and `vjust` ("left", "center", "right", "inward", 
+    "outward")
+
+*   `size` in mm. Normally fonts are measured in pt. There are 2.83 points per
+    milliment, so to convert from points to mm, just divide by 2.83.
+
+*   `family` = name of a font family. The only families guaranteed to work on
+    every device are "serif", "sans" and "mono". Font selection in R is a complex 
+    topic as is it peformed per graphic device so the fonts supported by the 
+    on screen display (`quartz()` on mac, `X11` on linux, and `windows()` on
+    windows), may be different to the fonts supported for pdf and png output.
+
+    There are two packages that simplify the quandary a bit. `showtext` makes 
+    graphics-device-indpendent plots by rendering all text as polygons.
+    `extrafont` takes an alternative approach, converting fonts to a standard
+    format that all devices can use. Both approaches have pros and cons, so
+    you may need to try them both out and see which works best for your needs.
+    
+*   `fontface` = "bold", "italic", or "plain" (the default).
+
+*   Often you want to label existing points on the plot. You don't want the
+    text to overlap with the points (or bars etc), so it's useful to offset
+    the text a little. The `nudge_x` and `nudge_y` parameters allow you to
+    nudge the text a little horizontally or vertically, without having to
+    modify the default aesthetics (and are certainly easier if you have
+    categorical axes.)
+
+### Limits
+
+Unfortunately text labels don't affect the limits of the plot. This is because they have absolute sizes (e.g. a label might be 3cm), regardless of the size of the plot. This means there's no way for ggplot2 to reliably figure out the correct size.
+
+### Overplotting
+
+
+
+### Direct labelling
+
+You can also directly label the data instead of relying on the legend. The directlabels package makes this particularly easy:
+
+```{r, eval = FALSE}
+library(directlabels)
+ggplot(mpg, aes(displ, hwy, colour = class)) + 
+  geom_point(show_guide = FALSE) +
+  geom_dl(aes(label = class), list("last.points", rot = 30), show_guide = FALSE) 
+
+ggplot(mpg, aes(displ, hwy, colour = class)) + 
+  geom_point(show_guide = FALSE) +
+  geom_dl(aes(label = class), "smart.grid", show_guide = FALSE)
+```
+
 
 ## Grouped data {#sec:grouping}
 
