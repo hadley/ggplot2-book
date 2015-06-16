@@ -293,12 +293,6 @@ ggplot(economics, aes(date, unemploy)) +
   However, pulling out just a few observations (using subset) can be very useful.
   Typically you will want to label outliers or other important points. \index{Labels}
 
-* `geom_vline()`, `geom_hline()`: add vertical or horizontal lines to a plot. 
-   \indexf{geom_vline} \indexf{geom_hline}
-
-* `geom_abline()`: add lines with arbitrary slope and intercept to a plot. 
-  \indexf{geom_abline}
-
 * `geom_rect()` for highlighting interesting rectangular regions of the plot.
   `geom_rect()` has aesthetics `xmin`, `xmax`, `ymin` and `ymax`. \indexf{geom_rect}
 
@@ -307,6 +301,42 @@ ggplot(economics, aes(date, unemploy)) +
   on the line.  You create arrowheads with the `arrow()` function, which has 
   arguments `angle`, `length`, `ends` and `type`. \indexf{geom_line}
 
+### Reference lines
+
+(These are sometimes called rules)
+ 
+* `geom_vline()`, `geom_hline()`: add vertical or horizontal lines to a plot. 
+   \indexf{geom_vline} \indexf{geom_hline}
+
+* `geom_abline()`: add lines with arbitrary slope and intercept to a plot. 
+  \indexf{geom_abline}
+
+```{r}
+ggplot(mpg, aes(cty, hwy)) +
+  geom_point() +
+  geom_abline()
+```
+
+There are two ways to show a reference line without obscuring the data:
+
+* Using `alpha` so you can still see it in the background
+
+* Put it underneath the data. With the default background, a thick white
+  line makes a useful reference. It's easy to see but it doesn't jump out at
+  you.
+
+`r columns(1, 4 / 1, 1)`
+```{r}
+ggplot(diamonds, aes(log10(carat), log10(price))) + 
+  geom_bin2d() + 
+  facet_wrap(~ cut, nrow = 1)
+
+coef(lm(log10(price) ~ log10(carat), data = diamonds))
+ggplot(diamonds, aes(log10(carat), log10(price))) + 
+  geom_bin2d() + 
+  geom_abline(intercept = 3.66, slope = 1.67, colour = "white", alpha = 0.5, size = 1) + 
+  facet_wrap(~ cut, nrow = 1)
+```
 
 ## Saving your output {#sec:saving}
 
