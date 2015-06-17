@@ -1,30 +1,33 @@
 ---
-title: scales
-output: bookdown::html_chapter
 bibliography: references.bib
 ---
 
 ```{r scales-chap, echo=FALSE}
-library("ggplot2")
+source("common.R")
+columns(1, 2 / 3)
 ```
 
 # Scales, axes and legends {#cha:scales}
 
 ## Introduction
 
-Scales control the mapping from data to aesthetics. They take your data and turn it into something that you can perceive visually: e.g., size, colour, position or shape. Scales also provide the tools you use to read the plot: the axes and legends (collectively known as guides). Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the range). The domain of each scale corresponds to the range of the variable supplied to the scale, and can be continuous or discrete, ordered or unordered. The range consists of the concrete aesthetics that you can perceive and that R can understand: position, colour, shape, size and line type. If you blinked when you read that scales map data both to position and colour, you are not alone. The notion that the same kind of object is used to map data to positions and symbols strikes some people as unintuitive. However, you will see the logic and power of this notion as you read further in the chapter.
+Scales control the mapping from data to aesthetics. They take your data and turn it into something that you can perceive visually, like size, colour, position or shape. Scales also provide the tools you use to read the plot: the axes and legends. 
+
+Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the scale). The domain of each scale corresponds to the range of the variable supplied to the scale, and can be continuous or discrete, ordered or unordered. The range consists of the concrete aesthetics that you can perceive and that R can understand: position, colour, shape, size and line type. 
+
+If you blinked when you read that scales map data both to position and colour, you are not alone. The notion that the same kind of object is used to map data to positions and symbols strikes some people as unintuitive. However, you will see the logic and power of this notion as you read further in the chapter.
 
 The process of scaling takes place in three steps, transformation, training and mapping, and is described in [how scales work](#sec:how-scales-work). Without a scale, there is no way to go from the data to aesthetics, so a scale is required for every aesthetic used on the plot. It would be tedious to manually add a scale every time you used a new aesthetic, so whenever a scale is needed ggplot will add a default. You can generate many plots without knowing how scales work, but understanding scales and learning how to manipulate them will give you much more control. Default scales and how to override them are described in [scale usage](#sec:scale-usage). 
 
-Scales can be roughly divided into four categories: position scales, colour scales, the manual discrete scale and the identity scale. The common options and most important uses are described in [scale details](#sec:scale-details). The section focusses on giving you a high-level overview of the options available, rather than expanding on every detail in depth.  Details about individual parameters are included in the online documentation.
+Scales can be roughly divided into four categories: position scales, colour scales, the manual scale and the identity scale. The common options and most important uses are described in [scale details](#sec:scale-details). The section focusses on giving you a high-level overview of the options available, rather than expanding on every detail in depth. Details about individual parameters are included in the online documentation.
 
-The other important role of each scale is to produce a **guide** that allows the viewer to perform the inverse mapping, from aesthetic space to data space, and read values off the plot. For position aesthetics, the axes are the guides; for all other aesthetics, legends do the job. Unlike other plotting systems, you have little direct control over the axis or legend: there is no `gglegend()` or `ggaxis()` to call to modify legends or axes.  Instead, all aspects of the guides are controlled by parameters of the scale. Axes and legends are discussed in [legends and axes](#sec:guides).
+The other important role of each scale is to produce a **guide** that allows the viewer to perform the inverse mapping, from aesthetic space to data space, and read values off the plot. For position aesthetics, the axes are the guides; for all other aesthetics, legends do the job. Most aspects of the guides are controlled by parameters of the scale, but you can also use the `guides()` function to modify guides without messing with the scales directly. You'll learn more about that in [legends and axes](#sec:guides).
 
-<!--
-% Add example showing an axis and legend(s?) for the same variable mapped to different aesthetics
--->
+SCALES PACKAGE
 
 [More resources](#sec:scale-resources) concludes the chapter with pointers to other academic work that discusses some of the things you need to keep in mind when assigning variables to aesthetics.
+
+## The mammals sleep dataset
 
 ## How scales work {#sec:how-scales-work}
 
@@ -36,50 +39,62 @@ The range can also be discrete or continuous. For discrete scales, it is a vecto
 
 The process of mapping the domain to the range includes the following stages:
 
-* __transformation__: (for continuous domain only). It is often useful to display a transformation of the data, such as a logarithm or square root. Transformations are described in more depth in [position scales](#sub:scale-position). \index{Scales!transformation}
+*   __transformation__: (for continuous domain only). It is often useful to 
+    display a transformation of the data, such as a logarithm or square root.
+    Transformations are described in more depth in 
+    [position scales](#sub:scale-position). \index{Scales!transformation}
 
-  After any transformations have been applied, the statistical summaries for each layer are computed based on the transformed data. This ensures that a plot of $\log(x)$ vs. $\log(y)$ on linear scales looks the same as $x$ vs. $y$ on log scales.
+    After any transformations have been applied, the statistical summaries for 
+    each layer are computed based on the transformed data. This ensures that a 
+    plot of $\log(x)$ vs. $\log(y)$ on linear scales looks the same as 
+    $x$ vs. $y$ on log scales.
 
-* __training__:  During this key stage, the domain of the scale is learned.  Sometimes learning the domain of a scale is extremely straightforward: In a plot with only one layer, representing only raw data, it consists of determining the minimum and maximum values of a continuous variable (after transformation), or listing the unique levels of a categorical variable.  However, often the domain must reflect multiple layers across multiple datasets in multiple panels.  For example, imagine a scale that will be used to create an axis; the minimum and maximum values of the raw data in the first layer and the statistical summary in the second layer are likely to be different, but they must all eventually be drawn on the same plot. \index{Scales!training}
+*   __training__:  During this key stage, the domain of the scale is learned from
+    the data. Sometimes learning the domain of a scale is extremely 
+    straightforward: In a plot with only one layer, representing only raw data, 
+    it consists of determining the minimum and maximum values of a continuous 
+    variable (after transformation), or listing the unique levels of a 
+    categorical variable.  However, often the domain must reflect multiple layers 
+    across multiple datasets in multiple panels.  For example, imagine a scale 
+    that will be used to create an axis; the minimum and maximum values of the 
+    raw data in the first layer and the statistical summary in the second 
+    layer are likely to be different, but they must all eventually be drawn on 
+    the same plot. \index{Scales!training}
+ 
+    The domain can also be specified directly, overriding the training process, 
+    by manually setting the domain of the scale with the `limits` argument, 
+    as described in [scale usage](#sec:scale-usage).  Any values outside of the
+    domain of the scale will be mapped to `NA`.
 
-  The domain can also be specified directly, overriding the training process, by manually setting the domain of the scale with the `limits` argument, as described in [scale usage](#sec:scale-usage).  Any values outside of the domain of the scale will be mapped to `NA`.
-
-* __mapping__:  We now know the domain and we already knew the range before we started this process, so the last thing to do is to apply the scaling function that maps data values to aesthetic values.  \index{Scales!mapping}
+*   __mapping__:  We now know the domain and we already knew the range before 
+    we started this process, so the last thing to do is to apply the scaling 
+    function that maps data values to aesthetic values.  \index{Scales!mapping}
 
 We have left a few stages out of this description of the process for simplicity.  For example, we haven't discussed the role faceting plays in training, and we have also ignored position adjustments.  Nevertheless this description is accurate, and you should come back to it if you are confused about what scales are doing in your plot.
 
 ## Usage {#sec:scale-usage}
 
-<!--
-% No more set_default_scale! Would the new equivalent be theme_set? http://docs.ggplot2.org/0.9.3/theme_update.html
--->
-
 Every aesthetic has a default scale that is added to the plot whenever you use that aesthetic. These are listed in Table \ref{tbl:default-scales}. The scale depends on the variable type: continuous (numeric) or discrete (factor, logical, character). If you do not want a default scale, you can overwrite it, as described in [scales](#sub:customise-scales).
+
+Every aesthetic can use an identity or manaul scale.
+
+* Colour and file
+  * Discrete: brewer, grey, hue
+  * Continuous: distiller, **gradient**, gradient2, gradientn
+* Positition:
+  * Discrete: **discrete**
+  * Continuous: **continuous**, log10, sqrt
+* Shape (only discrete): __shape__
+* Line type (only discrete): __linetype__
+* Size (only continuous): __size__, radius
 
 To add a different scale or to modify some features of the default scale, you must construct a new scale and then add it to the plot using `+`. \indexc{+} All scale constructors have a common naming scheme.  They start with `scale_`, followed by the name of the aesthetic (e.g., `colour_`, `shape_` or `x_`), and finally by the name of the scale (e.g., `gradient`, `hue` or `manual`). For example, the name of the default scale for the colour aesthetic based on discrete data is `scale_colour_hue()`, and the name of the Brewer colour scale for fill colour is `scale_fill_brewer()`. \index{Scales!adding}
 
-\begin{table}
-  \begin{center}
-  \begin{tabular}{p{1in}p{1in}p{1in}}
-    \toprule
-    Aesthetic & Discrete & Continuous \\
-    \midrule
-    Colour and fill & brewer \newline grey \newline \textbf{hue} \newline identity \newline manual & \textbf{gradient} \newline gradient2 \newline gradientn \\[0.5em]
-    Position (x, y) & \textbf{discrete} & \textbf{continuous}\newline date \\[0.5em]
-    Shape & \textbf{shape} \newline identity \newline manual  \\[0.5em]
-    Line type & \textbf{linetype} \newline identity \newline manual \\[0.5em]
-    Size & identity \newline manual & \textbf{size} \\
-    \bottomrule
-  \end{tabular}
-  \end{center}
-  \caption{Scales, by aesthetic and variable type.  Default scales are emboldened. The default scale varies depending on whether the variable is continuous or discrete.  Shape and line type do not have a default continuous scale; size does not have a default discrete scale.}
-  \label{tbl:default-scales}
-\end{table}
+The following code illustrates this process.  We start with a plot that uses the default colour scale, modify it to adjust the appearance of the legend, and then use a different colour scale:
 
-The following code illustrates this process.  We start with a plot that uses the default colour scale, modify it to adjust the appearance of the legend, and then use a different colour scale.  The results are shown in Figure \ref{fig:scale-adjust}.
-
-```{r scale-adjust, fig.width=4, out.width="0.49\\linewidth", fig.cap="Adjusting the default parameters of a scale. (Top left) The plot with default scale. (Top right) Adding the default scale by hand doesn't change the appearance of the plot. (Bottom left) Adjusting the parameters of the scale to tweak the legend. (Bottom right) Using a different colour scale: Set1 from the ColorBrewer colours."}
-p <- qplot(sleep_total, sleep_cycle, data = msleep, colour = vore)
+```{r scale-adjust}
+p <- ggplot(msleep, aes(sleep_total, sleep_cycle)) + 
+  geom_point(aes(colour = vore))
 p 
 # Explicitly add the default scale
 p + scale_colour_hue()
@@ -94,78 +109,135 @@ p + scale_colour_hue("What does\nit eat?",
 p + scale_colour_brewer(palette = "Set1")
 ```
 
-<!--
-% As well as referring to scales explicitly by name, you can also refer to the default scales by their type:  `discrete` or `continuous`.  For example, the default discrete colour scale (hue) can be referred to as `scale_colour_discrete`.  
-% 
-% Having to specify the type of variable (continuous or discrete) seems like extra work: why can't ggplot2 figure that out by itself?  Well, it can't because you can create the scales independently of (and before) the plot.  Allows you to create scales independently of the plot. 
--->
-
 ## Scale details {#sec:scale-details}
 
 Scales can be divided roughly into four separate groups:
 
-* Position scales, used to map continuous, discrete and date-time variables onto the plotting region and to construct the corresponding axes.
-* Colour scales, used to map continuous and discrete variables to colours.
-* Manual scales, used to map discrete variables to your choice of symbol size, line type, shape or colour, and to create the corresponding legend.
-* The identity scale, used to plot variable values directly to the aesthetic rather than mapping them.  For example, if the variable you want to map to symbol colour is itself a vector of colours, you want to render those values directly rather than mapping them to some other colours.
+* Position scales, used to map continuous, discrete and date-time variables 
+  onto the plotting region and to construct the corresponding axes.
 
-This section describes each group in more detail.  Precise details about individual scales can be found in the documentation, within R (e.g., `?scale_fill_discrete`), or online at  <http://docs.ggplot2.org/>.
+* Colour scales, used to map continuous and discrete variables to colours.
+
+* Manual scales, used to map discrete variables to your choice of symbol size, 
+  line type, shape or colour, and to create the corresponding legend.
+
+* The identity scale, used to plot variable values directly to the aesthetic 
+  rather than mapping them.  For example, if the variable you want to map to 
+  symbol colour is itself a vector of colours, you want to render those values 
+  directly rather than mapping them to some other colours.
+
+This section describes each group in more detail. Precise details about individual scales can be found in the documentation, e.g., `?scale_fill_discrete`.
 
 ### Common arguments {#sub:scale-arguments}
 
 The following arguments are common to all scales.
 
-* `name`:  sets the label which will appear on the axis or legend. You can supply text strings (using `\n` for line breaks) or mathematical expressions (as described by `?plotmath`).  Because tweaking these labels is such a common task, there are three helper functions to save you some typing: `xlab`, `ylab` and `labs`.  Their use is demonstrated in the code below and results are shown in Figure \ref{fig:legend-names}. \index{Axis!labels} \index{Legend!title} \index{Scales!names}
+*   `name`:  sets the label which will appear on the axis or legend. You can 
+    supply text strings (using `\n` for line breaks) or mathematical expressions 
+    (as described by `?plotmath`).  \index{Axis!labels} \index{Legend!title} 
+    \index{Scales!names}
+    
+    ```{r legend-names}
+    p <- ggplot(mpg, aes(cty, hwy, colour = displ)) + geom_point()
+    p
+    p + scale_x_continuous("City mpg")
+    ```
+    
+    Because tweaking these labels is such a common task, there are three 
+    helper functions to save you some typing: `xlab`, `ylab` and `labs`:
+    
+    ```{r legend-names}
+    p + xlab("City mpg") + ylab("Highway mpg")
+    p + labs(x = "City mpg", y = "Highway", colour = "Displacement")
+    p + xlab(expression(frac(miles, gallon)))
+    ```
 
-```{r legend-names, out.width="0.32\\linewidth", fig.cap="A demonstration of the different forms legend title can take."}
-p <- qplot(cty, hwy, data = mpg, colour = displ)
-p
-p + scale_x_continuous("City mpg")
-p + xlab("City mpg")
-p + ylab("Highway mpg")
-p + labs(x = "City mpg", y = "Highway", colour = "Displacement")
-p + xlab(expression(frac(miles, gallon)))
-```
+*   `limits`: fixes the domain of the scale. Continuous scales take a numeric 
+    vector of length two; discrete scales take a character vector. If limits are 
+    set, no training of the data will be performed. See 
+    [position scales](#sub:scale-position) for shortcuts. \index{Axis!limits}
+    \index{Scales!limits}
+    
+    Limits are useful for removing data you don't want displayed in a plot 
+    (i.e., setting limits that are smaller than the full range of data), and 
+    for ensuring that limits are consistent across multiple plots intended to be 
+    compared (i.e., setting limits that are larger than some of the default 
+    ranges).  
 
-* `limits`: fixes the domain of the scale.   Continuous scales take a numeric vector of length two; discrete scales take a character vector. If limits are set, no training of the data will be performed.  See [position scales](#sub:scale-position) for shortcuts. \index{Axis!limits} \index{Scales!limits}
-  
-  Limits are useful for removing data you don't want displayed in a plot (i.e., setting limits that are smaller than the full range of data), and for ensuring that limits are consistent across multiple plots intended to be compared (i.e., setting limits that are larger or smaller than some of the default ranges).  
-  
-  Any value not in the domain of the scale is discarded: for an observation to be included in the plot, each aesthetic must be in the domain of each scale.  This discarding occurs before statistics are calculated. 
-  
-* `breaks` and `labels`: `breaks` controls which values appear on the axis or legend, i.e., what values tick marks should appear on an axis or how a continuous scale is segmented in a legend. `labels` specifies the labels that should appear at the breakpoints. If `labels` is set, you must also specify `breaks`, so that the two can be matched up correctly. \index{Axis!breaks} \index{Axis!labels} \index{Legend!keys}
+*   `breaks` and `labels`: `breaks` controls which values appear on the axis or 
+    legend, i.e., what values tick marks should appear on an axis or how a 
+    continuous scale is segmented in a legend. `labels` specifies the labels 
+    that should appear at the breakpoints. If `labels` is set, you must also 
+    specify `breaks`, so that the two can be matched up correctly. 
+    \index{Axis!breaks} \index{Axis!labels} \index{Legend!keys}
+    
+    `breaks` and `labels` can be NULL, character vector, function...
 
-  To distinguish breaks from limits, remember that breaks affect what appears on the axes and legends, while limits affect what appears on the plot.  See Figure \ref{fig:breaks_vs_limits} for an illustration.  The first column uses the default settings for both breaks and limits, which are `limits = c(4, 8)` and `breaks = 4:8`.  In the middle column, the breaks have been reset: the plotted region is the same, but the tick positions and labels have shifted.  In the right column, it is the limits which have been redefined, so much of the data now falls outside the plotting region. 
-  
-```{r breaks_vs_limits, out.width="0.32\\linewidth", fig.cap="The difference between breaks and limits. (Left) default plot with \\texttt{limits = c(4, 8), breaks = 4:8}, (middle) \\texttt{breaks = c(5.5,6.5)} and (right) \\texttt{limits = c(5.5 ,6.5)}. The effect on the x axis (top) and colour legend (bottom)"}
-p <- qplot(cyl, wt, data = mtcars)
-p
-p + scale_x_continuous(breaks = c(5.5, 6.5))
-p + scale_x_continuous(limits = c(5.5, 6.5))
-p <- qplot(wt, cyl, data = mtcars, colour = cyl)
-p
-p + scale_colour_gradient(breaks = c(5.5, 6.5))
-p + scale_colour_gradient(limits = c(5.5, 6.5))
-```
+    To distinguish breaks from limits, remember that breaks affect what appears 
+    on the axes and legends, while limits affect what appears on the plot.
+    
+    `r columns(3, 2/3)`
+    ```{r breaks_vs_limits}
+    df <- data.frame(x = 1:5)
+    p <- ggplot(df, aes(x, 1)) + 
+      geom_point(size = 5) + 
+      labs(x = NULL, y = NULL)
+    
+    p
+    p + scale_x_continuous(breaks = c(2, 4))
+    p + scale_x_continuous(limits = c(2, 4))
+    ```
 
-* __formatter__: if no labels are specified the formatter will be called on each break to produce the label.  Useful formatters for continuous scales are `comma`, `percent`, `dollar` and `scientific`, and for discrete scales is `abbreviate`. \index{Axis!formatting}
+*  `minor_breaks`
+
+* `guide`
+
+*   `na.value`: where possible, ggplot2 tries to keep missing values in the 
+    plot, so they don't go silently missing. This means that many scales try
+    to pick a useful default for missing values.
+  
+    ```{r}
+    df <- data.frame(x = 1:5)
+    p <- ggplot(df, aes(x, 1)) + geom_point(aes(colour = x), size = 10)
+    p
+    p + scale_colour_gradient(limits = c(2, 4))
+    p + scale_colour_gradient(limits = c(2, 4), na.value = NA)
+    ```
+
+### Continuous scales
+
+*   `oob`: By default, any value not in the domain of the scale is
+    replaced with a missing value. You can override with the `oob` 
+    (out of bounds) argument to the scale. The default is `scales::censor()` 
+    which replaces any value outside the limits with `NA`. Alternatively, you 
+    could use `scales::squish()` which squishes all values into the range.
+  
+    ```{r}
+    df <- data.frame(x = 1:5)
+    p <- ggplot(df, aes(x, 1)) + geom_tile(aes(fill = x), colour = "white")
+    p
+    p + scale_fill_gradient(limits = c(2, 4))
+    p + scale_fill_gradient(limits = c(2, 4), oob = scales::squish)
+    ```
 
 ### Position scales {#sub:scale-position}
 
-Every plot must have two position scales, one for the horizontal position (the x scale) and one for the vertical position (the y scale). `ggplot` comes with continuous, discrete (for factor, character and logical vectors) and date scales. Each of these transform the data in a slightly different way, and generate a slightly different type of axis. The following sections describe each type in more detail. \index{Scales!position} \index{Positioning!scales}
+Every plot must have two position scales, one for the horizontal position (the x scale) and one for the vertical position (the y scale). ggplot1 comes with continuous, discrete (for factor, character and logical vectors) and date scales. Each of these transform the data in a slightly different way, and generate a slightly different type of axis. The following sections describe each type in more detail. \index{Scales!position} \index{Positioning!scales}
 
-A common task for all position axes is changing the axis limits.  Because this is such a common task, `ggplot` provides a couple of helper functions to save you some typing: `xlim` and `ylim`.  These functions inspect their input and then create the appropriate scale, as follows: \index{Axis!limits} \index{Scales!limits} \indexf{xlim}  \indexf{ylim} \index{Limits|see{Axis, limits}}
+A common task for all position axes is changing the axis limits. Because this is such a common task, ggplot2 provides a couple of helper functions to save you some typing: `xlim()`, `ylim()` and `limits()`. These functions inspect their input and then create the appropriate scale, as follows: \index{Axis!limits} \index{Scales!limits} \indexf{xlim}  \indexf{ylim} \index{Limits|see{Axis, limits}}
 
 * `xlim(10, 20)`: a continuous scale from 10 to 20
 * `ylim(20, 10)`: a reversed continuous scale from 20 to 10
 * `xlim("a", "b", "c")`: a discrete scale
 * `xlim(as.Date(c("2008-05-01", "2008-08-01")))`: a date scale from May 1 to August 1 2008.
 
-These limits do not work in the same way as `xlim` and `ylim` in base or lattice graphics.  In `ggplot`, to be consistent with the other scales, any data outside the limits is not plotted and not included in the statistical transformation.  This means that setting the limits is not the same as visually zooming in to a region of the plot.  To do that, you need to use the `xlim` and `ylim` arguments to `coord_cartesian()`, described in [cartesian coordinate systems](#sub:cartesian).  This performs purely visual zooming and does not affect the underlying data. \index{Zooming}
+There are three ways to control what data is shown on the plot. Each works slightly differently
 
-<!--
- % Position scales also have the __expand__ argument, which controls the amount of extra space added to axis limits.  This is a numeric vector of length two: the first number is a multiplicative amount and the second is an additive constant.  The default for continuous scales is {\tt c(0.05, 0)} (i.e.,\ add 5\% extra space on each end); for discrete scales it is {\tt c(0, 0.75)}).  Set to {\tt c(0, 0)} to eliminate extra space.
- -->
+* Subset the data.
+* Set the limits in the scale.
+* Set the limits in coordinate system.
+
+These limits do not work in the same way as `xlim` and `ylim` in base or lattice graphics.  In ggplot2, to be consistent with the other scales, any data outside the limits is converted to missing values. This means that setting the limits is not the same as visually zooming in to a region of the plot.  To do that, you need to use the `xlim` and `ylim` arguments to `coord_cartesian()`, described in [cartesian coordinate systems](#sub:cartesian).  This performs purely visual zooming and does not affect the underlying data. \index{Zooming}
 
 By default, the limits of position scales extend a little past the range of the data. This ensures that the data does not overlap the axes. You can control the amount of expansion with the `expand` argument. This parameter should be a numeric vector of length two. The first element gives the multiplicative expansion, and the second the additive expansion.  If you don't want any extra space, use `expand = c(0, 0)`. \index{Axis!expansion}
 
@@ -173,95 +245,92 @@ By default, the limits of position scales extend a little past the range of the 
 
 The most common continuous position scales are `scale_x_continuous()` and `scale_y_continuous()`, which map data to the x and y axis. \index{Scales!position!continuous} The most interesting variations are produced using transformations.  Every continuous scale takes a `trans` argument, allowing the specification of a variety of transformations, both linear and non-linear.  The transformation is carried out by a 'transformer,' which describes the transformation, its inverse, and how to draw the labels. Table \ref{tbl:common-trans} lists some of the more common transformers. \index{Transformation!scales} \indexf{scale_x_continuous} \indexf{scale_y_continuous} \index{Scales!continuous}
 
-\begin{table}
-  \centering
-  \begin{tabular}{lll}
-    \toprule
-    Name & Function $f(x)$ & Inverse $f^{-1}(y)$ \\
-    \midrule
-    asn       & $\tanh^{-1}(x)$ & $\tanh(y)$ \\
-    exp       & $e ^ x$         & $\log(y)$  \\
-    identity  & $x$             & $y$        \\
-    log       & $\log(x)$       & $e ^ y$    \\
-    log10     & $\log_{10}(x)$  & $10 ^ y$   \\
-    log2      & $\log_2(x)$     & $2 ^ y$    \\
-    logit     & $\log(\frac{x}{1 - x})$ & $\frac{1}{1 + e(y)} $ \\
-    pow10     & $10^x$          & $\log_{10}(y) $ \\
-    probit    & $\Phi(x)$       & $\Phi^{-1}(y)$ \\
-    recip     & $x^{-1}$        & $y^{-1}$ \\
-    reverse   & $-x$            & $-y$     \\
-    sqrt      & $x^{1/2}$       & $y ^ 2$  \\
-    % power     & $\frac{x^p - 1}{p * sgn(values - 1)}$ & $|values| * p + 1 $ 
-    \bottomrule
-  \end{tabular}
-  \caption{List of built-in transformers.}
-  \label{tbl:common-trans}
-\end{table}
+---------- ------------------------- -----------------------
+Name       Function $f(x)$           Inverse $f^{-1}(y)$
+asn        $\tanh^{-1}(x)$           $\tanh(y)$
+exp        $e ^ x$                   $\log(y)$
+identity   $x$                       $y$
+log        $\log(x)$                 $e ^ y$
+log10      $\log_{10}(x)$            $10 ^ y$
+log2       $\log_2(x)$               $2 ^ y$
+logit      $\log(\frac{x}{1 - x})$   $\frac{1}{1 + e(y)} $
+pow10      $10^x$                    $\log_{10}(y) $
+probit     $\Phi(x)$                 $\Phi^{-1}(y)$
+recip      $x^{-1}$                  $y^{-1}$
+reverse    $-x$                      $-y$
+sqrt       $x^{1/2}$                 $y ^ 2$
+---------- ------------------------- -----------------------
 
 Transformations are most often used to modify position scales, so there are shortcuts for x, y and z scales: `scale_x_log10()` is equivalent to `scale_x_continuous(trans = "log10")`.  The `trans` argument works for any continuous scale, including the colour gradients described below, but the shortcuts only exist for position scales. \index{Log transform} \indexf{scale_x_log10} \indexf{scale_y_log10}
 
 Of course, you can also perform the transformation yourself. For example, instead of using `scale_x_log10()`, you could plot `log10(x)`. That produces an identical result inside the plotting region, but the axis and tick labels won't be the same. If you use a transformed scale, the axes will be labelled in the original data space. In both cases, the transformation occurs before the statistical summary. Figure \ref{fig:trans} illustrates this difference with the following code. \index{Transformation!data}
 
-```{r trans, dev='png', fig.cap="A scatterplot of diamond price vs. carat illustrating the difference between log transforming the scale (left) and log transforming the data (right).  The plots are identical, but the axis labels are different."}
-qplot(log10(carat), log10(price), data = diamonds)
-qplot(carat, price, data = diamonds) + 
-  scale_x_log10() + scale_y_log10()
+```{r trans}
+ggplot(msleep, aes(log10(brainwt), log10(bodywt))) + 
+  geom_point()
+  
+ggplot(msleep, aes(brainwt, bodywt)) + 
+  geom_point() + 
+  scale_x_log10() + 
+  scale_y_log10()
 ```
 
 Transformers are also used in `coord_trans()`, where the transformation occurs after the statistic has been calculated, and affects the shape of the graphical object drawn on the plot. `coord_trans()` is described in more detail in [cartesian coordinate systems](#sub:cartesian).
 
 #### Date and time {#ssub:scale-date}
 
-Dates and times are basically continuous values, but with special ways of labelling the axes. Currently, only dates of class `date` and times of class `POSIXct` are supported. If your dates are in a different format you will need to convert them with `as.Date()` or `as.POSIXct()`.  \index{Date} \index{Time} \index{Scales!date-time} \indexf{scale_x_datetime}
+Dates and date times are continuous values with special ways of labelling the axes. Your dates must be stored as `date` (for dates) and `POSIXct` (for date times). If your dates are in a different format you will need to convert them with `as.Date()` or `as.POSIXct()`. \index{Date} \index{Time} \index{Scales!date-time} \indexf{scale_x_datetime}
 
-There are three arguments that control the appearance and location of the ticks for date axes: `major`, `minor` and `format`. Generally, the scale does a pretty good job of choosing the defaults, but if you need to tweak them the details are as follows:
+Like all other scales, the `breaks`, `minor_breaks` and `labels` arguments control the appearance and location of the ticks. However, there are two special functions available for dates that generate useful breaks and labels:
 
-* The `major` and `minor` arguments specify the position of major and minor breaks in terms of date units, years, months, weeks, days, hours, minutes and seconds, and can be combined with a multiplier.  For example, `major = "2 weeks"` will place a major tick mark every two weeks.  If not specified, the date scale has some reasonable default for choosing them automatically.
-* The `format` argument specifies how the tick labels should be formatted. Table~\ref{tbl:dates} lists the special characters used to display components of a date.  For example, if you wanted to display dates of the form 14/10/1979, you would use the string `"%d/%m/%y"`. \index{Time series!date formatting}
+* `scales::date_breaks(width)`: specify the position of major and minor breaks 
+  in terms of date units, years, months, weeks, days, hours, minutes and 
+  seconds, and can be combined with a multiplier.  For example, 
+  `breaks = scales::date_breaks("2 weeks")` will place a major tick mark every 
+  two weeks.
 
-\begin{table}
-  \begin{center}
-  \begin{tabular}{ll}
-    \toprule
-    Code & Meaning \\
-    \midrule
-    \verb|%S| & second (00-59)\\
-    \verb|%M| & minute (00-59)\\
-    \verb|%l| & hour, in 12-hour clock (1-12)\\
-    \verb|%I| & hour, in 12-hour clock (01-12)\\
-    \verb|%H| & hour, in 24-hour clock (00-23)\\
-    \verb|%a| & day of the week, abbreviated (Mon-Sun)\\
-    \verb|%A| & day of the week, full (Monday-Sunday)\\
-    \verb|%e| & day of the month (1-31)\\
-    \verb|%d| & day of the month (01-31)\\
-    \verb|%m| & month, numeric (01-12)\\
-    \verb|%b| & month, abbreviated (Jan-Dec)\\
-    \verb|%B| & month, full (January-December)\\
-    \verb|%y| & year, without century (00-99)\\
-    \verb|%Y| & year, with century (0000-9999)\\
-    \bottomrule
+* `scales::date_labels(format)` to display components of a date. You 
+   can use the following special statements:
+   
+    -------------- ----------------------------------------
+    Code           Meaning
+    `%S`           second (00-59)
+    `%M`           minute (00-59)
+    `%l`           hour, in 12-hour clock (1-12)
+    `%I`           hour, in 12-hour clock (01-12)
+    `%H`           hour, in 24-hour clock (00-23)
+    `%a`           day of the week, abbreviated (Mon-Sun)
+    `%A`           day of the week, full (Monday-Sunday)
+    `%e`           day of the month (1-31)
+    `%d`           day of the month (01-31)
+    `%m`           month, numeric (01-12)
+    `%b`           month, abbreviated (Jan-Dec)
+    `%B`           month, full (January-December)
+    `%y`           year, without century (00-99)
+    `%Y`           year, with century (0000-9999)
+    -------------- ----------------------------------------
     
-  \end{tabular}
-  \end{center}
-  \caption{Common data formatting codes, adapted from the documentation of \texttt{strptime}.  Listed from shortest to longest duration.}
-  \label{tbl:dates}
-\end{table}
+    For example, if you wanted to display dates of the form 14/10/1979, you
+    would use the string `"%d/%m/%y"`. \index{Time series!date formatting}
 
 The code below generates the plots in Figure \ref{fig:date-scale}, illustrating some of these parameters.
 
-```{r date-scale, out.width="0.32\\linewidth", fig.cap="A time series of personal savings rate. (Left) The default appearance, (middle) breaks every 10 years, and (right) scale restricted to 2004, with YMD date format. Measurements are recorded at the end of each month."}
-plot <- qplot(date, psavert, data = economics, geom = "line") + 
+`r columns(3, 3/2)`
+```{r date-scale}
+plot <- ggplot(economics, aes(date, psavert)) +
+  geom_line() +
   ylab("Personal savings rate") +
   geom_hline(xintercept = 0, colour = "grey50")
+# Default breaks and labels
 plot
-library("scales") # to access breaks/formatting functions
 plot + scale_x_date(
-  labels = date_format("%Y"),
-  breaks = date_breaks("5 years")
+  labels = scales::date_format("%Y"),
+  breaks = scales::date_breaks("5 years")
 )
 plot + scale_x_date(
   limits = as.Date(c("2004-01-01", "2005-01-01")),
-  labels = date_format("%Y-%m-%d")
+  labels = scales::date_format("%Y-%m-%d"),
+  minor_breaks = scales::date_breaks("month")
 )
 ```
 
@@ -269,17 +338,16 @@ plot + scale_x_date(
 
 Discrete position scales map the unique values of their input to integers.  The order of the result can be controlled by the `breaks` argument, and levels can be dropped with the `limits` argument (or by using `xlim()` or `ylim()`).  Because it is often useful to place labels and other annotations on intermediate positions on the plot, discrete position scales also accept continuous values.  If you have not adjusted the breaks or limits, the numerical position of a factor level can be calculated with `as.numeric()`: the values are placed on integers starting at 1. \index{Scales!position!discrete} \indexf{scale_x_discrete} \indexf{scale_y_discrete} \index{Scales!discrete}
 
-<!--
-% TODO: think of a better example to put here
-%% FIGLISTING
-%% 
-%% japanese <- subset(mpg, manufacturer %in% 
-%%   c("toyota", "honda", "nissan", "subaru", "hyundai"))
-%% qplot(hwy, manufacturer, data = japanese) + 
-%%   geom_text(aes(y = as.numeric(factor(manufacturer)) - 0.1, label = model), 
-%%    size = 2, angle = -45, hjust = 0, stat = "unique")
-%% 
--->
+```{r}
+df <- data.frame(trt = c("a", "b", "c"), value = c(1, 3, 2))
+ggplot(df, aes(trt, value)) + 
+  geom_point() + 
+  geom_text(aes(as.numeric(trt) + 0.1, label = format(value)))
+
+ggplot(df, aes(trt, value)) + 
+  geom_point() + 
+  geom_text(aes(label = format(value)), position = position_nudge(x = 0.1))
+```
 
 ### Colour {#sub:scale-colour}
 
@@ -287,9 +355,14 @@ After position, probably the most commonly used aesthetic is colour. There are q
 
 At the physical level, colour is produced by a mixture of wavelengths of lights. To know a colour completely we need to know the complete mixture of wavelengths, but fortunately for us the human eye only has three different colour receptors, and so we can summarise any colour with just three numbers. You may be familiar with the rgb encoding of colour space, which defines a colour by the intensities of red, green and blue light needed to produce it. One problem with this space is that it is not perceptually uniform: the two colours that are one unit apart may look similar or very different depending on where they are in the colour space. This makes it difficult to create a mapping from a continuous variable to a set of colours.  There have been many attempts to come up with colours spaces that are more perceptually uniform.  We'll use a modern attempt called the hcl colour space, which has three components of **h** ue, **c** hroma and **l** uminance: \index{Colour!spaces}
 
-* Hue is a number between 0 and 360 (an angle) which gives the ``colour'' of the colour: like blue, red, orange, etc.
-* Luminance is the lightness of the colour.  A luminance of 0 produces black, and a luminance of 1 produces white.
-* Chroma is the purity of a colour.  A chroma of 0 is grey, and the maximum value of chroma varies with luminance.
+* Hue is a number between 0 and 360 (an angle) which gives the ``colour'' of 
+  the colour: like blue, red, orange, etc.
+
+* Luminance is the lightness of the colour.  A luminance of 0 produces black, 
+  and a luminance of 1 produces white.
+
+* Chroma is the purity of a colour.  A chroma of 0 is grey, and the maximum 
+  value of chroma varies with luminance.
 
 The combination of these three components does not produce a simple geometric shape.  Figure \ref{fig:hcl} attempts to show the 3d shape of the space.  Each slice is a constant luminance (brightness) with hue mapped to angle and chroma to radius.  You can see the centre of each slice is grey and the colours get more intense as they get closer to the edge.
 
@@ -303,19 +376,18 @@ The combination of these three components does not produce a simple geometric sh
 An additional complication is that many people (~10% of men) do not possess the normal complement of colour receptors and so can distinguish fewer colours than usual. \index{Colour!blindness} In brief, it's best to avoid red-green contrasts, and to check your plots with systems that simulate colour blindness. Visicheck is one online solution. Another alternative is the **dichromat** package [@dichromat] which provides tools for simulating colour blindness, and a set of colour schemes known to work well for colour-blind people. You can also help people with colour blindness in the same way that you can help people with black-and-white printers: by providing redundant mappings to other aesthetics like size, line type or shape.
 
 All of the scales discussed in the following sections work with border (`colour`) and fill (`fill`) colour aesthetics.
-<!--
-% \url{http://cran.r-project.org/web/packages/dichromat}
-% http://casoilresource.lawr.ucdavis.edu/drupal/node/201
-% http://colororacle.cartography.ch/
--->
 
 #### Continuous {#ssub:colour-continuous}
 
 There are three types of continuous colour gradients, based on the number of colours in the gradient: \index{Colour!gradients} \index{Scales!colour!gradient}
 
 * `scale_colour_gradient()` and `scale_fill_gradient()`: a two-colour gradient, low-high.  Arguments `low` and `high` control the colours at either end of the gradient. \indexf{scale_colour_gradient} \indexf{scale_fill_gradient}
+
 * `scale_colour_gradient2()` and `scale_fill_gradient2()`: a three-colour gradient, low-med-high.  As well as `low` and `high` colours, these scales also have a `mid` colour for the colour of the midpoint.  The midpoint defaults to 0, but can be set to any value with the `midpoint` argument.  This is particularly useful for creating diverging colour schemes.\indexf{scale_colour_gradient2} \indexf{scale_fill_gradient2}
+
 * `scale_colour_gradientn()` and `scale_fill_gradientn()`: a custom n-colour gradient.  This scale requires a vector of colours in the `colours` argument.  Without further arguments these colours will be evenly spaced along the range of the data.  If you want the values to be unequally spaced, use the `values` argument, which should be between 0 and 1 if `rescale` is true (the default), or within the range of the data is `rescale` is false.
+
+* `scale_colour_distiller()`
 
 Colour gradients are often used to show the height of a 2d surface.  In the following example we'll use the surface of a 2d density estimate of the `faithful` dataset [@azzalini:1990], which records the waiting time between eruptions and during each eruption for the Old Faithful geyser in Yellowstone Park. Figure \ref{fig:gradient} shows three gradients applied to this data, created with the following code.  Note the use of limits: this parameter is common to all scales.
 
@@ -334,9 +406,6 @@ erupt + scale_fill_gradient(limits = c(0, 0.04),
 erupt + scale_fill_gradient2(limits = c(-0.04, 0.04), 
   midpoint = mean(df$density)) 
 ```
-<!--
-% http://www.vendian.org/mncharity/dir3/blackbody/
--->
 
 To create your own custom gradient, use `scale_colour_gradientn()`. This is useful if you have colours that are meaningful for your data (e.g., black body colours or standard terrain colours), or you'd like to use a palette produced by another package. The following code and Figure \ref{fig:colorspace} shows palettes generated from routines in the **colorspace** package. [@zeileis:2008] describes the philosophy behind these palettes and provides a good introduction to some of the complexities of creating good colour scales. \index{Colour!palettes} \indexf{scale_colour_gradientn} \indexf{scale_fill_gradientn}
 
