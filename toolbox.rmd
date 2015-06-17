@@ -153,102 +153,120 @@ p + geom_polygon() + labs(title = "geom_polygon")
 
 ## Labels {#sec:grouping}
 
-\index{Labels} \indexf{geom_text}
+Adding text to a plot can be quite tricky. ggplot2 doesn't have all the answers, but provides some tools to make your life a little easier.  The main tool is `geom_text()`, which adds `label`s at the specified `x` and `y` positions. \index{Labels} \indexf{geom_text} `geom_text()` has the most aesthetics of any geom, because there are so many ways to control the appearance of a text:
 
-`geom_text()` adds labels at the specified points. It requires the `x`, `y` and `label` aesthetics.
-
-These combinations are illustrated below:
-
-`r columns(1, 2/3)`
-```{r, echo = FALSE}
-library(grid)
-draw.text <- function(just, i, j) {
-  grid.points(x[j], y[i], gp = gpar(fill = "grey50"), pch = 20, size = unit(0.5, "char"))
-  abcd <- textGrob(
-    "ABCD", 
-    x = x[j], y = y[i], 
-    just = just, 
-    gp = gpar(fontsize = 16, colour = "black")
-  )
-  
-  grid.draw(abcd)
-  grid.text(
-    deparse(substitute(just)), 
-    x = grobX(abcd, "north"), y = grobY(abcd, "north") + unit(0.5, "lines"), just = c(0.5, 0),
-    gp = gpar(col = "grey30", fontsize = 8, fontface = "bold")
-  )
-}
-
-grid.newpage()
-grid.rect(gp= gpar(fill="grey93", col=NA))
-pos <- c(0.2, 0.5, 0.8)
-x <- unit(pos, "npc")
-y <- unit(pos, "npc")
-grid.grill(h=y, v=x, gp=gpar(col="white"))
-draw.text(c(0,   0), 1, 1)
-draw.text(c(0.5, 0), 2, 1)
-draw.text(c(1,   0), 3, 1)
-
-draw.text(c(0,   0.5), 1, 2)
-draw.text(c(0.5, 0.5), 2, 2)
-draw.text(c(1,   0.5), 3, 2)
-
-draw.text(c(0,   1), 1, 3)
-draw.text(c(0.5, 1), 2, 3)
-draw.text(c(1,   1), 3, 3)
-```
-
-*   Horizontal and verticle alignment: `hjust` ("bottom", "middle", "top", 
-    "inward", "outward") and `vjust` ("left", "center", "right", "inward", 
-    "outward")
-
-*   `size` in mm. Normally fonts are measured in pt. There are 2.83 points per
-    milliment, so to convert from points to mm, just divide by 2.83.
-
-*   `family` = name of a font family. The only families guaranteed to work on
-    every device are "serif", "sans" and "mono". Font selection in R is a complex 
-    topic as is it peformed per graphic device so the fonts supported by the 
-    on screen display (`quartz()` on mac, `X11` on linux, and `windows()` on
-    windows), may be different to the fonts supported for pdf and png output.
-
-    There are two packages that simplify the quandary a bit. `showtext` makes 
-    graphics-device-indpendent plots by rendering all text as polygons.
-    `extrafont` takes an alternative approach, converting fonts to a standard
-    format that all devices can use. Both approaches have pros and cons, so
-    you may need to try them both out and see which works best for your needs.
+*   `family` gives the name of a font. There are only three fonts that
+    are guaranteed to work everywhere: "sans" (the default), "serif", or "mono":
     
-*   `fontface` = "bold", "italic", or "plain" (the default).
+    ```{r}
+    df <- data.frame(x = 1, y = 3:1, family = c("sans", "serif", "mono"))
+    ggplot(df, aes(x, y)) + 
+      geom_text(aes(label = family, family = family))
+    ```
+    
+    It's trickier to include a system font on a plot because text drawing is 
+    done differently by each graphics device (GD). There are five GDs in common 
+    use (`png()`, `pdf()`, on screen devices for Windows, Mac and Linux), so
+    to have a font work everywhere you need to configure five devices in five
+    different ways. Two packages simplify the quandary a bit: 
+    
+    * `showtext` makes GD-indpendent plots by rendering all text as polygons. 
+    * `extrafont` converts fonts to a standard format that all devices can use. 
+    
+    Both approaches have pros and cons, so you will to need to try both of 
+    them and see which works best for your needs.
+    
+*   `fontface` specifies the face: "plain" (the default), "bold" or "italic".
+
+    ```{r}
+    df <- data.frame(x = 1, y = 3:1, face = c("plain", "bold", "italic"))
+    ggplot(df, aes(x, y)) + 
+      geom_text(aes(label = face, fontface = face))
+    ```
+
+*   You can adjust the alignment of the text with the `hjust` ("left", "center", 
+    "right", "inward", "outward") and `vjust` ("bottom", "middle", "top", 
+    "inward", "outward") aesthetics. The default alignment is centered. One
+    of the most useful alignments is "inward": it aligns text towards the middle
+    of the plot:
+    
+    ```{r}
+    df <- data.frame(
+      x = c(1, 1, 2, 2, 1.5),
+      y = c(1, 2, 1, 2, 1.5),
+      text = c("bottom-left", "bottom-right", "top-left", "top-right", "center")
+    )
+    ggplot(df, aes(x, y)) +
+      geom_text(aes(label = text))
+    ggplot(df, aes(x, y)) +
+      geom_text(aes(label = text), vjust = "inward", hjust = "inward")
+    ```
+
+*   `size` controls the size of font. Unusually, it's measured in mm, rather
+    than the usual unit of points. This makes it consistent with other size
+    units in ggplot2. To convert from points to mm, just divide by 2.83.
+    
+*   `angle` specifies the rotation of the text in degrees.
+
+You can map data values to these aesthetics, but use restraint: it is hard to percieve the relationship between variables mapped to these aesthetics.
+
+`geom_text()` also has three parameters. Unlike the aesthetics, these only take single values so must be the same for all labels:
 
 *   Often you want to label existing points on the plot. You don't want the
     text to overlap with the points (or bars etc), so it's useful to offset
     the text a little. The `nudge_x` and `nudge_y` parameters allow you to
-    nudge the text a little horizontally or vertically, without having to
-    modify the default aesthetics (and are certainly easier if you have
-    categorical axes.)
+    nudge the text a little horizontally or vertically:
+    
+    ```{r}
+    df <- data.frame(trt = c("a", "b", "c"), resp = c(1.2, 3.4, 2.5))
+    ggplot(df, aes(resp, trt)) + 
+      geom_point() + 
+      geom_text(aes(label = paste0("(", resp, ")")), nudge_y = -0.05)
+    ```
 
-### Limits
+*   If `check_overlap = TRUE`, overlapping labels will be automatically 
+    removed. The algorithm is simple: labels are plotted in the order they 
+    appear in the data frame; if a label would overlap with an existing point, 
+    it's omitted
+    
+    ```{r}
+    ggplot(mpg, aes(displ, hwy)) + 
+      geom_text(aes(label = model))
+    ggplot(mpg, aes(displ, hwy)) + 
+      geom_text(aes(label = model), check_overlap = TRUE)
+    ```
 
-Unfortunately text labels don't affect the limits of the plot. This is because they have absolute sizes (e.g. a label might be 3cm), regardless of the size of the plot. This means there's no way for ggplot2 to reliably figure out the correct size.
+Labelling data well poses some challenges:
 
-### Overplotting
+*   Text does not affect the limits of the plot. Unfortunately there's no way
+    to make this work since a label has an absolute size (e.g. 3 cm), regardless
+    of the size of the plot. This means that the limits of a plot would need to
+    be different depending on the size of the plot - there's just no way to
+    make that happen with ggplot2. Instead, you'll need to tweak `xlim()` and
+    `ylim()` based on your data and plot size.
+    
+*   If you want to label many points, it is difficult to avoid overlaps. 
+    `check_overlap = TRUE` is useful, but offers little control over which
+    labels are removed. There are number of techniques available for base 
+    graphics, like `maptools::pointLabel()`, but they're not trivial to port 
+    to the grid graphics used by ggplot2. If all else fails, you may need to
+    manually label points in a drawing tool
 
-
-
-### Direct labelling
-
-You can also directly label the data instead of relying on the legend. The directlabels package makes this particularly easy:
+Labels can also be used as alternative to a legend. This generally makes the plot easier to read because it puts the lookup table closer to the data. The directlabels package provides a number of tools to make this easier:
 
 ```{r, eval = FALSE}
+ggplot(mpg, aes(displ, hwy, colour = class)) + 
+  geom_point()
+
 library(directlabels)
 ggplot(mpg, aes(displ, hwy, colour = class)) + 
   geom_point(show_guide = FALSE) +
-  geom_dl(aes(label = class), list("last.points", rot = 30), show_guide = FALSE) 
-
-ggplot(mpg, aes(displ, hwy, colour = class)) + 
-  geom_point(show_guide = FALSE) +
-  geom_dl(aes(label = class), "smart.grid", show_guide = FALSE)
+  geom_dl(aes(label = class), method = "smart.grid")
 ```
 
+Directlabels provides a number of position methods. `smart.grid` is a reasonable place to start for scatterplots, but there are other methods that are more useful for frequency polygons and line plots. See the directlabels website, <http://directlabels.r-forge.r-project.org>, for other techniques.
+
+See [annotations](#sec:annotating) for more details on how to add plot titles, and ways to add a single label (i.e. not mapped from data) to the plot.
 
 ## Grouped data {#sec:grouping}
 
