@@ -177,47 +177,6 @@ There is some duplication in this example because we have to specify the x and y
 % If you want to write your own, you need to copy this basic idea: take position arguments, and return a grid grob.  For example, let's say we'd like to give the strips a 3d appearance.  We can do this by drawing a rectangle, and then drawing highlights on the top-right and low-lights (shadows) on the bottom-left.
 -->
 
-## Customising scales and geoms {#sec:theme-scale-geom}
-
-When producing a consistent theme, you may also want to tune some of the scale and geom defaults.  Rather than having to manually specify the changes every time you add the scale or geom, you can use the following functions to alter the default settings for scales and geoms. 
-
-### Scales {#sub:customise-scales}
-
-To change the default scale associated with an aesthetic, you can override the default by assigning a custom function to the appropriate default function (See Table~\ref{tbl:default-scales} for the defaults). The following example sets up continuous colour and fill scales for black-and-white printing: \index{Scales!customising defaults} \indexf{set_default_scale}
-
-```{r eval=FALSE, echo=FALSE}
-scale_colour_gradient2 <- function(...) 
-  scale_colour_gradient2(..., low = "white", high = "black")
-scale_fill_gradient <- function(...)
-  scale_fill_gradient(..., low = "white", high = "black")
-```
-
-This example sets up discrete colour and fill scales to use ColorBrewer.
-
-```{r eval=FALSE, echo=FALSE}
-scale_colour_discrete <- function(...) 
-  scale_colour_brewer(..., palette = "Set1")
-scale_fill_discrete <- function(...) 
-  scale_fill_brewer(..., palette = "Set1")
-```
-
-### Geoms and stats {#sub:geoms-and-stats}
-
-You can customise geoms and stats in a similar way with `update_geom_defaults()` and `update_stat_defaults()`.  Unlike the other theme settings these will only affect plots *created* after the setting has been changed, not all plots drawn after the setting has been changed.  The following example demonstrates changing the default point colour and changing the default histogram to a density ('true') histogram.  \index{Geoms!customising defaults} \index{Scales!customising defaults} \indexf{update_geom_defaults}
-
-```{r defaults, eval=FALSE}
-update_geom_defaults("point", aes(colour = "darkblue"))
-qplot(mpg, wt, data = mtcars)
-update_stat_defaults("bin", aes(y = ..density..))
-qplot(rating, data = movies, geom = "histogram", binwidth = 1)
-```
-
-Table~\ref{tbl:geom-defaults} lists all of the common aesthetic defaults.  If you change the defaults for one geom, it's a good idea to change all the defaults for all the other geoms that you commonly use so that your plots look consistent.  If you are unsure on what makes for a valid colour, line type, shape or size, [Specifications](#cha:specifications) gives the details. \index{Aesthetics!defaults}
-<!--
-\input{tbls/geom-defaults}
--->
-
-
 ## Annotations {#sec:annotating}
 
 When annotating your plot with additional labels, the important thing to remember is that these annotations are just extra data. There are two basic ways to add annotations: one at a time, or many at once. \index{Annotation}
