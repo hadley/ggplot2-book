@@ -13,11 +13,13 @@ columns(1, 2 / 3)
 
 Scales control the mapping from data to aesthetics. They take your data and turn it into something that you can perceive visually, like size, colour, position or shape. Scales also provide the tools you use to read the plot: the axes and legends.
 
-Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the scale). The domain of each scale corresponds to the range of the variable supplied to the scale, and can be continuous or discrete, ordered or unordered. The range consists of the concrete aesthetics that you can perceive and that R can understand: position, colour, shape, size and line type. 
+Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the scale). The domain of each scale corresponds to the range of the variable supplied to the scale, and can be continuous or discrete, ordered or unordered. The range is the concrete aesthetics that you can perceive and that R can understand: position, colour, shape, size, line type, and so on. 
 
 If you blinked when you read that scales map data both to position and colour, you are not alone. The notion that the same kind of object is used to map data to positions and symbols strikes some people as unintuitive. However, you will see the logic and power of this notion as you read further in the chapter.
 
-The process of scaling takes place in three steps, transformation, training and mapping, and is described in [how scales work](#sec:how-scales-work). Without a scale, there is no way to go from the data to aesthetics, so a scale is required for every aesthetic used on the plot. It would be tedious to manually add a scale every time you used a new aesthetic, so whenever a scale is needed ggplot will add a default. You can generate many plots without knowing how scales work, but understanding scales and learning how to manipulate them will give you much more control. Default scales and how to override them are described in [scale usage](#sec:scale-usage). 
+The process of scaling takes place in three steps, transformation, training and mapping, and is described in [how scales work](#sec:how-scales-work). 
+
+You can generate many plots without knowing how scales work, but understanding scales and learning how to manipulate them will give you much more control. Default scales and how to override them are described in [scale usage](#sec:scale-usage). 
 
 Scales can be roughly divided into four categories: position scales, colour scales, the manual scale and the identity scale. The common options and most important uses are described in [scale details](#sec:scale-details). The section focusses on giving you a high-level overview of the options available, rather than expanding on every detail in depth. Details about individual parameters are included in the online documentation.
 
@@ -28,6 +30,8 @@ SCALES PACKAGE
 [More resources](#sec:scale-resources) concludes the chapter with pointers to other academic work that discusses some of the things you need to keep in mind when assigning variables to aesthetics.
 
 ## The mammals sleep dataset
+
+In this chapter, many examples will use data from the mammals sleep dataset, `msleep`.
 
 ## How scales work {#sec:how-scales-work}
 
@@ -74,7 +78,33 @@ We have left a few stages out of this description of the process for simplicity.
 
 ## Usage {#sec:scale-usage}
 
-Every aesthetic has a default scale that is added to the plot whenever you use that aesthetic. 
+Without a scale, there is no way to go from the data to aesthetics, so a scale is required for every aesthetic used on the plot. It would be tedious to manually add a scale every time you used a new aesthetic, so ggplot2 automatically adds a default for you. This means that the following two plot specifications are equivalent: \indexc{+} 
+
+`r columns(2, 2/3)`
+```{r scale-adjust, eval = FALSE}
+ggplot(msleep, aes(sleep_total, sleep_cycle)) + 
+  geom_point(aes(colour = vore))
+
+ggplot(msleep, aes(sleep_total, sleep_cycle)) + 
+  geom_point(aes(colour = vore)) + 
+  scale_x_continuous() + 
+  scale_y_continuous() + 
+  scale_color_hue()
+```
+
+This structure should look pretty familiar by now: you add scales in the same way you add geoms, stats or faceting. Note that the use of `+` is a little misleading here. It's not really adding, but overriding. The attributes of any previous scales (apart from the name) are overridden.
+
+Scale functions have a common naming scheme:
+
+1. `scale`
+1. `_`
+1. The name of the aesthetic (e.g., `colour`, `shape` or `x`)
+1. `_`
+1. The name of the scale (e.g., `gradient`, `hue` or `manual`). 
+
+For example, the name of the default scale for the colour aesthetic based on discrete data is `scale_colour_hue()`, and the name of the Brewer colour scale for fill colour is `scale_fill_brewer()`. \index{Scales!adding}
+
+Every aesthetic has four scales: continuous, default, identity and manual.
 
 * Colour and file
   * Discrete: brewer, grey, hue
@@ -86,44 +116,11 @@ Every aesthetic has a default scale that is added to the plot whenever you use t
 * Line type (only discrete): __linetype__
 * Size (only continuous): __size__, radius
 
-Every aesthetic can use an identity or manaul scale.
+To adjust the properties of a scale, you add a scale function with the parameters you want to modify, as you'll see in the following sections.
 
-To add a different scale or to modify some features of the default scale, you must construct a new scale and then add it to the plot using `+`. \indexc{+} All scale constructors have a common naming scheme.  They start with `scale_`, followed by the name of the aesthetic (e.g., `colour_`, `shape_` or `x_`), and finally by the name of the scale (e.g., `gradient`, `hue` or `manual`). For example, the name of the default scale for the colour aesthetic based on discrete data is `scale_colour_hue()`, and the name of the Brewer colour scale for fill colour is `scale_fill_brewer()`. \index{Scales!adding}
+## Gudes: legends and axes {#sec:guides}
 
-`+` is a little misleading here. It's not really adding, but overriding. The attributes of any previous scales are completely ignored.
-
-The following code illustrates this process.  We start with a plot that uses the default colour scale, modify it to adjust the appearance of the legend, and then use a different colour scale:
-
-`r columns(2, 2/3)`
-```{r scale-adjust}
-p <- ggplot(msleep, aes(sleep_total, sleep_cycle)) + 
-  geom_point(aes(colour = vore))
-p 
-# Explicitly add the default scale
-p + scale_colour_hue()
-
-# Adjust parameters of the default, here changing the appearance 
-# of the legend
-p + scale_colour_hue("What does\nit eat?", 
-   breaks = c("herbi", "carni", "omni", NA), 
-   labels = c("plants", "meat", "both", "don't know"))
-
-# Use a different scale
-p + scale_colour_brewer(palette = "Set1")
-```
-
-## Legends and axes {#sec:guides}
-
-Collectively, axes and legends are called **guides**, and they are the inverse of the scale: they allow you to read observations from the plot and map them back to their original values. Figure \ref{fig:labelled-guides} labels the guides and their components. 
-
-| Scale          | Axis              | Legend
-|----------------|-------------------|---------------              
-| `name`         | Label             | Title
-| `breaks`       | Ticks & grid line | Key         
-| `labels`       | Tick label        | Key label
-| `minor_breaks` | Minor grid line   |          
-
-There are natural equivalents between the legend and the axis: the legend title and axis label are equivalent and determined by the scale name; the legend keys and tick labels are both determined by the scale breaks. \index{Guides}
+The component of a scale that you're most likely to want to modify is its __guide__. Guides, axes and legends, are the inverse of the scale: they allow you to read observations from the plot and map them back to their original values. 
 
 \begin{figure}[htbp]
   \centering
@@ -132,60 +129,42 @@ There are natural equivalents between the legend and the axis: the legend title 
   \label{fig:labelled-guides}
 \end{figure}
 
-In ggplot2, legends and axes are produced automatically based on the scales and geoms that you used in the plot. This is different than how legends work in most other plotting systems, where you are responsible for adding them. In ggplot2, there is little you can do to directly control the legend. \index{Legend} This seems like a big restriction at first, but as you get more comfortable with this approach, you will discover that it saves you a lot of time, and there is little you cannot do with it.
+There are natural equivalents between the legend and the axis: the legend title and axis label are equivalent and determined by the scale name; the legend keys and tick labels are both determined by the scale breaks. \index{Guides}
 
-To draw the legend, the plot must collect information about how each aesthetic is used: for what data and what geoms. The scale breaks are used to determine the values of the legend keys and a list of the geoms that use the aesthetic  is used to determine how to draw the keys. For example, if you use the point geom, then you will get points in the legend; if you use the lines geom, you will get lines. If both point and line geoms are used, then both points and lines will be drawn in the legend.  This is illustrated in Figure \ref{fig:legend-geom}.
+| Scale          | Axis              | Legend
+|----------------|-------------------|---------------              
+| `name`         | Label             | Title
+| `breaks`       | Ticks & grid line | Key         
+| `labels`       | Tick label        | Key label
+| `minor_breaks` | Minor grid line   |          
 
-`r columns(1, 1/4, 1)`
-```{r legend-geom, echo = FALSE}
-p <- ggplot(diamonds[1:100, ], aes(price, carat, colour = cut))
-draw_legends(
-  p + geom_point(),
-  p + geom_line(), 
-  p + geom_point() + geom_line(), 
-  p + geom_bar(aes(fill = cut, y = ..count..), binwidth = 100)
-)
+In ggplot2, legends and axes are produced automatically based on the scales and geoms that you used in the plot. This is different than how legends work in most other plotting systems, where you are responsible for adding them. In ggplot2, there is little you can do to directly control the legend. \index{Legend} This seems like a big restriction at first, but as you get more comfortable with this approach, you will discover that it saves you time, and there is little you cannot do with it.
+
+### Scale title
+
+The first argument, `name`, is the name of the scale, the label that will appear on the axis or legend. You can supply text strings (using `\n` for line breaks) or mathematical expressions (as described by `?plotmath`).  \index{Axis!labels} \index{Legend!title}  \index{Scales!names}
+    
+`r columns(2, 2/3)`
+```{r legend-names}
+p <- ggplot(mpg, aes(cty, hwy)) + geom_point()
+p + scale_x_continuous("City mpg")
+p + scale_x_continuous(quote(frac(miles, gallon)))
 ```
 
-`ggplot` tries to use the smallest possible number of legends that accurately conveys the aesthetics used in the plot.  It does this by combining legends if a variable is used with more than one aesthetic.  Figure \ref{fig:legend-merge} shows an example of this for the points geom: if both colour and shape are mapped to the same variable, then only a single legend is necessary.  In order for legends to be merged, they must have the same name (the same legend title).  For this reason, if you change the name of one of the merged legends, you'll need to change it for all of them.
+Because tweaking these labels is such a common task, there are three 
+helper functions to save you some typing: `xlab()`, `ylab()` and `labs()`:
 
-```{r legend-merge, echo = FALSE}
-q <- ggplot(diamonds[1:100, ], aes(price, carat)) + geom_point() 
-draw_legends(
-  q + aes(colour = cut),
-  q + aes(shape = cut),
-  q + aes(shape = cut, colour = cut)
-)
+```{r legend-names-helper}
+p <- ggplot(mpg, aes(cty, hwy)) + geom_point()
+p + xlab("City mpg") + ylab("Highway mpg")
+p + labs(x = "City mpg", y = "Highway", colour = "Displacement")
 ```
-
-The contents of the legend and axes are controlled by the scale, and the details of the rendering are controlled by the theming system. The following list includes the most commonly tweaked settings.
-
-*   `name`:  sets the label which will appear on the axis or legend. You can 
-    supply text strings (using `\n` for line breaks) or mathematical expressions 
-    (as described by `?plotmath`).  \index{Axis!labels} \index{Legend!title} 
-    \index{Scales!names}
-    
-    `r columns(2, 2/3)`
-    ```{r legend-names}
-    p <- ggplot(mpg, aes(cty, hwy, colour = displ)) + geom_point()
-    p
-    p + scale_x_continuous("City mpg")
-    ```
-    
-    Because tweaking these labels is such a common task, there are three 
-    helper functions to save you some typing: `xlab`, `ylab` and `labs`:
-    
-    ```{r legend-names-helper}
-    p + xlab("City mpg") + ylab("Highway mpg")
-    p + labs(x = "City mpg", y = "Highway", colour = "Displacement")
-    p + xlab(expression(frac(miles, gallon)))
-    ```
 
 ### Breaks and labels
 
-`breaks` controls which values appear on the axis or legend, i.e., what values tick marks should appear on an axis or how a continuous scale is segmented in a legend.`labels` specifies the labels that should appear at the breakpoints. \index{Axis!breaks} \index{Axis!labels} \index{Legend!keys}
+The `breaks` argument controls which values appear as tick marks on axes and keys on legends. Each break has an associated label, which is the text that appears in the key or by the tick. Modify these with the `labels` argument. If you set `labels`, you should also set `breaks`: otherwise, if data changes, the breaks will no longer align with the labels. \index{Axis!breaks} \index{Axis!labels} \index{Legend!keys}
 
-`r columns(3, 2/3)`
+`r columns(3, 1)`
 ```{r breaks-labels}
 df <- data.frame(x = (1:5) * 1000, y = 1)
 p <- ggplot(df, aes(x, y)) + 
@@ -197,8 +176,6 @@ p + scale_x_continuous(breaks = c(2000, 4000))
 p + scale_x_continuous(breaks = c(2000, 4000), labels = c("2k", "4k"))
 ```
 
-It's a bad idea to set `labels` and not `breaks`: if the underlying data changes, the breaks will also change and the labels will not be in the correct position.
-    
 To suppress breaks (including grid lines), or label, set them to `NULL`:
 
 ```{r breaks-hide}
@@ -206,7 +183,7 @@ p + scale_x_continuous(breaks = NULL)
 p + scale_x_continuous(labels = NULL)
 ```
 
-Alternatively, you can supply a function to `breaks` or `labels`. The `breaks` function should accept a numeric vector of length two (the axis limits) and return a numeric vector of breaks. The `labels` function should accept a numeric vector of breaks and return a character of the same length. The scales package provides a number of useful labelling functions:
+Additionally, you can supply a function to `breaks` or `labels`. The `breaks` function should accept a numeric vector of length two (the axis limits) and return a numeric vector of breaks. The `labels` function should accept a numeric vector of breaks and return a character of the same length. The scales package provides a number of useful labelling functions:
 
 ```{r breaks-functions}
 p + scale_y_continuous(labels = scales::percent)
@@ -225,6 +202,50 @@ p + scale_x_continuous(labels = scales::comma)
 * `scales::math_format()`
 
 You can adjust the minor breaks (the faint grid lines that appear between the major grid lines) simiarly. By default minor grid lines are spaced evenly in the original data space: this gives the common behaviour of log-log plots where major grid lines are evenly spaced on the log scale, and minor grid lines are evenly spaced on the log scale.
+
+### Layers and guides
+
+To draw the legend, the plot must collect information about how each aesthetic is used: for what data and what geoms. The scale breaks are used to determine the values of the legend keys and a list of the geoms that use the aesthetic  is used to determine how to draw the keys. For example, if you use the point geom, then you will get points in the legend; if you use the lines geom, you will get lines. If both point and line geoms are used, then both points and lines will be drawn in the legend.  This is illustrated in Figure \ref{fig:legend-geom}.
+
+`r columns(1, 1/3, 1)`
+```{r legend-geom, echo = FALSE}
+p <- ggplot(msleep, aes(bodywt, brainwt, colour = vore))
+draw_legends(
+  p + geom_point(na.rm = TRUE),
+  p + geom_line(na.rm = TRUE), 
+  p + geom_point(na.rm = TRUE) + geom_line(na.rm = TRUE), 
+  p + geom_bar(aes(fill = vore, y = ..count..), binwidth = 100)
+)
+```
+
+You can override whether or not a layer appears in the legend with `show_guide` option. By default, it's set to `NA`: that means it will appear in the legend if the corresponding aethetic is mapped to a variable in the data. You can use `FALSE` to prevent it from ever appearing in the legend or `TRUE` to force it to appear when it otherwise wouldn't.
+
+`r columns(2, 2/3)`
+```{r}
+df <- data.frame(x = 1:3, y = 3:1, z = letters[1:3])
+ggplot(df, aes(x, y)) + 
+  geom_point(size = 6, colour = "grey20") +
+  geom_point(aes(colour = z), size = 3) 
+ggplot(df, aes(x, y)) + 
+  geom_point(size = 6, colour = "grey20", show_guide = TRUE) +
+  geom_point(aes(colour = z), size = 3) 
+```
+
+### Combining legends
+
+ggplot2 tries to use the smallest possible number of legends that accurately conveys the aesthetics used in the plot. It does this by combining legends if a variable is used with more than one aesthetic. Figure \ref{fig:legend-merge} shows an example of this for the points geom: if both colour and shape are mapped to the same variable, then only a single legend is necessary. 
+
+`r columns(1, 1/3, 1)`
+```{r legend-merge, echo = FALSE}
+q <- ggplot(msleep, aes(bodywt, brainwt)) + geom_point(na.rm = TRUE)
+draw_legends(
+  q + aes(colour = vore),
+  q + aes(shape = vore),
+  q + aes(shape = vore, colour = vore)
+)
+```
+
+In order for legends to be merged, they must have the same name (the same legend title). For this reason, if you change the name of one of the merged legends, you'll need to change it for all of them.
 
 ### Theme settings
 
