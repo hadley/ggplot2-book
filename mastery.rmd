@@ -192,28 +192,19 @@ The properties of a layer are described in [layers](#cha:layers) and their uses 
 
 ### Scales {#sub:scales}
 
-A **scale** controls the mapping from data to aesthetic attributes, and we need a scale for every aesthetic used on a plot.  Each scale operates across all the data in the plot, ensuring a consistent mapping from data to aesthetics.  Some scales are illustrated in Figure \ref{fig:scales}.
+A **scale** controls the mapping from data to aesthetic attributes, and we need a scale for every aesthetic used on a plot.  Each scale operates across all the data in the plot, ensuring a consistent mapping from data to aesthetics.  
+
+Examples of legends from four different scales. From left to right: continuous variable mapped to size, and to colour, discrete variable mapped to shape, and to colour. The ordering of scales seems upside-down, but this matches the labelling of the $y$-axis: small values occur at the bottom.
 
 ```{r src5, echo = FALSE}
-# http://stackoverflow.com/questions/12539348/ggplot-separate-legend-and-plot
-library(gridExtra)
-g_legend <- function(a.gplot) {
-  tmp <- ggplot_gtable(ggplot_build(a.gplot))
-  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-  legend <- tmp$grobs[[leg]]
-  legend
-}
 x <- 1:10
 y <- factor(letters[1:5])
-p1 <- qplot(x, x, size = x)
-p2 <- qplot(x, x, 1:10, colour = x)
-p3 <- qplot(y, y, 1:10, shape = y)
-p4 <- qplot(y, y, 1:10, colour = y)
-```
-
-```{r scales, echo = FALSE, fig.width = 4, fig.height = 2, out.width = "4in", fig.cap = "Examples of legends from four different scales. From left to right: continuous variable mapped to size, and to colour, discrete variable mapped to shape, and to colour. The ordering of scales seems upside-down, but this matches the labelling of the $y$-axis: small values occur at the bottom.", fig.align='center'}
-grid.arrange(g_legend(p1), g_legend(p2), 
-             g_legend(p3), g_legend(p4), nrow = 1)
+draw_legends(
+  qplot(x, x, size = x),
+  qplot(x, x, 1:10, colour = x),
+  qplot(y, y, 1:10, shape = y),
+  qplot(y, y, 1:10, colour = y)
+)
 ```
 
 A scale is a function, and its inverse, along with a set of parameters. For example, the colour gradient scale maps a segment of the real line to a path through a colour space. The parameters of the function define whether the path is linear or curved, which colour space to use (e.g., LUV or RGB), and the colours at the start and end.

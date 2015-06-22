@@ -2,7 +2,7 @@
 bibliography: references.bib
 ---
 
-```{r scales-chap, echo=FALSE}
+```{r scales-chap, include=FALSE}
 source("common.R")
 columns(1, 2 / 3)
 ```
@@ -94,6 +94,7 @@ To add a different scale or to modify some features of the default scale, you mu
 
 The following code illustrates this process.  We start with a plot that uses the default colour scale, modify it to adjust the appearance of the legend, and then use a different colour scale:
 
+`r columns(2, 2/3)`
 ```{r scale-adjust}
 p <- ggplot(msleep, aes(sleep_total, sleep_cycle)) + 
   geom_point(aes(colour = vore))
@@ -135,32 +136,26 @@ In ggplot2, legends and axes are produced automatically based on the scales and 
 
 To draw the legend, the plot must collect information about how each aesthetic is used: for what data and what geoms. The scale breaks are used to determine the values of the legend keys and a list of the geoms that use the aesthetic  is used to determine how to draw the keys. For example, if you use the point geom, then you will get points in the legend; if you use the lines geom, you will get lines. If both point and line geoms are used, then both points and lines will be drawn in the legend.  This is illustrated in Figure \ref{fig:legend-geom}.
 
-
-`r column(1, 4, 1)`
-```{r legend-geom}
-# http://stackoverflow.com/questions/12539348/ggplot-separate-legend-and-plot
-g_legend <- function(p) {
-  tmp <- ggplot_gtable(ggplot_build(p))
-  leg <- which(sapply(tmp$grobs, `[[`, "name") == "guide-box")
-  legend <- tmp$grobs[[leg]]
-  legend
-}
+`r columns(1, 1/4, 1)`
+```{r legend-geom, echo = FALSE}
 p <- ggplot(diamonds[1:100, ], aes(price, carat, colour = cut))
-p1 <- p + geom_point()
-p2 <- p + geom_line()
-p3 <- p + geom_point() + geom_line()
-p4 <- p + geom_bar(binwidth = 100) + aes(fill = cut, y = ..count..)
-gridExtra::grid.arrange(g_legend(p1), g_legend(p2), g_legend(p3), g_legend(p4), nrow = 1)
+draw_legends(
+  p + geom_point(),
+  p + geom_line(), 
+  p + geom_point() + geom_line(), 
+  p + geom_bar(aes(fill = cut, y = ..count..), binwidth = 100)
+)
 ```
 
 `ggplot` tries to use the smallest possible number of legends that accurately conveys the aesthetics used in the plot.  It does this by combining legends if a variable is used with more than one aesthetic.  Figure \ref{fig:legend-merge} shows an example of this for the points geom: if both colour and shape are mapped to the same variable, then only a single legend is necessary.  In order for legends to be merged, they must have the same name (the same legend title).  For this reason, if you change the name of one of the merged legends, you'll need to change it for all of them.
 
-```{r legend-merge, echo=FALSE, fig.width = 4, fig.height = 2, out.width = "3in", fig.cap="Colour legend, shape legend, colour + shape legend."}
+```{r legend-merge, echo = FALSE}
 q <- ggplot(diamonds[1:100, ], aes(price, carat)) + geom_point() 
-q1 <- q + aes(colour = cut)
-q2 <- q + aes(shape = cut)
-q3 <- q + aes(shape = cut, colour = cut)
-grid.arrange(g_legend(q1), g_legend(q2), g_legend(q3), nrow = 1)
+draw_legends(
+  q + aes(colour = cut),
+  q + aes(shape = cut),
+  q + aes(shape = cut, colour = cut)
+)
 ```
 
 The contents of the legend and axes are controlled by the scale, and the details of the rendering are controlled by the theming system. The following list includes the most commonly tweaked settings.
@@ -170,6 +165,7 @@ The contents of the legend and axes are controlled by the scale, and the details
     (as described by `?plotmath`).  \index{Axis!labels} \index{Legend!title} 
     \index{Scales!names}
     
+    `r columns(2, 2/3)`
     ```{r legend-names}
     p <- ggplot(mpg, aes(cty, hwy, colour = displ)) + geom_point()
     p
@@ -179,7 +175,7 @@ The contents of the legend and axes are controlled by the scale, and the details
     Because tweaking these labels is such a common task, there are three 
     helper functions to save you some typing: `xlab`, `ylab` and `labs`:
     
-    ```{r legend-names}
+    ```{r legend-names-helper}
     p + xlab("City mpg") + ylab("Highway mpg")
     p + labs(x = "City mpg", y = "Highway", colour = "Displacement")
     p + xlab(expression(frac(miles, gallon)))
@@ -190,22 +186,22 @@ The contents of the legend and axes are controlled by the scale, and the details
 `breaks` controls which values appear on the axis or legend, i.e., what values tick marks should appear on an axis or how a continuous scale is segmented in a legend.`labels` specifies the labels that should appear at the breakpoints. \index{Axis!breaks} \index{Axis!labels} \index{Legend!keys}
 
 `r columns(3, 2/3)`
-```{r breaks_vs_limits}
+```{r breaks-labels}
 df <- data.frame(x = (1:5) * 1000, y = 1)
 p <- ggplot(df, aes(x, y)) + 
   geom_point(size = 5) + 
   labs(x = NULL, y = NULL)
 
 p
-p + scale_x_continuous(breaks = c(2, 4))
-p + scale_x_continuous(breaks = c(2, 4), labels = c("two", "four"))
+p + scale_x_continuous(breaks = c(2000, 4000))
+p + scale_x_continuous(breaks = c(2000, 4000), labels = c("2k", "4k"))
 ```
 
 It's a bad idea to set `labels` and not `breaks`: if the underlying data changes, the breaks will also change and the labels will not be in the correct position.
     
 To suppress breaks (including grid lines), or label, set them to `NULL`:
 
-```{r breaks_vs_limits}
+```{r breaks-hide}
 p + scale_x_continuous(breaks = NULL)
 p + scale_x_continuous(labels = NULL)
 ```
@@ -300,7 +296,7 @@ ggplot(df, aes(x, y)) +
   geom_bar(aes(fill = z), stat = "identity", colour = "black") 
 
 ggplot(df, aes(x, y)) + 
-  geom_bar(aes(fill = z), stat = "identity", colour = "grey50") +
+  geom_bar(aes(fill = z), stat = "identity", colour = "black") +
   guides(fill = guide_legend(override.aes = list(colour = NA)))
 ```
 
@@ -474,12 +470,10 @@ Like all other scales, the `breaks`, `minor_breaks` and `labels` arguments contr
 
 The code below generates the plots in Figure \ref{fig:date-scale}, illustrating some of these parameters.
 
-`r columns(3, 3/2)`
+`r columns(2, 1 / 2)`
 ```{r date-scale}
-plot <- ggplot(economics, aes(date, psavert)) +
-  geom_line() +
-  ylab("Personal savings rate") +
-  geom_hline(xintercept = 0, colour = "grey50")
+plot <- ggplot(economics, aes(date, psavert)) + geom_line() +
+  labs(x = NULL, y = NULL)
 # Default breaks and labels
 plot
 plot + scale_x_date(
@@ -497,6 +491,7 @@ plot + scale_x_date(
 
 Discrete position scales map the unique values of their input to integers.  The order of the result can be controlled by the `breaks` argument, and levels can be dropped with the `limits` argument (or by using `xlim()` or `ylim()`).  Because it is often useful to place labels and other annotations on intermediate positions on the plot, discrete position scales also accept continuous values.  If you have not adjusted the breaks or limits, the numerical position of a factor level can be calculated with `as.numeric()`: the values are placed on integers starting at 1. \index{Scales!position!discrete} \indexf{scale_x_discrete} \indexf{scale_y_discrete} \index{Scales!discrete}
 
+`r columns(2, 2/3)`
 ```{r}
 df <- data.frame(trt = c("a", "b", "c"), value = c(1, 3, 2))
 ggplot(df, aes(trt, value)) + 
@@ -600,13 +595,19 @@ Not that one set of colours is not uniformly good: bright colours work well for 
 
 ```{r brewer-pal}
 df <- data.frame(x = 1:3 + runif(30), y = runif(30), z = c("a", "b", "c"))
-point <- ggplot(df, aes(x, y)) + geom_point(aes(colour = z)) 
+point <- ggplot(df, aes(x, y)) +
+  geom_point(aes(colour = z))  + 
+  theme(legend.position = "bottom") +
+  labs(x = NULL, y = NULL)
 point + scale_colour_brewer(palette = "Set1")
 point + scale_colour_brewer(palette = "Set2")  
 point + scale_colour_brewer(palette = "Pastel1")
 
 df <- data.frame(x = 1:3, y = 3:1, z = c("a", "b", "c"))
-area <- ggplot(df, aes(x, y)) + geom_bar(aes(fill = z), stat = "identity") 
+area <- ggplot(df, aes(x, y)) + 
+  geom_bar(aes(fill = z), stat = "identity") + 
+  theme(legend.position = "bottom") +
+  labs(x = NULL, y = NULL)
 area + scale_fill_brewer(palette = "Set1")
 area + scale_fill_brewer(palette = "Set2")
 area + scale_fill_brewer(palette = "Pastel1")
@@ -620,8 +621,8 @@ The discrete scales, `scale_linetype()`, `scale_shape()` and `scale_size_discret
 
 If you want to customise these scales, you need to create your own new scale with the manual scale: `scale_shape_manual()`, `scale_linetype_manual()`, `scale_colour_manual()`, etc. The manual scale has one important argument, `values`, where you specify the values that the scale should produce. If this vector is named, it will match the values of the output to the values of the input, otherwise it will match in order of the levels of the discrete variable. You will need some knowledge of the valid aesthetic values, which are described in [specifications](#cha:specifications). The following code demonstrates the use of `scale_manual`, with results shown in Figure \ref{fig:scale-manual} \indexf{scale_shape_manual} \indexf{scale_colour_manual} \indexf{scale_linetype_manual}
 
+`r columns(2, 2/3)`
 ```{r scale-manual}
-
 plot <- ggplot(msleep, aes(brainwt, bodywt)) + 
   scale_x_log10() + 
   scale_y_log10()
@@ -633,15 +634,11 @@ colours <- c(carni = "red", insecti = "orange", herbi = "green", omni = "blue")
 plot + 
   geom_point(aes(colour = vore)) + 
   scale_colour_manual(values = colours)
-
-plot + 
-  geom_point(aes(shape = vore)) + 
-  scale_shape_manual(values = c(1, 2, 6, 23))
 ```
 
 The following example shows a creative use of `scale_colour_manual()`, when you want to display multiple variables on the same plot, and show a useful legend. In most other plotting systems, you'd just colour the lines as below, and then add a legend that describes which colour corresponds to which variable.  That doesn't work in `ggplot` because it's the scales that are responsible for drawing legends, and the scale doesn't know how the lines should be labelled.
 
-`r column(1, 3/4, 0.75)`
+`r columns(1, 1/2, 0.6)`
 ```{r huron}
 huron <- data.frame(year = 1875:1972, level = LakeHuron)
 ggplot(huron, aes(year)) +

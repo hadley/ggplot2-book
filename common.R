@@ -30,3 +30,18 @@ columns <- function(n, aspect_ratio = 1, max_width = if (n == 1) 0.65 else 1) {
       paste0("style='max-width: ", round(width, 2), "in'")
   )
 }
+
+
+# Draw parts of plots -----------------------------------------------------
+
+draw_legends <- function(...) {
+  plots <- list(...)
+  gtables <- lapply(plots, function(x) ggplot_gtable(ggplot_build(x)))
+  guides <- lapply(gtables, gtable::gtable_filter, "guide-box")
+  
+  one <- Reduce(function(x, y) cbind(x, y, size = "first"), guides)
+  
+  grid::grid.newpage()
+  grid::grid.draw(one)
+}
+
