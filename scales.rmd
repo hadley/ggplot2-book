@@ -15,112 +15,35 @@ Scales control the mapping from data to aesthetics. They take your data and turn
 
 Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the scale). The domain of each scale corresponds to the range of the variable supplied to the scale, and can be continuous or discrete, ordered or unordered. The range is the concrete aesthetics that you can perceive and that R can understand: position, colour, shape, size, line type, and so on. 
 
-If you blinked when you read that scales map data both to position and colour, you are not alone. The notion that the same kind of object is used to map data to positions and symbols strikes some people as unintuitive. However, you will see the logic and power of this notion as you read further in the chapter.
-
-The process of scaling takes place in three steps, transformation, training and mapping, and is described in [how scales work](#sec:how-scales-work). 
-
 You can generate many plots without knowing how scales work, but understanding scales and learning how to manipulate them will give you much more control. Default scales and how to override them are described in [scale usage](#sec:scale-usage). 
 
 Scales can be roughly divided into four categories: position scales, colour scales, the manual scale and the identity scale. The common options and most important uses are described in [scale details](#sec:scale-details). The section focusses on giving you a high-level overview of the options available, rather than expanding on every detail in depth. Details about individual parameters are included in the online documentation.
 
 The other important role of each scale is to produce a **guide** that allows the viewer to perform the inverse mapping, from aesthetic space to data space, and read values off the plot. For position aesthetics, the axes are the guides; for all other aesthetics, legends do the job. Most aspects of the guides are controlled by parameters of the scale, but you can also use the `guides()` function to modify guides without messing with the scales directly. You'll learn more about that in [legends and axes](#sec:guides).
 
-SCALES PACKAGE
+The process of scaling takes place in three steps, transformation, training and mapping, and is described in [how scales work](#sec:how-scales-work). 
 
-[More resources](#sec:scale-resources) concludes the chapter with pointers to other academic work that discusses some of the things you need to keep in mind when assigning variables to aesthetics.
+## Default scales {#sec:scale-usage}
 
-## The mammals sleep dataset
+Without a scale, there is no way to go from the data to aesthetics, so a scale is required for every aesthetic used on the plot. Default scales are named according to the aesthetic and the variable type: `scale_y_continuous()`, `scale_colour_discrete()`, etc.
 
-In this chapter, many examples will use data from the mammals sleep dataset, `msleep`.
-
-## How scales work {#sec:how-scales-work}
-
-To describe how scales work, we will first describe the domain (the data space) and the range (the aesthetic space), and then outline the process by which one is mapped to the other.
-
-Since an input variable is either discrete or continuous, the domain is either a set of values (stored as a factor, character vector or logical vector) \indexf{Discrete variables} or an interval on the real line (stored as a numeric vector of length 2). For example, in the mammals sleep dataset (`msleep`), the domain of the discrete variable `vore` is \{carni, herbi, omni, insecti\}, and the domain of the continuous variable `bodywt` is $[0.005, 6654]$.  We often think of these as data ranges, but here we are focussing on their nature as input to the scale, i.e., as a domain of a function. \index{Data!msleep@\texttt{msleep}}
-
-The range can also be discrete or continuous. For discrete scales, it is a vector of aesthetic values corresponding to the input values. For continuous scales, it is a 1d path through some more complicated space. For example, a colour gradient interpolates linearly from one colour to another. The range is either specified by the user when the scale is created, or by the scale itself.
-
-The process of mapping the domain to the range includes the following stages:
-
-*   __transformation__: (for continuous domain only). It is often useful to 
-    display a transformation of the data, such as a logarithm or square root.
-    Transformations are described in more depth in 
-    [position scales](#sub:scale-position). \index{Scales!transformation}
-
-    After any transformations have been applied, the statistical summaries for 
-    each layer are computed based on the transformed data. This ensures that a 
-    plot of $\log(x)$ vs. $\log(y)$ on linear scales looks the same as 
-    $x$ vs. $y$ on log scales.
-
-*   __training__:  During this key stage, the domain of the scale is learned from
-    the data. Sometimes learning the domain of a scale is extremely 
-    straightforward: In a plot with only one layer, representing only raw data, 
-    it consists of determining the minimum and maximum values of a continuous 
-    variable (after transformation), or listing the unique levels of a 
-    categorical variable.  However, often the domain must reflect multiple layers 
-    across multiple datasets in multiple panels.  For example, imagine a scale 
-    that will be used to create an axis; the minimum and maximum values of the 
-    raw data in the first layer and the statistical summary in the second 
-    layer are likely to be different, but they must all eventually be drawn on 
-    the same plot. \index{Scales!training}
- 
-    The domain can also be specified directly, overriding the training process, 
-    by manually setting the domain of the scale with the `limits` argument, 
-    as described in [scale usage](#sec:scale-usage).  Any values outside of the
-    domain of the scale will be mapped to `NA`.
-
-*   __mapping__:  We now know the domain and we already knew the range before 
-    we started this process, so the last thing to do is to apply the scaling 
-    function that maps data values to aesthetic values.  \index{Scales!mapping}
-
-We have left a few stages out of this description of the process for simplicity.  For example, we haven't discussed the role faceting plays in training, and we have also ignored position adjustments.  Nevertheless this description is accurate, and you should come back to it if you are confused about what scales are doing in your plot.
-
-## Usage {#sec:scale-usage}
-
-Without a scale, there is no way to go from the data to aesthetics, so a scale is required for every aesthetic used on the plot. It would be tedious to manually add a scale every time you used a new aesthetic, so ggplot2 automatically adds a default for you. This means that the following two plot specifications are equivalent: \indexc{+} 
+It would be tedious to manually add a scale every time you used a new aesthetic, so ggplot2 automatically adds a default for you. This means that the following two plot specifications are equivalent: 
 
 `r columns(2, 2/3)`
-```{r scale-adjust, eval = FALSE}
-ggplot(msleep, aes(sleep_total, sleep_cycle)) + 
-  geom_point(aes(colour = vore))
+```{r default-scales, eval = FALSE}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point(aes(colour = class))
 
-ggplot(msleep, aes(sleep_total, sleep_cycle)) + 
-  geom_point(aes(colour = vore)) + 
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point(aes(colour = class)) +
   scale_x_continuous() + 
   scale_y_continuous() + 
-  scale_color_hue()
+  scale_colour_discrete()
 ```
-
-This structure should look pretty familiar by now: you add scales in the same way you add geoms, stats or faceting. Note that the use of `+` is a little misleading here. It's not really adding, but overriding. The attributes of any previous scales (apart from the name) are overridden.
-
-Scale functions have a common naming scheme:
-
-1. `scale`
-1. `_`
-1. The name of the aesthetic (e.g., `colour`, `shape` or `x`)
-1. `_`
-1. The name of the scale (e.g., `gradient`, `hue` or `manual`). 
-
-For example, the name of the default scale for the colour aesthetic based on discrete data is `scale_colour_hue()`, and the name of the Brewer colour scale for fill colour is `scale_fill_brewer()`. \index{Scales!adding}
-
-Every aesthetic has four scales: continuous, default, identity and manual.
-
-* Colour and file
-  * Discrete: brewer, grey, hue
-  * Continuous: distiller, **gradient**, gradient2, gradientn
-* Positition:
-  * Discrete: **discrete**
-  * Continuous: **continuous**, log10, sqrt
-* Shape (only discrete): __shape__
-* Line type (only discrete): __linetype__
-* Size (only continuous): __size__, radius
-
-To adjust the properties of a scale, you add a scale function with the parameters you want to modify, as you'll see in the following sections.
 
 ## Gudes: legends and axes {#sec:guides}
 
-The component of a scale that you're most likely to want to modify is its __guide__. Guides, axes and legends, are the inverse of the scale: they allow you to read observations from the plot and map them back to their original values. 
+The component of a scale that you're most likely to want to modify is the __guide__, the axis or legend associated with the scale. Guides allow you to read observations from the plot and map them back to their original values. 
 
 \begin{figure}[htbp]
   \centering
@@ -129,7 +52,7 @@ The component of a scale that you're most likely to want to modify is its __guid
   \label{fig:labelled-guides}
 \end{figure}
 
-There are natural equivalents between the legend and the axis: the legend title and axis label are equivalent and determined by the scale name; the legend keys and tick labels are both determined by the scale breaks. \index{Guides}
+There are natural equivalents between the legend and the axis: the legend title and axis label are equivalent and determined by the scale name; the legend keys and tick labels are both determined by the scale breaks. \index{Guides} \index{Legend}
 
 | Scale          | Axis              | Legend
 |----------------|-------------------|---------------              
@@ -138,31 +61,48 @@ There are natural equivalents between the legend and the axis: the legend title 
 | `labels`       | Tick label        | Key label
 | `minor_breaks` | Minor grid line   |          
 
-In ggplot2, legends and axes are produced automatically based on the scales and geoms that you used in the plot. This is different than how legends work in most other plotting systems, where you are responsible for adding them. In ggplot2, there is little you can do to directly control the legend. \index{Legend} This seems like a big restriction at first, but as you get more comfortable with this approach, you will discover that it saves you time, and there is little you cannot do with it.
+In ggplot2, legends and axes are produced automatically based on the scales and geoms that you used in the plot. This is different than how legends work in most other plotting systems, where you are responsible for adding them. In ggplot2, you don't corrently control the legend; instead you set up the data so that there's a clear mapping between data and aesthetics, and a legend is generated for you automatically.  This can be frustrating when you first start using ggplot2, but once you get the hang of it, you'll find that it saves you time, and there is little you cannot do. 
+
+If you blinked when you read that scales map data both to position and colour, you are not alone. The notion that the same kind of object is used to map data to positions and symbols strikes some people as unintuitive. However, you will see the logic and power of this notion as you read further in the chapter.
+
+The appearance of the axes and legends are controlled by arguments to the scale functions, as described below.
 
 ### Scale title
 
-The first argument, `name`, is the name of the scale, the label that will appear on the axis or legend. You can supply text strings (using `\n` for line breaks) or mathematical expressions (as described by `?plotmath`).  \index{Axis!labels} \index{Legend!title}  \index{Scales!names}
+The first argument to the scale function, `name`, is the name of the scale, the label that will appear on the axis or legend. You can supply text strings (using `\n` for line breaks) or mathematical expressions (as described by `?plotmath`):  \index{Axis!labels} \index{Legend!title}  \index{Scales!names}
     
-`r columns(2, 2/3)`
-```{r legend-names}
-p <- ggplot(mpg, aes(cty, hwy)) + geom_point()
-p + scale_x_continuous("City mpg")
-p + scale_x_continuous(quote(frac(miles, gallon)))
+`r columns(2, 1 / 2)`
+```{r guide-names}
+df <- data.frame(x = 1:2, y = 1, z = "a")
+p <- ggplot(df, aes(x, y)) + geom_point()
+p + scale_x_continuous("X axis")
+p + scale_x_continuous(quote(a + mathematical ^ expression))
 ```
 
 Because tweaking these labels is such a common task, there are three 
 helper functions to save you some typing: `xlab()`, `ylab()` and `labs()`:
 
-```{r legend-names-helper}
-p <- ggplot(mpg, aes(cty, hwy)) + geom_point()
-p + xlab("City mpg") + ylab("Highway mpg")
-p + labs(x = "City mpg", y = "Highway", colour = "Displacement")
+```{r guide-names-helper}
+p <- ggplot(df, aes(x, y)) + geom_point(aes(colour = z))
+p + 
+  xlab("X axis") + 
+  ylab("Y axis")
+p + labs(x = "X axis", y = "Y axis", colour = "Colour\nlegend")
+```
+
+There are two ways to remove the axis label. Setting it to `""` removes it, but still allocates space; `NULL` removes the label and its space. Look closely at the left and bottom borders of these plots. I've changed the plot background to grey to make it easier to see the difference.
+
+```{r guide-names-remove}
+p <- ggplot(df, aes(x, y)) + 
+  geom_point() + 
+  theme(plot.background = element_rect(fill = "grey90"))
+p + labs(x = "",  y = "")
+p + labs(x = NULL, y = NULL)
 ```
 
 ### Breaks and labels
 
-The `breaks` argument controls which values appear as tick marks on axes and keys on legends. Each break has an associated label, which is the text that appears in the key or by the tick. Modify these with the `labels` argument. If you set `labels`, you should also set `breaks`: otherwise, if data changes, the breaks will no longer align with the labels. \index{Axis!breaks} \index{Axis!labels} \index{Legend!keys}
+The `breaks` argument controls which values appear as tick marks on axes and keys on legends. Each break has an associated label, controlled by the `labels` argument. If you set `labels`, you must also set `breaks`: otherwise, if data changes, the breaks will no longer align with the labels. \index{Axis!breaks} \index{Axis!labels} \index{Legend!keys}
 
 `r columns(3, 1)`
 ```{r breaks-labels}
@@ -187,38 +127,57 @@ Additionally, you can supply a function to `breaks` or `labels`. The `breaks` fu
 
 ```{r breaks-functions}
 p + scale_y_continuous(labels = scales::percent)
-p + scale_y_continuous(labels = scales::dollar)
-p + scale_x_continuous(labels = scales::comma)
+p + scale_x_continuous(labels = scales::unit_format("k", 1/1000))
+p + scale_y_continuous(labels = scales::dollar_format("$"))
 ```
 
-* `scales::percent`
-* `scales::comma`
-* `scales::unit_format(unit, scale)`
-* `scales::dollar_format(prefix, suffix, negative_parens)`
-* `scales::wrap_format()`
-* `scales::format_format()`
-* `scales::parse_format()`
-* `scales::trans_format()`
-* `scales::math_format()`
+Other functions include:
 
-You can adjust the minor breaks (the faint grid lines that appear between the major grid lines) simiarly. By default minor grid lines are spaced evenly in the original data space: this gives the common behaviour of log-log plots where major grid lines are evenly spaced on the log scale, and minor grid lines are evenly spaced on the log scale.
+* `scales::comma()`: adds commas for large numbers.
+* `scales::unit_format(unit, scale)`: adds a unit suffix, optionally scaling.
+* `scales::dollar_format(prefix, suffix)`: 
+   displays currency values, rounding to 2 decimal places and adding prefix
+   or suffix.
+* `scales::wrap_format()`: wraps long labels into multiple lines.
+
+See the documentation of the scales package for more details.
+
+You can adjust the minor breaks (the faint grid lines that appear between the major grid lines) with the `minor_breaks` argument. By default minor grid lines are spaced evenly in the original data space: this gives the common behaviour of log-log plots where major grid lines are evenly spaced on the log scale, and minor grid lines are evenly spaced on the log scale.
+
+### "Adding" scales
+
+The use of `+` to "add" scales to a plot is a little misleading. When you `+` a scale, you're not actually adding it to the plot, but overriding the existing scale. This means that the following two specifications are equivalent: \indexc{+} 
+
+```{r multiple-scales, fig.show = "hide", message = TRUE}
+ggplot(df, aes(x, y)) + 
+  geom_point() + 
+  scale_x_continuous(breaks = 1:5) + 
+  scale_x_continuous(labels = 1:5)
+
+ggplot(df, aes(x, y)) + 
+  geom_point() + 
+  scale_x_continuous(labels = 1:5)
+```
+
+Note the message: if you see this in your own code, you need to reorganse the plot specification so you only add a single scale per aesthetic.
 
 ### Layers and guides
 
-To draw the legend, the plot must collect information about how each aesthetic is used: for what data and what geoms. The scale breaks are used to determine the values of the legend keys and a list of the geoms that use the aesthetic  is used to determine how to draw the keys. For example, if you use the point geom, then you will get points in the legend; if you use the lines geom, you will get lines. If both point and line geoms are used, then both points and lines will be drawn in the legend.  This is illustrated in Figure \ref{fig:legend-geom}.
+To draw the legend, the plot must collect information about how each aesthetic is used: for what data and what geoms. The scale breaks are used to determine the values of the legend keys and a list of the geoms that use the aesthetic  is used to determine how to draw the keys. For example, if you use the point geom, then you will get points in the legend; if you use the lines geom, you will get lines. If both point and line geoms are used, then both points and lines will be drawn in the legend:
 
 `r columns(1, 1/3, 1)`
 ```{r legend-geom, echo = FALSE}
-p <- ggplot(msleep, aes(bodywt, brainwt, colour = vore))
+df <- data.frame(x = 1:4, y = 1:4, z = letters[1:4])
+p <- ggplot(df, aes(x, y, colour = z, group = 1))
 draw_legends(
-  p + geom_point(na.rm = TRUE),
-  p + geom_line(na.rm = TRUE), 
-  p + geom_point(na.rm = TRUE) + geom_line(na.rm = TRUE), 
-  p + geom_bar(aes(fill = vore, y = ..count..), binwidth = 100)
+  p + geom_point(),
+  p + geom_line(), 
+  p + geom_point() + geom_line(), 
+  p + geom_bar(aes(fill = z), stat = "identity")
 )
 ```
 
-You can override whether or not a layer appears in the legend with `show_guide` option. By default, it's set to `NA`: that means it will appear in the legend if the corresponding aethetic is mapped to a variable in the data. You can use `FALSE` to prevent it from ever appearing in the legend or `TRUE` to force it to appear when it otherwise wouldn't.
+You can override whether or not a layer appears in the legend with `show_guide` argument to the layer. Its default value is `NA`: that means it will appear in the legend if the corresponding aethetic is mapped to a variable in the data. You can use `FALSE` to prevent it from ever appearing in the legend or `TRUE` to force it to appear when it otherwise wouldn't. Using `TRUE` can be useful if you've used the following trick to make points stand out:
 
 `r columns(2, 2/3)`
 ```{r}
@@ -233,19 +192,20 @@ ggplot(df, aes(x, y)) +
 
 ### Combining legends
 
-ggplot2 tries to use the smallest possible number of legends that accurately conveys the aesthetics used in the plot. It does this by combining legends if a variable is used with more than one aesthetic. Figure \ref{fig:legend-merge} shows an example of this for the points geom: if both colour and shape are mapped to the same variable, then only a single legend is necessary. 
+ggplot2 tries to use the smallest possible number of legends that accurately conveys the aesthetics used in the plot. It does this by combining legends if a variable is used with more than one aesthetic. The figure below shows how this works for points: if both colour and shape are mapped to the same variable, then only a single legend is necessary. 
 
 `r columns(1, 1/3, 1)`
 ```{r legend-merge, echo = FALSE}
-q <- ggplot(msleep, aes(bodywt, brainwt)) + geom_point(na.rm = TRUE)
+df <- data.frame(x = 1:3, y = 3:1, z = letters[1:3])
+p <- ggplot(df, aes(x, y)) + geom_point()
 draw_legends(
-  q + aes(colour = vore),
-  q + aes(shape = vore),
-  q + aes(shape = vore, colour = vore)
+  p + aes(colour = z),
+  p + aes(shape = z),
+  p + aes(shape = z, colour = z)
 )
 ```
 
-In order for legends to be merged, they must have the same name (the same legend title). For this reason, if you change the name of one of the merged legends, you'll need to change it for all of them.
+In order for legends to be merged, they must have the same `name`. For this reason, if you change the name of one of the merged legends, you'll need to change it for all of them.
 
 ### Theme settings
 
@@ -266,7 +226,7 @@ base + theme(legend.position = "none")
 base + theme(legend.position = c(0.15, 0.75))
 ```
 
-Other theme settings that control the how the legends are laid out include `legend.direction`, `legend.justification`, `legend.box`, `legend.box.just`, `legend.margin`. 
+Other theme settings that control the how the legends are laid out include `legend.direction`, `legend.justification`, `legend.box`, `legend.box.just`, `legend.margin`. You should be able to use these settings to arrange the legends in whatever way you need.
 
 Other theme settings adjust how individual elements of the guides are drawn:
 
@@ -280,10 +240,10 @@ Other theme settings adjust how individual elements of the guides are drawn:
 * `legend.key.size`
 * `legend.title`
 * `legend.text`
-* `panel.grid`, `panel.grid.major`, `panel.grid.minor` (and x and y variants)
+* `panel.grid`, `panel.grid.major`, `panel.grid.minor` (with `.x` and 
+  `.y` variants)
 
 You'll learn how to modify those in the theme section.
-
 
 ### The guide
 
@@ -377,7 +337,33 @@ on the axes and legends, while limits affect what appears on the plot.
 
 
 
-## Scale details {#sec:scale-details}
+## Other scales {#sec:scale-details}
+
+
+Scale functions have a common naming scheme:
+
+1. `scale`
+1. `_`
+1. The name of the aesthetic (e.g., `colour`, `shape` or `x`)
+1. `_`
+1. The name of the scale (e.g., `gradient`, `hue` or `manual`). 
+
+For example, the name of the default scale for the colour aesthetic based on discrete data is `scale_colour_hue()`, and the name of the Brewer colour scale for fill colour is `scale_fill_brewer()`. \index{Scales!adding}
+
+Every aesthetic has four scales: continuous, default, identity and manual.
+
+* Colour and file
+  * Discrete: brewer, grey, hue
+  * Continuous: distiller, **gradient**, gradient2, gradientn
+* Positition:
+  * Discrete: **discrete**
+  * Continuous: **continuous**, log10, sqrt
+* Shape (only discrete): __shape__
+* Line type (only discrete): __linetype__
+* Size (only continuous): __size__, radius
+
+To adjust the properties of a scale, you add a scale function with the parameters you want to modify, as you'll see in the following sections.
+
 
 Scales can be divided roughly into four separate groups:
 
@@ -703,3 +689,47 @@ ggplot(luv, aes(u, v)) +
   scale_color_identity() + 
   coord_equal()
 ```
+
+
+## How scales work {#sec:how-scales-work}
+
+To describe how scales work, we will first describe the domain (the data space) and the range (the aesthetic space), and then outline the process by which one is mapped to the other.
+
+Since an input variable is either discrete or continuous, the domain is either a set of values (stored as a factor, character vector or logical vector) \indexf{Discrete variables} or an interval on the real line (stored as a numeric vector of length 2). For example, in the mammals sleep dataset (`msleep`), the domain of the discrete variable `vore` is \{carni, herbi, omni, insecti\}, and the domain of the continuous variable `bodywt` is $[0.005, 6654]$.  We often think of these as data ranges, but here we are focussing on their nature as input to the scale, i.e., as a domain of a function. \index{Data!msleep@\texttt{msleep}}
+
+The range can also be discrete or continuous. For discrete scales, it is a vector of aesthetic values corresponding to the input values. For continuous scales, it is a 1d path through some more complicated space. For example, a colour gradient interpolates linearly from one colour to another. The range is either specified by the user when the scale is created, or by the scale itself.
+
+The process of mapping the domain to the range includes the following stages:
+
+*   __transformation__: (for continuous domain only). It is often useful to 
+    display a transformation of the data, such as a logarithm or square root.
+    Transformations are described in more depth in 
+    [position scales](#sub:scale-position). \index{Scales!transformation}
+
+    After any transformations have been applied, the statistical summaries for 
+    each layer are computed based on the transformed data. This ensures that a 
+    plot of $\log(x)$ vs. $\log(y)$ on linear scales looks the same as 
+    $x$ vs. $y$ on log scales.
+
+*   __training__:  During this key stage, the domain of the scale is learned
+    from the data. Sometimes learning the domain of a scale is extremely 
+    straightforward: In a plot with only one layer, representing only raw data, 
+    it consists of determining the minimum and maximum values of a continuous 
+    variable (after transformation), or listing the unique levels of a 
+    categorical variable.  However, often the domain must reflect multiple
+    layers across multiple datasets in multiple panels.  For example, imagine 
+    a scale that will be used to create an axis; the minimum and maximum 
+    values of the raw data in the first layer and the statistical summary in 
+    the second layer are likely to be different, but they must all eventually 
+    be drawn on the same plot. \index{Scales!training}
+ 
+    The domain can also be specified directly, overriding the training process, 
+    by manually setting the domain of the scale with the `limits` argument, 
+    as described in [scale usage](#sec:scale-usage).  Any values outside of the
+    domain of the scale will be mapped to `NA`.
+
+*   __mapping__:  We now know the domain and we already knew the range before 
+    we started this process, so the last thing to do is to apply the scaling 
+    function that maps data values to aesthetic values.  \index{Scales!mapping}
+
+We have left a few stages out of this description of the process for simplicity.  For example, we haven't discussed the role faceting plays in training, and we have also ignored position adjustments.  Nevertheless this description is accurate, and you should come back to it if you are confused about what scales are doing in your plot.
