@@ -41,6 +41,8 @@ ggplot(mpg, aes(displ, hwy)) +
   scale_colour_discrete()
 ```
 
+### Exercises
+
 ## Gudes: legends and axes {#sec:guides}
 
 The component of a scale that you're most likely to want to modify is the __guide__, the axis or legend associated with the scale. Guides allow you to read observations from the plot and map them back to their original values. 
@@ -281,46 +283,63 @@ ggplot(df, aes(x, y)) +
   guides(fill = guide_legend(override.aes = list(colour = NA)))
 ```
 
+### Exercises
+
 
 ## Limits 
 
-Zoom in. Or ensure consistent scales across multiple plots.
+The limits, or domain, of a scale are usually derived from the range of the data. However it can be to useful to manually specify limits to remove data you don't want displayed in a plot (i.e., setting limits that are smaller than the full range of data), or to ensure that limits are consistent across multiple plot of the same data  (i.e., setting limits that are larger than some of the default ranges).\index{Axis!limits} \index{Scales!limits}
 
-Limits don't just apply to position scales, but to all scales. This is particularly useful if you want colours to match up across multiple plots that don't all show the same information.
+It's most natural to think about the limits of position scales: they map directly to the data ranges of the axes. But limits also apply to scales that have legends instead of axes, like colour, size, and shape. This is particularly useful if you want colours to match up across multiple plots that don't all show the same information.
 
-`expand_limits()`
-`xlim()`, `ylim()`, `lims()`
-NA
 
-*   `limits`: fixes the domain of the scale. Continuous scales take a numeric 
-    vector of length two; discrete scales take a character vector. If limits are 
-    set, no training of the data will be performed. See 
-    [position scales](#sub:scale-position) for shortcuts. \index{Axis!limits}
-    \index{Scales!limits}
-    
-    Limits are useful for removing data you don't want displayed in a plot 
-    (i.e., setting limits that are smaller than the full range of data), and 
-    for ensuring that limits are consistent across multiple plots intended to be 
-    compared (i.e., setting limits that are larger than some of the default 
-    ranges).  
+A common task for all position axes is changing the axis limits. Because this is such a common task, ggplot2 provides a couple of helper functions to save you some typing: `xlim()`, `ylim()` and `limits()`. These functions inspect their input and then create the appropriate scale, as follows: \index{Axis!limits} \index{Scales!limits} \indexf{xlim}  \indexf{ylim} \index{Limits|see{Axis, limits}}
 
-*   `na.value`: where possible, ggplot2 tries to keep missing values in the 
-    plot, so they don't go silently missing. This means that many scales try
-    to pick a useful default for missing values.
+* `xlim(10, 20)`: a continuous scale from 10 to 20
+* `ylim(20, 10)`: a reversed continuous scale from 20 to 10
+* `xlim("a", "b", "c")`: a discrete scale
+* `xlim(as.Date(c("2008-05-01", "2008-08-01")))`: a date scale from May 1 to August 1 2008.
+
+There are three ways to control what data is shown on the plot. Each works slightly differently
+
+* Subset the data.
+* Set the limits in the scale.
+* Set the limits in coordinate system.
+
+These limits do not work in the same way as `xlim` and `ylim` in base or lattice graphics.  In ggplot2, to be consistent with the other scales, any data outside the limits is converted to missing values. This means that setting the limits is not the same as visually zooming in to a region of the plot.  To do that, you need to use the `xlim` and `ylim` arguments to `coord_cartesian()`, described in [cartesian coordinate systems](#sub:cartesian).  This performs purely visual zooming and does not affect the underlying data. \index{Zooming}
+
+The limits are controlled primarily via the `limits` argument:
+
+* For continuous scales, this should be a numeric vector of length two. 
+  If you only want to set the upper or lower limit, you can set the other value
+  to `NA`
   
-    ```{r}
-    df <- data.frame(x = 1:5)
-    p <- ggplot(df, aes(x, 1)) + geom_point(aes(colour = x), size = 10)
-    p
-    p + scale_colour_gradient(limits = c(2, 4))
-    p + scale_colour_gradient(limits = c(2, 4), na.value = NA)
+* For discrete scales, this is a character vector which enumerates all possible
+  values.
+  
+Like for labels, there are helpers that save typing for the most common use cases: `xlim()`, `ylim()` and `lims()`.
+
+A related function is `expand_limits()` it ensures that the data points in the call are always included (i.e. it only ever expands the limits, never decreases them).
+
+There are a handful of other arguments that affect the behaviour of `limits` in some way:
+
+*   `expand`: By default, the limits of position scales extend a little past 
+    the range of the data. This ensures that the data does not overlap the 
+    axes. You can control the amount of expansion with the `expand` argument. 
+    This parameter should be a numeric vector of length two. The first element 
+    gives the multiplicative expansion, and the second the additive expansion.  
+    If you don't want any extra space, use `expand = c(0, 0)`. 
+    \index{Axis!expansion}
+    
+    ```{r, eval = FALSE}
+    range + c(-1, 1) * (diff(range) * mul + add)
     ```
 
-*   `oob`: By default, any value not in the domain of the scale is
-    replaced with a missing value. You can override with the `oob` 
-    (out of bounds) argument to the scale. The default is `scales::censor()` 
-    which replaces any value outside the limits with `NA`. Alternatively, you 
-    could use `scales::squish()` which squishes all values into the range.
+*   `oob`: By default, any value not in the domain of the scale is replaced 
+    with a missing value. You can override with the `oob` (out of bounds) 
+    argument to the scale. The default is `scales::censor()` which replaces any
+    value outside the limits with `NA`. Another option is `scales::squish()` 
+    which squishes all values into the range:
   
     ```{r}
     df <- data.frame(x = 1:5)
@@ -330,12 +349,21 @@ NA
     p + scale_fill_gradient(limits = c(2, 4), oob = scales::squish)
     ```
 
-By default, the limits of position scales extend a little past the range of the data. This ensures that the data does not overlap the axes. You can control the amount of expansion with the `expand` argument. This parameter should be a numeric vector of length two. The first element gives the multiplicative expansion, and the second the additive expansion.  If you don't want any extra space, use `expand = c(0, 0)`. \index{Axis!expansion}
+*   `na.value`: by default, colour scales display `NA` values as grey: this
+    is often distinguishable from the other valeus on the scale. It's possible 
+    to override this (or set it for other scales), with `na.value()`.
+    
+    ```{r}
+    df <- data.frame(x = 1:5)
+    p <- ggplot(df, aes(x, 1)) + geom_point(aes(colour = x), size = 10)
+    p
+    p + scale_colour_gradient(limits = c(2, 4))
+    p + scale_colour_gradient(limits = c(2, 4), na.value = NA)
+    ```
 
-To distinguish breaks from limits, remember that breaks affect what appears 
-on the axes and legends, while limits affect what appears on the plot.
+### Exercises
 
-
+1.  How does `expand_limits()` work?  Read the source code.
 
 ## Other scales {#sec:scale-details}
 
@@ -382,30 +410,27 @@ Scales can be divided roughly into four separate groups:
 
 This section describes each group in more detail. Precise details about individual scales can be found in the documentation, e.g., `?scale_fill_discrete`.
 
-
-
 ### Position scales {#sub:scale-position}
 
-Every plot must have two position scales, one for the horizontal position (the x scale) and one for the vertical position (the y scale). ggplot1 comes with continuous, discrete (for factor, character and logical vectors) and date scales. Each of these transform the data in a slightly different way, and generate a slightly different type of axis. The following sections describe each type in more detail. \index{Scales!position} \index{Positioning!scales}
+Every plot must have two position scales, one for the horizontal position (the x scale) and one for the vertical position (the y scale). \index{Scales!position} \index{Positioning!scales} There are three types of position scales: 
 
-A common task for all position axes is changing the axis limits. Because this is such a common task, ggplot2 provides a couple of helper functions to save you some typing: `xlim()`, `ylim()` and `limits()`. These functions inspect their input and then create the appropriate scale, as follows: \index{Axis!limits} \index{Scales!limits} \indexf{xlim}  \indexf{ylim} \index{Limits|see{Axis, limits}}
+* continuous: for numeric (double) and integer variables.
 
-* `xlim(10, 20)`: a continuous scale from 10 to 20
-* `ylim(20, 10)`: a reversed continuous scale from 20 to 10
-* `xlim("a", "b", "c")`: a discrete scale
-* `xlim(as.Date(c("2008-05-01", "2008-08-01")))`: a date scale from May 1 to August 1 2008.
+* discrete: for factor, character and logical variables.
 
-There are three ways to control what data is shown on the plot. Each works slightly differently
+* date scales: for Date and POSIXct (datetime) variables.
 
-* Subset the data.
-* Set the limits in the scale.
-* Set the limits in coordinate system.
-
-These limits do not work in the same way as `xlim` and `ylim` in base or lattice graphics.  In ggplot2, to be consistent with the other scales, any data outside the limits is converted to missing values. This means that setting the limits is not the same as visually zooming in to a region of the plot.  To do that, you need to use the `xlim` and `ylim` arguments to `coord_cartesian()`, described in [cartesian coordinate systems](#sub:cartesian).  This performs purely visual zooming and does not affect the underlying data. \index{Zooming}
+The following sections describe each type in more detail. 
 
 #### Continuous {#ssub:scale-continuous}
 
-The most common continuous position scales are `scale_x_continuous()` and `scale_y_continuous()`, which map data to the x and y axis. \index{Scales!position!continuous} The most interesting variations are produced using transformations.  Every continuous scale takes a `trans` argument, allowing the specification of a variety of transformations, both linear and non-linear.  The transformation is carried out by a 'transformer,' which describes the transformation, its inverse, and how to draw the labels. Table \ref{tbl:common-trans} lists some of the more common transformers. \index{Transformation!scales} \indexf{scale_x_continuous} \indexf{scale_y_continuous} \index{Scales!continuous}
+The most common continuous position scales are `scale_x_continuous()` and `scale_y_continuous()`, which linearly map data to the x and y axis. \index{Scales!position!continuous} 
+
+The most interesting variations are produced using transformations. Every continuous scale takes a `trans` argument, allowing the specification of a variety of transformations, both linear and non-linear. 
+
+EXAMPLE
+
+The transformation is carried out by a "transformer", which describes the transformation, its inverse, and how to draw the labels. The following table lists the most common variants: \index{Transformation!scales} \indexf{scale_x_continuous} \indexf{scale_y_continuous} \index{Scales!continuous}
 
 ---------- ------------------------- -----------------------
 Name       Function $f(x)$           Inverse $f^{-1}(y)$
@@ -423,27 +448,29 @@ reverse    $-x$                      $-y$
 sqrt       $x^{1/2}$                 $y ^ 2$
 ---------- ------------------------- -----------------------
 
-Transformations are most often used to modify position scales, so there are shortcuts for x, y and z scales: `scale_x_log10()` is equivalent to `scale_x_continuous(trans = "log10")`.  The `trans` argument works for any continuous scale, including the colour gradients described below, but the shortcuts only exist for position scales. \index{Log transform} \indexf{scale_x_log10} \indexf{scale_y_log10}
+There are short cuts for the most common scales: `scale_x_log10()`, `scale_x_sqrt()` and `scale_x_reverse()` (and similarly for `y`.) \index{Log transform} \indexf{scale_x_log10} \indexf{scale_y_log10}
 
-Of course, you can also perform the transformation yourself. For example, instead of using `scale_x_log10()`, you could plot `log10(x)`. That produces an identical result inside the plotting region, but the axis and tick labels won't be the same. If you use a transformed scale, the axes will be labelled in the original data space. In both cases, the transformation occurs before the statistical summary. Figure \ref{fig:trans} illustrates this difference with the following code. \index{Transformation!data}
+Of course, you can also perform the transformation yourself. For example, instead of using `scale_x_log10()`, you could plot `log10(x)`. That produces an identical result inside the plotting region, but the axis and tick labels won't be the same. If you use a transformed scale, the axes will be labelled in the original data space. In both cases, the transformation occurs before the statistical summary.
 
 ```{r trans}
 ggplot(msleep, aes(log10(brainwt), log10(bodywt))) + 
-  geom_point()
+  geom_point() + 
+  geom_smooth()
   
 ggplot(msleep, aes(brainwt, bodywt)) + 
   geom_point() + 
+  geom_smooth() +
   scale_x_log10() + 
   scale_y_log10()
 ```
 
-Transformers are also used in `coord_trans()`, where the transformation occurs after the statistic has been calculated, and affects the shape of the graphical object drawn on the plot. `coord_trans()` is described in more detail in [cartesian coordinate systems](#sub:cartesian).
+Transformers are also used in `coord_trans()`, where the transformation occurs after the statistic has been calculated, and affects the shape of the graphical object drawn on the plot. See [cartesian coordinate systems](#sub:cartesian) for more details.
 
 #### Date and time {#ssub:scale-date}
 
 Dates and date times are continuous values with special ways of labelling the axes. Your dates must be stored as `date` (for dates) and `POSIXct` (for date times). If your dates are in a different format you will need to convert them with `as.Date()` or `as.POSIXct()`. \index{Date} \index{Time} \index{Scales!date-time} \indexf{scale_x_datetime}
 
-Like all other scales, the `breaks`, `minor_breaks` and `labels` arguments control the appearance and location of the ticks. However, there are two special functions available for dates that generate useful breaks and labels:
+Like all other scales, the `breaks`, `minor_breaks` and `labels` arguments control the appearance and location of the ticks. The scales package provides some break and label functions particularly useful for dates:
 
 * `scales::date_breaks(width)`: specify the position of major and minor breaks 
   in terms of date units, years, months, weeks, days, hours, minutes and 
@@ -475,7 +502,7 @@ Like all other scales, the `breaks`, `minor_breaks` and `labels` arguments contr
     For example, if you wanted to display dates of the form 14/10/1979, you
     would use the string `"%d/%m/%y"`. \index{Time series!date formatting}
 
-The code below generates the plots in Figure \ref{fig:date-scale}, illustrating some of these parameters.
+The code below illustrates some of these parameters.
 
 `r columns(2, 1 / 2)`
 ```{r date-scale}
@@ -496,18 +523,20 @@ plot + scale_x_date(
 
 #### Discrete {#ssub:scale-discrete}
 
-Discrete position scales map the unique values of their input to integers.  The order of the result can be controlled by the `breaks` argument, and levels can be dropped with the `limits` argument (or by using `xlim()` or `ylim()`).  Because it is often useful to place labels and other annotations on intermediate positions on the plot, discrete position scales also accept continuous values.  If you have not adjusted the breaks or limits, the numerical position of a factor level can be calculated with `as.numeric()`: the values are placed on integers starting at 1. \index{Scales!position!discrete} \indexf{scale_x_discrete} \indexf{scale_y_discrete} \index{Scales!discrete}
+Discrete position scales map the unique values of their input to integers.  The order of the result can be controlled by the `breaks` argument, and levels can be dropped with the `limits` argument (or by using `xlim()` or `ylim()`). 
+
+Because it is often useful to place labels and other annotations on intermediate positions on the plot, discrete position scales also accept continuous values.  You can use `position_nudge()` to tweak the position of labels: placed on integers starting at 1. \index{Scales!position!discrete} \indexf{scale_x_discrete} \indexf{scale_y_discrete} \index{Scales!discrete}
 
 `r columns(2, 2/3)`
 ```{r}
 df <- data.frame(trt = c("a", "b", "c"), value = c(1, 3, 2))
 ggplot(df, aes(trt, value)) + 
   geom_point() + 
-  geom_text(aes(as.numeric(trt) + 0.1, label = format(value)))
+  geom_text(aes(label = value))
 
 ggplot(df, aes(trt, value)) + 
   geom_point() + 
-  geom_text(aes(label = format(value)), position = position_nudge(x = 0.1))
+  geom_text(aes(label = value), nudge_x = 0.1)
 ```
 
 ### Colour {#sub:scale-colour}
@@ -537,54 +566,6 @@ The combination of these three components does not produce a simple geometric sh
 An additional complication is that many people (~10% of men) do not possess the normal complement of colour receptors and so can distinguish fewer colours than usual. \index{Colour!blindness} In brief, it's best to avoid red-green contrasts, and to check your plots with systems that simulate colour blindness. Visicheck is one online solution. Another alternative is the **dichromat** package [@dichromat] which provides tools for simulating colour blindness, and a set of colour schemes known to work well for colour-blind people. You can also help people with colour blindness in the same way that you can help people with black-and-white printers: by providing redundant mappings to other aesthetics like size, line type or shape.
 
 All of the scales discussed in the following sections work with border (`colour`) and fill (`fill`) colour aesthetics.
-
-#### Continuous {#ssub:colour-continuous}
-
-There are three types of continuous colour gradients, based on the number of colours in the gradient: \index{Colour!gradients} \index{Scales!colour!gradient}
-
-* `scale_colour_gradient()` and `scale_fill_gradient()`: a two-colour gradient, 
-  low-high.  Arguments `low` and `high` control the colours at either end of 
-  the gradient. \indexf{scale_colour_gradient} \indexf{scale_fill_gradient}
-
-* `scale_colour_gradient2()` and `scale_fill_gradient2()`: a three-colour 
-  gradient, low-med-high.  As well as `low` and `high` colours, these scales 
-  also have a `mid` colour for the colour of the midpoint.  The midpoint 
-  defaults to 0, but can be set to any value with the `midpoint` argument.
-  This is particularly useful for creating diverging colour schemes.
-  \indexf{scale_colour_gradient2} \indexf{scale_fill_gradient2}
-
-* `scale_colour_gradientn()` and `scale_fill_gradientn()`: a custom n-colour 
-  gradient.  This scale requires a vector of colours in the `colours` argument.  
-  Without further arguments these colours will be evenly spaced along the 
-  range of the data.  If you want the values to be unequally spaced, use the 
-  `values` argument, which should be between 0 and 1 if `rescale` is true 
-  (the default), or within the range of the data is `rescale` is false.
-
-* `scale_colour_distiller()`
-
-Colour gradients are often used to show the height of a 2d surface.  In the following example we'll use the surface of a 2d density estimate of the `faithful` dataset [@azzalini:1990], which records the waiting time between eruptions and during each eruption for the Old Faithful geyser in Yellowstone Park. The following code shows three different examples with different colours:
-
-`r columns(3, 1)`
-```{r}
-f2d <- MASS::kde2d(faithful$eruptions, faithful$waiting,  h = c(1, 10), n = 100)
-df <- data.frame(expand.grid(eruptions = f2d$x, waiting = f2d$y), density = as.vector(f2d$z))
-erupt <- ggplot(df, aes(waiting, eruptions, fill = density)) +
-  geom_raster() +
-  scale_x_continuous(expand = c(0, 0)) + 
-  scale_y_continuous(expand = c(0, 0)) +
-  theme(legend.position = "none")
-erupt + scale_fill_gradient()
-erupt + scale_fill_gradient(low = "white", high = "black") 
-erupt + scale_fill_gradient2(midpoint = 0.01) 
-```
-
-To create your own custom gradient, use `scale_colour_gradientn()`. This is useful if you have colours that are meaningful for your data (e.g., black body colours or standard terrain colours), or you'd like to use a palette produced by another package. The following code shows palettes generated from routines in the **colorspace** package. [@zeileis:2008] describes the philosophy behind these palettes and provides a good introduction to some of the complexities of creating good colour scales. \index{Colour!palettes} \indexf{scale_colour_gradientn} \indexf{scale_fill_gradientn}
-
-```{r colorspace}
-erupt + scale_fill_gradientn(colours = colorspace::rainbow_hcl(7))
-erupt + scale_fill_gradientn(colours = colorspace::diverge_hcl(7))
-erupt + scale_fill_gradientn(colours = colorspace::heat_hcl(7))
-```
 
 #### Discrete {#ssub:colour-discrete}
 
@@ -621,6 +602,55 @@ area + scale_fill_brewer(palette = "Pastel1")
 ```
 
 If you have your own discrete colour scale, you can use `scale_colour_manual()`, as described below.
+
+
+#### Continuous {#ssub:colour-continuous}
+
+There are three types of continuous colour gradients, based on the number of colours in the gradient: \index{Colour!gradients} \index{Scales!colour!gradient}
+
+* `scale_colour_gradient()` and `scale_fill_gradient()`: a two-colour gradient, 
+  low-high.  Arguments `low` and `high` control the colours at either end of 
+  the gradient. \indexf{scale_colour_gradient} \indexf{scale_fill_gradient}
+
+* `scale_colour_gradient2()` and `scale_fill_gradient2()`: a three-colour 
+  gradient, low-med-high.  As well as `low` and `high` colours, these scales 
+  also have a `mid` colour for the colour of the midpoint.  The midpoint 
+  defaults to 0, but can be set to any value with the `midpoint` argument.
+  This is particularly useful for creating diverging colour schemes.
+  \indexf{scale_colour_gradient2} \indexf{scale_fill_gradient2}
+
+* `scale_colour_gradientn()` and `scale_fill_gradientn()`: a custom n-colour 
+  gradient.  This scale requires a vector of colours in the `colours` argument.  
+  Without further arguments these colours will be evenly spaced along the 
+  range of the data.  If you want the values to be unequally spaced, use the 
+  `values` argument, which should be between 0 and 1 if `rescale` is true 
+  (the default), or within the range of the data is `rescale` is false.
+
+Colour gradients are often used to show the height of a 2d surface.  In the following example we'll use the surface of a 2d density estimate of the `faithful` dataset [@azzalini:1990], which records the waiting time between eruptions and during each eruption for the Old Faithful geyser in Yellowstone Park. The following code shows three different examples with different colours:
+
+`r columns(3, 1)`
+```{r}
+f2d <- MASS::kde2d(faithful$eruptions, faithful$waiting,  h = c(1, 10), n = 100)
+df <- data.frame(expand.grid(eruptions = f2d$x, waiting = f2d$y), density = as.vector(f2d$z))
+erupt <- ggplot(df, aes(waiting, eruptions, fill = density)) +
+  geom_raster() +
+  scale_x_continuous(expand = c(0, 0)) + 
+  scale_y_continuous(expand = c(0, 0)) +
+  theme(legend.position = "none")
+erupt + scale_fill_gradient()
+erupt + scale_fill_gradient(low = "white", high = "black") 
+erupt + scale_fill_gradient2(midpoint = 0.01) 
+```
+
+To create your own custom gradient, use `scale_colour_gradientn()`. This is useful if you have colours that are meaningful for your data (e.g., black body colours or standard terrain colours), or you'd like to use a palette produced by another package. The following code shows palettes generated from routines in the **colorspace** package. [@zeileis:2008] describes the philosophy behind these palettes and provides a good introduction to some of the complexities of creating good colour scales. \index{Colour!palettes} \indexf{scale_colour_gradientn} \indexf{scale_fill_gradientn}
+
+```{r colorspace}
+erupt + scale_fill_gradientn(colours = colorspace::rainbow_hcl(7))
+erupt + scale_fill_gradientn(colours = colorspace::diverge_hcl(7))
+erupt + scale_fill_gradientn(colours = colorspace::heat_hcl(7))
+```
+
+* `scale_colour_distiller()`
 
 ### The manual discrete scale {#sub:scale-manual}
 
@@ -689,7 +719,6 @@ ggplot(luv, aes(u, v)) +
   scale_color_identity() + 
   coord_equal()
 ```
-
 
 ## How scales work {#sec:how-scales-work}
 
