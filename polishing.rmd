@@ -158,25 +158,11 @@ theme_set(old_theme)
 
 There is some duplication in this example because we have to specify the x and y elements separately.  This is a necessary evil so that you can have total control over the appearance of the elements.  If you are writing your own theme, you would probably want to write a function to minimise this repetition.
 
-<!--
-% \subsection{Custom element functions}
-% \label{sub:custom-elements}
-% 
-% To see how to write custom element functions, it's good to start by seeing how the built-in element functions work:
-% 
-% % INTERWEAVE
-% % 
-% % str(args(element_text()))
-% % str(args(element_rect()))
-% % str(args(element_line()))
-% \input{_include/b9b6e26b5f4fc7e2bb7c9847fb6cd634.tex}
-% % END
-% 
-% You'll notice that these are very similar to the arguments to \f{textGrob}, \f{rectGrob} and \f{polylineGrob} and these are exactly the functions that they are based on.  All that the element function do is set up some defaults.  
-% 
-% If you want to write your own, you need to copy this basic idea: take position arguments, and return a grid grob.  For example, let's say we'd like to give the strips a 3d appearance.  We can do this by drawing a rectangle, and then drawing highlights on the top-right and low-lights (shadows) on the bottom-left.
--->
+### Exercises
 
+1.  Create the ugliest plot possible! (Contributed by Andrew D. Steen, 
+    University of Tennessee - Knoxville)
+    
 ## Annotations {#sec:annotating}
 
 When annotating your plot with additional labels, the important thing to remember is that these annotations are just extra data. There are two basic ways to add annotations: one at a time, or many at once. \index{Annotation}
@@ -319,17 +305,19 @@ To save your output, you can use the typical R way with disk-based graphics devi
 The following code shows these two methods. If you want to save multiple plots to a single file, you will need to explicitly open a disk-based graphics device (like `png()` or `pdf()`), print the plots and then close it with `dev.off()`.
 
 ```{r ggsave, eval=FALSE}
-qplot(mpg, wt, data = mtcars)
-ggsave(file = "output.pdf")
+ggplot(mpg, aes(displ, hwy)) + geom_point()
+ggsave("output.pdf")
 
-pdf(file = "output.pdf", width = 6, height = 6)
+pdf("output.pdf", width = 6, height = 6)
 # If inside a script, you will need to explicitly print() plots
-qplot(mpg, wt, data = mtcars)
-qplot(wt, mpg, data = mtcars)
+ggplot(mpg, aes(displ, hwy)) + geom_point()
+ggplot(mpg, aes(displ, cty)) + geom_point()
 dev.off()
 ```
 
 Table~\ref{tbl:graphic-recommendation} lists recommended graphic formats for various tasks.  R output generally works best as part of a linux development tool chain: using png or pdf output in LaTeX documents.  With Microsoft Office it is easiest to use a high-resolution (`dpi = 600`) png file.  You can use vector output, but neither Windows meta files nor postscript supports transparency, and while postscript prints fine, it is only shown on screen if you add a preview in another software package. Transparency is used to show confidence intervals with the points showing through. If you copy and paste a graph into Word, and see that the confidence interval bands have vanished, that is the cause. The same advice holds for OpenOffice. \index{Exporting!to Word} \index{Exporting!to Powerpoint}
+
+SVG becoming a viable alternative.
 
 If you are using LaTeX, I recommend including `\DeclareGraphicsExtensions{.png,.pdf}` in the preamble.  Then you don't need to specify the file extension in `\includegraphics{}` commands, but LaTeX will pick png files in preference to pdf. \index{Exporting!to Latex} I choose this order because you can produce all your files in pdf, and then go back and re-render any big ones as png.  Another useful command is `\graphicspath{}` which specifies a path in which to look for graphics, allowing you to keep graphics in a separate directory to the text.
 
@@ -451,8 +439,3 @@ print(c, vp = vplayout(2, 2))
 
 By default `grid.layout()` makes each cell the same size, but you can use the `widths` and `heights` arguments to make them different sizes.  See the documentation for `grid.layout()` for more examples.
 
-
-### Exercises
-
-1.  Create the ugliest plot possible! (Contributed by Andrew D. Steen, 
-    University of Tennessee - Knoxville)
