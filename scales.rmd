@@ -11,41 +11,22 @@ columns(1, 2 / 3)
 
 ## Introduction
 
-Scales control the mapping from data to aesthetics. They take your data and turn it into something that you can see, like size, colour, position or shape. Scales also provide the tools you use to read the plot: the axes and legends. Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the scale). The guide or legend is the inverse of a scale: it allows you to read data values off the plot.
+Scales control the mapping from data to aesthetics. They take your data and turn it into something that you can see, like size, colour, position or shape. Scales also provide the tools that let you read the plot: the axes and legends. Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the scale). The axis or legend is the inverse function: it allows you to convert visual properties back to data.
 
-You can generate many plots without knowing how scales work, but understanding scales and learning how to manipulate them will give you much more control. 
-
-Default scales and how to override them are described in [scale usage](#sec:scale-usage). 
-
-Scales can be roughly divided into four categories: position scales, colour scales, the manual scale and the identity scale. The common options and most important uses are described in [scale details](#sec:scale-details). The section focusses on giving you a high-level overview of the options available, rather than expanding on every detail in depth. Details about individual parameters are included in the online documentation.
-
-The other important role of each scale is to produce a **guide** that allows the viewer to perform the inverse mapping, from aesthetic space to data space, and read values off the plot. For position aesthetics, the axes are the guides; for all other aesthetics, legends do the job. Most aspects of the guides are controlled by parameters of the scale, but you can also use the `guides()` function to modify guides without messing with the scales directly. You'll learn more about that in [legends and axes](#sec:guides).
-
-The process of scaling takes place in three steps, transformation, training and mapping, and is described in [how scales work](#sec:how-scales-work). 
+You can generate many plots without knowing how scales work, but understanding scales and learning how to manipulate them will give you much more control. The basics of working with scales is described in [scale usage](#sec:scale-usage). The following sections discusses the different parameter in the scale functions. [Guides](#sec:guides) discusses the common parameters that control the axes and legends. Legends are particularly complicated so have an additional set of options as described in [legends](#sec:legends). [Limits](#sec:limits) shows how to use limits to both zoom into interesting parts of a plot, and to ensure that multiple plots have matching legends and axes. [Scale details](#sec:scale-details) gives an overview of the different types of scales available in ggplot2, which can be roughly divided into four categories: position scales, colour scales, the manual scale and the identity scale. The chapter finishes off with a rough guide to how scales work behind the scenes in  [how scales work](#sec:how-scales-work). 
 
 ## Modifying scales {#sec:scale-usage}
 
-Without a scale, there is no way to go from the data to aesthetics, so a scale is required for every aesthetic used on the plot. 
-
-
-Scale functions have a common naming scheme:
-
-1. `scale`
-1. `_`
-1. The name of the aesthetic (e.g., `colour`, `shape` or `x`)
-1. `_`
-1. The name of the scale (e.g., `gradient`, `hue` or `manual`). 
-
-For example, the name of the default scale for the colour aesthetic based on discrete data is `scale_colour_hue()`, and the name of the Brewer colour scale for fill colour is `scale_fill_brewer()`. \index{Scales!adding}
-
-To adjust the properties of a scale, you add a scale function with the parameters you want to modify, as you'll see in the following sections.
-
-Default scales are named according to the aesthetic and the variable type: `scale_y_continuous()`, `scale_colour_discrete()`, etc. It would be tedious to manually add a scale every time you used a new aesthetic, so ggplot2 automatically adds a default for you. This means that the following two plot specifications are equivalent: 
+A scale is required for every aesthetic used on the plot. When you write:
 
 ```{r default-scales, fig.show = "hide"}
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point(aes(colour = class))
+```
 
+What actually happens is this:
+
+```{r, fig.show = "hide"}
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point(aes(colour = class)) +
   scale_x_continuous() + 
@@ -53,46 +34,88 @@ ggplot(mpg, aes(displ, hwy)) +
   scale_colour_discrete()
 ```
 
+Default scales are named according to the aesthetic and the variable type: `scale_y_continuous()`, `scale_colour_discrete()`, etc. 
+
+It would be tedious to manually add a scale every time you used a new aesthetic, so ggplot2 does it for you. But if you want to override the defaults, you'll need to add the scale yourself, like this:
+
+```{r, fig.show = "hide"}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point(aes(colour = class)) + 
+  scale_x_continuous("A really awesome x axis label") +
+  scale_y_continuous("An amazingly great y axis label")
+```
+
 The use of `+` to "add" scales to a plot is a little misleading. When you `+` a scale, you're not actually adding it to the plot, but overriding the existing scale. This means that the following two specifications are equivalent: \indexc{+} 
 
 ```{r multiple-scales, fig.show = "hide", message = TRUE}
-df <- data.frame(x = 1:2, y = 1, z = "a")
-ggplot(df, aes(x, y)) + 
+ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
-  scale_x_continuous(breaks = 1:5) + 
-  scale_x_continuous(labels = 1:5)
+  scale_x_continuous("Label 1") +
+  scale_x_continuous("Label 2")
 
-ggplot(df, aes(x, y)) + 
+ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
-  scale_x_continuous(labels = 1:5)
+  scale_x_continuous("Label 2")
 ```
 
-Note the message: if you see this in your own code, you need to reorganse the plot specification so you only add a single scale per aesthetic.
+Note the message: if you see this in your own code, you need to reorganse your code specification to only add a single scale.
 
-To modify a scale, you override the default scale and supply additional arguments.  The parameters of a scale that you're most common modify are those that control the appearance of the guide, as described below.
+You can also use a different scale altogether:
+
+```{r, fig.show = "hide"}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point(aes(colour = class)) +
+  scale_x_sqrt() + 
+  scale_colour_brewer()
+```
+
+You've probably already figured out the naming scheme for scales, but to be concrete, it's made up of three pieces separated by "_":
+
+1. `scale`
+1. The name of the aesthetic (e.g., `colour`, `shape` or `x`)
+1. The name of the scale (e.g., `continuous`, `discrete`, `brewer`). 
 
 ### Exercises
 
-1.  What happens if you connect a discrete variable to a continuous scale?
-    What happens if you connect a continuous variable to a discrete scale?
+1.  What happens if you pair a discrete variable to a continuous scale?
+    What happens if you pair a continuous variable to a discrete scale?
+
+1.  Simplify the following plot specifications to make them easier to 
+    understand.
+    
+    ```{r, eval = FALSE}
+    ggplot(mpg, aes(displ)) + 
+      scale_y_continuous("Highway mpg") + 
+      scale_x_continuous() +
+      geom_point(aes(y = mpg)) +
+
+    ggplot(mpg, aes(y = displ, x = class)) + 
+      scale_y_continuous("Displacement (l)") + 
+      scale_x_discrete("Car type") +
+      scale_x_discrete("Type of car") + 
+      scale_x_discrete() +  
+      scale_colour_discrete() + 
+      geom_point(aes(colour = drv)) + 
+      scale_colour_discrete("Drive\ntrain")
+    ```
 
 ## Gudes: legends and axes {#sec:guides}
 
-The component of a scale that you're most likely to want to modify is the __guide__, the axis or legend associated with the scale. Guides allow you to read observations from the plot and map them back to their original values. If you blinked when you read that both axes and legends are instances of the general class, you are not alone. The notion that the same kind of object is used to map data to positions and symbols strikes some people as unintuitive. However, there are natural equivalents between the legend and the axis: the legend title and axis label are equivalent and determined by the scale name; the legend keys and tick labels are both determined by the scale breaks. \index{Guides} \index{Legend}
+The component of a scale that you're most likely to want to modify is the __guide__, the axis or legend associated with the scale. Guides allow you to read observations from the plot and map them back to their original values. In ggplot2, guides are produced automatically based on the layers in your plot. This is very different to base R grahics, where you are responsible for drawing the legends by hand. In ggplot2, you don't directly control the legend; instead you set up the data so that there's a clear mapping between data and aesthetics, and a legend is generated for you automatically. This can be frustrating when you first start using ggplot2, but once you get the hang of it, you'll find that it saves you time, and there is little you cannot do. If you're struggling to get the legend you want, it's likely because your data is arranged in a suboptimal manner: read [tidying](#cha:data) for more details.
 
-In ggplot2, legends and axes are produced automatically based on the scales and geoms that you used in the plot. This is different than how legends work in most other plotting systems, where you are responsible for adding them. In ggplot2, you don't corrently control the legend; instead you set up the data so that there's a clear mapping between data and aesthetics, and a legend is generated for you automatically. This can be frustrating when you first start using ggplot2, but once you get the hang of it, you'll find that it saves you time, and there is little you cannot do. If you're struggling to get the legend you want, it's likely because your data is arranged in a suboptimal manner: read [tidying](#cha:data) for more details.
+You might find it surprising that axes and legends are the same type of thing, but while they look very different there are many natural correspondences:  \index{Guides} \index{Legend}
 
-Each of these parameters is control by an argument to the `scale_` function. Every scale has these elements, so every scale function has these three arguments:
+| Axis              | Legend        | Argument name
+|-------------------|---------------|-----------------
+| Label             | Title         | `name`          
+| Ticks & grid line | Key           | `breaks`        
+| Tick label        | Key label     | `labels`        
 
-| Scale parameter | Axis              | Legend
-|-----------------|-------------------|---------------              
-| `name`          | Label             | Title
-| `breaks`        | Ticks & grid line | Key         
-| `labels`        | Tick label        | Key label
+The following sections covers each of the three correspondences in more detail.
 
 ### Scale title
 
-The first argument to the scale function, `name`, is the name of the scale, the label that will appear on the axis or legend. You can supply text strings (using `\n` for line breaks) or mathematical expressions (as described in `?plotmath`):  \index{Axis!labels} \index{Legend!title}  \index{Scales!names}
+The first argument to the scale function, `name`, is the scale title which will appear on the axis or legend. You can supply text strings (using `\n` for line breaks) or mathematical expressions in `quote()` (as described in `?plotmath`):  \index{Axis!labels} \index{Legend!title}  \index{Scales!names}
     
 `r columns(2, 1 / 2)`
 ```{r guide-names}
@@ -103,7 +126,7 @@ p + scale_x_continuous(quote(a + mathematical ^ expression))
 ```
 
 Because tweaking these labels is such a common task, there are three 
-helper functions to save you some typing: `xlab()`, `ylab()` and `labs()`:
+helpers that save you some typing: `xlab()`, `ylab()` and `labs()`:
 
 ```{r guide-names-helper}
 p <- ggplot(df, aes(x, y)) + geom_point(aes(colour = z))
@@ -113,7 +136,7 @@ p +
 p + labs(x = "X axis", y = "Y axis", colour = "Colour\nlegend")
 ```
 
-There are two ways to remove the axis label. Setting it to `""` removes it, but still allocates space; `NULL` removes the label and its space. Look closely at the left and bottom borders of these plots. I've drawn a grey rectangle around the plot to make it easier to see the difference.
+There are two ways to remove the axis label. Setting it to `""` omits the label, but still allocates space; `NULL` removes the label and its space. Look closely at the left and bottom borders of the following two plots. I've drawn a grey rectangle around the plot to make it easier to see the difference.
 
 ```{r guide-names-remove}
 p <- ggplot(df, aes(x, y)) + 
@@ -127,45 +150,53 @@ p + labs(x = NULL, y = NULL)
 
 The `breaks` argument controls which values appear as tick marks on axes and keys on legends. Each break has an associated label, controlled by the `labels` argument. If you set `labels`, you must also set `breaks`: otherwise, if data changes, the breaks will no longer align with the labels. \index{Axis!breaks} \index{Axis!labels} \index{Legend!keys}
 
+The following code shows some basic examples for both axes and legends.
+
 `r columns(3, 1)`
 ```{r breaks-labels}
 df <- data.frame(x = (1:5) * 1000, y = 1)
 axs <- ggplot(df, aes(x, y)) + 
   geom_point(size = 5) + 
   labs(x = NULL, y = NULL)
-leg <- ggplot(df, aes(y, x, colour = x)) + 
-  geom_point(size = 5) + 
-  labs(x = NULL, y = NULL)
-
 axs
 axs + scale_x_continuous(breaks = c(2000, 4000))
 axs + scale_x_continuous(breaks = c(2000, 4000), labels = c("2k", "4k"))
+```
 
+```{r}
+leg <- ggplot(df, aes(y, x, colour = x)) + 
+  geom_point(size = 5) + 
+  labs(x = NULL, y = NULL)
 leg
 leg + scale_colour_continuous(breaks = c(2000, 4000))
 leg + scale_colour_continuous(breaks = c(2000, 4000), labels = c("2k", "4k"))
 ```
 
+If you want to relabel the breaks in a categorical scale, you can use a named labels vector:
+
+`r columns(2, 1 / 2)`
+```{r}
+df2 <- data.frame(x = 1:3, y = c("a", "b", "c"))
+ggplot(df2, aes(x, y)) + 
+  geom_point()
+ggplot(df2, aes(x, y)) + 
+  geom_point() + 
+  scale_y_discrete(labels = c(a = "apple", b = "banana", c = "carrot"))
+```
+
 To suppress breaks (and for axes, grid lines) or labels, set them to `NULL`:
 
+`r columns(2, 1 / 2)`
 ```{r axs-breaks-hide}
 axs + scale_x_continuous(breaks = NULL)
 axs + scale_x_continuous(labels = NULL)
 ```
 ```{r leg-breaks-hide}
 leg + scale_colour_continuous(breaks = NULL)
-# leg + scale_colour_continuous(labels = NULL)
+leg + scale_colour_continuous(labels = NULL)
 ```
 
-Additionally, you can supply a function to `breaks` or `labels`. The `breaks` function have one argument, the limits (a numeric vector of length two), and return a numeric vector of breaks. The `labels` function should accept a numeric vector of breaks and return a character vector of labels (the same length as the input). The scales package provides a number of useful labelling functions:
-
-```{r breaks-functions}
-axs + scale_y_continuous(labels = scales::percent_format())
-axs + scale_y_continuous(labels = scales::dollar_format("$"))
-leg + scale_colour_continuous(labels = scales::unit_format("k", 1e-3))
-```
-
-Other useful labelling functions:
+Additionally, you can supply a function to `breaks` or `labels`. The `breaks` function should have one argument, the limits (a numeric vector of length two), and should return a numeric vector of breaks. The `labels` function should accept a numeric vector of breaks and return a character vector of labels (the same length as the input). The scales package provides a number of useful labelling functions:
 
 * `scales::comma_format()` adds commas to make it easier to read large numbers.
 
@@ -178,11 +209,48 @@ Other useful labelling functions:
 
 See the documentation of the scales package for more details.
 
+`r columns(3)`
+```{r breaks-functions}
+axs + scale_y_continuous(labels = scales::percent_format())
+axs + scale_y_continuous(labels = scales::dollar_format("$"))
+leg + scale_colour_continuous(labels = scales::unit_format("k", 1e-3))
+```
+
 You can adjust the minor breaks (the faint grid lines that appear between the major grid lines) by supplying a numeric vector of positions to the `minor_breaks` argument. By default minor grid lines are spaced evenly in the original data space: this gives the common behaviour of log-log plots where major grid lines are evenly spaced on the log scale, and minor grid lines are evenly spaced on the log scale.
 
-## Legends
+### Exercises
 
-While the most important parameters are shared between axes and legends, there are two important ways that legends are different from axes:
+1.  Recreate the following graphic:
+
+    ```{r, echo = FALSE}
+    ggplot(mpg, aes(displ, hwy)) + 
+      geom_point() +  
+      scale_x_continuous("Displacement", labels = scales::unit_format("L")) + 
+      scale_y_continuous(quote(paste("Highway ", frac(miles, gallon)))) 
+    ```
+
+1.  List the three different types of object you can supply to the
+    `breaks` argument. How do `breaks` and `labels` differ?
+    
+1.  Recreate the following plot:
+
+    ```{r, echo = FALSE}
+    drv_labels <- c("4" = "4wd", "f" = "fwd", "r" = "rwd")
+    ggplot(mpg, aes(displ, hwy)) + 
+      geom_point(aes(colour = drv)) +  
+      scale_colour_discrete(labels = drv_labels)
+    ```
+
+1.  What label function allows you to create mathematical expressions?
+    What label function converts 1 to 1st, 2 to 2nd, and so on?
+    
+1.  What are the three most important arguments that apply to both 
+    axes and legends? What do they do? Compare and constrast their
+    operation for axes vs. legends.
+
+## Legends {#sec:legends}
+
+While the most important parameters are shared between axes and legends, there are some extra options that only apply to legends. Legends are more complicated than axes because:
 
 1.  A legend can display multiple aesthetics (e.g. colour and shape), from
     multiple layers, and the symbol displayed in a legend varies based on the
@@ -194,32 +262,30 @@ While the most important parameters are shared between axes and legends, there a
 1.  Legends have considerably more details that can be tweaked: should they
     be displayed vertically or horizontally? How many columns? How big should
     the keys be?
+    
+The following sections describe the options that control these interactions.
 
-### Layers and legends
+### Layers and legends {#sub-layers-legends}
 
-To draw the legend, the plot must collect information about how each aesthetic is used: for what data and what geoms. The scale breaks are used to determine the values of the legend keys and a list of the geoms that use the aesthetic  is used to determine how to draw the keys. For example, if you use the point geom, then you will get points in the legend; if you use the lines geom, you will get lines. If both point and line geoms are used, then both points and lines will be drawn in the legend:
+The A legend may need to draw symbols from multiple layers. For example, if you've mapped colour to both points and lines, the keys will show both points and lines. If you've mapped fill colour, you get a rectangle. Note the way the legend varies in the plots below:
 
-`r columns(1, 1/3, 1)`
+`r columns(3)`
 ```{r legend-geom, echo = FALSE}
-df <- data.frame(x = 1:4, y = 1:4, z = letters[1:4])
-p <- ggplot(df, aes(x, y, colour = z, group = 1))
-draw_legends(
-  p + geom_point(),
-  p + geom_line(), 
-  p + geom_point() + geom_line(), 
-  p + geom_bar(aes(fill = z), stat = "identity")
-)
+df <- data.frame(x = 1, y = 1:3, z = letters[1:3])
+p <- ggplot(df, aes(x, y, colour = z))
+p + geom_point()
+p + geom_point() + geom_path()
+p + geom_raster(aes(fill = z))
 ```
 
-You can override whether or not a layer appears in the legend with `show_guide` argument to the layer. Its default value is `NA`: that means it will appear in the legend if the corresponding aethetic is mapped to a variable in the data. You can use `FALSE` to prevent it from ever appearing in the legend or `TRUE` to force it to appear when it otherwise wouldn't. Using `TRUE` can be useful in conjunction with the following trick to make points stand out:
+By default, a layer will only appear if the corresponding aethetic is mapped to a variable with `aes()`. You can override whether or not a layer appears in the legend with `show_guide`: `FALSE` to prevents a layer from ever appearing in the legend, `TRUE` forces it to appear when it otherwise wouldn't. Using `TRUE` can be useful in conjunction with the following trick to make points stand out:
 
 `r columns(2, 2/3)`
 ```{r}
-df <- data.frame(x = 1:3, y = 3:1, z = letters[1:3])
-ggplot(df, aes(x, y)) + 
+ggplot(df, aes(y, y)) + 
   geom_point(size = 6, colour = "grey20") +
   geom_point(aes(colour = z), size = 3) 
-ggplot(df, aes(x, y)) + 
+ggplot(df, aes(y, y)) + 
   geom_point(size = 6, colour = "grey20", show_guide = TRUE) +
   geom_point(aes(colour = z), size = 3) 
 ```
@@ -227,35 +293,31 @@ ggplot(df, aes(x, y)) +
 Sometimes you want the geoms in the legend to display differently to the geoms in the plot. This is particularly useful when you've used transparency or size to deal with moderate overplotting and also used colour in the plot. You can do this using the `override.aes` parameter of `guide_legend()`, which you'll learn more about shortly.
 
 ```{r}
-df <- data.frame(x = rnorm(1000), y = rnorm(1000))
-df$z <- cut(df$x, 3, labels = c("a", "b", "c"))
-ggplot(df, aes(x, y)) + 
+norm <- data.frame(x = rnorm(1000), y = rnorm(1000))
+norm$z <- cut(norm$x, 3, labels = c("a", "b", "c"))
+ggplot(norm, aes(x, y)) + 
   geom_point(aes(colour = z), alpha = 0.1)
-ggplot(df, aes(x, y)) + 
+ggplot(norm, aes(x, y)) + 
   geom_point(aes(colour = z), alpha = 0.1) + 
   guides(colour = guide_legend(override.aes = list(alpha = 1)))
 ```
 
-ggplot2 tries to use the smallest possible number of legends that accurately conveys the aesthetics used in the plot. It does this by combining legends if a variable is used with more than one aesthetic. The figure below shows how this works for points: if both colour and shape are mapped to the same variable, then only a single legend is necessary. 
+ggplot2 tries to use the fewest number of legends to accurately convey the aesthetics used in the plot. It does this by combining legends where the same variable is mapped to different aesthetics. The figure below shows how this works for points: if both colour and shape are mapped to the same variable, then only a single legend is necessary. 
 
-`r columns(1, 1/3)`
-```{r legend-merge, echo = FALSE}
-df <- data.frame(x = 1:3, y = 3:1, z = letters[1:3])
-p <- ggplot(df, aes(x, y)) + geom_point()
-draw_legends(
-  p + aes(colour = z),
-  p + aes(shape = z),
-  p + aes(shape = z, colour = z)
-)
+`r columns(3)`
+```{r legend-merge}
+ggplot(df, aes(x, y)) + geom_point(aes(colour = z))
+ggplot(df, aes(x, y)) + geom_point(aes(shape = z))
+ggplot(df, aes(x, y)) + geom_point(aes(shape = z, colour = z))
 ```
 
-In order for legends to be merged, they must have the same `name`. For this reason, if you change the name of one of the merged legends, you'll need to change it for all of them.
+In order for legends to be merged, they must have the same `name`. So if you change the name of one of the scales, you'll need to change it for all of them.
 
 ### Legend layout
 
-A number of settings that affect the overall display of the legends are controlled through the theme system.  You'll learn more about that in [themes](#sec:themes), but for now, all you need to know is that you modify theme settings with the `theme()` function.
+A number of settings that affect the overall display of the legends are controlled through the theme system. You'll learn more about that in [themes](#sec:themes), but for now, all you need to know is that you modify theme settings with the `theme()` function.
 
-The position and justification of legends are controlled by the theme setting `legend.position`, and the value can be "right", "left", "top", "bottom", "none" (no legend). \index{Legend!position}
+The position and justification of legends are controlled by the theme setting `legend.position`, which takes values "right", "left", "top", "bottom", or "none" (no legend). \index{Legend!position}
 
 `r columns(3, 2/3)`
 ```{r legend-position}
@@ -270,7 +332,7 @@ base + theme(legend.position = "bottom")
 base + theme(legend.position = "none")
 ```
 
-Switching between left/right and top/bottom modifies how each legend is laid out (horizontal or vertically), and how multiple legends are stacked (horizontal or vertically). If needed, you can adjust those options independently:
+Switching between left/right and top/bottom modifies how the keys in each legend are laid out (horizontal or vertically), and how multiple legends are stacked (horizontal or vertically). If needed, you can adjust those options independently:
 
 * `legend.direction`: layout of items in legends ("horizontal" or "vertical")
 
@@ -279,23 +341,25 @@ Switching between left/right and top/bottom modifies how each legend is laid out
 * `legend.box.just`: justification of each legend within the overall bounding 
    box, when there are multiple legends ("top", "bottom", "left", or "right")
 
-Alternatively, you can give a numeric vector of length two (with values between 0 and 1) the position of the corner given by `legend.justification`, a numeric vector of length two. Top right = `c(1, 1)`, bottom left = `c(0, 0)`. This can be useful if there's a lot of blank space in your plot, but positioning the legend exactly where you want it requires a lot of trial and error.
+Alternatively, if there's a lot of blank space in your plot you might want to place the legend inside the plot. You can do this by setting `legend.position` to a numeric vector of length two. The numbers represent a relative location in the panel area: `c(0, 1)` is the top-left corner and `c(1, 0)` is the bottom-right corner. You control which corner of the legend the `legend.position` refers to with `legend.justification`, which is specified in a similar way. Unfortunately positioning the legend exactly where you want it requires a lot of trial and error.
 
 ```{r legend-position-man}
-df <- data.frame(x = 1:3, y = 1:3, z = c("a", "b", "c"))
 base <- ggplot(df, aes(x, y)) + 
   geom_point(aes(colour = z), size = 3)
 
-base + theme(legend.position = c(0.35, 1), legend.justification = c(1, 1))
+base + theme(legend.position = c(0, 1), legend.justification = c(0, 1))
 base + theme(legend.position = c(0.5, 0.5), legend.justification = c(0.5, 0.5))
+base + theme(legend.position = c(1, 0), legend.justification = c(1, 0))
 ```
+
+(There's also a margin around the legends, which you can suppress with `legend.margin = grid::unit(0, "mm")`.)
 
 ### Guide functions
 
-You can get additional control over the fine details of the display of the guide with `guide_colourbar()` and `guide_legend()`. Legend guides can be used for any aesthetic (discrete or continuous) while the colour bar can only be used with continuous colour scales. 
+The guide functions, `guide_colourbar()` and `guide_legend()`, offer additional control over the fine details of the legend. Legend guides can be used for any aesthetic (discrete or continuous) while the colour bar guide can only be used with continuous colour scales. 
 
 You can override the default guide using the `guide` argument of the corresponding scale function, or more conveniently, the `guides()` helper function. `guides()` works like `labs`: you can override the default guide associated with each aesthetic. 
-`r columns(3)`
+
 ```{r}
 df <- data.frame(x = 1, y = 1:3, z = 1:3)
 base <- ggplot(df, aes(x, y)) + 
@@ -305,15 +369,15 @@ base + scale_fill_continuous(guide = guide_legend())
 base + guides(fill = guide_legend())
 ```
 
-Both functions have numerous examples in their documentation help pages that illustrate each argument at least once. Below, I'll describe the most important pieces that you're likely to want to change. Most of the arguments to the guide function control the fine level details of the text colour, size, font etc. You'll learn about those in the themes chapter.
+Both functions have numerous examples in their documentation help pages that illustrate all of their arguments. Most of the arguments to the guide function control the fine level details of the text colour, size, font etc. You'll learn about those in the themes chapter. Here I'll focus on the most important arguments.
 
 #### `guide_legend()`
 
-The legend guide displays one key per element. The most useful options are:
+The legend guide displays individual keys in a table. The most useful options are:
 
-*   `nrow` or `ncol` which set the number of rows or columns in the legend. 
-    `byrow` controls how the elements are filled into the table: `FALSE` fills 
-    the table by column (the default), `TRUE` fills it by row
+*   `nrow` or `ncol` which specify the dimensions of the table. `byrow` 
+    controls how the table is filled: `FALSE` fills it by column (the default),
+    `TRUE` fills it by row.
 
     `r columns(3)`
     ```{r legend-rows-cols}
@@ -325,15 +389,9 @@ The legend guide displays one key per element. The most useful options are:
     p + guides(fill = guide_legend(ncol = 2, byrow = TRUE))
     ```
 
-*   `override.aes`: override some of the aesthetic settings dervied from each
-    layer. This is useful if you want to make the elements in the legend 
-    more visually prominent.
-
-*   `keywidth` and `keyheight` (along with `default.unit`) allow you to specify
-    the size of the keys.
-
-*   `reverse`: this is particularly useful when you have stacked bars because 
-    the default stacking and legend orders are different:
+*   `reverse` reverses the order of the keys. This is particularly useful when 
+    you have stacked bars because the default stacking and legend orders are
+    different:
     
     ```{r}
     p <- ggplot(df, aes(1, y)) + geom_bar(stat = "identity", aes(fill = z))
@@ -341,18 +399,25 @@ The legend guide displays one key per element. The most useful options are:
     p + guides(fill = guide_legend(reverse = TRUE))
     ```
 
+*   `override.aes`: override some of the aesthetic settings dervied from each
+    layer. This is useful if you want to make the elements in the legend 
+    more visually prominent. See discussion in 
+    [layers and legends](#sub-layers-legends).
+
+*   `keywidth` and `keyheight` (along with `default.unit`) allow you to specify
+    the size of the keys. These are grid units, e.g. `grid::unit(1, "cm")`.
 
 #### `guide_colourbar`
 
-The colour bar guide is designed for continuous ranges of colors---as its name implies, it outputs a rectangle over which the color gradient varies. 
+The colour bar guide is designed for continuous ranges of colors---as its name implies, it outputs a rectangle over which the color gradient varies.  The most important arguments are:
 
 * `barwidth` and `barheight` (along with `default.unit`) allow you to specify
-   the size of the bar.
+   the size of the bar. These are grid units, e.g. `grid::unit(1, "cm")`.
   
 * `nbin` controls the number of slices. You may want to increase this from
-  the default value of 20 if you draw a very long bar
+  the default value of 20 if you draw a very long bar.
 
-* `reverse` flip the colour bar to go from highest to lowest.
+* `reverse` flips the colour bar to put the lowest values at the top.
 
 These options are illustrated below:
 
@@ -362,83 +427,124 @@ df <- data.frame(x = 1, y = 1:4, z = 4:1)
 p <- ggplot(df, aes(x, y)) + geom_tile(aes(fill = z))
 p
 p + guides(fill = guide_colorbar(reverse = TRUE))
-p + guides(fill = guide_colorbar(barheight = 3, default.unit = "cm"))
+p + guides(fill = guide_colorbar(barheight = grid::unit(3, "cm")))
 ```
 
 ### Exercises
 
+1.  How do you make legends appear to the left of the plot?
+
+1.  What's gone wrong with this plot? How could you fix it?
+
+    `r columns(1, 2 / 3)`
+    ```{r}
+    ggplot(mpg, aes(displ, hwy)) + 
+      geom_point(aes(colour = drv, shape = drv)) + 
+      scale_colour_discrete("Drive train")
+    ```
+
+1.  Can you recreate the code for this plot?
+
+    `r columns(1, 1 / 3)`
+    ```{r, echo = FALSE}
+    ggplot(mpg, aes(displ, hwy, colour = class)) + 
+      geom_point(show_guide = FALSE) + 
+      geom_smooth(method = "lm", se = FALSE) + 
+      theme(legend.position = "bottom") + 
+      guides(colour = guide_legend(nrow = 1))
+    ```
 
 ## Limits 
 
-The limits, or domain, of a scale are usually derived from the range of the data. However it can be to useful to manually specify limits to remove data you don't want displayed in a plot (i.e., setting limits that are smaller than the full range of data), or to ensure that limits are consistent across multiple plot of the same data  (i.e., setting limits that are larger than some of the default ranges).\index{Axis!limits} \index{Scales!limits}
+The limits, or domain, of a scale are usually derived from the range of the data. \index{Axis!limits} \index{Scales!limits} There are two reason you might want to specify limits rather than relying on the data:
 
-It's most natural to think about the limits of position scales: they map directly to the data ranges of the axes. But limits also apply to scales that have legends instead of axes, like colour, size, and shape. This is particularly useful if you want colours to match up across multiple plots that don't all show the same information.
+1. You want to make limits smaller than the range of the data to focus on 
+   an interesting area of the plot.
+   
+1. You want to make the limits larger than the range of the data because 
+   you want multiple plots to match up.
 
-A common task for all position axes is changing the axis limits. Because this is such a common task, ggplot2 provides a couple of helper functions to save you some typing: `xlim()`, `ylim()` and `limits()`. These functions inspect their input and then create the appropriate scale, as follows: \index{Axis!limits} \index{Scales!limits} \indexf{xlim}  \indexf{ylim} \index{Limits|see{Axis, limits}}
+It's most natural to think about the limits of position scales: they map directly to the ranges of the axes. But limits also apply to scales that have legends, like colour, size, and shape. This is particularly important to realise if you want your colours to match up across multiple plots in your paper.
+
+You can modify the limits using the `limits` parameter of the scale:
+
+* For continuous scales, this should be a numeric vector of length two. 
+  If you only want to set the upper or lower limit, you can set the other value
+  to `NA`.
+  
+* For discrete scales, this is a character vector which enumerates all possible
+  values.
+  
+`r columns(3)`
+```{r, messages = FALSE}
+df <- data.frame(x = 1:3, y = 1:3)
+base <- ggplot(df, aes(x, y)) + geom_point() 
+
+base
+base + scale_x_continuous(limits = c(1.5, 2.5))
+base + scale_x_continuous(limits = c(0, 4))
+```
+
+Because modiftying the limits is such a common task, ggplot2 provides some helper to make this even easier: `xlim()`, `ylim()` and `lims()` These functions inspect their input and then create the appropriate scale, as follows: \indexf{xlim}  \indexf{ylim}
 
 * `xlim(10, 20)`: a continuous scale from 10 to 20
 * `ylim(20, 10)`: a reversed continuous scale from 20 to 10
 * `xlim("a", "b", "c")`: a discrete scale
 * `xlim(as.Date(c("2008-05-01", "2008-08-01")))`: a date scale from May 1 to August 1 2008.
 
-There are three ways to control what data is shown on the plot. Each works slightly differently
+```{r, messages = FALSE}
+base + xlim(0, 4)
+base + xlim(4, 0)
+base + lims(x = c(0, 4))
+```
 
-* Subset the data.
-* Set the limits in the scale.
-* Set the limits in coordinate system.
+If you have eagle eyes, you'll have noticed that the range of the axes actually extends a little bit past the limits that you've specified. This ensures that the data does not overlap the axes. To eliminate this space, set `expand = c(0, 0)`. This is useful in conjunction with `geom_raster()`: \index{Axis!expansion}
 
-These limits do not work in the same way as `xlim` and `ylim` in base or lattice graphics.  In ggplot2, to be consistent with the other scales, any data outside the limits is converted to missing values. This means that setting the limits is not the same as visually zooming in to a region of the plot.  To do that, you need to use the `xlim` and `ylim` arguments to `coord_cartesian()`, described in [cartesian coordinate systems](#sub:cartesian).  This performs purely visual zooming and does not affect the underlying data. \index{Zooming}
+`r columns(2, 1, 0.66)
+```{r}
+ggplot(faithfuld, aes(waiting, eruptions)) + 
+  geom_tile(aes(fill = density)) + 
+  theme(legend.position = "none")
+ggplot(faithfuld, aes(waiting, eruptions)) + 
+  geom_tile(aes(fill = density)) + 
+  scale_x_continuous(expand = c(0,0)) + 
+  scale_y_continuous(expand = c(0,0)) +
+  theme(legend.position = "none")
+```
 
-The limits are controlled primarily via the `limits` argument:
-
-* For continuous scales, this should be a numeric vector of length two. 
-  If you only want to set the upper or lower limit, you can set the other value
-  to `NA`
+By default, any data outside the limits is converted to `NA`. This means that setting the limits is not the same as visually zooming in to a region of the plot.  To do that, you need to use the `xlim` and `ylim` arguments to `coord_cartesian()`, described in [cartesian coordinate systems](#sub:cartesian).  This performs purely visual zooming and does not affect the underlying data. \index{Zooming}. You can override with the `oob` (out of bounds) argument to the scale. The default is `scales::censor()` which replaces any value outside the limits with `NA`. Another option is `scales::squish()` which squishes all values into the range:
   
-* For discrete scales, this is a character vector which enumerates all possible
-  values.
-  
-Like for labels, there are helpers that save typing for the most common use cases: `xlim()`, `ylim()` and `lims()`.
-
-A related function is `expand_limits()` it ensures that the data points in the call are always included (i.e. it only ever expands the limits, never decreases them).
-
-There are a handful of other arguments that affect the behaviour of `limits` in some way:
-
-*   `expand`: By default, the limits of position scales extend a little past 
-    the range of the data. This ensures that the data does not overlap the 
-    axes. You can control the amount of expansion with the `expand` argument. 
-    This parameter should be a numeric vector of length two. The first element 
-    gives the multiplicative expansion, and the second the additive expansion.  
-    If you don't want any extra space, use `expand = c(0, 0)`. 
-    \index{Axis!expansion}
-    
-    ```{r, eval = FALSE}
-    range + c(-1, 1) * (diff(range) * mul + add)
-    ```
-
-*   `oob`: By default, any value not in the domain of the scale is replaced 
-    with a missing value. You can override with the `oob` (out of bounds) 
-    argument to the scale. The default is `scales::censor()` which replaces any
-    value outside the limits with `NA`. Another option is `scales::squish()` 
-    which squishes all values into the range:
-  
-    ```{r}
-    df <- data.frame(x = 1:5)
-    p <- ggplot(df, aes(x, 1)) + geom_tile(aes(fill = x), colour = "white")
-    p
-    p + scale_fill_gradient(limits = c(2, 4))
-    p + scale_fill_gradient(limits = c(2, 4), oob = scales::squish)
-    ```
+```{r}
+df <- data.frame(x = 1:5)
+p <- ggplot(df, aes(x, 1)) + geom_tile(aes(fill = x), colour = "white")
+p
+p + scale_fill_gradient(limits = c(2, 4))
+p + scale_fill_gradient(limits = c(2, 4), oob = scales::squish)
+```
 
 ### Exercises
 
-1.  How does `expand_limits()` work?  Read the source code.
+1.  The following code creates two plots of the mpg dataset. Modify the code
+    so that the legend and axes match, without using facetting!
+    
+    `r columns(2, 2/3)`
+    ```{r}
+    fwd <- subset(mpg, drv == "f")
+    rwd <- subset(mpg, drv == "r")
+    
+    ggplot(fwd, aes(displ, hwy, colour = class)) + geom_point()
+    ggplot(rwd, aes(displ, hwy, colour = class)) + geom_point()
+    ```
+
+1.  What does `expand_limits()` and how does it work?  Read the source code.
 
 1.  What happens if you add two `xlim()` calls to the same plot? Why?
 
+1.  What does `scale_x_continuous(limits = c(NA, NA))` do?
+
 ## Scales toolbox {#sec:scale-details}
 
-Scales can be divided roughly into four separate groups:
+Apart from tweaking the options of the default scales, you can also override them completely with your new scales! Scales can be divided roughly into four groups:
 
 * Position scales, used to map continuous, discrete and date-time variables 
   onto the plotting region and to construct the corresponding axes.
@@ -455,78 +561,58 @@ Scales can be divided roughly into four separate groups:
 
 This section describes each group in more detail. Precise details about individual scales can be found in the documentation, e.g., `?scale_fill_discrete`.
 
-### Position scales {#sub:scale-position}
+### Continuous position scales {#sub:scale-position}
 
-Every plot must have two position scales, one for the horizontal position (the x scale) and one for the vertical position (the y scale). \index{Scales!position} \index{Positioning!scales} 
+Every plot has two position scales, the x and y scales. \index{Scales!position} \index{Positioning!scales} The most common continuous position scales are `scale_x_continuous()` and `scale_y_continuous()`, which linearly map data to the x and y axis. \index{Scales!position!continuous}. \index{Transformation!scales} \indexf{scale_x_continuous} \indexf{scale_y_continuous} The most interesting variations are produced using transformations. Every continuous scale takes a `trans` argument, allowing the use of a variety of transformations: 
 
-There are three types of position scales: 
+```{r}
+# Convert from fuel economy to fuel consumption
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() + 
+  scale_y_continuous(trans = "reciprocal")
 
-* continuous: for numeric (double) and integer variables.
+# Log transform x and y axes
+ggplot(diamonds, aes(price, carat)) + 
+  geom_bin2d() + 
+  scale_x_continuous(trans = "log10") +
+  scale_y_continuous(trans = "log10")
+```
 
-* discrete: for factor, character and logical variables.
+The transformation is carried out by a "transformer", which describes the transformation, its inverse, and how to draw the labels. The following table lists the most common variants: 
 
-* date scales: for Date and POSIXct (datetime) variables.
+| Name      | Function $f(x)$         | Inverse $f^{-1}(y)$
+|-----------|-------------------------|------------------------
+| asn       | $\tanh^{-1}(x)$         | $\tanh(y)$
+| exp       | $e ^ x$                 | $\log(y)$
+| identity  | $x$                     | $y$
+| log       | $\log(x)$               | $e ^ y$
+| log10     | $\log_{10}(x)$          | $10 ^ y$
+| log2      | $\log_2(x)$             | $2 ^ y$
+| logit     | $\log(\frac{x}{1 - x})$ | $\frac{1}{1 + e(y)}$
+| pow10     | $10^x$                  | $\log_{10}(y)$
+| probit    | $\Phi(x)$               | $\Phi^{-1}(y)$
+| reciprocal| $x^{-1}$                | $y^{-1}$
+| reverse   | $-x$                    | $-y$
+| sqrt      | $x^{1/2}$               | $y ^ 2$
 
-The following sections describe each type in more detail. 
-
-#### Continuous {#ssub:scale-continuous}
-
-The most common continuous position scales are `scale_x_continuous()` and `scale_y_continuous()`, which linearly map data to the x and y axis. \index{Scales!position!continuous} 
-
-The most interesting variations are produced using transformations. Every continuous scale takes a `trans` argument, allowing the specification of a variety of transformations, both linear and non-linear. 
-
-EXAMPLE
-
-The transformation is carried out by a "transformer", which describes the transformation, its inverse, and how to draw the labels. The following table lists the most common variants: \index{Transformation!scales} \indexf{scale_x_continuous} \indexf{scale_y_continuous} \index{Scales!continuous}
-
----------- ------------------------- -----------------------
-Name       Function $f(x)$           Inverse $f^{-1}(y)$
-asn        $\tanh^{-1}(x)$           $\tanh(y)$
-exp        $e ^ x$                   $\log(y)$
-identity   $x$                       $y$
-log        $\log(x)$                 $e ^ y$
-log10      $\log_{10}(x)$            $10 ^ y$
-log2       $\log_2(x)$               $2 ^ y$
-logit      $\log(\frac{x}{1 - x})$   $\frac{1}{1 + e(y)}$
-pow10      $10^x$                    $\log_{10}(y)$
-probit     $\Phi(x)$                 $\Phi^{-1}(y)$
-recip      $x^{-1}$                  $y^{-1}$
-reverse    $-x$                      $-y$
-sqrt       $x^{1/2}$                 $y ^ 2$
----------- ------------------------- -----------------------
-
-There are short cuts for the most common scales: `scale_x_log10()`, `scale_x_sqrt()` and `scale_x_reverse()` (and similarly for `y`.) \index{Log transform} \indexf{scale_x_log10} \indexf{scale_y_log10}
+There are shortcuts for the most common: `scale_x_log10()`, `scale_x_sqrt()` and `scale_x_reverse()` (and similarly for `y`.) \index{Log transform} \indexf{scale_x_log10} \indexf{scale_y_log10}
 
 Of course, you can also perform the transformation yourself. For example, instead of using `scale_x_log10()`, you could plot `log10(x)`. That produces an identical result inside the plotting region, but the axis and tick labels won't be the same. If you use a transformed scale, the axes will be labelled in the original data space. In both cases, the transformation occurs before the statistical summary.
 
-```{r trans}
-ggplot(msleep, aes(log10(brainwt), log10(bodywt))) + 
-  geom_point() + 
-  geom_smooth()
-  
-ggplot(msleep, aes(brainwt, bodywt)) + 
-  geom_point() + 
-  geom_smooth() +
-  scale_x_log10() + 
-  scale_y_log10()
-```
-
 Transformers are also used in `coord_trans()`, where the transformation occurs after the statistic has been calculated, and affects the shape of the graphical object drawn on the plot. See [cartesian coordinate systems](#sub:cartesian) for more details.
 
-#### Date and time {#ssub:scale-date}
+Dates and date times scales are continuous scales with special ways of labelling the axes. ggplot2 works with `Date` (for dates) and `POSIXct` (for date times) classes: if your dates are in a different format you will need to convert them with `as.Date()` or `as.POSIXct()`. \index{Date} \index{Time} \index{Scales!date-time} \indexf{scale_x_datetime}
 
-Dates and date times are continuous values with special ways of labelling the axes. Your dates must be stored as `date` (for dates) and `POSIXct` (for date times). If your dates are in a different format you will need to convert them with `as.Date()` or `as.POSIXct()`. \index{Date} \index{Time} \index{Scales!date-time} \indexf{scale_x_datetime}
+Like all other scales, the `breaks` and `labels` arguments control the appearance and location of the ticks. The scales package provides some break and label functions particularly useful for dates:
 
-Like all other scales, the `breaks`, `minor_breaks` and `labels` arguments control the appearance and location of the ticks. The scales package provides some break and label functions particularly useful for dates:
+*   `scales::date_breaks(width)`: specify the position of major and minor breaks 
+    in terms of date units, years, months, weeks, days, hours, minutes and 
+    seconds, and can be combined with a multiplier.  For example, 
+    `breaks = scales::date_breaks("2 weeks")` will place a major tick mark every 
+    two weeks.
 
-* `scales::date_breaks(width)`: specify the position of major and minor breaks 
-  in terms of date units, years, months, weeks, days, hours, minutes and 
-  seconds, and can be combined with a multiplier.  For example, 
-  `breaks = scales::date_breaks("2 weeks")` will place a major tick mark every 
-  two weeks.
-
-* `scales::date_labels(format)` to display components of a date. You 
-   can use the following special statements:
+*   `scales::date_labels(format)` to display components of a date. You 
+    can use the following special statements:
    
     -------------- ----------------------------------------
     Code           Meaning
@@ -568,27 +654,9 @@ plot + scale_x_date(
 )
 ```
 
-#### Discrete {#ssub:scale-discrete}
-
-Discrete position scales map the unique values of their input to integers.  The order of the result can be controlled by the `breaks` argument, and levels can be dropped with the `limits` argument (or by using `xlim()` or `ylim()`). 
-
-Because it is often useful to place labels and other annotations on intermediate positions on the plot, discrete position scales also accept continuous values.  You can use `position_nudge()` to tweak the position of labels. \index{Scales!position!discrete} \indexf{scale_x_discrete} \indexf{scale_y_discrete} \index{Scales!discrete}
-
-`r columns(2, 2/3)`
-```{r}
-df <- data.frame(trt = c("a", "b", "c"), value = c(1, 3, 2))
-ggplot(df, aes(trt, value)) + 
-  geom_point() + 
-  geom_text(aes(label = value))
-
-ggplot(df, aes(trt, value)) + 
-  geom_point() + 
-  geom_text(aes(label = value), nudge_x = 0.1)
-```
-
 ### Colour {#sub:scale-colour}
 
-After position, probably the most commonly used aesthetic is colour. There are quite a few different ways of mapping values to colours: three different gradient based methods for continuous values, and two methods for mapping discrete values. But before we look at the details of the different methods, it's useful to learn a little bit of colour theory. Colour theory is complex because the underlying biology of the eye and brain is complex, and this introduction will only touch on some of the more important issues. An excellent more detailed exposition is available online at <http://tinyurl.com/clrdtls>. \index{Colour} \index{Scales!colour}
+After position, the most commonly used aesthetic is colour. There are quite a few different ways of mapping values to colours: four different gradient based methods for continuous values, and two methods for mapping discrete values. But before we look at the details of the different methods, it's useful to learn a little bit of colour theory. Colour theory is complex because the underlying biology of the eye and brain is complex, and this introduction will only touch on some of the more important issues. An excellent more detailed exposition is available online at <http://tinyurl.com/clrdtls>. \index{Colour} \index{Scales!colour}
 
 At the physical level, colour is produced by a mixture of wavelengths of lights. To know a colour completely we need to know the complete mixture of wavelengths, but fortunately for us the human eye only has three different colour receptors, and so we can summarise any colour with just three numbers. You may be familiar with the rgb encoding of colour space, which defines a colour by the intensities of red, green and blue light needed to produce it. One problem with this space is that it is not perceptually uniform: the two colours that are one unit apart may look similar or very different depending on where they are in the colour space. This makes it difficult to create a mapping from a continuous variable to a set of colours.  There have been many attempts to come up with colours spaces that are more perceptually uniform.  We'll use a modern attempt called the hcl colour space, which has three components of **h** ue, **c** hroma and **l** uminance: \index{Colour!spaces}
 
