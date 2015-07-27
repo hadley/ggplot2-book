@@ -13,7 +13,7 @@ columns(1, 2 / 3)
 
 Scales control the mapping from data to aesthetics. They take your data and turn it into something that you can see, like size, colour, position or shape. Scales also provide the tools that let you read the plot: the axes and legends. Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the scale). The axis or legend is the inverse function: it allows you to convert visual properties back to data.
 
-You can generate many plots without knowing how scales work, but understanding scales and learning how to manipulate them will give you much more control. The basics of working with scales is described in [scale usage](#sec:scale-usage). The following sections discusses the different parameter in the scale functions. [Guides](#sec:guides) discusses the common parameters that control the axes and legends. Legends are particularly complicated so have an additional set of options as described in [legends](#sec:legends). [Limits](#sec:limits) shows how to use limits to both zoom into interesting parts of a plot, and to ensure that multiple plots have matching legends and axes. [Scale details](#sec:scale-details) gives an overview of the different types of scales available in ggplot2, which can be roughly divided into four categories: position scales, colour scales, the manual scale and the identity scale. The chapter finishes off with a rough guide to how scales work behind the scenes in  [how scales work](#sec:how-scales-work). 
+You can generate many plots without knowing how scales work, but understanding scales and learning how to manipulate them will give you much more control. The basics of working with scales is described in [scale usage](#sec:scale-usage). The following sections discusses the different parameter in the scale functions. [Guides](#sec:guides) discusses the common parameters that control the axes and legends. Legends are particularly complicated so have an additional set of options as described in [legends](#sec:legends). [Limits](#sec:limits) shows how to use limits to both zoom into interesting parts of a plot, and to ensure that multiple plots have matching legends and axes. [Scale details](#sec:scale-details) gives an overview of the different types of scales available in ggplot2, which can be roughly divided into four categories: continous position scales, colour scales, manual scales and identity scales. 
 
 ## Modifying scales {#sec:scale-usage}
 
@@ -445,7 +445,7 @@ p + guides(fill = guide_colorbar(barheight = grid::unit(3, "cm")))
 
 1.  Can you recreate the code for this plot?
 
-    `r columns(1, 1 / 3)`
+    `r columns(1, 2 / 3)`
     ```{r, echo = FALSE}
     ggplot(mpg, aes(displ, hwy, colour = class)) + 
       geom_point(show_guide = FALSE) + 
@@ -544,26 +544,25 @@ p + scale_fill_gradient(limits = c(2, 4), oob = scales::squish)
 
 ## Scales toolbox {#sec:scale-details}
 
-Apart from tweaking the options of the default scales, you can also override them completely with your new scales! Scales can be divided roughly into four groups:
+As well as tweaking the options of the default scales, you can also override them completely with new scales. Scales can be divided roughly into four families:
 
-* Position scales, used to map continuous, discrete and date-time variables 
-  onto the plotting region and to construct the corresponding axes.
+* Continious position scales used to map integer, numeric, and date time 
+  data to x and y position.
 
-* Colour scales, used to map continuous and discrete variables to colours.
+* Colour scales, used to map continuous and discrete data to colours.
 
-* Manual scales, used to map discrete variables to your choice of symbol size, 
-  line type, shape or colour, and to create the corresponding legend.
+* Manual scales, used to map discrete variables to your choice of size, 
+  line type, shape or colour.
 
-* The identity scale, used to plot variable values directly to the aesthetic 
-  rather than mapping them.  For example, if the variable you want to map to 
-  symbol colour is itself a vector of colours, you want to render those values 
-  directly rather than mapping them to some other colours.
+* The identity scale, paradoxically used to plot variables _without_
+  scaling them. This is useful if your data is already a vector of 
+  colour names.
 
-This section describes each group in more detail. Precise details about individual scales can be found in the documentation, e.g., `?scale_fill_discrete`.
+The follow sections describe each family in more detail.
 
 ### Continuous position scales {#sub:scale-position}
 
-Every plot has two position scales, the x and y scales. \index{Scales!position} \index{Positioning!scales} The most common continuous position scales are `scale_x_continuous()` and `scale_y_continuous()`, which linearly map data to the x and y axis. \index{Scales!position!continuous}. \index{Transformation!scales} \indexf{scale_x_continuous} \indexf{scale_y_continuous} The most interesting variations are produced using transformations. Every continuous scale takes a `trans` argument, allowing the use of a variety of transformations: 
+Every plot has two position scales, x and y. \index{Scales!position} \index{Positioning!scales} The most common continuous position scales are `scale_x_continuous()` and `scale_y_continuous()`, which linearly map data to the x and y axis. \index{Scales!position!continuous}. \index{Transformation!scales} \indexf{scale_x_continuous} \indexf{scale_y_continuous} The most interesting variations are produced using transformations. Every continuous scale takes a `trans` argument, allowing the use of a variety of transformations: 
 
 ```{r}
 # Convert from fuel economy to fuel consumption
@@ -597,60 +596,63 @@ The transformation is carried out by a "transformer", which describes the transf
 
 There are shortcuts for the most common: `scale_x_log10()`, `scale_x_sqrt()` and `scale_x_reverse()` (and similarly for `y`.) \index{Log transform} \indexf{scale_x_log10} \indexf{scale_y_log10}
 
-Of course, you can also perform the transformation yourself. For example, instead of using `scale_x_log10()`, you could plot `log10(x)`. That produces an identical result inside the plotting region, but the axis and tick labels won't be the same. If you use a transformed scale, the axes will be labelled in the original data space. In both cases, the transformation occurs before the statistical summary.
+Of course, you can also perform the transformation yourself. For example, instead of using `scale_x_log10()`, you could plot `log10(x)`. The appearance of the geom will be the same, but the tick labels will different. If you use a transformed scale, the axes will be labelled in the original data space; if you transform the data, the axes will be labelled in the transformed space. 
 
-Transformers are also used in `coord_trans()`, where the transformation occurs after the statistic has been calculated, and affects the shape of the graphical object drawn on the plot. See [cartesian coordinate systems](#sub:cartesian) for more details.
+In either case, the transformation occurs before any statistical summaries. To transform, _after_ statistical computation, use `coord_trans()`. See [cartesian coordinate systems](#sub:cartesian) for more details.
 
-Dates and date times scales are continuous scales with special ways of labelling the axes. ggplot2 works with `Date` (for dates) and `POSIXct` (for date times) classes: if your dates are in a different format you will need to convert them with `as.Date()` or `as.POSIXct()`. \index{Date} \index{Time} \index{Scales!date-time} \indexf{scale_x_datetime}
+Date and date time data are continuous variables with special labels. ggplot2 works with `Date` (for dates) and `POSIXct` (for date times) classes: if your dates are in a different format you will need to convert them with `as.Date()` or `as.POSIXct()`. \index{Date} \index{Time} \index{Scales!date-time} \indexf{scale_x_datetime} `scale_x_date()` and `scale_x_datetime()` work similarly to `scale_x_continuous()` but have different defaults for `breaks` and `labels`. You can override the defaults with:
 
-Like all other scales, the `breaks` and `labels` arguments control the appearance and location of the ticks. The scales package provides some break and label functions particularly useful for dates:
+*   `breaks = scales::date_breaks(width)` allows you to position breaks by
+    date units (years, months, weeks, days, hours, minutes, and seconds). 
+    For example, `breaks = scales::date_breaks("2 weeks")` will place a major 
+    tick mark every two weeks.
 
-*   `scales::date_breaks(width)`: specify the position of major and minor breaks 
-    in terms of date units, years, months, weeks, days, hours, minutes and 
-    seconds, and can be combined with a multiplier.  For example, 
-    `breaks = scales::date_breaks("2 weeks")` will place a major tick mark every 
-    two weeks.
+*   `labels = scales::date_labels(format)` controls the display of the labels
+    using the same formatting strings as in `strptime()` and `format()`:
 
-*   `scales::date_labels(format)` to display components of a date. You 
-    can use the following special statements:
-   
-    -------------- ----------------------------------------
-    Code           Meaning
-    `%S`           second (00-59)
-    `%M`           minute (00-59)
-    `%l`           hour, in 12-hour clock (1-12)
-    `%I`           hour, in 12-hour clock (01-12)
-    `%H`           hour, in 24-hour clock (00-23)
-    `%a`           day of the week, abbreviated (Mon-Sun)
-    `%A`           day of the week, full (Monday-Sunday)
-    `%e`           day of the month (1-31)
-    `%d`           day of the month (01-31)
-    `%m`           month, numeric (01-12)
-    `%b`           month, abbreviated (Jan-Dec)
-    `%B`           month, full (January-December)
-    `%y`           year, without century (00-99)
-    `%Y`           year, with century (0000-9999)
-    -------------- ----------------------------------------
-    
-    For example, if you wanted to display dates of the form 14/10/1979, you
-    would use the string `"%d/%m/%y"`. \index{Time series!date formatting}
+    | String        | Meaning
+    |---------------|-----------------------------------------
+    | `%S`          | second (00-59)
+    | `%M`          | minute (00-59)
+    | `%l`          | hour, in 12-hour clock (1-12)
+    | `%I`          | hour, in 12-hour clock (01-12)
+    | `%p`          | am/pm
+    | `%H`          | hour, in 24-hour clock (00-23)
+    | `%a`          | day of week, abbreviated (Mon-Sun)
+    | `%A`          | day of week, full (Monday-Sunday)
+    | `%e`          | day of month (1-31)
+    | `%d`          | day of month (01-31)
+    | `%m`          | month, numeric (01-12)
+    | `%b`          | month, abbreviated (Jan-Dec)
+    | `%B`          | month, full (January-December)
+    | `%y`          | year, without century (00-99)
+    | `%Y`          | year, with century (0000-9999)
+
+    For example, if you wanted to display dates like 14/10/1979, you would use 
+    the string `"%d/%m/%y"`. \index{Time series!date formatting}
 
 The code below illustrates some of these parameters.
 
 `r columns(2, 1 / 2)`
 ```{r date-scale}
-plot <- ggplot(economics, aes(date, psavert)) + geom_line() +
+base <- ggplot(economics, aes(date, psavert)) + 
+  geom_line() +
   labs(x = NULL, y = NULL)
 # Default breaks and labels
-plot
-plot + scale_x_date(
+base
+base + scale_x_date(
   labels = scales::date_format("%Y"),
   breaks = scales::date_breaks("5 years")
 )
-plot + scale_x_date(
+base + scale_x_date(
   limits = as.Date(c("2004-01-01", "2005-01-01")),
-  labels = scales::date_format("%Y-%m-%d"),
+  labels = scales::date_format("%b %y"),
   minor_breaks = scales::date_breaks("month")
+)
+base + scale_x_date(
+  limits = as.Date(c("2004-01-01", "2004-06-01")),
+  labels = scales::date_format("%m/%d"),
+  minor_breaks = scales::date_breaks("2 weeks")
 )
 ```
 
@@ -658,18 +660,20 @@ plot + scale_x_date(
 
 After position, the most commonly used aesthetic is colour. There are quite a few different ways of mapping values to colours: four different gradient based methods for continuous values, and two methods for mapping discrete values. But before we look at the details of the different methods, it's useful to learn a little bit of colour theory. Colour theory is complex because the underlying biology of the eye and brain is complex, and this introduction will only touch on some of the more important issues. An excellent more detailed exposition is available online at <http://tinyurl.com/clrdtls>. \index{Colour} \index{Scales!colour}
 
-At the physical level, colour is produced by a mixture of wavelengths of lights. To know a colour completely we need to know the complete mixture of wavelengths, but fortunately for us the human eye only has three different colour receptors, and so we can summarise any colour with just three numbers. You may be familiar with the rgb encoding of colour space, which defines a colour by the intensities of red, green and blue light needed to produce it. One problem with this space is that it is not perceptually uniform: the two colours that are one unit apart may look similar or very different depending on where they are in the colour space. This makes it difficult to create a mapping from a continuous variable to a set of colours.  There have been many attempts to come up with colours spaces that are more perceptually uniform.  We'll use a modern attempt called the hcl colour space, which has three components of **h** ue, **c** hroma and **l** uminance: \index{Colour!spaces}
+At the physical level, colour is produced by a mixture of wavelengths of lights. To characterise a colour completely we need to know the complete mixture of wavelengths. Fortunately for us the human eye only has three different colour receptors, and so we can summarise the perception of any colour with just three numbers. You may be familiar with the rgb encoding of colour space, which defines a colour by the intensities of red, green and blue light needed to produce it. One problem with this space is that it is not perceptually uniform: the two colours that are one unit apart may look similar or very different depending on where they are in the colour space. This makes it difficult to create a mapping from a continuous variable to a set of colours. There have been many attempts to come up with colours spaces that are more perceptually uniform.  We'll use a modern attempt called the hcl colour space, which has three components of **h** ue, **c** hroma and **l** uminance: \index{Colour!spaces}
 
-* Hue is a number between 0 and 360 (an angle) which gives the ``colour'' of 
+* Hue is a number between 0 and 360 (an angle) which gives the "colour" of 
   the colour: like blue, red, orange, etc.
 
-* Luminance is the lightness of the colour.  A luminance of 0 produces black, 
+* Luminance is the lightness of the colour. A luminance of 0 produces black, 
   and a luminance of 1 produces white.
 
 * Chroma is the purity of a colour.  A chroma of 0 is grey, and the maximum 
   value of chroma varies with luminance.
 
-The combination of these three components does not produce a simple geometric shape.  Figure \ref{fig:hcl} attempts to show the 3d shape of the space.  Each slice is a constant luminance (brightness) with hue mapped to angle and chroma to radius.  You can see the centre of each slice is grey and the colours get more intense as they get closer to the edge.
+Hues are not perceived as being ordered: e.g. green does not seem "larger" than red. The perception of chroma and luminance are ordered.
+
+The combination of these three components does not produce a simple geometric shape. Figure \ref{fig:hcl} attempts to show the 3d shape of the space. Each slice is a constant luminance (brightness) with hue mapped to angle and chroma to radius.  You can see the centre of each slice is grey and the colours get more intense as they get closer to the edge.
 
 \begin{figure}[htbp]
   \centering
@@ -680,65 +684,26 @@ The combination of these three components does not produce a simple geometric sh
 
 An additional complication is that many people (~10% of men) do not possess the normal complement of colour receptors and so can distinguish fewer colours than usual. \index{Colour!blindness} In brief, it's best to avoid red-green contrasts, and to check your plots with systems that simulate colour blindness. Visicheck is one online solution. Another alternative is the **dichromat** package [@dichromat] which provides tools for simulating colour blindness, and a set of colour schemes known to work well for colour-blind people. You can also help people with colour blindness in the same way that you can help people with black-and-white printers: by providing redundant mappings to other aesthetics like size, line type or shape.
 
-All of the scales discussed in the following sections work with border (`colour`) and fill (`fill`) colour aesthetics.
-
-#### Discrete {#ssub:colour-discrete}
-
-There are two colour scales for discrete data, one which chooses colours in an automated way, and another which makes it easy to select from hand-picked sets.
-
-Ordered vs. unordered.
-
-The default colour scheme, `scale_colour_hue()`, picks evenly spaced hues around the hcl colour wheel.  This works well for up to about eight colours, but after that it becomes hard to tell the different colours apart.  Another disadvantage of the default colour scheme is that because the colours all have the same luminance and chroma, when you print them in black and white, they all appear as an identical shade of grey. \index{Colour!discrete scale} \indexf{scale_colour_hue}
-
-`scale_colour_grey()`
-
-An alternative to this algorithmic scheme is to use the ColorBrewer colours, <http://colorbrewer2.org/>. These colours have been hand picked to work well in a wide variety of situations, although the focus is on maps and so the colours tend to work better when displayed in large areas. For categorical data, the palettes most of interest are 'Set1' and 'Dark2' for points and 'Set2', 'Pastel1', 'Pastel2' and 'Accent' for areas. Use `RColorBrewer::display.brewer.all()` to list all palettes. \index{Colour!Brewer} \indexf{scale_colour_brewer}
-
-Not that one set of colours is not uniformly good: bright colours work well for points, but are overwhelming on bars. Subtle colours work well for bars, but are hard to see on points."
-
-```{r brewer-pal}
-df <- data.frame(x = 1:3 + runif(30), y = runif(30), z = c("a", "b", "c"))
-point <- ggplot(df, aes(x, y)) +
-  geom_point(aes(colour = z))  + 
-  theme(legend.position = "bottom") +
-  labs(x = NULL, y = NULL)
-point + scale_colour_brewer(palette = "Set1")
-point + scale_colour_brewer(palette = "Set2")  
-point + scale_colour_brewer(palette = "Pastel1")
-
-df <- data.frame(x = 1:3, y = 3:1, z = c("a", "b", "c"))
-area <- ggplot(df, aes(x, y)) + 
-  geom_bar(aes(fill = z), stat = "identity") + 
-  theme(legend.position = "bottom") +
-  labs(x = NULL, y = NULL)
-area + scale_fill_brewer(palette = "Set1")
-area + scale_fill_brewer(palette = "Set2")
-area + scale_fill_brewer(palette = "Pastel1")
-```
-
-If you have your own discrete colour scale, you can use `scale_colour_manual()`, as described below.
-
-
 #### Continuous {#ssub:colour-continuous}
 
-Colour gradients are often used to show the height of a 2d surface. In the following example we'll use the surface of a 2d density estimate of the `faithful` dataset [@azzalini:1990], which records the waiting time between eruptions and during each eruption for the Old Faithful geyser in Yellowstone Park. I hide the legends and set `expand` to 0, to focus on the appearance of the data.  \index{Colour!gradients} x\index{Scales!colour!gradient}. Remember: I'm illustrating these scales with filled tiles, but they all also apply to coloured lines, points, etc.
+Colour gradients are often used to show the height of a 2d surface. In the following example we'll use the surface of a 2d density estimate of the `faithful` dataset [@azzalini:1990], which records the waiting time between eruptions and during each eruption for the Old Faithful geyser in Yellowstone Park. I hide the legends and set `expand` to 0, to focus on the appearance of the data.  \index{Colour!gradients} x\index{Scales!colour!gradient}. Remember: I'm illustrating these scales with filled tiles, but you can also use them with coloured lines and points.
 
 `r columns(3, 1)`
 ```{r}
 erupt <- ggplot(faithfuld, aes(waiting, eruptions, fill = density)) +
   geom_raster() +
-  scale_x_continuous(expand = c(0, 0)) + 
-  scale_y_continuous(expand = c(0, 0)) + 
+  scale_x_continuous(NULL, expand = c(0, 0)) + 
+  scale_y_continuous(NULL, expand = c(0, 0)) + 
   theme(legend.position = "none")
-erupt
 ```
 
 There are four continuous colour scales:
 
 *   `scale_colour_gradient()` and `scale_fill_gradient()`: a two-colour gradient, 
-    low-high (light blue-dark blue).  Arguments `low` and `high` control the 
-    colours at either end of the gradient. \indexf{scale_colour_gradient}
-    \indexf{scale_fill_gradient}
+    low-high (light blue-dark blue). This is the default scale for continous
+    colour, and is the same as `scale_colour_continuous()`. Arguments `low` and
+    `high` control the colours at either end of the gradient.
+    \indexf{scale_colour_gradient} \indexf{scale_fill_gradient}
 
     Generally, for continuous colour scales you want to keep hue constant, and 
     vary chroma and luminance. The munsell colour system is useful for this
@@ -747,11 +712,10 @@ There are four continuous colour scales:
     chroma and luminance values for a given hue.
   
     ```{r}
+    erupt
+
     erupt + scale_fill_gradient(low = "white", high = "black")
-    erupt + scale_fill_gradient(
-      low = munsell::mnsl("5B 3/2"), 
-      high = munsell::mnsl("5B 8/6")
-    )
+    
     erupt + scale_fill_gradient(
       low = munsell::mnsl("5G 9/2"), 
       high = munsell::mnsl("5G 6/8")
@@ -775,31 +739,30 @@ There are four continuous colour scales:
     erupt + scale_fill_gradient2(midpoint = mid) 
     ```
     
-*   `scale_colour_gradientn()` and `scale_fill_gradientn()`: a custom n-colour 
-    gradient. This scale requires a vector of colours in the `colours` argument.  
-    Without further arguments these colours will be evenly spaced along the 
-    range of the data.  If you want the values to be unequally spaced, use the 
-    `values` argument, which should be between 0 and 1 if `rescale` is true 
-    (the default), or within the range of the data is `rescale` is false.
+*   `scale_colour_gradientn()` and `scale_fill_gradientn()`: a custom n-colour
+    gradient. This is useful if you have colours that are meaningful for your 
+    data (e.g., black body colours or standard terrain colours), or you'd like 
+    to use a palette produced by another package. The following code includes 
+    palettes generated from routines in the **colorspace** package. 
+    [@zeileis:2008] describes the philosophy behind these palettes and provides 
+    a good introduction to some of the complexities of creating good colour 
+    scales. \index{Colour!palettes} \indexf{scale_colour_gradientn}
+    \indexf{scale_fill_gradientn}
     
-    To create your own custom gradient, use `scale_colour_gradientn()`. This is     
-    useful if you have colours that are meaningful for your data (e.g., black 
-    body colours or standard terrain colours), or you'd like to use a palette
-    produced by another package. The following code shows palettes generated from
-    routines in the **colorspace** package. [@zeileis:2008] describes the philosophy
-    behind these palettes and provides a good introduction to some of the
-    complexities of creating good colour scales. \index{Colour!palettes} 
-    \indexf{scale_colour_gradientn} \indexf{scale_fill_gradientn}
-
     ```{r colorspace}
-    erupt + scale_fill_gradientn(colours = colorspace::rainbow_hcl(7))
-    erupt + scale_fill_gradientn(colours = colorspace::diverge_hcl(7))
+    erupt + scale_fill_gradientn(colours = terrain.colors(7))
     erupt + scale_fill_gradientn(colours = colorspace::heat_hcl(7))
+    erupt + scale_fill_gradientn(colours = colorspace::diverge_hcl(7))
     ```
+    
+    By default, `colours` will evenly spaced along the range of the data. To
+    make them unevenly spaced, use the`values` argument, which should be between 
+    0 and 1 if `rescale` is true (the default), or within the range of the data 
+    is `rescale` is false.
 
-*   `scale_color_distiller()` and `scale_fill_gradient()` apply the Brewer 
-    colour scales to continous  data. You use it the same way as
-    `scale_fill_brewer()`:
+*   `scale_color_distiller()` and `scale_fill_gradient()` apply the ColorBrewer 
+    colour scales to continous data. You use it the same way as
+    `scale_fill_brewer()`, described below:
 
     ```{r}
     erupt + scale_fill_distiller()
@@ -819,11 +782,99 @@ p + scale_fill_gradient(na.value = NA)
 p + scale_fill_gradient(low = "black", high = "white", na.value = "red")
 ```
 
+#### Discrete {#ssub:colour-discrete}
+
+There are four colour scales for discrete data. We'll illustrate them with a barchar that encodes both position and fill to the same variable:
+
+`r columns(3, 1)`
+```{r}
+df <- data.frame(x = c("a", "b", "c", "d"), y = c(3, 4, 1, 2))
+bars <- ggplot(df, aes(x, y, fill = x)) + 
+  geom_bar(stat = "identity") + 
+  labs(x = NULL, y = NULL) +
+  theme(legend.position = "none")
+```
+
+*   The default colour scheme, `scale_colour_hue()`, picks evenly spaced hues 
+    around the hcl colour wheel. This works well for up to about eight colours, 
+    but after that it becomes hard to tell the different colours apart. You
+    can control the default chroma and luminance, and the range of hues, with 
+    the `h`, `c` and `l` arguments:
+    
+    ```{r}
+    bars
+    bars + scale_fill_hue(c = 40)
+    bars + scale_fill_hue(h = c(180, 300))
+    ```
+    
+    One disadvantage of the default colour scheme is that because the colours 
+    all have the same luminance and chroma, when you print them in black and 
+    white, they all appear as an identical shade of grey. 
+    \index{Colour!discrete scale} \indexf{scale_colour_hue}
+    
+*   `scale_colour_brewer()` uses hand picked "ColorBrewer" colours,
+    <http://colorbrewer2.org/>. These colours have been hand picked to work well
+    in a wide variety of situations, although the focus is on maps and so the 
+    colours tend to work better when displayed in large areas. For categorical 
+    data, the palettes most of interest are 'Set1' and 'Dark2' for points and 
+    'Set2', 'Pastel1', 'Pastel2' and 'Accent' for areas. Use
+    `RColorBrewer::display.brewer.all()` to list all palettes. 
+    \index{Colour!Brewer} \indexf{scale_colour_brewer}
+
+    ```{r}
+    bars + scale_fill_brewer(palette = "Set1")
+    bars + scale_fill_brewer(palette = "Set2")
+    bars + scale_fill_brewer(palette = "Accent")
+    ```
+    
+*   `scale_colour_grey()` maps discrete data to grays, from light to dark.
+
+    ```{r}
+    bars + scale_fill_grey()
+    bars + scale_fill_grey(start = 0.5, end = 1)
+    bars + scale_fill_grey(start = 0, end = 0.5)
+    ```
+    
+*   `scale_colour_manual()` is useful if you have your own discrete colour
+    palette. The following examples show colour palettes inspired by
+    Wes Anderson movies, as provided by the WesAnderson package. These
+    are not designed for perceptual uniformity, but are fun!
+    
+    ```{r}
+    library(wesanderson)
+    bars + scale_fill_manual(values = wes_palette("GrandBudapest"))
+    bars + scale_fill_manual(values = wes_palette("Zissou"))
+    bars + scale_fill_manual(values = wes_palette("Rushmore"))
+    ```
+
+Note that one set of colours is not uniformly good for all purposes: bright colours work well for points, but are overwhelming on bars. Subtle colours work well for bars, but are hard to see on points:
+
+`r columns(3, 1)`
+```{r brewer-pal}
+df <- data.frame(x = 1:3 + runif(30), y = runif(30), z = c("a", "b", "c"))
+point <- ggplot(df, aes(x, y)) +
+  geom_point(aes(colour = z))  + 
+  theme(legend.position = "none") +
+  labs(x = NULL, y = NULL)
+point + scale_colour_brewer(palette = "Set1")
+point + scale_colour_brewer(palette = "Set2")  
+point + scale_colour_brewer(palette = "Pastel1")
+
+df <- data.frame(x = 1:3, y = 3:1, z = c("a", "b", "c"))
+area <- ggplot(df, aes(x, y)) + 
+  geom_bar(aes(fill = z), stat = "identity") + 
+  theme(legend.position = "none") +
+  labs(x = NULL, y = NULL)
+area + scale_fill_brewer(palette = "Set1")
+area + scale_fill_brewer(palette = "Set2")
+area + scale_fill_brewer(palette = "Pastel1")
+```
+
 ### The manual discrete scale {#sub:scale-manual}
 
-The discrete scales, `scale_linetype()`, `scale_shape()` and `scale_size_discrete()` basically have no options (although for the shape scale you can choose whether points should be filled or solid). These scales are just a list of valid values that are mapped to each factor level in turn. \index{Shape!scale} \index{Line type!scale} \index{Size!scale}
+The discrete scales, `scale_linetype()`, `scale_shape()` and `scale_size_discrete()` basically have no options. These scales are just a list of valid values that are mapped to the unique discrete values. \index{Shape!scale} \index{Line type!scale} \index{Size!scale}
 
-If you want to customise these scales, you need to create your own new scale with the manual scale: `scale_shape_manual()`, `scale_linetype_manual()`, `scale_colour_manual()`, etc. The manual scale has one important argument, `values`, where you specify the values that the scale should produce. If this vector is named, it will match the values of the output to the values of the input, otherwise it will match in order of the levels of the discrete variable. You will need some knowledge of the valid aesthetic values, which are described in [specifications](#cha:specifications). The following code demonstrates the use of `scale_manual`, with results shown in Figure \ref{fig:scale-manual} \indexf{scale_shape_manual} \indexf{scale_colour_manual} \indexf{scale_linetype_manual}
+If you want to customise these scales, you need to create your own new scale with the manual scale: `scale_shape_manual()`, `scale_linetype_manual()`, `scale_colour_manual()`. The manual scale has one important argument, `values`, where you specify the values that the scale should produce. If this vector is named, it will match the values of the output to the values of the input, otherwise it will match in order of the levels of the discrete variable. You will need some knowledge of the valid aesthetic values, which are described in [specifications](#cha:specifications). The following code demonstrates the use of `scale_colour_manual`: \ref{fig:scale-manual} \indexf{scale_shape_manual} \indexf{scale_colour_manual} \indexf{scale_linetype_manual}
 
 `r columns(2, 2/3)`
 ```{r scale-manual}
@@ -840,7 +891,7 @@ plot +
   scale_colour_manual(values = colours)
 ```
 
-The following example shows a creative use of `scale_colour_manual()`, when you want to display multiple variables on the same plot, and show a useful legend. In most other plotting systems, you'd just colour the lines as below, and then add a legend that describes which colour corresponds to which variable.  That doesn't work in ggplot because it's the scales that are responsible for drawing legends, and the scale doesn't know how the lines should be labelled.
+The following example shows a creative use of `scale_colour_manual()` to display multiple variables on the same plot and show a useful legend. In most other plotting systems, you'd just colour the lines as below, and then add a legend that describes which colour corresponds to which variable. That doesn't work in ggplot because it's the scales that are responsible for drawing legends, and the scale doesn't know how the lines should be labelled.
 
 `r columns(1, 1/2, 0.6)`
 ```{r huron}
@@ -850,7 +901,7 @@ ggplot(huron, aes(year)) +
   geom_line(aes(y = level - 5), colour = "blue") 
 ```
 
-What you need to do is tell the colour scale about the two different lines by creating a mapping from the data to the colour aesthetic. There's no variable present in the data, so you'll have to create one:
+What you need to do is give the lines informatives labels:
 
 ```{r huron2}
 ggplot(huron, aes(year)) +
@@ -858,22 +909,22 @@ ggplot(huron, aes(year)) +
   geom_line(aes(y = level - 5, colour = "below")) 
 ```
 
-This gets us basically what we want, but the legend isn't labelled correctly, and has the wrong colours.  That can be fixed with `scale_colour_manual()`:
+And then tell the scale how to map labels to colours:
 
 ```{r huron3}
 ggplot(huron, aes(year)) +
   geom_line(aes(y = level + 5, colour = "above")) + 
   geom_line(aes(y = level - 5, colour = "below")) + 
-  scale_colour_manual("Direction", values =
-                      c("above" = "red", "below" = "blue"))
+  scale_colour_manual("Direction", 
+    values = c("above" = "red", "below" = "blue")
+  )
 ```
 
-See [multiple time series](#sub:time-series) for an alternative approach to the problem.
+See [multiple time series](#sub:time-series) for another approach.
 
 ### The identity scale {#sub:scale-identity}
 
-The identity scale is used when your data is already in a form that the plotting functions in R understand, i.e., when the data and aesthetic spaces are the same.  This means there is no way to derive a meaningful legend from the data alone, and by default a legend is not drawn. The identity scale can also be useful in the case where you have manually scaled the data to aesthetic values. If you want one, you can still use the `breaks` and `labels` arguments to set it up yourself. \index{Scales!identity} \indexf{scale_identity}
-
+The identity scale is used when your data is already scaled, when the data and aesthetic spaces are the same. \index{Scales!identity} \indexf{scale_identity}
 The code below shows an example where the identity scale is useful. We've taken all the colours names built in R and converted them into the Luv colour space. Here we want to use the colour of the point as the colour, and a legend is unnecessary, because the colour of the points represents itself: the data and aesthetic spaces are the same.
 
 ```{r scale-identity}
@@ -886,46 +937,3 @@ ggplot(luv, aes(u, v)) +
   scale_color_identity() + 
   coord_equal()
 ```
-
-## How scales work {#sec:how-scales-work}
-
-To describe how scales work, we will first describe the domain (the data space) and the range (the aesthetic space), and then outline the process by which one is mapped to the other.
-
-Since an input variable is either discrete or continuous, the domain is either a set of values (stored as a factor, character vector or logical vector) \indexf{Discrete variables} or an interval on the real line (stored as a numeric vector of length 2). For example, in the mammals sleep dataset (`msleep`), the domain of the discrete variable `vore` is \{carni, herbi, omni, insecti\}, and the domain of the continuous variable `bodywt` is $[0.005, 6654]$.  We often think of these as data ranges, but here we are focussing on their nature as input to the scale, i.e., as a domain of a function. \index{Data!msleep@\texttt{msleep}}
-
-The range can also be discrete or continuous. For discrete scales, it is a vector of aesthetic values corresponding to the input values. For continuous scales, it is a 1d path through some more complicated space. For example, a colour gradient interpolates linearly from one colour to another. The range is either specified by the user when the scale is created, or by the scale itself.
-
-The process of mapping the domain to the range includes the following stages:
-
-*   __transformation__: (for continuous domain only). It is often useful to 
-    display a transformation of the data, such as a logarithm or square root.
-    Transformations are described in more depth in 
-    [position scales](#sub:scale-position). \index{Scales!transformation}
-
-    After any transformations have been applied, the statistical summaries for 
-    each layer are computed based on the transformed data. This ensures that a 
-    plot of $\log(x)$ vs. $\log(y)$ on linear scales looks the same as 
-    $x$ vs. $y$ on log scales.
-
-*   __training__:  During this key stage, the domain of the scale is learned
-    from the data. Sometimes learning the domain of a scale is extremely 
-    straightforward: In a plot with only one layer, representing only raw data, 
-    it consists of determining the minimum and maximum values of a continuous 
-    variable (after transformation), or listing the unique levels of a 
-    categorical variable.  However, often the domain must reflect multiple
-    layers across multiple datasets in multiple panels.  For example, imagine 
-    a scale that will be used to create an axis; the minimum and maximum 
-    values of the raw data in the first layer and the statistical summary in 
-    the second layer are likely to be different, but they must all eventually 
-    be drawn on the same plot. \index{Scales!training}
- 
-    The domain can also be specified directly, overriding the training process, 
-    by manually setting the domain of the scale with the `limits` argument, 
-    as described in [scale usage](#sec:scale-usage).  Any values outside of the
-    domain of the scale will be mapped to `NA`.
-
-*   __mapping__:  We now know the domain and we already knew the range before 
-    we started this process, so the last thing to do is to apply the scaling 
-    function that maps data values to aesthetic values.  \index{Scales!mapping}
-
-We have left a few stages out of this description of the process for simplicity.  For example, we haven't discussed the role faceting plays in training, and we have also ignored position adjustments.  Nevertheless this description is accurate, and you should come back to it if you are confused about what scales are doing in your plot.
