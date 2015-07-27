@@ -1,5 +1,6 @@
 library(ggplot2)
-options(digits = 3)
+library(dplyr)
+options(digits = 3, dplyr.print_min = 6)
 
 knitr::opts_chunk$set(
   comment = "#>",
