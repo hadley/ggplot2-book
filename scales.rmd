@@ -891,7 +891,7 @@ plot +
   scale_colour_manual(values = colours)
 ```
 
-The following example shows a creative use of `scale_colour_manual()` to display multiple variables on the same plot and show a useful legend. In most other plotting systems, you'd just colour the lines as below, and then add a legend that describes which colour corresponds to which variable. That doesn't work in ggplot because it's the scales that are responsible for drawing legends, and the scale doesn't know how the lines should be labelled.
+The following example shows a creative use of `scale_colour_manual()` to display multiple variables on the same plot and show a useful legend. In most other plotting systems, you'd colour the lines and then add a legend:
 
 `r columns(1, 1/2, 0.6)`
 ```{r huron}
@@ -901,7 +901,7 @@ ggplot(huron, aes(year)) +
   geom_line(aes(y = level - 5), colour = "blue") 
 ```
 
-What you need to do is give the lines informatives labels:
+That doesn't work in ggplot because there's no way to add legend manually. Instead, give the lines informative labels:
 
 ```{r huron2}
 ggplot(huron, aes(year)) +
@@ -924,16 +924,21 @@ See [multiple time series](#sub:time-series) for another approach.
 
 ### The identity scale {#sub:scale-identity}
 
-The identity scale is used when your data is already scaled, when the data and aesthetic spaces are the same. \index{Scales!identity} \indexf{scale_identity}
-The code below shows an example where the identity scale is useful. We've taken all the colours names built in R and converted them into the Luv colour space. Here we want to use the colour of the point as the colour, and a legend is unnecessary, because the colour of the points represents itself: the data and aesthetic spaces are the same.
+The identity scale is used when your data is already scaled, when the data and aesthetic spaces are the same. The code below shows an example where the identity scale is useful. `luv_colours` contains the locations of all R's built-in colours in the Luv colour space (the space that hcl is based on). A legend is unnecessary, because the point colour represents itself: the data and aesthetic spaces are the same. \index{Scales!identity} \indexf{scale_identity}
 
 ```{r scale-identity}
-luv <- as.data.frame(convertColor(t(col2rgb(colors())), "sRGB", "Luv"))
-luv$col <- colors()
-head(luv)
+head(luv_colours)
 
-ggplot(luv, aes(u, v)) + 
+ggplot(luv_colours, aes(u, v)) + 
   geom_point(aes(colour = col), size = 3) + 
   scale_color_identity() + 
   coord_equal()
 ```
+
+### Exericses
+
+1.  Compare and contrast with the four continuous colour scales with the four
+    discrete scales.
+    
+1.  Explore the distribution of the built-in in `colors()` using the 
+    `luv_colours` dataset.
