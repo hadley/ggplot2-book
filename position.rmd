@@ -256,6 +256,29 @@ plot + facet_wrap(~disp_n, nrow = 1)
 
 Note that the faceting formula does not evaluate functions so you must first create a new variable containing the discretised data.
 
+### Exercises
+
+1.  Diamonds: display the distribution of price conditional
+    on cut and carat. Try facetting by cut and grouping by carat. Try
+    facetting by carat and grouping by cut. Which do you prefer?
+    
+1.  Diamonds: compare the relationship between price and carat for
+    each colour. What makes it hard to compare the groups? Is grouping better 
+    or facetting? If you use facetting, what annotation might you add to 
+    make it easier to see the differences between panels?
+
+1.  Why is `facet_wrap()` generally more useful than `facet_grid()`?
+
+1.  Recreate the following plot. It facets `mpg2` by class, overlaying
+    a smooth curve fit to the full dataset.
+
+    ```{r, echo = FALSE}
+    ggplot(mpg2, aes(displ, hwy)) + 
+      geom_smooth(data = select(mpg2, -class), se = FALSE) + 
+      geom_point() + 
+      facet_wrap(~class, nrow = 2)
+    ```
+
 ## Coordinate systems {#sec:coord}
 
 Coordinate systems have two main jobs: 
@@ -437,16 +460,21 @@ base +
 
 Using polar coordinates gives rise to pie charts and wind roses (from bar geoms), and radar charts (from line geoms). Polar coordinates are often used for circular data, particularly time or direction, but the perceptual properties are not good because the angle is harder to perceive for small radii than it is for large radii.  The `theta` argument determines which position variable is mapped to angle (by default, x) and which to radius.  Figure \ref{fig:polar} shows how by changing the coordinate system we can turn a bar chart into a pie chart or a bullseye chart. The documentation includes other examples of polar charts. \index{Polar coordinates} \index{Coordinate systems!polar} \indexf{coord_polar}
 
-`r columns(3)`
+`r columns(3, 1)`
 ```{r polar}
+base <- ggplot(mtcars, aes(factor(1), fill = factor(cyl))) +
+  geom_bar(width = 1) + 
+  theme(legend.position = "none") + 
+  xlab(NULL) + ylab(NULL)
+
 # Stacked barchart
-(pie <- ggplot(mtcars, aes(x = factor(1), fill = factor(cyl))) +
-  geom_bar(width = 1))
+base
+
 # Pie chart
-pie + coord_polar(theta = "y")
+base + coord_polar(theta = "y")
 
 # The bullseye chart
-pie + coord_polar()
+base + coord_polar()
 ```
 
 ### Map projections with `coord_map()`
@@ -480,8 +508,8 @@ Maps are intrinsically displays of spherical data. Simply plotting raw longitude
     world <- map_data("world")
     worldmap <- ggplot(world, aes(long, lat, group = group)) +
       geom_path() +
-      scale_y_continuous(NULL, breaks = (-2:3) * 30) +
-      scale_x_continuous(NULL, breaks = (-4:4) * 45)
+      scale_y_continuous(NULL, breaks = (-2:3) * 30, labels = NULL) +
+      scale_x_continuous(NULL, breaks = (-4:4) * 45, labels = NULL)
     
     worldmap + coord_map()
     # Some crazier projections
