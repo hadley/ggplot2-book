@@ -11,45 +11,77 @@ source("common.R")
 
 In this chapter you will learn how to prepare polished plots for publication.  Most of this chapter focusses on the theming capability of ggplot which allows you to control many non-data aspects of plot appearances, but you'll also learn functions that make adding annotations easier and the best way to save plots for inclusion into other software packages. \index{Publication!polishing plots for}
 
-The visual appearance of the plot is determined by both data and non-data related components.  [Themes](#sec:themes) introduces the theme system which controls all aspects of non-data display.  By now you should be familiar with the many ways that you can alter the data-related components of the plot---layers and scales---to visualise your data and change the appearance of the plot.
+Imagine you've made the following plot of your data.
 
-[Saving your output](#sec:saving) discusses the chapter with a discussion about how to get your graphics out of R and into LaTeX, Word or other presentation or word-processing software.  [Multiple plots on the same page](#sec:grid-layout) concludes with a discussion of how to lay out multiple plots on a single page.
+`r columns(1, 2/3)`
+```{r}
+base <- ggplot(mpg, aes(cty, hwy, color = factor(cyl))) +
+  geom_jitter() + 
+  geom_abline(colour = "grey50", size = 2)
+base
+```
 
-<!--
-% Need cross-refs here to changing axis, legend and plot titles
-% And guide breaks and legends
--->
+It's served it's purpose to you: you know now that `cty` and `hwy` are highly correlated, and that both are highly related to the number of cylinders. But now you want to share that plot with others by including it in a paper. That's going to necesitate some changes. First, we need:
+
+* Need better labels for the axes and legend
+* A better colour scale
+* A plot title.
+
+Fortunately you know how to do that already because you've read the scales chapter:
+
+```{r}
+labelled <- base +
+  labs(
+    x = "City mileage/gallon",
+    y = "Highway mileage/gallon",
+    colour = "Cylinders",
+    title = "Highway vs. city mileage per gallon"
+  ) +
+  scale_colour_brewer(type = "seq", palette = "Spectral")
+labelled
+```
+
+But know you need to learn about the themeing system so you can make it compatible with the journal style.
+
+```{r theme-ex1a}
+styled <- labelled +
+  theme_bw() + 
+  theme(
+    axis.text = element_text(size = 14),
+    plot.title = element_text(face = "bold"),
+    legend.background = element_rect(fill = "white", size = 4, colour = "white"),
+    legend.justification = c(0, 1),
+    legend.position = c(0, 1),
+    axis.ticks = element_line(colour = "grey70", size = 0.2),
+    panel.grid.major = element_line(colour = "grey70", size = 0.2),
+    panel.grid.minor = element_blank()
+  )
+styled
+```
+
+Finally, the journal wants the file as a 600 dpi TIFF file. [Saving your output](#sec:saving) discusses the chapter with a discussion about how to get your graphics out of R and into LaTeX, Word or other presentation or word-processing software.  
 
 ## Themes {#sec:themes}
 
+The theming system in ggplot2 enables a user to control non-data elements of a ggplot object. It is composed of the following:
+
+* theme _elements_, which refer to individual attributes of a graphic
+  that are independent of the data, such as font size, axis ticks,
+  appearance of grid lines or background color of a legend;
+
+* theme _element functions_, which enables you to modify the settings
+  of certain theme elements;
+
+* theme _functions_, which define the settings of a collection of
+  theme elements for the purpose of creating a specific style of
+  graphics production;
+
+* the `theme()` function, used to locally modify one or more theme
+  elements in a specific ggplot object
+
 The appearance of non-data elements of the plot is controlled by the theme system. The theme system does not affect how the data is rendered by geoms, or how it is transformed by scales. Themes don't change the perceptual properties of the plot, but they do help you make the plot aesthetically pleasing or match existing style guides. Themes give you control over things like the fonts in all parts of the plot: the title, axis labels, axis tick labels, strips, legend labels and legend key labels; and the colour of ticks, grid lines and backgrounds (panel, plot, strip and legend). \index{Themes} \index{Publication!themes}
 
-This separation of control into data and non-data parts is quite different than base and lattice graphics.  In base and lattice graphics, most functions take a large number of arguments that specify both data and non-data appearance, which makes the functions complicated and hard to learn. ggplot2 takes a different approach: when creating the plot you determine how the data is displayed, then *after* it has been created you can edit every detail of the rendering, using the theming system.  Some of the effects of changing the theme of a plot are shown in below:
-
-`r columns(3, 1)`
-```{r themes}
-base <- ggplot(mpg, aes(displ, hwy)) + geom_point()
-base
-base + theme_bw()
-base + theme_minimal()
-```
-
-Like many other areas of ggplot2, themes can be controlled on multiple levels from coarse to fine. You can:
-
-* Use a complete theme. This affects every element of the plot in a visually 
-  consistent manner.  The default theme uses a grey panel background with white 
-  gridlines; however, there are built-in alternatives such as `theme_bw()` 
-  which uses a white background with grey gridlines 
-  ([link to section](#sec:built-in)).
-  
-* Modify a single element of a built-in theme. Each theme is made up of 
-  multiple elements. The theme system comes with a number of built-in element 
-  rendering functions with a limited set of parameters. By adjusting these 
-  parameters you can control things like text size and colour, background and 
-  grid line colours and text orientation.  By combining multiple elements you 
-  can create your own theme ([link to section](#sec:theme-elements)).
-
-### Complete themes {#sec:built-in}
+This separation of control into data and non-data parts is quite different than base and lattice graphics.  In base and lattice graphics, most functions take a large number of arguments that specify both data and non-data appearance, which makes the functions complicated and hard to learn. ggplot2 takes a different approach: when creating the plot you determine how the data is displayed, then *after* it has been created you can edit every detail of the rendering, using the theming system. 
 
 ggplot2 comes with a number of built in themes: \index{Themes!built-in}
 
@@ -84,34 +116,56 @@ ggplot2 comes with a number of built in themes: \index{Themes!built-in}
    
 * `theme_void()`: A completely empty theme. 
 
+`r columns(3, 2/3)`
 ```{r}
 df <- data.frame(x = 1:3, y = 1:3)
 base <- ggplot(df, aes(x, y)) + geom_point()
-base + theme_grey() 
-base + theme_bw()
-base + theme_linedraw()
-base + theme_light()
-base + theme_dark()
-base + theme_minimal() 
-base + theme_classic()
-base + theme_void()
+base + theme_grey() + ggtitle("theme_grey()")
+base + theme_bw() + ggtitle("theme_bw()")
+base + theme_linedraw() + ggtitle("theme_linedraw()")
+base + theme_light() + ggtitle("theme_bw()")
+base + theme_dark() + ggtitle("theme_dark()")
+base + theme_minimal()  + ggtitle("theme_minimal()")
+base + theme_classic() + ggtitle("theme_classic()")
+base + theme_void() + ggtitle("theme_void()")
 ```
 
 All themes have a `base_size` parameter which controls the base font size. The base font size is the size that the axis titles use: the plot title is usually bigger, and the tick and strip labels are smaller. If you want to control these sizes separately, you'll need to modify the individual elements as described in the following section.
 
 You're not limited to just built-in themes. Other packages, like ggtheme, add even more. Here's a selection:
 
-`r columns(3, 1)`
 ```{r}
 library(ggthemes)
-base + theme_tufte() 
-base + theme_solarized()
-base + theme_excel() # ;)
+base + theme_tufte() + ggtitle("theme_tufte()")
+base + theme_solarized() + ggtitle("theme_solarized()")
+base + theme_excel() + ggtitle("theme_excel()") # ;)
 ```
 
-### Theme elements and element functions {#sec:theme-elements}
+As well as using a complete theme, you can modifying each component individually. The theme system comes with a number of built-in element rendering functions with a limited set of parameters. By adjusting these parameters you can control things like text size and colour, background and grid line colours and text orientation, as you'll see in the following section.
 
-A theme is made up of multiple *elements* which control the appearance of a single item on the plot, as listed in Table~\ref{tbl:elements}. There are three elements that have individual `x` and `y` settings: `axis.text`, `axis.title` and `strip.text`. Having a different setting for the horizontal and vertical elements allows you to control how text should appear in different orientations. The appearance of each element is controlled by an *element function*. \index{Themes!elements}
+## Theme elements
+
+A theme is made up of multiple __elements__ which control the appearance of a single item on the plot. There are around 40 unique elements, than can roughly grouped into five categories: \index{Themes!elements}
+
+
+* global settings
+* axis
+* legends
+* strips
+* panels 
+* plot region
+
+Each element is either:
+
+* a unit
+* an element function
+* text
+
+I'll describe the types of elements with a few examples, and then work through the different categories.
+
+The default theme function `theme_grey()` contains 38 individual theme elements. The first three of these are `line`, `rect` and `text`, whose default properties are defined through their respective theme element functions `element_line()`, `element_rect()` and `element_text()`. The remaining theme elements can be grouped into:
+
+### Theme elements {#sec:theme-elements}
 
 There are four basic types of built-in element functions: text, lines and segments, rectangles and blank.  Each element function has a set of parameters that control the appearance as described below:
 
@@ -121,25 +175,18 @@ There are four basic types of built-in element functions: text, lines and segmen
   
     ```{r theme-text}
     base_t <- base + labs(title = "This is a ggplot")
-    base_t
     base_t + theme(plot.title = element_text(size = 20))
     base_t + theme(plot.title = element_text(face = "bold", colour = "red"))
-    
-    base + theme(axis.text = element_text(colour = "red"))
-    base + theme(axis.text.y = element_text(angle = -45))
-    base + theme(axis.text.x = element_text(angle = -90, vjust = 0.5))
+    base_t + theme(plot.title = element_text(hjust = 0))
     ```
 
 *  `element_line()` draws lines parameterised by `colour`, `size` and
    `linetype`: \indexf{element_line}
 
     ```{r theme-line}
-    base + theme(panel.grid.major = element_line(colour = "red"))
+    base + theme(panel.grid.major = element_line(colour = "black"))
     base + theme(panel.grid.major = element_line(size = 2))
     base + theme(panel.grid.major = element_line(linetype = "dotted"))
-    base + theme(axis.line = element_line())
-    base + theme(axis.line = element_line(colour = "red"))
-    base + theme(axis.line = element_line(size = 0.5, linetype = "dashed"))
     ```
 
 * `element_rect()` draws rectangles, mostly used for backgrounds, parameterised
@@ -172,10 +219,180 @@ There are four basic types of built-in element functions: text, lines and segmen
     )
     last_plot() + theme(axis.line = element_line(colour = "grey50"))
     ```
+    
+Other settings take "units". Create them with `unit(1, "cm")` or `unit(0.25, "in")`.
 
-### Theme inheritance
+### Plot attributes
 
-### Global settings
+Finally, some elements affect the plot as a whole:
+
+Element               | Theme function   | Description
+----------------------|------------------|------------
+plot.background       | `element_rect()` | background of entire plot
+plot.title            | `element_text()` | plot title
+plot.margin           | `unit()` * 4     | 4-elemnt vector of margins around plot
+
+Element `plot.margin` is a four-element vector associated with the margins to be placed outside the graphics region going clockwise from the top (top-right-bottom-left, margin order is troubling).
+
+The theme element `plot.background` modifies properties of the entire graphics region of a ggplot. By default it's set to white which ensures you can always read the text (even if you save and put on a black background). When exporting for inclusion in other systems, you might want to set it to transparent (it won't look any different on screen). Similarly you might want to eliminate the built-in margin if you're embedding a system with margins.
+
+```{r plot-bkgrd-ex}
+base + theme(plot.background = element_rect(colour = "grey50"))
+base + theme(
+  plot.background = element_rect(colour = "grey50"),
+  plot.margin = grid::unit(c(0, 0, 0, 0), "cm")
+)
+base + theme(plot.background = element_rect(fill = "lightblue"))
+```
+
+### Axis attributes
+
+The table below lists each theme element associated with the rendering of axes, the theme function or unit function that controls it, and a short description of the element.
+
+Element             | Setter            | Description               |
+--------------------|-------------------|---------------------------|
+axis.line           | `element_line()`  | line parallel to axis     |
+axis.text           | `element_text()`  | tick labels               |
+axis.text.x         | `element_text()`  | x-axis tick labels        |
+axis.text.y         | `element_text()`  | y-axis tick labels        |
+axis.title          | `element_text()`  | axis titles               |
+axis.title.x        | `element_text()`  | x-axis title              |
+axis.title.y        | `element_text()`  | y-axis title              |
+axis.ticks          | `element_line()`  | axis tick marks           |
+axis.ticks.length   | `unit()`          | length of tick marks      |
+axis.ticks.margin   | `unit()`          | width of axis tick margin |
+
+Our first example shows how to modify axis lines. The first call below changes each of the available properties in the `axis.line` theme element so that the changes propagate to both `axis.line.x` and `axis.line.y`, taking advantage of inheritance. The plot on the left therefore has axis lines with long dashes of thickness 2 in red in both the `x` and `y` directions.
+
+The second call uses inheritance somewhat differently. The attributes changed in `axis.line` propagate to both `axis.line.x` and `axis.line.y`. However, in the second line of code corresponding to `axis.line.y`,  the specified color and linetype override the values inherited from `axis.line`. As a result, in the right hand plot, `axis.line.x` will be a solid blue line with thickness 2 while `axis.line.y` will be a dashed orange line with the same thickness.
+
+```{r theme-axis}
+df <- data.frame(x = 1:3, y = 1:3)
+base <- ggplot(df, aes(x, y)) + geom_point()
+
+# Accentuate the axes
+base + theme(
+  axis.line = element_line(colour = "grey50", size = 1)
+)
+# Style both x and y axis labels
+base + theme(
+  axis.text = element_text(color = "blue", size = 15)
+)
+# Useful for long labels
+base + theme(
+  axis.text.x = element_text(angle = -90, vjust = 0.5)
+)
+```
+
+### Legend attributes
+
+The following theme elements are associated with the appearance of legends:
+
+Element             | Theme function            | Description                                 |
+--------------------|---------------------------|---------------------------------------------|
+legend.background   |  `element_rect()`         | legend background                           |
+legend.key          |  `element_rect()`         | background of legend keys                   |
+legend.key.size     |  `unit()`                 |                                             |
+legend.key.height   |  `unit()`                 | legend key height                           |
+legend.key.width    |  `unit()`                 | legend key width                            |
+legend.margin       |  `unit()`                 | legend margin                               |
+legend.text         |  `element_text()`         | legend labels                               |
+legend.text.align   |  0--1                     | legend label alignment (0 = right, 1 = left)|
+legend.title        |  `element_text()`         | legend name                                 |
+legend.title.align  |  0--1                     | legend name alignment (0 = right, 1 = left) |
+
+These options are illustrated below:
+
+```{r theme-legend}
+df <- data.frame(x = 1:4, y = 1:4, z = rep(c("a", "b"), each = 2))
+base <- ggplot(df, aes(x, y, colour = z)) + geom_point()
+
+base + theme(
+  legend.background = element_rect(fill = "lemonchiffon", colour = "grey50", size = 1)
+)
+base + theme(
+  legend.key = element_rect(color = "grey50"),
+  legend.key.width = grid::unit(0.9, "cm"),
+  legend.key.height = grid::unit(0.75, "cm")
+)
+base + theme(
+  legend.text = element_text(size = 15),
+  legend.title = element_text(size = 15, face = "bold")
+)
+```
+
+There are four other properties that control how legends are laid out in the context of the plot (`legend.position`, `legend.direction`, `legend.justification`, `legend.box`). They are described in [legend layout](#sub:legend-layout).
+
+### Panel attributes
+
+Panel elements control the appearance of the plotting panels.
+
+Element             | Theme function    | Description                                       |
+--------------------|-------------------|---------------------------------------------------|
+panel.background    | `element_rect()`  | background of graphics region (drawn beneath data)|  
+panel.border        | `element_rect()`  | border of graphics region (drawn on top of data)  |
+panel.grid.major    | `element_line()`  | major grid lines                                  |
+panel.grid.major.x  | `element_line()`  | vertical major grid lines                         |
+panel.grid.major.y  | `element_line()`  | horizontal major grid lines                       |
+panel.grid.minor    | `element_line()`  | minor grid lines                                  |
+panel.grid.minor.x  | `element_line()`  | vertical minor grid lines                         |
+panel.grid.minor.y  | `element_line()`  | horizontal minor grid lines                       |
+aspect.ratio        | numeric           | plot aspect ratio                                 |
+
+```{r panel-bkgd-ex}
+base <- ggplot(df, aes(x, y)) + geom_point()
+# Modify background
+base + theme(panel.background = element_rect(fill = "lightblue"))
+
+# Tweak major grid lines
+base + theme(panel.grid.major = element_line(color = "gray60", size = 0.8))
+# Just in one direction  
+base + theme(panel.grid.major.x = element_line(color = "gray60", size = 0.8))
+```
+
+The main difference is between `panel.background` and `panel.border` is that the background is drawn underneath the data, and the border is drawn on top of it. For that reason, you'll always need to assign `fill = NA` when overriding `panel.border`.
+
+You can use the theming system to modify the aspect ratio of the panels. Here are a couple of examples:
+
+```{r aspect-ratio-ex}
+base2 <- base + theme(plot.background = element_rect(colour = "grey50"))
+# Wide screen
+base2 + theme(aspect.ratio = 9 / 16)
+# Long and skiny
+base2 + theme(aspect.ratio = 2 / 1)
+# Square
+base2 + theme(aspect.ratio = 1)
+```
+
+### Facetting attributes
+
+The following theme elements are associated with panel strips in faceted ggplots:
+
+Theme element       | Theme function   | Description                        |
+--------------------|------------------|------------------------------------|
+strip.background    | `element_rect()` | background of panel strips         |
+strip.text          | `element_text()` | strip text                         |
+strip.text.x        | `element_text()` | horizontal strip text              |
+strip.text.y        | `element_text()` | vertical strip text                |
+panel.margin        | `unit()`         | margin between facets              |
+panel.margin.x      | `unit()`         | margin between facets (vertical)   |
+panel.margin.y      | `unit()`         | margin between facets (horizontal) |
+
+Element `strip.text.x` affects both `facet_wrap()` or `facet_grid()`; `strip.text.y` only affects `facet_grid()`.
+
+```{r panel-margin-ex}
+df <- data.frame(x = 1:4, y = 1:4, z = c("a", "a", "b", "b"))
+base_f <- ggplot(df, aes(x, y)) + geom_point() + facet_wrap(~z)
+
+base_f
+base_f + theme(panel.margin = grid::unit(0.5, "in"))
+base_f + theme(
+  strip.background = element_rect(fill = "grey20", color = "grey80", size = 1),
+  strip.text = element_text(colour = "white")
+)
+```
+
+### Setting globally
 
 As well as applying themes to each plot individually, you can also set them globally with `theme_set()`.  `theme_set()` returns the previous theme so that you can restore it later if you want. \indexf{theme_set}
 
@@ -185,116 +402,81 @@ You can modify the elements locally for a single plot with `theme()` (as seen ab
 old_theme <- theme_update(
   plot.background = element_rect(fill = "lightblue3", colour = NA),
   panel.background = element_rect(fill = "lightblue", colour = NA),
-  axis.text = element_text(colour = "#CCFF33"),
-  axis.title = element_text(colour = "#CCFF33")
+  axis.text = element_text(colour = "linen"),
+  axis.title = element_text(colour = "linen")
 )
 base
-theme_set(theme_grey())
+theme_set(old_theme)
+base
 ```
 
 ### Exercises
 
 1.  Create the ugliest plot possible! (Contributed by Andrew D. Steen, 
     University of Tennessee - Knoxville)
-    
-## Annotations {#sec:annotating}
 
-When annotating your plot with additional labels, the important thing to remember is that these annotations are just extra data. You can use \index{Annotation}
+## Creating your own theme
 
-* `geom_text()` to add text descriptions or to label points.  Most plots 
-  will not benefit from adding text to every single observation on the plot.
-  However, pulling out just a few observations (using subset) can be very useful.
-  Typically you will want to label outliers or other important points. \index{Labels}
+If you want to create your complete theme, you need a few more details.
 
-* `geom_rect()` to highlight interesting rectangular regions of the plot.
-  `geom_rect()` has aesthetics `xmin`, `xmax`, `ymin` and `ymax`. 
-   \indexf{geom_rect}
 
-* `geom_line()`, `geom_path()` and `geom_segment()` to add lines.  All 
-  these geoms have an `arrow` parameter, which allows you to place an arrowhead 
-  on the line.  Create arrowheads with `grid::arrow()`, which has 
-  arguments `angle`, `length`, `ends` and `type`. \indexf{geom_line}
+### Global settings
 
-* `geom_vline()`, `geom_hline()` and `geom_abline()` allow you to add
-  reference lines (sometimes called rules), that span the full range of the 
-  plot. \indexf{geom_vline} \indexf{geom_hline} \indexf{geom_abline}
+There are four elements that affect the global appearance of the plot.
 
-Typically, you can either put annotations in the foreground (using `alpha` if needed so you can still see the data), or in the background. With the default background, a thick white line makes a useful reference: it's easy to see but it doesn't jump out at you.
+Element      | Theme function    | Description
+-------------|--------------------------------------------
+line         | `element_line()`  | all line elements
+rect         | `element_rect()`  | all rectangular elements
+text         | `element_text()`  | all text
+title        | `element_text()`  | all text in title elements (plot, axes & legend)
 
-To show off the basic idea, we'll draw a time series of unemployment:
+These set default properties that are inherited by more specific settings. These are most useful for setting an overall "background" colour and overall font settings (e.g. family and size).
 
-`r columns(1, 3 / 8, 1)`
-```{r umep}
-ggplot(economics, aes(date, unemploy)) + 
-  geom_line()
+`r columns(2, 1, 2/3)`
+```{r axis-line-ex}
+df <- data.frame(x = 1:3, y = 1:3)
+base <- ggplot(df, aes(x, y)) + geom_point()
+
+base + theme(text = element_text(colour = "pink"))
 ```
 
-We can annotate this plot with which president was in power at the time. There is little new in this code - it's a straightforward manipulation of existing geoms. There is one special thing to note: the use of `-Inf` and `Inf` as positions. These refer to the top and bottom (or left and right) limits of the plot.
+It's also possible to use `rel()` to specify a relative size.
 
-```{r unemp-pres}
-presidential <- subset(presidential, start > economics$date[1])
+Inheritance
 
-ggplot(economics) + 
-  geom_rect(
-    aes(xmin = start, xmax = end, fill = party), 
-    ymin = -Inf, ymax = Inf, alpha = 0.2, 
-    data = presidential
-  ) + 
-  geom_vline(
-    aes(xintercept = as.numeric(start)), 
-    data = presidential,
-    colour = "grey50", alpha = 0.5
-  ) + 
-  geom_text(
-    aes(x = start, y = 2500, label = name), 
-    data = presidential, 
-    size = 3, vjust = 0, hjust = 0, nudge_x = 50
-  ) + 
-  geom_line(aes(date, unemploy)) + 
-  scale_fill_manual(values = c("blue", "red"))
-```
+Complete vs. incomplete.
 
-You can use the same technique to add a single annotation to a plot, but it's a bit fiddly because you have to create a one row data frame:
+`%+replace%`
 
-```{r, fig.show="hide"}
-yrng <- range(economics$unemploy)
-xrng <- range(economics$date)
-caption <- paste(strwrap("Unemployment rates in the US have 
-  varied a lot over the years", 40), collapse = "\n")
+### Complete vs incomplete
 
-ggplot(economics, aes(date, unemploy)) + 
-  geom_line() + 
-  geom_text(
-    aes(x, y, label = caption), 
-    data = data.frame(x = xrng[1], y = yrng[2], caption = caption), 
-    hjust = 0, vjust = 1, size = 4
-  )
-```
+It is useful to understand the difference between complete and incomplete theme objects. A *complete* theme object is one produced by calling a theme function with the attribute `complete = TRUE`. 
 
-It's easier to use the `annotate()` helper function which creates the data frame for you:
+Theme functions `theme_grey()` and `theme_bw()` are examples of complete theme functions. Calls to `theme()` produce *incomplete* theme objects, since they represent (local) modifications to a theme object rather than returning a complete theme object per se. When adding an incomplete theme to a complete one, the result is a complete theme. 
+
+Complete and incomplete themes behave somewhat differently when added to a ggplot object:
+
+* Adding an incomplete theme augments the current theme object, replacing only 
+  those properties of elements defined in the call to `theme()`. In particular, 
+  any NULL element properties specified in `theme()`.
+  
+* Adding a complete theme wipes away the existing theme and applies. 
+
+To deal with this problem, the concept of a complete theme (object) was introduced in the new theming system. In particular, `theme_grey` and `theme_bw` are both complete theme functions and return complete theme objects when called. When added to a plot, a complete theme object overrides the current default theme and in fact *replaces* it. This idea is implemented by endowing a theme function with the attribute `"complete"`: its value is `TRUE` for complete themes and `FALSE` for incomplete themes. Examples are shown in the next section.
+
+### Modifying a theme function
+
+There is a second type of inheritance in themes
 
 ```{r}
-ggplot(economics, aes(date, unemploy)) + 
-  geom_line() + 
-  annotate("text", x = xrng[1], y = yrng[2], label = caption,
-    hjust = 0, vjust = 1, size = 4
-  )
-```
+theme_grey()$legend.key
 
-Annotations, particularly reference lines are also useful when comparing groups across facets. In the following plot, it's much easier to see the subtle differences if we add a reference line.
+new_theme <- theme_grey() + theme(legend.key = element_rect(colour = "red"))
+new_theme$legend.key
 
-`r columns(1, 1 / 4, 1)`
-```{r}
-ggplot(diamonds, aes(log10(carat), log10(price))) + 
-  geom_bin2d() + 
-  facet_wrap(~cut, nrow = 1)
-
-mod_coef <- coef(lm(log10(price) ~ log10(carat), data = diamonds))
-ggplot(diamonds, aes(log10(carat), log10(price))) + 
-  geom_bin2d() + 
-  geom_abline(intercept = mod_coef[1], slope = mod_coef[2], 
-    colour = "white", size = 1) + 
-  facet_wrap(~cut, nrow = 1)
+new_theme <- theme_grey() %+replace% theme(legend.key = element_rect(colour = "red"))
+new_theme$legend.key
 ```
 
 ## Saving your output {#sec:saving}
@@ -360,6 +542,7 @@ If you are using LaTeX, I recommend including `\DeclareGraphicsExtensions{.png,.
   \label{tbl:graphic-recommendation}
 \end{table}
 
+<!--
 ## Multiple plots on the same page {#sec:grid-layout}
 
 If you want to arrange multiple plots on a single page, you'll need to learn a little bit of grid, the underlying graphics system used by ggplot. The key concept you'll need to learn about is a viewport: a rectangular subregion of the display. The default viewport takes up the entire plotting region, and by customising the viewport you can arrange a set of plots in just about any way you can imagine. \index{Layout} \index{Publication!multiple plots on the same page}
@@ -463,4 +646,4 @@ print(c, vp = vplayout(2, 2))
 ```
 
 By default `grid.layout()` makes each cell the same size, but you can use the `widths` and `heights` arguments to make them different sizes.  See the documentation for `grid.layout()` for more examples.
-
+-->
