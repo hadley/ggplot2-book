@@ -1,5 +1,4 @@
 ---
-output: bookdown::html_chapter
 bibliography: references.bib
 ---
 
@@ -11,9 +10,9 @@ source("common.r")
 
 ## Introduction
 
-A major requirement of a good data analysis is flexibility. If the data changes, or you discover something that makes you rethink your basic assumptions, you need to be able to easily change many plots at once. The main inhibitor of flexibility is duplication. If you have the same plotting statement repeated over and over again, you have to make the same change in many different places. Often just the thought of making all those changes is exhausting!
+A major requirement of a good data analysis is flexibility. If the data changes, or you discover something that makes you rethink your basic assumptions, you need to be able to easily change many plots at once. The main inhibitor of flexibility is code duplication. If you have the same plotting statement repeated over and over again, you have to make the same change in many different places. Often just the thought of making all those changes is exhausting!
 
-To make your code more flexible, you need to reduce duplication by writing functions. When you notice you're doing the same thing over and over again, think about how you might generalise it and turn it into a function. If you're not that familiar with how functions work in R, you might want to brush up your knowledge at <http://adv-r.had.co.nz/Functions.html>.
+To make your code more flexible, you need to reduce duplicated code by writing functions. When you notice you're doing the same thing over and over again, think about how you might generalise it and turn it into a function. If you're not that familiar with how functions work in R, you might want to brush up your knowledge at <http://adv-r.had.co.nz/Functions.html>.
 
 In this chapter I'll show four basic techniques for reducing the duplication in your plotting code:
 
@@ -44,7 +43,7 @@ ggplot(mpg, aes(displ, hwy)) +
   bestfit
 ```
 
-That's a great way to reduce simple types of duplication (it's much better than copying-and-pasting!), but requires that the component be exactly the same every time.  If you need more flexibility, you can wrap these resuable snippets in a function. For example, we could extend our `bestfit` object to a more general function for adding lines of best fit to a plot. The following code creates `geom_lm()` which has three parameters: the model `formula`, the line `colour` and the line `size`:
+That's a great way to reduce simple types of duplication (it's much better than copying-and-pasting!), but requires that the component be exactly the same every time.  If you need more flexibility, you can wrap these reusable snippets in a function. For example, we could extend our `bestfit` object to a more general function for adding lines of best fit to a plot. The following code creates `geom_lm()` which has three parameters: the model `formula`, the line `colour` and the line `size`:
 
 ```{r geom-lm}
 geom_lm <- function(formula = y ~ x, colour = alpha("steelblue", 0.5), 
@@ -69,7 +68,7 @@ Note the use of `...`. In the function definition `...` allows a function to acc
 1.  Create an object that represents a fill scale with the Blues 
     ColorBrewer palette.
 
-1.  Read the source code for `theme_grey()`?  What are its arguments? 
+1.  Read the source code for `theme_grey()`. What are its arguments? 
     How does it work?
 
 1.  Create `scale_colour_wesanderson()`. It should have a parameter to pick 
@@ -106,7 +105,26 @@ ggplot(mpg, aes(class, cty)) + geom_mean()
 ggplot(mpg, aes(class, cty)) + geom_mean(se = FALSE)
 ```
 
-You're not just limited to geoms and stats, you can also put scales, coords and facetting specifications in that list.
+### ggplot2 components
+
+You're not just limited to layers, you can also put any of the following object in that list:
+
+* A data.frame, which will override the default dataset associated with the 
+  plot. (If you add a data frame by itself, you'll need to use `%+%`,
+  but this is not necessary if the data frame is in a list)
+  
+* An `aes()` object, which will combined with the existing default
+  aesthetic mapping.
+  
+* Scales, which override existing scales (with a warning if they're already
+  been set by the user)
+
+* Coordinate systems, which overrides the existing coordinate system.
+
+* Facetting specification, which overrides the existing facetting
+  specification.
+  
+* Theme components, which override the specified components.
 
 ### Annotation
 
@@ -175,7 +193,7 @@ If you need more complex behaviour, it might be easier to create a custom geom o
 
 1.  To make the best use of space, many examples in this book turn off 
     the axes labels and the legend. I've just copied-and-pasted the same code 
-    into multiple place, but it would make more sense to create a resuable 
+    into multiple place, but it would make more sense to create a reusable 
     function. What would that function look like?
 
 1.  Extend the `borders()` function to also add `coord_quickmap()` to the
@@ -223,7 +241,7 @@ Remember ggplot2 objects are regular R objects, and R is a functional programmin
 
 ## Plot functions {#sec:functions}
 
-Creating small reusable components is most inline with the ggplot2 spirit: you can recombine them flexibly to create whatever plot you want. But sometimes you're creating the same plot over and over again, and you don't need that flexibility. Instead of creating components, you might want to a function that takes data and parameters and returns a complete plot.
+Creating small reusable components is most in line with the ggplot2 spirit: you can recombine them flexibly to create whatever plot you want. But sometimes you're creating the same plot over and over again, and you don't need that flexibility. Instead of creating components, you might want to write a function that takes data and parameters and returns a complete plot.
 
 For example, you could wrap up the complete code needed to make a piechart:
 
@@ -241,7 +259,7 @@ piechart(mpg, aes(factor(1), fill = class))
 
 This is much less flexible than the component based approach, but equally, it's much more concise.
 
-You can take a similar approach to drawing parallel coordinates plots (PCPs) with ggplots. PCPs require a transformation of the data, so you can write two functions: one that does the transformation and one that generates the plot. I strongly recommend keeping the transformation and plotting separately because it makes life much easier if you later want to reuse the same transformation for a different visualisation.
+You can take a similar approach to drawing parallel coordinates plots (PCPs) with ggplots. PCPs require a transformation of the data, so you can write two functions: one that does the transformation and one that generates the plot. I strongly recommend keeping the transformation and plotting separate because it makes life much easier if you later want to reuse the same transformation for a different visualisation.
 
 `r columns(2, 2/3)`
 ```{r pcp_data}
@@ -272,7 +290,7 @@ A complete example of this idea is `qplot()`, which provides a fairly deep wrapp
 
 ### Indirectly referring to variables
 
-The `piechart()` function above is a little unappealing because it requires the user to know the exact `aes()` specification that generates a pie chart. It would be more convenient if the user could simply specify the the name of the variable to plot. To do that you'll need to learn a bit more about how `aes()` works.
+The `piechart()` function above is a little unappealing because it requires the user to know the exact `aes()` specification that generates a pie chart. It would be more convenient if the user could simply specify the name of the variable to plot. To do that you'll need to learn a bit more about how `aes()` works.
 
 `aes()` uses non-standard evaluation: rather than looking at the values of its arguments, it looks at their expressions. This makes it difficult to work with programmatically - there's no way to store the name of a variable in an object and then refer to it later:
 
@@ -297,9 +315,9 @@ Instead we need to use `aes_()`, which uses regular evaluation. There are two ba
     f(displ)
     ```
 
-    (The difference between `as.name()` and `parse()` is subtle. If `x_var` 
+    The difference between `as.name()` and `parse()` is subtle. If `x_var` 
     is "a + b", `as.name()` will turn it into a variable called `` `a + b` ``,
-    `parse()` will turn it into the function call `a + b`. If this is
+    `parse()` will turn it into the function call `a + b`. (If this is
     confusing <http://adv-r.had.co.nz/Expressions.html> might help).
 
 *   Using a formula, created with `~`.
@@ -347,7 +365,7 @@ ggplot(df, aes(x, y)) + f()
 
 Because `n` is not stored in an environment accessible when the expressions in the mapping are evaluated. 
 
-Note that this is only a problem with `mapping`, not with any other arguments. All other arguments are evaluated immediately so their values (not a reference to a name) is stored in the plot object.
+Note that this is only a problem with `mapping`, not with any other arguments. All other arguments are evaluated immediately so their values (not a reference to a name) are stored in the plot object.
 
 ```{r, fig.show = "hide"}
 f <- function() {
