@@ -10,7 +10,7 @@ source("common.r")
 
 ## Introduction
 
-A major requirement of a good data analysis is flexibility. If your data changes, or you discover something that makes you rethink your basic assumptions, you need to be able to easily change many plots at once. The main inhibitor of flexibility is code duplication. If you have the same plotting statement repeated over and over again, you'll have to make the same change in many different places. Often just the thought of making all those changes is exhausting!
+A major requirement of a good data analysis is flexibility. If your data changes, or you discover something that makes you rethink your basic assumptions, you need to be able to easily change many plots at once. The main inhibitor of flexibility is code duplication. If you have the same plotting statement repeated over and over again, you'll have to make the same change in many different places. Often just the thought of making all those changes is exhausting! This chapter will help you overcome that by problem by showing you how to program with ggplto2.
 
 To make your code more flexible, you need to reduce duplicated code by writing functions. When you notice you're doing the same thing over and over again, think about how you might generalise it and turn it into a function. If you're not that familiar with how functions work in R, you might want to brush up your knowledge at <http://adv-r.had.co.nz/Functions.html>. 
 
@@ -20,9 +20,9 @@ In this chapter I'll show how to write functions that create:
 * Multiple ggplot2 components.
 * A complete plot
 
-And then I'll finisih off with a brief illustration of how you can apply functional programming techniques to ggplot2 objects.
+And then I'll finish off with a brief illustration of how you can apply functional programming techniques to ggplot2 objects.
 
-You might also find the [cowplot](https://github.com/wilkelab/cowplot) and [ggthemes](https://github.com/jrnold/ggthemes) packages helpful. As well as providing reuable components that help you directly, you can also read the source code of the packages to figure out how they work.
+You might also find the [cowplot](https://github.com/wilkelab/cowplot) and [ggthemes](https://github.com/jrnold/ggthemes) packages helpful. As well as providing resuable components that help you directly, you can also read the source code of the packages to figure out how they work.
 
 ## Single components
 
@@ -60,7 +60,9 @@ ggplot(mpg, aes(displ, 1 / hwy)) +
   geom_lm(y ~ poly(x, 2), size = 1, colour = "red")
 ```
 
-Note the use of `...`. When included in the function definition `...` allows a function to accept arbitrary additional arguments. Inside the function, you can then use `...` to pass those arguments on to another function. Here we pass `...` onto `geom_smooth()` so the user can still modify all the other arguments we haven't explicit overridden. When you write your own component functions, it's a good idea to always use `...` is this way.
+Pay close attention to the use of `...`. When included in the function definition `...` allows a function to accept arbitrary additional arguments. Inside the function, you can then use `...` to pass those arguments on to another function. Here we pass `...` onto `geom_smooth()` so the user can still modify all the other arguments we haven't explicit overridden. When you write your own component functions, it's a good idea to always use `...` is this way.
+
+Finally, note that you can only _add_ components to a plot: you can't modify or remove existing objects.
 
 ### Exercises
 
@@ -129,14 +131,14 @@ You're not just limited to adding layers in this way. You can also include any o
 
 It's often useful to add standard annotations to a plot. In this case, your function will also set the data in the layer function, rather than inheriting it from the plot. There are two other options that you should set when you do this. These ensure that the layer is self-contained:
 
-* `inherit.aes = FALSE` presents the layer from inheriting aesthetics from the 
+* `inherit.aes = FALSE` prevents the layer from inheriting aesthetics from the 
   parent plot. This ensures your annotation works regardless of what else is on 
   the plot.
   
-* `show.legend = FALSE` ensuresthat your annotation won't appear in the
+* `show.legend = FALSE` ensures that your annotation won't appear in the
   legend.
   
-One example of this technique is the `borders()` function built into ggplot2.  It's designed to add map borders from one of the dataset in the maps package:
+One example of this technique is the `borders()` function built into ggplot2.  It's designed to add map borders from one of the datasets in the maps package:
 
 ```{r}
 borders <- function(database = "world", regions = ".", fill = NA, 
