@@ -2,30 +2,31 @@
 bibliography: references.bib
 ---
 
-```{r duplication, include = FALSE}
+```{r include = FALSE}
 source("common.r")
 ```
 
-# Programming with ggplot2 {#cha:duplication}
+# Programming with ggplot2 {#cha:programming}
 
 ## Introduction
 
-A major requirement of a good data analysis is flexibility. If the data changes, or you discover something that makes you rethink your basic assumptions, you need to be able to easily change many plots at once. The main inhibitor of flexibility is code duplication. If you have the same plotting statement repeated over and over again, you have to make the same change in many different places. Often just the thought of making all those changes is exhausting!
+A major requirement of a good data analysis is flexibility. If your data changes, or you discover something that makes you rethink your basic assumptions, you need to be able to easily change many plots at once. The main inhibitor of flexibility is code duplication. If you have the same plotting statement repeated over and over again, you'll have to make the same change in many different places. Often just the thought of making all those changes is exhausting!
 
-To make your code more flexible, you need to reduce duplicated code by writing functions. When you notice you're doing the same thing over and over again, think about how you might generalise it and turn it into a function. If you're not that familiar with how functions work in R, you might want to brush up your knowledge at <http://adv-r.had.co.nz/Functions.html>.
+To make your code more flexible, you need to reduce duplicated code by writing functions. When you notice you're doing the same thing over and over again, think about how you might generalise it and turn it into a function. If you're not that familiar with how functions work in R, you might want to brush up your knowledge at <http://adv-r.had.co.nz/Functions.html>. 
 
-In this chapter I'll show four basic techniques for reducing the duplication in your plotting code:
+In this chapter I'll show how to write functions that create:
 
-* Function with single component
-* Function with multiple components
-* Creating a whole plot
-* Functional programming
+* A single ggplot2 component.
+* Multiple ggplot2 components.
+* A complete plot
 
-You might also find the [cowplot](https://github.com/wilkelab/cowplot) and [ggthemes](https://github.com/jrnold/ggthemes) packages helpful. As well as providing reuable components that might help you directly, you can also read the source code of the packages to figure out how they work.
+And then I'll finisih off with a brief illustration of how you can apply functional programming techniques to ggplot2 objects.
+
+You might also find the [cowplot](https://github.com/wilkelab/cowplot) and [ggthemes](https://github.com/jrnold/ggthemes) packages helpful. As well as providing reuable components that help you directly, you can also read the source code of the packages to figure out how they work.
 
 ## Single components
 
-Each component of a ggplot plot (layer, scale, coord, facet & theme) is its own object. Most of the time you create the object and immediately add it to a plot. However, you can save any component to a variable (giving it a name), and then apply it to multiple plots:
+Each component of a ggplot plot is an object. Most of the time you create the component and immediately add it to a plot, but you don't have to. Instead, you can save any component to a variable (giving it a name), and then add it to multiple plots:
 
 `r columns(2, 1, 0.75)`
 ```{r layer9}
@@ -43,7 +44,7 @@ ggplot(mpg, aes(displ, hwy)) +
   bestfit
 ```
 
-That's a great way to reduce simple types of duplication (it's much better than copying-and-pasting!), but requires that the component be exactly the same every time.  If you need more flexibility, you can wrap these reusable snippets in a function. For example, we could extend our `bestfit` object to a more general function for adding lines of best fit to a plot. The following code creates `geom_lm()` which has three parameters: the model `formula`, the line `colour` and the line `size`:
+That's a great way to reduce simple types of duplication (it's much better than copying-and-pasting!), but requires that the component be exactly the same each time.  If you need more flexibility, you can wrap these reusable snippets in a function. For example, we could extend our `bestfit` object to a more general function for adding lines of best fit to a plot. The following code creates a `geom_lm()` with three parameters: the model `formula`, the line `colour` and the line `size`:
 
 ```{r geom-lm}
 geom_lm <- function(formula = y ~ x, colour = alpha("steelblue", 0.5), 
@@ -59,7 +60,7 @@ ggplot(mpg, aes(displ, 1 / hwy)) +
   geom_lm(y ~ poly(x, 2), size = 1, colour = "red")
 ```
 
-Note the use of `...`. In the function definition `...` allows a function to accept aribtrary extra functions. You then use `...` within the function to pass those arguments on to another function. It's a good idea to always use `...` in your component functions so that you can control all parameters of the geom. Here it allows the user to pass on any additional arguments (like `data`, `linetype`) to the underlying geom. 
+Note the use of `...`. When included in the function definition `...` allows a function to accept arbitrary additional arguments. Inside the function, you can then use `...` to pass those arguments on to another function. Here we pass `...` onto `geom_smooth()` so the user can still modify all the other arguments we haven't explicit overridden. When you write your own component functions, it's a good idea to always use `...` is this way.
 
 ### Exercises
 
@@ -77,7 +78,7 @@ Note the use of `...`. In the function definition `...` allows a function to acc
 
 ## Multiple components
 
-It's not alway possible to achieve your goals with a single component, so ggplot2 supports a convenient way of adding multiple components to a plot in one step: with a list. The following function adds a layer showing the mean of `y` and a layer showing its standard error:
+It's not alway possible to achieve your goals with a single componens. Fortunately, ggplot2 has a convenient way of adding multiple components to a plot in one step with a list. The following function adds two layers: one to show the mean, and one to show its standard error:
 
 `r columns(2, 2/3, 0.75)`
 ```{r geom-mean-1}
@@ -105,9 +106,9 @@ ggplot(mpg, aes(class, cty)) + geom_mean()
 ggplot(mpg, aes(class, cty)) + geom_mean(se = FALSE)
 ```
 
-### ggplot2 components
+### Plot components
 
-You're not just limited to layers, you can also put any of the following object in that list:
+You're not just limited to adding layers in this way. You can also include any of the following object types in the list:
 
 * A data.frame, which will override the default dataset associated with the 
   plot. (If you add a data frame by itself, you'll need to use `%+%`,
@@ -116,25 +117,23 @@ You're not just limited to layers, you can also put any of the following object 
 * An `aes()` object, which will combined with the existing default
   aesthetic mapping.
   
-* Scales, which override existing scales (with a warning if they're already
-  been set by the user)
+* Scales, which override existing scales, with a warning if they've already
+  been set by the user.
 
-* Coordinate systems, which overrides the existing coordinate system.
+* Coordinate systems and facetting specification, which override the existing
+  settings.
 
-* Facetting specification, which overrides the existing facetting
-  specification.
-  
 * Theme components, which override the specified components.
 
 ### Annotation
 
-It's often useful to add standard annotations to a plot. In this case, your function will also set the data in the layer function, rather than inheriting it from the plot defaults. When you do this, there are two other options that you should set to make the layer self-contained:
+It's often useful to add standard annotations to a plot. In this case, your function will also set the data in the layer function, rather than inheriting it from the plot. There are two other options that you should set when you do this. These ensure that the layer is self-contained:
 
-* `inherit.aes = FALSE`: this ensures that your layer doesn't inherit an 
-  aesthetics from the parent plot. This will ensure your annotation works
-  regardless of what else is on the plot.
+* `inherit.aes = FALSE` presents the layer from inheriting aesthetics from the 
+  parent plot. This ensures your annotation works regardless of what else is on 
+  the plot.
   
-* `show.legend = FALSE`: this ensures that your annotation won't appear in the
+* `show.legend = FALSE` ensuresthat your annotation won't appear in the
   legend.
   
 One example of this technique is the `borders()` function built into ggplot2.  It's designed to add map borders from one of the dataset in the maps package:
@@ -151,11 +150,11 @@ borders <- function(database = "world", regions = ".", fill = NA,
 }
 ```
 
-### Passing along arguments
+### Additional arguments
 
-`...` is no longer so useful if your function returns multiple components because there's no way to direct different arguments to different layers. Instead, you'll need to think about exactly how you want your function to work, balancing the benefits of having one function that does it all vs. the cost of having a complex function that's harder to understand. 
+If you want to pass additional arguments to the components in your function, `...` is no: there's no way to direct different arguments to different components. Instead, you'll need to think about how you want your function to work, balancing the benefits of having one function that does it all vs. the cost of having a complex function that's harder to understand. 
 
-Here's one approach using `modifyList()` and `do.call()`:
+To get your start, here's one approach using `modifyList()` and `do.call()`:
 
 ```{r}
 geom_mean <- function(..., bar.params = list(), errorbar.params = list()) {
@@ -191,10 +190,10 @@ If you need more complex behaviour, it might be easier to create a custom geom o
 
 ### Exercises
 
-1.  To make the best use of space, many examples in this book turn off 
-    the axes labels and the legend. I've just copied-and-pasted the same code 
-    into multiple place, but it would make more sense to create a reusable 
-    function. What would that function look like?
+1.  To make the best use of space, many examples in this book hide the axes 
+    labels and legend. I've just copied-and-pasted the same code into multiple 
+    places, but it would make more sense to create a reusable function. 
+    What would that function look like?
 
 1.  Extend the `borders()` function to also add `coord_quickmap()` to the
     plot.
@@ -202,42 +201,6 @@ If you need more complex behaviour, it might be easier to create a custom geom o
 1.  Look through your own code. What combinations of geoms or scales do you
     use all the time? How could you extract the pattern into a reusable 
     function?
-
-## Functional programming
-
-Since ggplot2 objects are just objects, you can put them in lists, and use all of R's great tools. For example, if you wanted to add different geoms to the same base plot, you could put them in a list and use `lapply()`.
-
-`r columns(3, 1, 1)`
-```{r}
-geoms <- list(
-  geom_point(),
-  geom_boxplot(aes(group = cut_width(displ, 1))),
-  list(geom_point(), geom_smooth())
-)
-
-p <- ggplot(mpg, aes(displ, hwy))
-lapply(geoms, function(g) p + g)
-```
-
-Remember ggplot2 objects are regular R objects, and R is a functional programming language, so there are lots of standard R tools that you can apply. If you're not familiar with functional programming, a reasonable place to start is <http://adv-r.had.co.nz/Functional-programming.html>.
-
-### Exercises
-
-1.  What does the following function do? What's a better name for it?
-    
-    ```{r, eval = FALSE}
-    mystery <- function(...) {
-      Reduce(`+`, list(...), accumulate = TRUE)
-    }
-    
-    mystery(
-      ggplot(mpg, aes(displ, hwy)) + geom_point(), 
-      geom_smooth(), 
-      xlab(NULL), 
-      ylab(NULL)
-    )
-    ```
-
 
 ## Plot functions {#sec:functions}
 
@@ -247,7 +210,7 @@ For example, you could wrap up the complete code needed to make a piechart:
 
 `r columns(1, 2 / 3, 0.5)`
 ```{r}
-piechart <- function(data, mapping, ...) {
+piechart <- function(data, mapping) {
   ggplot(data, mapping) +
     geom_bar(width = 1) + 
     coord_polar(theta = "y") + 
@@ -259,34 +222,35 @@ piechart(mpg, aes(factor(1), fill = class))
 
 This is much less flexible than the component based approach, but equally, it's much more concise.
 
-You can take a similar approach to drawing parallel coordinates plots (PCPs) with ggplots. PCPs require a transformation of the data, so you can write two functions: one that does the transformation and one that generates the plot. I strongly recommend keeping the transformation and plotting separate because it makes life much easier if you later want to reuse the same transformation for a different visualisation.
+You can take a similar approach to drawing parallel coordinates plots (PCPs). PCPs require a transformation of the data, so I recommend writing two functions: one that does the transformation and one that generates the plot. Keeping these two piece separate makes life much easier if you later want to reuse the same transformation for a different visualisation.
 
 `r columns(2, 2/3)`
 ```{r pcp_data}
-rescale01 <- function(x) {
-  rng <- range(x, na.rm = TRUE)
-  (x - rng[1]) / (rng[2] - rng[1])
-}
 pcp_data <- function(df) {
   is_numeric <- vapply(df, is.numeric, logical(1))
+
   # Rescale numeric columns
+  rescale01 <- function(x) {
+    rng <- range(x, na.rm = TRUE)
+    (x - rng[1]) / (rng[2] - rng[1])
+  }
   df[is_numeric] <- lapply(df[is_numeric], rescale01)
+  
   # Add row identifier
   df$.row <- rownames(df)
+  
   # Treat numerics as value (aka measure) variables 
   tidyr::gather_(df, "variable", "value", names(df)[is_numeric])
 }
 pcp <- function(df, ...) {
   df <- pcp_data(df)
-  ggplot(df, aes(variable, value, group = .row)) + 
-    geom_line(...)
+  ggplot(df, aes(variable, value, group = .row)) + geom_line(...)
 }
 pcp(mpg)
 pcp(mpg, aes(colour = drv))
 ```
 
-A complete example of this idea is `qplot()`, which provides a fairly deep wrapper around the most common `ggplot()` options. I recommend studying the source code if you want to see how far these basic techniques can take you.
-
+A complete exploration of this idea is `qplot()`, which provides a fairly deep wrapper around the most common `ggplot()` options. I recommend studying the source code if you want to see how far these basic techniques can take you.
 
 ### Indirectly referring to variables
 
@@ -350,9 +314,9 @@ There's another advantage to `aes_()` over `aes()` if you're writing ggplot2 plo
 
 ### The plot environment
 
-As you create more sophisticated plotting functions, you'll need to understand a bit more about ggplot2's scoping rules. ggplot2 was written well before I understood the full intricacies of non-standard evaluation. This means it has a rather simple scoping system. If a variable is not found in the `data`, it is looked for in the plot environment. There is only one environment for a plot (not one for each layer), and it is the environment in which `ggplot()` is called from (i.e. the `parent.frame()`).
+As you create more sophisticated plotting functions, you'll need to understand a bit more about ggplot2's scoping rules. ggplot2 was written well before I understood the full intricacies of non-standard evaluation so it has a rather simple scoping system. If a variable is not found in the `data`, it is looked for in _the_ plot environment. There is only one environment for a plot (not one for each layer), and it is the environment in which `ggplot()` is called from (i.e. the `parent.frame()`).
 
-This means that a function like this won't work:
+This means that the following function won't work because `n` is not stored in an environment accessible when the expressions in `aes()` are evaluated. 
 
 ```{r, error = TRUE}
 f <- function() {
@@ -363,9 +327,7 @@ df <- data.frame(x = 1:3, y = 1:3)
 ggplot(df, aes(x, y)) + f()
 ```
 
-Because `n` is not stored in an environment accessible when the expressions in the mapping are evaluated. 
-
-Note that this is only a problem with `mapping`, not with any other arguments. All other arguments are evaluated immediately so their values (not a reference to a name) are stored in the plot object.
+Note that this is only a problem with the `mapping` argument. All other arguments are evaluated immediately so their values (not a reference to a name) are stored in the plot object. This means the following function will work:
 
 ```{r, fig.show = "hide"}
 f <- function() {
@@ -375,7 +337,7 @@ f <- function() {
 ggplot(df, aes(x, y)) + f()
 ```
 
-If you need to use a different environment for the plot, you can specify it with the `environment` argument to `ggplot()`.
+If you need to use a different environment for the plot, you can specify it with the `environment` argument to `ggplot()`. You'll need to do this if you're creating a plot function that takes user provided data. See `qplot()` for an example.
 
 ### Exercises
 
@@ -384,3 +346,63 @@ If you need to use a different environment for the plot, you can specify it with
     name of a variable to visualise. Let them choose between histograms,
     frequency polygons, and density plots. What other arguments might you
     want to include?
+
+1.  What additional arguments should `pcp()` take? What are the downsides
+    of how `...` is used in the current code?
+
+1.  Advanced: why doesn't this code work? How can you fix it?
+
+    ```{r, error = TRUE}
+    f <- function() {
+      levs <- c("2seater", "compact", "midsize", "minivan", "pickup", 
+        "subcompact", "suv")
+      piechart3(mpg, factor(class, levels = levs))
+    }
+    f()
+    ```
+
+## Functional programming
+
+Since ggplot2 objects are just regular R objects, you can put them in a list. This means you can apply all of R's great functional programming tools. For example, if you wanted to add different geoms to the same base plot, you could put them in a list and use `lapply()`.
+
+`r columns(3, 1, 1)`
+```{r}
+geoms <- list(
+  geom_point(),
+  geom_boxplot(aes(group = cut_width(displ, 1))),
+  list(geom_point(), geom_smooth())
+)
+
+p <- ggplot(mpg, aes(displ, hwy))
+lapply(geoms, function(g) p + g)
+```
+
+If you're not familiar with functional programming, read through <http://adv-r.had.co.nz/Functional-programming.html> and think about how you might apply the techniques to your duplicated plotting code.
+
+### Exercises
+    
+1.  How could you add a `geom_point()` layer to each element of the following 
+    list?
+
+    ```{r, eval = FALSE}
+    plots <- list(
+      ggplot(mpg, aes(displ, hwy)),
+      ggplot(diamonds, aes(carat, price)),
+      ggplot(faithfuld, aes(waiting, eruptions, size = density))
+    )
+    ```
+
+1.  What does the following function do? What's a better name for it?
+    
+    ```{r, eval = FALSE}
+    mystery <- function(...) {
+      Reduce(`+`, list(...), accumulate = TRUE)
+    }
+    
+    mystery(
+      ggplot(mpg, aes(displ, hwy)) + geom_point(), 
+      geom_smooth(), 
+      xlab(NULL), 
+      ylab(NULL)
+    )
+    ```
