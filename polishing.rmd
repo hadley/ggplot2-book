@@ -7,11 +7,13 @@ bibliography: references.bib
 source("common.R")
 ```
 
-# Polishing your plots for publication {#cha:polishing}
+# Themes {#cha:polishing}
 
-In this chapter you will learn how to prepare polished plots for publication.  Most of this chapter focusses on the theming capability of ggplot which allows you to control many non-data aspects of plot appearances, but you'll also learn functions that make adding annotations easier and the best way to save plots for inclusion into other software packages. \index{Publication!polishing plots for}
+In this chapter you will learn how to prepare polished plots for publication using ggplot2 theme system, which allows you to exercise fine control over the non-data elements of your plot. The theme system does not affect how the data is rendered by geoms, or how it is transformed by scales. Themes don't change the perceptual properties of the plot, but they do help you make the plot aesthetically pleasing or match existing style guides. Themes give you control over things like the fonts in all parts of the plot: the title, axis labels, axis tick labels, strips, legend labels and legend key labels; and the colour of ticks, grid lines and backgrounds (panel, plot, strip and legend). \index{Themes} \index{Publication!themes}
 
-Imagine you've made the following plot of your data.
+This separation of control into data and non-data parts is quite different than base and lattice graphics. In base and lattice graphics, most functions take a large number of arguments that specify both data and non-data appearance, which makes the functions complicated and hard to learn. ggplot2 takes a different approach: when creating the plot you determine how the data is displayed, then *after* it has been created you can edit every detail of the rendering, using the theming system. 
+
+For example, imagine you've made the following plot of your data.
 
 `r columns(1, 2/3)`
 ```{r}
@@ -21,11 +23,11 @@ base <- ggplot(mpg, aes(cty, hwy, color = factor(cyl))) +
 base
 ```
 
-It's served it's purpose to you: you know now that `cty` and `hwy` are highly correlated, and that both are highly related to the number of cylinders. But now you want to share that plot with others by including it in a paper. That's going to necesitate some changes. First, we need:
+It's served it's purpose for you: you've learned that `cty` and `hwy` are highly correlated, both are highly related to `cyl`, and that `hwy` is always greater than `cty` (and the difference increases as `cty` increases). Now you want to share the plot with others, perhaps by publishing it in a paper. That requires some changes. First, we need to make sure the plot can stand alone by:
 
-* Need better labels for the axes and legend
-* A better colour scale
-* A plot title.
+* Improving the axes and legend labels.
+* Adding a title for the plot.
+* Tweaking the colour scale.
 
 Fortunately you know how to do that already because you've read the scales chapter:
 
@@ -35,20 +37,26 @@ labelled <- base +
     x = "City mileage/gallon",
     y = "Highway mileage/gallon",
     colour = "Cylinders",
-    title = "Highway vs. city mileage per gallon"
+    title = "Highway and city mileage are highly correlated"
   ) +
   scale_colour_brewer(type = "seq", palette = "Spectral")
 labelled
 ```
 
-But know you need to learn about the themeing system so you can make it compatible with the journal style.
+Next, you need to make sure the plot matches the style guidelines of your journal:
+
+* The background should be white, not pale grey.
+* The legend should be placed inside the plot, if there's room.
+* No minor gridlines, and major gridlines should be a pale grey.
+* The plot title should be 12pt bold text.
+
+In this chapter, you'll learn how to use the theming system to make those changes, as shown below:
 
 ```{r theme-ex1a}
 styled <- labelled +
   theme_bw() + 
   theme(
-    axis.text = element_text(size = 14),
-    plot.title = element_text(face = "bold"),
+    plot.title = element_text(face = "bold", size = 12),
     legend.background = element_rect(fill = "white", size = 4, colour = "white"),
     legend.justification = c(0, 1),
     legend.position = c(0, 1),
@@ -59,46 +67,35 @@ styled <- labelled +
 styled
 ```
 
-Finally, the journal wants the file as a 600 dpi TIFF file. [Saving your output](#sec:saving) discusses the chapter with a discussion about how to get your graphics out of R and into LaTeX, Word or other presentation or word-processing software.  
+Finally, the journal wants the figure as a 600 dpi TIFF file. You'll learn the fine details of `ggsave()` in [saving your output](#sec:saving).
+
+The theming system is composed of four main components:
+
+* Theme _elements_ specify the non-data elements that you can control.
+  For example, the `plot.title` element controls the appearance of the
+  plot title; `axis.ticks.x`, the ticks on the x axis; `legend.key.height`,
+  the height of the keys in the legend.
+
+* Each element is associated with an _element function_, which describes 
+  the visual properties of the element. For example, `element_text()` sets
+  the font size, colour and face of text elements like `plot.title`.
+
+* The `theme()` function which allows you to override the default theme
+  elements by calling element functions, like 
+  `theme(plot.title = element_text(colour = "red"))`.
+  
+* Complete _themes_, like `theme_grey()` set all of the theme elements to 
+  values designed to work together harmoniously.
 
 ## Themes {#sec:themes}
 
-The theming system in ggplot2 enables a user to control non-data elements of a ggplot object. It is composed of the following:
-
-* theme _elements_, which refer to individual attributes of a graphic
-  that are independent of the data, such as font size, axis ticks,
-  appearance of grid lines or background color of a legend;
-
-* theme _element functions_, which enables you to modify the settings
-  of certain theme elements;
-
-* theme _functions_, which define the settings of a collection of
-  theme elements for the purpose of creating a specific style of
-  graphics production;
-
-* the `theme()` function, used to locally modify one or more theme
-  elements in a specific ggplot object
-
-The appearance of non-data elements of the plot is controlled by the theme system. The theme system does not affect how the data is rendered by geoms, or how it is transformed by scales. Themes don't change the perceptual properties of the plot, but they do help you make the plot aesthetically pleasing or match existing style guides. Themes give you control over things like the fonts in all parts of the plot: the title, axis labels, axis tick labels, strips, legend labels and legend key labels; and the colour of ticks, grid lines and backgrounds (panel, plot, strip and legend). \index{Themes} \index{Publication!themes}
-
-This separation of control into data and non-data parts is quite different than base and lattice graphics.  In base and lattice graphics, most functions take a large number of arguments that specify both data and non-data appearance, which makes the functions complicated and hard to learn. ggplot2 takes a different approach: when creating the plot you determine how the data is displayed, then *after* it has been created you can edit every detail of the rendering, using the theming system. 
-
-ggplot2 comes with a number of built in themes: \index{Themes!built-in}
-
-* `theme_grey()`: the signature ggplot2 theme with a light grey background and 
-  white gridlines, designed to put the data forward yet make comparisons easy.
-  This follows from the advice of [@tufte:2006; @tufte:1990; @tufte:2001; 
-  @tufte:1997] and [@brewer:1994; @carr:2002; @carr:1994; @carr:1999]. We can 
-  still see the gridlines to aid in the judgement of position 
-  [@cleveland:1993a], but they have little visual impact and we can easily 
-  'tune' them out. The grey background gives the plot a similar typographic 
-  colour to the text, ensuring that the graphics fit in with the flow of a 
-  document without jumping out with a bright white background. Finally, the 
-  grey background creates a continuous field of colour which ensures that the 
-  plot is perceived as a single visual entity. \indexf{theme_grey}
+ggplot2 comes with a number of built in themes. \index{Themes!built-in} The most important is `theme_grey()`, the signature ggplot2 theme with a light grey background and white gridlines. The theme is designed to put the data forward while supporting comparisons, following the advice of [@tufte:2006; @brewer:1994; @carr:2002; @carr:1994; @carr:1999]. We can still see the gridlines to aid in the judgement of position [@cleveland:1993a], but they have little visual impact and we can easily 'tune' them out. The grey background gives the plot a similar typographic  colour to the text, ensuring that the graphics fit in with the flow of a 
+document without jumping out with a bright white background. Finally, the  grey background creates a continuous field of colour which ensures that the plot is perceived as a single visual entity. \indexf{theme_grey}
   
-* `theme_bw()`: the classic dark-on-light ggplot2 theme. May work better for 
-  presentations displayed with a projector.
+There are seven other themes built in to ggplot2 1.1.0:
+  
+* `theme_bw()`: a variation on `theme_grey()` that uses a white background
+  and thin grey grid lines. 
   
 * `theme_linedraw()`: A theme with only black lines of various widths on white 
   backgrounds, reminiscent of a line drawing.
@@ -130,9 +127,11 @@ base + theme_classic() + ggtitle("theme_classic()")
 base + theme_void() + ggtitle("theme_void()")
 ```
 
-All themes have a `base_size` parameter which controls the base font size. The base font size is the size that the axis titles use: the plot title is usually bigger, and the tick and strip labels are smaller. If you want to control these sizes separately, you'll need to modify the individual elements as described in the following section.
+All themes have a `base_size` parameter which controls the base font size. The base font size is the size that the axis titles use: the plot title is usually bigger (1.2x), and the tick and strip labels are smaller (0.8x). If you want to control these sizes separately, you'll need to modify the individual elements as described in the following section.
 
-You're not limited to just built-in themes. Other packages, like ggtheme, add even more. Here's a selection:
+As well as applying themes a plot at-a-time, you can change the default theme with `theme_set()`. For example, if you really hate the default grey background, run `theme_set(theme_bw())` to use a white background for all plots. \indexf{theme_set}
+
+You're not limited to the themes built-in to ggplot2. Other packages, like ggtheme by Jeffrey Arnold, add even more. Here's a few of my favourite from ggtheme:
 
 ```{r}
 library(ggthemes)
@@ -141,31 +140,11 @@ base + theme_solarized() + ggtitle("theme_solarized()")
 base + theme_excel() + ggtitle("theme_excel()") # ;)
 ```
 
+The complete themes are a great place to start but don't give you a lot of control. To modify individual elements, you need to use `theme()` to connect an element with a 
+
 As well as using a complete theme, you can modifying each component individually. The theme system comes with a number of built-in element rendering functions with a limited set of parameters. By adjusting these parameters you can control things like text size and colour, background and grid line colours and text orientation, as you'll see in the following section.
 
-## Theme elements
-
-A theme is made up of multiple __elements__ which control the appearance of a single item on the plot. There are around 40 unique elements, than can roughly grouped into five categories: \index{Themes!elements}
-
-
-* global settings
-* axis
-* legends
-* strips
-* panels 
-* plot region
-
-Each element is either:
-
-* a unit
-* an element function
-* text
-
-I'll describe the types of elements with a few examples, and then work through the different categories.
-
-The default theme function `theme_grey()` contains 38 individual theme elements. The first three of these are `line`, `rect` and `text`, whose default properties are defined through their respective theme element functions `element_line()`, `element_rect()` and `element_text()`. The remaining theme elements can be grouped into:
-
-### Theme elements {#sec:theme-elements}
+## Theme element functions
 
 There are four basic types of built-in element functions: text, lines and segments, rectangles and blank.  Each element function has a set of parameters that control the appearance as described below:
 
@@ -221,6 +200,29 @@ There are four basic types of built-in element functions: text, lines and segmen
     ```
     
 Other settings take "units". Create them with `unit(1, "cm")` or `unit(0.25, "in")`.
+
+
+## Theme elements {#sec:theme-elements}
+
+A theme is made up of multiple __elements__ which control the appearance of a single item on the plot. There are around 40 unique elements, than can roughly grouped into five categories: \index{Themes!elements}
+
+
+* global settings
+* axis
+* legends
+* strips
+* panels 
+* plot region
+
+Each element is either:
+
+* a unit
+* an element function
+* text
+
+I'll describe the types of elements with a few examples, and then work through the different categories.
+
+The default theme function `theme_grey()` contains 38 individual theme elements. The first three of these are `line`, `rect` and `text`, whose default properties are defined through their respective theme element functions `element_line()`, `element_rect()` and `element_text()`. The remaining theme elements can be grouped into:
 
 ### Plot attributes
 
@@ -394,8 +396,6 @@ base_f + theme(
 
 ### Setting globally
 
-As well as applying themes to each plot individually, you can also set them globally with `theme_set()`.  `theme_set()` returns the previous theme so that you can restore it later if you want. \indexf{theme_set}
-
 You can modify the elements locally for a single plot with `theme()` (as seen above), or globally for all future plots with `theme_update()`. \index{Themes!updating} \indexf{theme_get} \indexf{theme}
 
 ```{r theme-update}
@@ -541,109 +541,3 @@ If you are using LaTeX, I recommend including `\DeclareGraphicsExtensions{.png,.
   \caption{Recommended graphic output for different purposes.}
   \label{tbl:graphic-recommendation}
 \end{table}
-
-<!--
-## Multiple plots on the same page {#sec:grid-layout}
-
-If you want to arrange multiple plots on a single page, you'll need to learn a little bit of grid, the underlying graphics system used by ggplot. The key concept you'll need to learn about is a viewport: a rectangular subregion of the display. The default viewport takes up the entire plotting region, and by customising the viewport you can arrange a set of plots in just about any way you can imagine. \index{Layout} \index{Publication!multiple plots on the same page}
-
-To begin, let's create three plots that we can experiment with. When arranging multiple plots on a page, it will usually be easiest to create them, assign them to variables and then plot them. This makes it easier to experiment with plot placement independent of content. The plots created by the code below are shown in Figure \ref{fig:layout}.
-
-`r columns(3)`
-```{r layout}
-a <- ggplot(economics, aes(date, unemploy)) + geom_line()
-b <- ggplot(economics, aes(uempmed, unemploy)) + geom_point() + geom_smooth(se = FALSE) 
-c <- ggplot(economics, aes(uempmed, unemploy)) + geom_point()
-a
-b
-c
-```
-
-### Subplots
-
-One common layout is to have a small subplot drawn on top of the main plot.  To achieve this effect, we first plot the main plot, and then draw the subplot in a smaller viewport.  Viewports are created with (surprise!) the `viewport()` function, with parameters `x`, `y`, `width` and `height` to control the size and position of the viewport. By default, the measurements are given in 'npc' units, which range from 0 to 1. The location (0, 0) is the bottom left, (1, 1) the top right and (0.5, 0.5) the centre of viewport.  If these relative units don't work for your needs, you can also use absolute units, like `unit(2, "cm")` or `unit(1, "inch")`. \index{Sub-figures} \index{Subplots}
-
-```{r viewports}
-library(grid)
-# A viewport that takes up the entire plot device
-vp1 <- viewport(width = 1, height = 1, x = 0.5, y = 0.5)
-vp1 <- viewport()
-
-# A viewport that takes up half the width and half the height, 
-# located in the middle of the plot.
-vp2 <- viewport(width = 0.5, height = 0.5, x = 0.5, y = 0.5)
-vp2 <- viewport(width = 0.5, height = 0.5)
-
-# A viewport that is 2cm x 3cm located in the center
-vp3 <- viewport(width = unit(2, "cm"), height = unit(3, "cm"))
-```
-
-By default, the x and y parameters control the location of the centre of the viewport. When positioning the plot in other locations, you may need to use the `just` parameter to control which corner of the plot you are positioning.  The following code gives some examples.
-
-```{r viewport2}
-# A viewport in the top right
-vp4 <- viewport(x = 1, y = 1, just = c("right", "top"))
-# Bottom left
-vp5 <- viewport(x = 0, y = 0, just = c("right", "bottom"))
-```
-
-To draw the plot in our new viewport, we use the `vp` argument of the `print()` method.  This method is normally called automatically whenever you evaluate something on the command line, but because we want to customise the viewport, we need to call it ourselves. The result of this is shown in Figure \ref{fig:subplot-1}.
-
-```{r polish, results='hide'}
-pdf("figures/polishing-subplot-1.pdf", width = 4, height = 4)
-subvp <- viewport(width = 0.4, height = 0.4, x = 0.75, y = 0.35)
-b
-print(c, vp = subvp)
-dev.off()
-```
-
-This gives us what we want, but we need to make a few tweaks to the appearance: the text should be smaller, we want to remove the axis labels and shrink the plot margins. The result is shown in Figure \ref{fig:subplot-2}.
-
-```{r polish2, results='hide'}
-csmall <- c + 
-  theme_gray(9) + 
-  labs(x = NULL, y = NULL) + 
-  theme(plot.margin = unit(c(1/4, 0, 0, 0), "lines"))
-
-pdf("figures/polishing-subplot-2.pdf", width = 4, height = 4)
-b
-print(csmall, vp = subvp)
-dev.off()
-```
-
-\begin{figure}[htbp]
-  \centering
-  \subfigure[Figure with subplot.]{
-    \includegraphics[width=0.5\textwidth]{figures/polishing-subplot-1}
-    \label{fig:subplot-1}
-  }%
-  \subfigure[Subplot tweaked for better display.]{
-    \includegraphics[width=0.5\textwidth]{figures/polishing-subplot-2}
-    \label{fig:subplot-2}
-  }
-  \caption{Two examples of a figure with subplot. It will usually be necessary to tweak the theme settings of the subplot for optimum display.}
-  \label{fig:subplot}
-\end{figure}
-
-Note we need to use `pdf()` (or `png()` etc.) to save the plots to disk because `ggsave()` only saves a single plot.
-
-### Rectangular grids
-
-A more complicated scenario is when you want to arrange a number of plots in a rectangular grid. Of course you could create a series of viewports and use what you've learned above, but doing all the calculations by hand is cumbersome. A better approach is to use `grid.layout()`, which sets up a regular grid of viewports with arbitrary heights and widths. You still need to create each viewport, but instead of explicitly specifying the position and size, you can specify the row and column of the layout.
-
-The following example shows how this work.  We first create the layout, here a 2 by 2 grid, then assign it to a viewport and push that viewport on to the plotting device.  Now we are ready to draw each plot into its own position on the grid.  We create a small function to save some typing, and then draw each plot in the desired place on the grid.  You can supply a vector of rows or columns to span a plot over multiple cells.  The results are shown in Figure \ref{fig:layout-2}.
-
-`r columns(1)`
-```{r layout-2}
-grid.newpage()
-pushViewport(viewport(layout = grid.layout(2, 2)))
-
-vplayout <- function(x, y) 
-  viewport(layout.pos.row = x, layout.pos.col = y)
-print(a, vp = vplayout(1, 1:2))
-print(b, vp = vplayout(2, 1))
-print(c, vp = vplayout(2, 2))
-```
-
-By default `grid.layout()` makes each cell the same size, but you can use the `widths` and `heights` arguments to make them different sizes.  See the documentation for `grid.layout()` for more examples.
--->
