@@ -140,23 +140,37 @@ base + theme_solarized() + ggtitle("theme_solarized()")
 base + theme_excel() + ggtitle("theme_excel()") # ;)
 ```
 
-The complete themes are a great place to start but don't give you a lot of control. To modify individual elements, you need to use `theme()` to connect an element with a 
+The complete themes are a great place to start but don't give you a lot of control. To modify individual elements, you need to use `theme()` to override the default setting for an element with an element function.
 
-As well as using a complete theme, you can modifying each component individually. The theme system comes with a number of built-in element rendering functions with a limited set of parameters. By adjusting these parameters you can control things like text size and colour, background and grid line colours and text orientation, as you'll see in the following section.
+## Modifying theme components
 
-## Theme element functions
+Modifying an individual theme component looks like `plot + theme(element.name = element_function())`.  In this section you'll learn about the basic element functions, and then in the next section, you'll see all the elements that you can modify.
 
-There are four basic types of built-in element functions: text, lines and segments, rectangles and blank.  Each element function has a set of parameters that control the appearance as described below:
+There are four basic types of built-in element functions: text, lines and segments, rectangles and blank. Each element function has a set of parameters that control the appearance as described below:
 
 *   `element_text()` draws labels and headings. You can control the font 
-    `family`, `face`, `colour`, `size`, `hjust`, `vjust`, `angle` and 
-    `lineheight`. \index{Themes!labels} \indexf{element_text}
+    `family`, `face`, `colour`, `size` (in points), `hjust`, `vjust`, `angle` 
+    (in degress) and `lineheight` (as ratio of `fontcase`). More details on 
+    the parameters can be found in [specifications](#cha:specifications).
+    \index{Themes!labels} \indexf{element_text}
   
     ```{r theme-text}
     base_t <- base + labs(title = "This is a ggplot")
     base_t + theme(plot.title = element_text(size = 20))
     base_t + theme(plot.title = element_text(face = "bold", colour = "red"))
     base_t + theme(plot.title = element_text(hjust = 0))
+    ```
+    
+    You can control the margins around the text with the `margin` argument that
+    should be fed the results of the `margin()` function. `margin()` has four 
+    arguments: the amount of space (in points) to add to the top, right, bottom 
+    and left sides of the text. Any elements not specified default to 0.
+
+    ```{r theme-text-margin}
+    # The margins here look asymmetric because there are also plot margins
+    base_t + theme(plot.title = element_text(margin = margin()))
+    base_t + theme(plot.title = element_text(margin = margin(t = 10, b = 10)))
+    base_t + theme(axis.title.y = element_text(margin = margin(r = 10)))
     ```
 
 *  `element_line()` draws lines parameterised by `colour`, `size` and
@@ -199,50 +213,51 @@ There are four basic types of built-in element functions: text, lines and segmen
     last_plot() + theme(axis.line = element_line(colour = "grey50"))
     ```
     
-Other settings take "units". Create them with `unit(1, "cm")` or `unit(0.25, "in")`.
+A few other settings take grid units. Create them with `unit(1, "cm")` or `unit(0.25, "in")`.
 
+To modify theme elements for all future plots, use `theme_update()`. It returns the previous theme settings, so you can easily restore the original parameters once you're done. \index{Themes!updating} \indexf{theme_get} \indexf{theme}
+
+```{r theme-update}
+old_theme <- theme_update(
+  plot.background = element_rect(fill = "lightblue3", colour = NA),
+  panel.background = element_rect(fill = "lightblue", colour = NA),
+  axis.text = element_text(colour = "linen"),
+  axis.title = element_text(colour = "linen")
+)
+base
+theme_set(old_theme)
+base
+```
 
 ## Theme elements {#sec:theme-elements}
 
-A theme is made up of multiple __elements__ which control the appearance of a single item on the plot. There are around 40 unique elements, than can roughly grouped into five categories: \index{Themes!elements}
+There are around 40 unique elements that control the appearance of the plot. They can be roughly grouped into five categories: \index{Themes!elements}
 
+* plot attributes
+* axis attributes
+* legends attributes
+* panel attributes
+* facet attributes
 
-* global settings
-* axis
-* legends
-* strips
-* panels 
-* plot region
-
-Each element is either:
-
-* a unit
-* an element function
-* text
-
-I'll describe the types of elements with a few examples, and then work through the different categories.
-
-The default theme function `theme_grey()` contains 38 individual theme elements. The first three of these are `line`, `rect` and `text`, whose default properties are defined through their respective theme element functions `element_line()`, `element_rect()` and `element_text()`. The remaining theme elements can be grouped into:
+I'll describe each category below with a few examples.
 
 ### Plot attributes
 
-Finally, some elements affect the plot as a whole:
+Some elements affect the plot as a whole:
 
 Element               | Theme function   | Description
 ----------------------|------------------|------------
-plot.background       | `element_rect()` | background of entire plot
+plot.background       | `element_rect()` | plot background
 plot.title            | `element_text()` | plot title
-plot.margin           | `unit()` * 4     | 4-elemnt vector of margins around plot
+plot.margin           | `margin()`       | margins around plot
 
-Element `plot.margin` is a four-element vector associated with the margins to be placed outside the graphics region going clockwise from the top (top-right-bottom-left, margin order is troubling).
-
-The theme element `plot.background` modifies properties of the entire graphics region of a ggplot. By default it's set to white which ensures you can always read the text (even if you save and put on a black background). When exporting for inclusion in other systems, you might want to set it to transparent (it won't look any different on screen). Similarly you might want to eliminate the built-in margin if you're embedding a system with margins.
+`plot.background` modifies properties of the entire graphics region of a ggplot. By default it's set to white which ensures you can always read the text (even if you save and put on a black background). When exporting for inclusion in other systems, you might want to make it transparent (it won't look any different on screen). Similarly, if you're embedding a plot in a context which automatically gives it margins you might want to eliminate the built-in margins (a small margin is still necessary if you want to draw a border).
 
 ```{r plot-bkgrd-ex}
 base + theme(plot.background = element_rect(colour = "grey50"))
 base + theme(
   plot.background = element_rect(colour = "grey50"),
-  plot.margin = grid::unit(c(0, 0, 0, 0), "cm")
+  plot.margin = margin(2, 2, 2, 2)
 )
 base + theme(plot.background = element_rect(fill = "lightblue"))
 ```
@@ -251,39 +266,30 @@ base + theme(plot.background = element_rect(fill = "lightblue"))
 
 The table below lists each theme element associated with the rendering of axes, the theme function or unit function that controls it, and a short description of the element.
 
-Element             | Setter            | Description               |
---------------------|-------------------|---------------------------|
-axis.line           | `element_line()`  | line parallel to axis     |
-axis.text           | `element_text()`  | tick labels               |
-axis.text.x         | `element_text()`  | x-axis tick labels        |
-axis.text.y         | `element_text()`  | y-axis tick labels        |
-axis.title          | `element_text()`  | axis titles               |
-axis.title.x        | `element_text()`  | x-axis title              |
-axis.title.y        | `element_text()`  | y-axis title              |
-axis.ticks          | `element_line()`  | axis tick marks           |
-axis.ticks.length   | `unit()`          | length of tick marks      |
-axis.ticks.margin   | `unit()`          | width of axis tick margin |
+Element             | Setter            | Description               
+--------------------|-------------------|---------------------------
+axis.line           | `element_line()`  | line parallel to axis (not shown by default)
+axis.text           | `element_text()`  | tick labels               
+axis.text.x         | `element_text()`  | x-axis tick labels        
+axis.text.y         | `element_text()`  | y-axis tick labels        
+axis.title          | `element_text()`  | axis titles               
+axis.title.x        | `element_text()`  | x-axis title              
+axis.title.y        | `element_text()`  | y-axis title              
+axis.ticks          | `element_line()`  | axis tick marks           
+axis.ticks.length   | `unit()`          | length of tick marks      
 
-Our first example shows how to modify axis lines. The first call below changes each of the available properties in the `axis.line` theme element so that the changes propagate to both `axis.line.x` and `axis.line.y`, taking advantage of inheritance. The plot on the left therefore has axis lines with long dashes of thickness 2 in red in both the `x` and `y` directions.
-
-The second call uses inheritance somewhat differently. The attributes changed in `axis.line` propagate to both `axis.line.x` and `axis.line.y`. However, in the second line of code corresponding to `axis.line.y`,  the specified color and linetype override the values inherited from `axis.line`. As a result, in the right hand plot, `axis.line.x` will be a solid blue line with thickness 2 while `axis.line.y` will be a dashed orange line with the same thickness.
+Note that `axis.text` (and `axis.title`) comes in three forms: `axis.text`, `axis.text.x`, and `axis.text.y`. Use the first form if you want to modify the properties of both axes at once: any properties that you don't explicitly set in `axis.text.x` and `axis.text.y`  will be inherited from `axis.text`.
 
 ```{r theme-axis}
 df <- data.frame(x = 1:3, y = 1:3)
 base <- ggplot(df, aes(x, y)) + geom_point()
 
 # Accentuate the axes
-base + theme(
-  axis.line = element_line(colour = "grey50", size = 1)
-)
+base + theme(axis.line = element_line(colour = "grey50", size = 1))
 # Style both x and y axis labels
-base + theme(
-  axis.text = element_text(color = "blue", size = 15)
-)
+base + theme(axis.text = element_text(color = "blue", size = 15))
 # Useful for long labels
-base + theme(
-  axis.text.x = element_text(angle = -90, vjust = 0.5)
-)
+base + theme(axis.text.x = element_text(angle = -90, vjust = 0.5))
 ```
 
 ### Legend attributes
@@ -314,8 +320,8 @@ base + theme(
 )
 base + theme(
   legend.key = element_rect(color = "grey50"),
-  legend.key.width = grid::unit(0.9, "cm"),
-  legend.key.height = grid::unit(0.75, "cm")
+  legend.key.width = unit(0.9, "cm"),
+  legend.key.height = unit(0.75, "cm")
 )
 base + theme(
   legend.text = element_text(size = 15),
@@ -387,27 +393,11 @@ df <- data.frame(x = 1:4, y = 1:4, z = c("a", "a", "b", "b"))
 base_f <- ggplot(df, aes(x, y)) + geom_point() + facet_wrap(~z)
 
 base_f
-base_f + theme(panel.margin = grid::unit(0.5, "in"))
+base_f + theme(panel.margin = unit(0.5, "in"))
 base_f + theme(
   strip.background = element_rect(fill = "grey20", color = "grey80", size = 1),
   strip.text = element_text(colour = "white")
 )
-```
-
-### Setting globally
-
-You can modify the elements locally for a single plot with `theme()` (as seen above), or globally for all future plots with `theme_update()`. \index{Themes!updating} \indexf{theme_get} \indexf{theme}
-
-```{r theme-update}
-old_theme <- theme_update(
-  plot.background = element_rect(fill = "lightblue3", colour = NA),
-  panel.background = element_rect(fill = "lightblue", colour = NA),
-  axis.text = element_text(colour = "linen"),
-  axis.title = element_text(colour = "linen")
-)
-base
-theme_set(old_theme)
-base
 ```
 
 ### Exercises
