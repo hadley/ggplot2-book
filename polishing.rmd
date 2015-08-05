@@ -67,8 +67,6 @@ styled <- labelled +
 styled
 ```
 
-Finally, the journal wants the figure as a 600 dpi TIFF file. You'll learn the fine details of `ggsave()` in [saving your output](#sec:saving).
-
 The theming system is composed of four main components:
 
 * Theme _elements_ specify the non-data elements that you can control.
@@ -86,6 +84,8 @@ The theming system is composed of four main components:
   
 * Complete _themes_, like `theme_grey()` set all of the theme elements to 
   values designed to work together harmoniously.
+
+Finally, the journal wants the figure as a 600 dpi TIFF file. You'll learn the fine details of `ggsave()` in [saving your output](#sec:saving).
 
 ## Themes {#sec:themes}
 
@@ -152,6 +152,7 @@ There are four basic types of built-in element functions: text, lines and segmen
     `family`, `face`, `colour`, `size` (in points), `hjust`, `vjust`, `angle` 
     (in degress) and `lineheight` (as ratio of `fontcase`). More details on 
     the parameters can be found in [specifications](#cha:specifications).
+    Setting the font face is particularly challenging.
     \index{Themes!labels} \indexf{element_text}
   
     ```{r theme-text}
@@ -229,19 +230,29 @@ theme_set(old_theme)
 base
 ```
 
+### Exercises
+
+1.  Try out all the themes in ggthemes. Which do you like the best?
+
+1.  What aspects of the default theme do you like? What don't you like?   
+    What would you change?
+
+1.  Look at the plots in your favourite scientific journal. What theme
+    do they most resemble? What are the main differences?
+
 ## Theme elements {#sec:theme-elements}
 
 There are around 40 unique elements that control the appearance of the plot. They can be roughly grouped into five categories: \index{Themes!elements}
 
-* plot attributes
-* axis attributes
-* legends attributes
-* panel attributes
-* facet attributes
+* plot elements
+* axis elements
+* legends elements
+* panel elements
+* facet elements
 
-I'll describe each category below with a few examples.
+I'll describe each category with a few examples.
 
-### Plot attributes
+### Plot elements
 
 Some elements affect the plot as a whole:
 
@@ -251,7 +262,7 @@ plot.background       | `element_rect()` | plot background
 plot.title            | `element_text()` | plot title
 plot.margin           | `margin()`       | margins around plot
 
-`plot.background` modifies properties of the entire graphics region of a ggplot. By default it's set to white which ensures you can always read the text (even if you save and put on a black background). When exporting for inclusion in other systems, you might want to make it transparent (it won't look any different on screen). Similarly, if you're embedding a plot in a context which automatically gives it margins you might want to eliminate the built-in margins (a small margin is still necessary if you want to draw a border).
+`plot.background` draws a rectangle that underlies everything else on the plot. By default, it's uses a white background which ensures that the plot is usable wherever it might end up (e.g. even if you save and put on a black background). When exporting plots to use in other systems, you might want to make it transparent (it won't look any different on screen). Similarly, if you're embedding a plot in a system that already has margins you might want to eliminate the built-in margins (a small margin is still necessary if you want to draw a border).
 
 ```{r plot-bkgrd-ex}
 base + theme(plot.background = element_rect(colour = "grey50"))
@@ -262,9 +273,9 @@ base + theme(
 base + theme(plot.background = element_rect(fill = "lightblue"))
 ```
 
-### Axis attributes
+### Axis elements
 
-The table below lists each theme element associated with the rendering of axes, the theme function or unit function that controls it, and a short description of the element.
+The axis elements control the apperance of the axes:
 
 Element             | Setter            | Description               
 --------------------|-------------------|---------------------------
@@ -292,9 +303,9 @@ base + theme(axis.text = element_text(color = "blue", size = 15))
 base + theme(axis.text.x = element_text(angle = -90, vjust = 0.5))
 ```
 
-### Legend attributes
+### Legend elements
 
-The following theme elements are associated with the appearance of legends:
+The legend elements control the apperance of all legend. To modify the appearance of a single legend, set the corresponding element in `guide_legend()` or `guide_colourbar()`.
 
 Element             | Theme function            | Description                                 |
 --------------------|---------------------------|---------------------------------------------|
@@ -331,9 +342,9 @@ base + theme(
 
 There are four other properties that control how legends are laid out in the context of the plot (`legend.position`, `legend.direction`, `legend.justification`, `legend.box`). They are described in [legend layout](#sub:legend-layout).
 
-### Panel attributes
+### Panel elements
 
-Panel elements control the appearance of the plotting panels.
+Panel elements control the appearance of the plotting panels:
 
 Element             | Theme function    | Description                                       |
 --------------------|-------------------|---------------------------------------------------|
@@ -347,6 +358,8 @@ panel.grid.minor.x  | `element_line()`  | vertical minor grid lines             
 panel.grid.minor.y  | `element_line()`  | horizontal minor grid lines                       |
 aspect.ratio        | numeric           | plot aspect ratio                                 |
 
+The main difference is between `panel.background` and `panel.border` is that the background is drawn underneath the data, and the border is drawn on top of it. For that reason, you'll always need to assign `fill = NA` when overriding `panel.border`.
+
 ```{r panel-bkgd-ex}
 base <- ggplot(df, aes(x, y)) + geom_point()
 # Modify background
@@ -358,9 +371,7 @@ base + theme(panel.grid.major = element_line(color = "gray60", size = 0.8))
 base + theme(panel.grid.major.x = element_line(color = "gray60", size = 0.8))
 ```
 
-The main difference is between `panel.background` and `panel.border` is that the background is drawn underneath the data, and the border is drawn on top of it. For that reason, you'll always need to assign `fill = NA` when overriding `panel.border`.
-
-You can use the theming system to modify the aspect ratio of the panels. Here are a couple of examples:
+The aspect ratio affects each panel, not the overall plot:
 
 ```{r aspect-ratio-ex}
 base2 <- base + theme(plot.background = element_rect(colour = "grey50"))
@@ -372,9 +383,9 @@ base2 + theme(aspect.ratio = 2 / 1)
 base2 + theme(aspect.ratio = 1)
 ```
 
-### Facetting attributes
+### Facetting elements
 
-The following theme elements are associated with panel strips in faceted ggplots:
+The following theme elements are associated with faceted ggplots:
 
 Theme element       | Theme function   | Description                        |
 --------------------|------------------|------------------------------------|
@@ -404,74 +415,22 @@ base_f + theme(
 
 1.  Create the ugliest plot possible! (Contributed by Andrew D. Steen, 
     University of Tennessee - Knoxville)
+    
+1.  `theme_dark()` makes the inside of the plot dark, but not the 
+    outside. Change the plot background to black, and then update all the
+    text settings so you can still read the labels.
+    
+1.  Make an elegant theme that uses linen as the background colour and
+    a serif font for the text.
 
-## Creating your own theme
-
-If you want to create your complete theme, you need a few more details.
-
-
-### Global settings
-
-There are four elements that affect the global appearance of the plot.
-
-Element      | Theme function    | Description
--------------|--------------------------------------------
-line         | `element_line()`  | all line elements
-rect         | `element_rect()`  | all rectangular elements
-text         | `element_text()`  | all text
-title        | `element_text()`  | all text in title elements (plot, axes & legend)
-
-These set default properties that are inherited by more specific settings. These are most useful for setting an overall "background" colour and overall font settings (e.g. family and size).
-
-`r columns(2, 1, 2/3)`
-```{r axis-line-ex}
-df <- data.frame(x = 1:3, y = 1:3)
-base <- ggplot(df, aes(x, y)) + geom_point()
-
-base + theme(text = element_text(colour = "pink"))
-```
-
-It's also possible to use `rel()` to specify a relative size.
-
-Inheritance
-
-Complete vs. incomplete.
-
-`%+replace%`
-
-### Complete vs incomplete
-
-It is useful to understand the difference between complete and incomplete theme objects. A *complete* theme object is one produced by calling a theme function with the attribute `complete = TRUE`. 
-
-Theme functions `theme_grey()` and `theme_bw()` are examples of complete theme functions. Calls to `theme()` produce *incomplete* theme objects, since they represent (local) modifications to a theme object rather than returning a complete theme object per se. When adding an incomplete theme to a complete one, the result is a complete theme. 
-
-Complete and incomplete themes behave somewhat differently when added to a ggplot object:
-
-* Adding an incomplete theme augments the current theme object, replacing only 
-  those properties of elements defined in the call to `theme()`. In particular, 
-  any NULL element properties specified in `theme()`.
-  
-* Adding a complete theme wipes away the existing theme and applies. 
-
-To deal with this problem, the concept of a complete theme (object) was introduced in the new theming system. In particular, `theme_grey` and `theme_bw` are both complete theme functions and return complete theme objects when called. When added to a plot, a complete theme object overrides the current default theme and in fact *replaces* it. This idea is implemented by endowing a theme function with the attribute `"complete"`: its value is `TRUE` for complete themes and `FALSE` for incomplete themes. Examples are shown in the next section.
-
-### Modifying a theme function
-
-There is a second type of inheritance in themes
-
-```{r}
-theme_grey()$legend.key
-
-new_theme <- theme_grey() + theme(legend.key = element_rect(colour = "red"))
-new_theme$legend.key
-
-new_theme <- theme_grey() %+replace% theme(legend.key = element_rect(colour = "red"))
-new_theme$legend.key
-```
+1.  Systematically explore the effects of `hjust` when you have a multiline
+    title. Why doesn't `vjust` do anything?
 
 ## Saving your output {#sec:saving}
 
-You have two basic choices of output: raster or vector.  Vector graphics are procedural.  This means that they are essentially 'infinitely' zoomable; there is no loss of detail.  Raster graphics are stored as an array of pixels and have a fixed optimal viewing size.  Figure \ref{fig:vector-raster} illustrates the basic differences for a basic circle.  A good description is available at <http://tinyurl.com/rstrvctr>. \index{Saving} \index{Exporting} \index{Publication!saving output}
+You have two basic choices of output: raster or vector. Vector graphics describe a plot as sequence of operation: draw a line from $(x_1, y_1)$ to $(x_2, y_2)$, draw a circle at $(x_3, x_4)$ with radius $r$. This means that they are effectively 'infinitely' zoomable; there is no loss of detail. Raster graphics are stored as an array of pixel colours and have a fixed optimal viewing size. Figure \ref{fig:vector-raster} illustrates the basic differences for a basic circle. A good description is available at <http://tinyurl.com/rstrvctr>. \index{Saving} \index{Exporting} \index{Publication!saving output}
+
+The most useful vector graphic formats are pdf and svg. The most useful raster graphic format is png.
 
 \begin{figure}[htbp]
   \centering
@@ -480,54 +439,44 @@ You have two basic choices of output: raster or vector.  Vector graphics are pro
   \label{fig:vector-raster}
 \end{figure}
 
-Generally, vector output is more desirable, but for complex graphics containing thousands of graphical objects it can be slow to render.  In this case, it may be better to switch to raster output.  For printed use, a high-resolution (e.g., 600 dpi) graphic may be an acceptable compromise, but may be large. 
+Unless there is a compelling reason not to, use vector graphics: they look better in more places. There are two main reasons not to use vector graphics:
 
-To save your output, you can use the typical R way with disk-based graphics devices, which works for all packages, or a special function from `ggplot` that saves the current plot: `ggsave()`. `ggsave()` is optimised for interactive use and has the following important arguments: \indexf{ggsave}
+* You have a plot (e.g. a scatterplot) with you have thousands of graphical 
+  objects (i.e. points). A vector versions might be large and slow to render.
 
-* The `path` specifies the path where the image should be saved. The file 
-  extension will be used to automatically select the correct graphics device.
-
-* Three arguments control output size.  If left blank, the size of the current 
-  on-screen graphics device will be used. Otherwise, override with `width` and 
-  `height` arguments. 
+* You want to embed the graphic in MS Office. MS has poor support for vector
+  graphics (except for their own DrawingXML format which is not currently
+  easy to make from R), so raster graphics are easier.
   
-* For raster graphics, the `dpi` argument controls the resolution of the plot. 
-  It defaults to 300, which is appropriate for most printers, but you may want 
-  to use 600 for particularly high-resolution output, or 72 for on-screen 
-  (e.g., web) display.
+For printed use, a high-resolution (e.g., 600 dpi) raster graphic will give equivalent quality, but may be large. 
 
-The following code shows these two methods. If you want to save multiple plots to a single file, you will need to explicitly open a disk-based graphics device (like `png()` or `pdf()`), print the plots and then close it with `dev.off()`.
+There are two ways to save output from ggplot2. You can use the standard R approach where you open a graphics device, generate the plot, then close the device:
 
-```{r ggsave, eval = FALSE}
-ggplot(mpg, aes(displ, hwy)) + geom_point()
-ggsave("output.pdf")
-
+```R
 pdf("output.pdf", width = 6, height = 6)
-# If inside a script, you will need to explicitly print() plots
-ggplot(mpg, aes(displ, hwy)) + geom_point()
 ggplot(mpg, aes(displ, cty)) + geom_point()
 dev.off()
 ```
 
-Table~\ref{tbl:graphic-recommendation} lists recommended graphic formats for various tasks. R output generally works best as part of a linux development tool chain: using png or pdf output in LaTeX documents.  With Microsoft Office it is easiest to use a high-resolution (`dpi = 600`) png file.  You can use vector output, but neither Windows meta files nor postscript supports transparency, and while postscript prints fine, it's not displayed on screen (unless you add a preview image with another tool). Transparency is used to show confidence intervals with the points showing through. If you copy and paste a graph into Word, and see that the confidence interval bands have vanished, that is the cause. The same advice holds for OpenOffice. \index{Exporting!to Word} \index{Exporting!to Powerpoint}
+This works for all packages, but is verbose. ggplot2 provides a convenient shorthand with `ggsave()`:
 
-If you are using LaTeX, I recommend including `\DeclareGraphicsExtensions{.png,.pdf}` in the preamble.  Then you don't need to specify the file extension in `\includegraphics{}` commands, but LaTeX will pick png files in preference to pdf. \index{Exporting!to Latex} I choose this order because you can produce all your files in pdf, and then go back and re-render any big ones as png.  Another useful command is `\graphicspath{}` which specifies a path in which to look for graphics, allowing you to keep graphics in a separate directory to the text.
+```R
+ggplot(mpg, aes(displ, cty)) + geom_point()
+ggsave("output.pdf")
+```
 
-\begin{table}
-  \begin{center}
-  \begin{tabular}{lll}
-    \toprule
-    Software & Recommended graphics device \\
-    \midrule
-    Illustrator & svg \\
-    latex & ps \\
-    MS Office & png (600 dpi) \\
-    Open Office & png (600 dpi) \\
-    pdflatex & pdf, png (600 dpi) \\
-    web & png (72 dpi) \\
-    \bottomrule 
-  \end{tabular}
-  \end{center}
-  \caption{Recommended graphic output for different purposes.}
-  \label{tbl:graphic-recommendation}
-\end{table}
+`ggsave()` is optimised for interactive use: you can use it after you've drawn a plot. It has the following important arguments: \indexf{ggsave}
+
+* The first argument, `path`, specifies the path where the image should be 
+  saved. The file extension will be used to automatically select the correct 
+  graphics device.
+
+* `width` and `height` control the output size. If left blank, they'll use the
+  size of the on-screen graphics device.
+  
+* For raster graphics (i.e. `.png`), the `dpi` argument controls the resolution 
+  of the plot.  It defaults to 300, which is appropriate for most printers, but 
+  you may want to use 600 for particularly high-resolution output, or 72 for 
+  on-screen (e.g., web) display.
+
+See `?ggsave` for more details.
