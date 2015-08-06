@@ -260,15 +260,11 @@ An important argument to `geom_smooth()` is the `method`, which allows you to ch
     Loess does not work well for large datasets (it's $O(n^2)$ in memory), so
     an alternative smoothing algorithm is used when $n$ is greater than 1,000. 
 
-<!-- TODO: 
-  This reads as though you _have to_ use on of these two these formulas, but mgcv::s() has many other options! Maybe briefly explain why this is your preference?
--->
-
 *   `method = "gam"` fits a generalised additive model provided by the __mgcv__ 
-    package. You need to first load mgcv, then use `formula = y ~ s(x)` or 
-    `y ~ s(x, bs = "cs")` (for large data). This is what ggplot2 uses when 
-    there are more than 1,000 points. \index{Package!mgcv}
-    \index{Model!generalised additive}
+    package. You need to first load mgcv, then use a formula like 
+    `formula = y ~ s(x)` or `y ~ s(x, bs = "cs")` (for large data). This is
+    what ggplot2 uses when there are more than 1,000 points. 
+    \index{Package!mgcv} \index{Model!generalised additive}
 
     `r columns(1, 2/3)`
     ```{r smooth-gam, message = FALSE}
@@ -384,22 +380,14 @@ drugs <- data.frame(
 )
 ```
 
-<!-- TODO 
-  I think you could get away without saying you need to explictly use `stat_identity()` here and just mention that, if you map a variable to y, ggplot assumes those are the binned values?
--->
-
 To display this sort of data, you need to tell `geom_bar()` to not run the default statistical transformation which bins and counts the data:.
 
 ```{r}
 ggplot(drugs, aes(drug, effect)) +
-  geom_bar()
+  geom_bar(stat = "identity")
 ```
 
-<!-- TODO 
-  Explain _why_ we should prefer points here?
--->
-
-But if you have this sort of data, you should seriously consider using `geom_point()` instead.
+But if you have this sort of data, you should seriously consider using `geom_point()` instead: they take up less space, and don't require that the y axis includes 0.
 
 ### Time series with line and path plots {#sub:line}
 
@@ -562,8 +550,12 @@ qplot(displ, data = mpg)
 
 Unless otherwise specified, `qplot()` tries to pick a sensible geometry and statistic based on the arguments provided. For example, if you give `qplot()` `x` and `y` variables, it'll create a scatterplot. If you just give it an `x`, it'll create a histogram or bar chart depending on the type of variable.
 
-If you're used to `plot()` you may find `qplot()` to be a useful crutch to get up and running quickly. However, while it's possible to use `qplot()` to access all of the customizability of ggplot2, I don't recommend it. If you find yourself making a more complex graph, e.g. using different aesthetics in different layers, or manually setting visual properties, use `ggplot()`, not `qplot()`.
+`qplot()` assumes that all variables should be scaled by default. If you want to set an aesthetic to a constant, you need to use `I()`:
 
-<!-- TODO
-  I'd prefer to see at least a short mention of using I() to prevent scale(s) from being applied.
--->
+`r columns(3, 2 / 3)`
+```{r}
+qplot(displ, hwy, data = mpg, colour = "blue")
+qplot(displ, hwy, data = mpg, colour = I("red"))
+```
+
+If you're used to `plot()` you may find `qplot()` to be a useful crutch to get up and running quickly. However, while it's possible to use `qplot()` to access all of the customizability of ggplot2, I don't recommend it. If you find yourself making a more complex graph, e.g. using different aesthetics in different layers, or manually setting visual properties, use `ggplot()`, not `qplot()`.
