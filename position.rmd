@@ -15,17 +15,25 @@ source("common.R")
 This chapter discusses position, particularly how facets are laid out on a page, and how coordinate systems within a panel work. There are four components that control position. You have already learned about two of them that work within a facet: \index{Positioning}
 
 * __Position adjustments__ adjust the position of overlapping objects 
-  within a layer These are most useful for bar and other interval geoms, but 
+  within a layer. These are most useful for bar and other interval geoms, but 
   can be useful in other situations ([link to section](#sec:position)).
+  
+<!-- TODO
+  This ^^^ is discussed pretty extensively in [Position adjustments](#sec:position) (layers chapter). Merge them maybe?
+-->
   
 * __Position scales__ control how the values in the data are mapped to 
   positions on the plot ([link to section](#sub:scale-position)).
+  
+<!-- TODO
+  This ^^^ is discussed pretty extensively in [Continuous position scales](#sub:scale-position) (scales chapter). Merge them maybe?
+-->
 
 This chapter will describe the other two components and show you how all four pieces fit together:
 
 * __Faceting__ is a mechanism for automatically laying out multiple plots 
   on a page. It splits the data into subsets, and then plots each subset 
-  in a different panel. Such plots are often called small multiples 
+  in a different panel. Such plots are often called small multiples or trellis graphics
   ([link to section](#sec:faceting)).
   
 * __Coordinate systems__ control how the two independent position scales 
@@ -51,7 +59,7 @@ The difference between `facet_wrap()` and `facet_grid()` are illustrated in Figu
 \begin{figure}[htbp]
   \centering
     \includegraphics[width=0.5\linewidth]{diagrams/position-facets}
-  \caption{A sketch illustrating the difference between the two faceting systems. \texttt{facet\_grid} (left) is fundamentally 2d, being made up of two independent components. \texttt{facet\_wrap} (right) is 1d, but wrapped into 2d to save space.}
+  \caption{A sketch illustrating the difference between the two faceting systems. \texttt{facet\_grid()} (left) is fundamentally 2d, being made up of two independent components. \texttt{facet\_wrap()} (right) is 1d, but wrapped into 2d to save space.}
   \label{fig:facet-sketch}
 \end{figure}
 
@@ -138,14 +146,14 @@ Free scales are also useful when we want to display multiple times series that w
 
 `r columns(1, 1, 0.75)`
 ```{r time}
-em <- economics %>% tidyr::gather(variable, value, -date)
+em <- tidyr::gather(economics, variable, value, -date)
 em
 ggplot(em, aes(date, value)) + 
   geom_line() + 
   facet_wrap(~variable, scales = "free_y", ncol = 1)
 ```
 
-`facet_grid()` has an additional parameter called `space`, which takes values `"free"` or `"fixed"`.  When space is "free", each column (or row) will have width (or height) proportional to the range of the scale for that column (or row).  This makes the scaling equal across the whole plot: 1 cm on each panel maps to the same range of data. (This is somewhat analogous to the 'sliced' axis limits of lattice.) For example, if panel a had range 2 and panel b had range 4, one-third of the space would be given to a, and two-thirds to b. This is most useful for categorical scales, where we can assign space proportionally based on the number of levels in each facet, as illustrated below.
+`facet_grid()` has an additional parameter called `space`, which takes the same values as `scales`.  When space is "free", each column (or row) will have width (or height) proportional to the range of the scale for that column (or row).  This makes the scaling equal across the whole plot: 1 cm on each panel maps to the same range of data. (This is somewhat analogous to the 'sliced' axis limits of lattice.) For example, if panel a had range 2 and panel b had range 4, one-third of the space would be given to a, and two-thirds to b. This is most useful for categorical scales, where we can assign space proportionally based on the number of levels in each facet, as illustrated below.
 
 ```{r discrete-free}
 mpg2$model <- reorder(mpg2$model, mpg2$cty)
@@ -173,7 +181,7 @@ ggplot(df1, aes(x, y)) +
   facet_wrap(~gender)
 ```
 
-This technique is particularly useful when you add anotations to make it easier to compare between facets, as shown in the next section.
+This technique is particularly useful when you add annotations to make it easier to compare between facets, as shown in the next section.
 
 ### Grouping vs. faceting {#sub:group-vs-facet}
 
@@ -224,7 +232,7 @@ ggplot(df, aes(x, y)) +
 
 ### Continuous variables {#sub:continuous-variables}
 
-To facet continuous variables, you must first discretise then. ggplot2 provides  three helper functions to do so: \index{Faceting!by continuous variables}
+To facet continuous variables, you must first discretise them. ggplot2 provides  three helper functions to do so: \index{Faceting!by continuous variables}
 
 * Divide the data into `n` bins each of the same length: `cut_interval(x, n)`
   \indexf{cut_interval}
@@ -460,7 +468,7 @@ base +
 
 Using polar coordinates gives rise to pie charts and wind roses (from bar geoms), and radar charts (from line geoms). Polar coordinates are often used for circular data, particularly time or direction, but the perceptual properties are not good because the angle is harder to perceive for small radii than it is for large radii.  The `theta` argument determines which position variable is mapped to angle (by default, x) and which to radius.  
 
-THe code below shows how we can turn a bar into a pie chart or a bullseye chart by changing the coordinate system. The documentation includes other examples. \index{Polar coordinates} \index{Coordinate systems!polar} \indexf{coord_polar}
+The code below shows how we can turn a bar into a pie chart or a bullseye chart by changing the coordinate system. The documentation includes other examples. \index{Polar coordinates} \index{Coordinate systems!polar} \indexf{coord_polar}
 
 `r columns(3, 1)`
 ```{r polar}
@@ -501,10 +509,14 @@ Maps are intrinsically displays of spherical data. Simply plotting raw longitude
     nzmap + coord_quickmap()
     ```
 
-*   `coord_map()` uses the  **mapproj** package [@mapproj] to do a formal map
+*   `coord_map()` uses the  __mapproj__ package [@mapproj] to do a formal map
     projection. It takes the same arguments as `mapproj()` for controlling the
     projection. It is much slower than `coord_quickmap()` because it must
     munches the data and transform each piece.
+    
+    <!-- TODO
+     Did you mean `mapproj::mapproject()`, instead of `mapproj()`? ^^^
+     -->
 
     ```{r map-world}
     world <- map_data("world")

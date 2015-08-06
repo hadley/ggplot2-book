@@ -13,7 +13,7 @@ columns(1, 2 / 3)
 
 Scales control the mapping from data to aesthetics. They take your data and turn it into something that you can see, like size, colour, position or shape. Scales also provide the tools that let you read the plot: the axes and legends. Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the scale). The axis or legend is the inverse function: it allows you to convert visual properties back to data.
 
-You can generate many plots without knowing how scales work, but understanding scales and learning how to manipulate them will give you much more control. The basics of working with scales is described in [scale usage](#sec:scale-usage). The following sections discusses the different parameter in the scale functions. [Guides](#sec:guides) discusses the common parameters that control the axes and legends. Legends are particularly complicated so have an additional set of options as described in [legends](#sec:legends). [Limits](#sec:limits) shows how to use limits to both zoom into interesting parts of a plot, and to ensure that multiple plots have matching legends and axes. [Scale details](#sec:scale-details) gives an overview of the different types of scales available in ggplot2, which can be roughly divided into four categories: continous position scales, colour scales, manual scales and identity scales. 
+You can generate many plots without knowing how scales work, but understanding scales and learning how to manipulate them will give you much more control. The basics of working with scales is described in [scale usage](#sec:scale-usage). [Guides](#sec:guides) discusses the common parameters that control the axes and legends. Legends are particularly complicated so have an additional set of options as described in [legends](#sec:legends). [Limits](#sec:limits) shows how to use limits to both zoom into interesting parts of a plot, and to ensure that multiple plots have matching legends and axes. [Scale details](#sec:scale-details) gives an overview of the different types of scales available in ggplot2, which can be roughly divided into four categories: continuous position scales, colour scales, manual scales and identity scales. 
 
 ## Modifying scales {#sec:scale-usage}
 
@@ -58,7 +58,7 @@ ggplot(mpg, aes(displ, hwy)) +
   scale_x_continuous("Label 2")
 ```
 
-Note the message: if you see this in your own code, you need to reorganse your code specification to only add a single scale.
+Note the message: if you see this in your own code, you need to reorganise your code specification to only add a single scale.
 
 You can also use a different scale altogether:
 
@@ -87,7 +87,7 @@ You've probably already figured out the naming scheme for scales, but to be conc
     ggplot(mpg, aes(displ)) + 
       scale_y_continuous("Highway mpg") + 
       scale_x_continuous() +
-      geom_point(aes(y = mpg)) +
+      geom_point(aes(y = hwy))
 
     ggplot(mpg, aes(y = displ, x = class)) + 
       scale_y_continuous("Displacement (l)") + 
@@ -99,9 +99,9 @@ You've probably already figured out the naming scheme for scales, but to be conc
       scale_colour_discrete("Drive\ntrain")
     ```
 
-## Gudes: legends and axes {#sec:guides}
+## Guides: legends and axes {#sec:guides}
 
-The component of a scale that you're most likely to want to modify is the __guide__, the axis or legend associated with the scale. Guides allow you to read observations from the plot and map them back to their original values. In ggplot2, guides are produced automatically based on the layers in your plot. This is very different to base R grahics, where you are responsible for drawing the legends by hand. In ggplot2, you don't directly control the legend; instead you set up the data so that there's a clear mapping between data and aesthetics, and a legend is generated for you automatically. This can be frustrating when you first start using ggplot2, but once you get the hang of it, you'll find that it saves you time, and there is little you cannot do. If you're struggling to get the legend you want, it's likely because your data is arranged in a suboptimal manner: read [tidying](#cha:data) for more details.
+The component of a scale that you're most likely to want to modify is the __guide__, the axis or legend associated with the scale. Guides allow you to read observations from the plot and map them back to their original values. In ggplot2, guides are produced automatically based on the layers in your plot. This is very different to base R graphics, where you are responsible for drawing the legends by hand. In ggplot2, you don't directly control the legend; instead you set up the data so that there's a clear mapping between data and aesthetics, and a legend is generated for you automatically. This can be frustrating when you first start using ggplot2, but once you get the hang of it, you'll find that it saves you time, and there is little you cannot do. If you're struggling to get the legend you want, it's likely because your data is arranged in a sub-optimal manner: read [tidying](#cha:data) for more details.
 
 You might find it surprising that axes and legends are the same type of thing, but while they look very different there are many natural correspondences:  \index{Guides} \index{Legend}
 
@@ -218,6 +218,10 @@ leg + scale_colour_continuous(labels = scales::unit_format("k", 1e-3))
 
 You can adjust the minor breaks (the faint grid lines that appear between the major grid lines) by supplying a numeric vector of positions to the `minor_breaks` argument. By default minor grid lines are spaced evenly in the original data space: this gives the common behaviour of log-log plots where major grid lines are evenly spaced on the log scale, and minor grid lines are evenly spaced on the log scale.
 
+<!-- TODO
+  This last sentence is complicated, and I think an example would help demonstrate, or at least mention that this is revisted in [Continuous position scales](#sub:scale-position) ^^^
+-->
+
 ### Exercises
 
 1.  Recreate the following graphic:
@@ -245,7 +249,7 @@ You can adjust the minor breaks (the faint grid lines that appear between the ma
     What label function converts 1 to 1st, 2 to 2nd, and so on?
     
 1.  What are the three most important arguments that apply to both 
-    axes and legends? What do they do? Compare and constrast their
+    axes and legends? What do they do? Compare and contrast their
     operation for axes vs. legends.
 
 ## Legends {#sec:legends}
@@ -267,18 +271,18 @@ The following sections describe the options that control these interactions.
 
 ### Layers and legends {#sub-layers-legends}
 
-The A legend may need to draw symbols from multiple layers. For example, if you've mapped colour to both points and lines, the keys will show both points and lines. If you've mapped fill colour, you get a rectangle. Note the way the legend varies in the plots below:
+A legend may need to draw symbols from multiple layers. For example, if you've mapped colour to both points and lines, the keys will show both points and lines. If you've mapped fill colour, you get a rectangle. Note the way the legend varies in the plots below:
 
 `r columns(3)`
 ```{r legend-geom, echo = FALSE}
 df <- data.frame(x = 1, y = 1:3, z = letters[1:3])
 p <- ggplot(df, aes(x, y, colour = z))
 p + geom_point()
-p + geom_point() + geom_path()
+p + geom_point() + geom_path(aes(group = 1))
 p + geom_raster(aes(fill = z))
 ```
 
-By default, a layer will only appear if the corresponding aethetic is mapped to a variable with `aes()`. You can override whether or not a layer appears in the legend with `show_guide`: `FALSE` to prevents a layer from ever appearing in the legend, `TRUE` forces it to appear when it otherwise wouldn't. Using `TRUE` can be useful in conjunction with the following trick to make points stand out:
+By default, a layer will only appear if the corresponding aesthetic is mapped to a variable with `aes()`. You can override whether or not a layer appears in the legend with `show.legend`: `FALSE` to prevents a layer from ever appearing in the legend, `TRUE` forces it to appear when it otherwise wouldn't. Using `TRUE` can be useful in conjunction with the following trick to make points stand out:
 
 `r columns(2, 2/3)`
 ```{r}
@@ -286,7 +290,7 @@ ggplot(df, aes(y, y)) +
   geom_point(size = 6, colour = "grey20") +
   geom_point(aes(colour = z), size = 3) 
 ggplot(df, aes(y, y)) + 
-  geom_point(size = 6, colour = "grey20", show_guide = TRUE) +
+  geom_point(size = 6, colour = "grey20", show.legend = TRUE) +
   geom_point(aes(colour = z), size = 3) 
 ```
 
@@ -399,7 +403,7 @@ The legend guide displays individual keys in a table. The most useful options ar
     p + guides(fill = guide_legend(reverse = TRUE))
     ```
 
-*   `override.aes`: override some of the aesthetic settings dervied from each
+*   `override.aes`: override some of the aesthetic settings derived from each
     layer. This is useful if you want to make the elements in the legend 
     more visually prominent. See discussion in 
     [layers and legends](#sub-layers-legends).
@@ -448,7 +452,7 @@ p + guides(fill = guide_colorbar(barheight = unit(3, "cm")))
     `r columns(1, 2 / 3)`
     ```{r, echo = FALSE}
     ggplot(mpg, aes(displ, hwy, colour = class)) + 
-      geom_point(show_guide = FALSE) + 
+      geom_point(show.legend = FALSE) + 
       geom_smooth(method = "lm", se = FALSE) + 
       theme(legend.position = "bottom") + 
       guides(colour = guide_legend(nrow = 1))
@@ -485,7 +489,7 @@ base + scale_x_continuous(limits = c(1.5, 2.5))
 base + scale_x_continuous(limits = c(0, 4))
 ```
 
-Because modiftying the limits is such a common task, ggplot2 provides some helper to make this even easier: `xlim()`, `ylim()` and `lims()` These functions inspect their input and then create the appropriate scale, as follows: \indexf{xlim}  \indexf{ylim}
+Because modifying the limits is such a common task, ggplot2 provides some helper to make this even easier: `xlim()`, `ylim()` and `lims()` These functions inspect their input and then create the appropriate scale, as follows: \indexf{xlim}  \indexf{ylim}
 
 * `xlim(10, 20)`: a continuous scale from 10 to 20
 * `ylim(20, 10)`: a reversed continuous scale from 20 to 10
@@ -500,7 +504,7 @@ base + lims(x = c(0, 4))
 
 If you have eagle eyes, you'll have noticed that the range of the axes actually extends a little bit past the limits that you've specified. This ensures that the data does not overlap the axes. To eliminate this space, set `expand = c(0, 0)`. This is useful in conjunction with `geom_raster()`: \index{Axis!expansion}
 
-`r columns(2, 1, 0.66)
+`r columns(2, 1, 0.66)`
 ```{r}
 ggplot(faithfuld, aes(waiting, eruptions)) + 
   geom_tile(aes(fill = density)) + 
@@ -536,7 +540,7 @@ p + scale_fill_gradient(limits = c(2, 4), oob = scales::squish)
     ggplot(rwd, aes(displ, hwy, colour = class)) + geom_point()
     ```
 
-1.  What does `expand_limits()` and how does it work?  Read the source code.
+1.  What does `expand_limits()` do and how does it work?  Read the source code.
 
 1.  What happens if you add two `xlim()` calls to the same plot? Why?
 
@@ -546,7 +550,7 @@ p + scale_fill_gradient(limits = c(2, 4), oob = scales::squish)
 
 As well as tweaking the options of the default scales, you can also override them completely with new scales. Scales can be divided roughly into four families:
 
-* Continious position scales used to map integer, numeric, and date time 
+* Continuous position scales used to map integer, numeric, and date time 
   data to x and y position.
 
 * Colour scales, used to map continuous and discrete data to colours.
@@ -562,7 +566,7 @@ The follow sections describe each family in more detail.
 
 ### Continuous position scales {#sub:scale-position}
 
-Every plot has two position scales, x and y. \index{Scales!position} \index{Positioning!scales} The most common continuous position scales are `scale_x_continuous()` and `scale_y_continuous()`, which linearly map data to the x and y axis. \index{Scales!position!continuous}. \index{Transformation!scales} \indexf{scale_x_continuous} \indexf{scale_y_continuous} The most interesting variations are produced using transformations. Every continuous scale takes a `trans` argument, allowing the use of a variety of transformations: 
+Every plot has two position scales, x and y. \index{Scales!position} \index{Positioning!scales} The most common continuous position scales are `scale_x_continuous()` and `scale_y_continuous()`, which linearly map data to the x and y axis. \index{Scales!position!continuous} \index{Transformation!scales} \indexf{scale_x_continuous} \indexf{scale_y_continuous} The most interesting variations are produced using transformations. Every continuous scale takes a `trans` argument, allowing the use of a variety of transformations: 
 
 ```{r}
 # Convert from fuel economy to fuel consumption
@@ -655,7 +659,7 @@ base + scale_x_date(
 
 ### Colour {#sub:scale-colour}
 
-After position, the most commonly used aesthetic is colour. There are quite a few different ways of mapping values to colours: four different gradient based methods for continuous values, and two methods for mapping discrete values. But before we look at the details of the different methods, it's useful to learn a little bit of colour theory. Colour theory is complex because the underlying biology of the eye and brain is complex, and this introduction will only touch on some of the more important issues. An excellent more detailed exposition is available online at <http://tinyurl.com/clrdtls>. \index{Colour} \index{Scales!colour}
+After position, the most commonly used aesthetic is colour. There are quite a few different ways of mapping values to colours in ggplot2: four different gradient based methods for continuous values, and two methods for mapping discrete values. But before we look at the details of the different methods, it's useful to learn a little bit of colour theory. Colour theory is complex because the underlying biology of the eye and brain is complex, and this introduction will only touch on some of the more important issues. An excellent more detailed exposition is available online at <http://tinyurl.com/clrdtls>. \index{Colour} \index{Scales!colour}
 
 At the physical level, colour is produced by a mixture of wavelengths of lights. To characterise a colour completely we need to know the complete mixture of wavelengths. Fortunately for us the human eye only has three different colour receptors, and so we can summarise the perception of any colour with just three numbers. You may be familiar with the rgb encoding of colour space, which defines a colour by the intensities of red, green and blue light needed to produce it. One problem with this space is that it is not perceptually uniform: the two colours that are one unit apart may look similar or very different depending on where they are in the colour space. This makes it difficult to create a mapping from a continuous variable to a set of colours. There have been many attempts to come up with colours spaces that are more perceptually uniform.  We'll use a modern attempt called the hcl colour space, which has three components of **h** ue, **c** hroma and **l** uminance: \index{Colour!spaces}
 
@@ -697,7 +701,7 @@ erupt <- ggplot(faithfuld, aes(waiting, eruptions, fill = density)) +
 There are four continuous colour scales:
 
 *   `scale_colour_gradient()` and `scale_fill_gradient()`: a two-colour gradient, 
-    low-high (light blue-dark blue). This is the default scale for continous
+    low-high (light blue-dark blue). This is the default scale for continuous
     colour, and is the same as `scale_colour_continuous()`. Arguments `low` and
     `high` control the colours at either end of the gradient.
     \indexf{scale_colour_gradient} \indexf{scale_fill_gradient}
@@ -726,7 +730,7 @@ There are four continuous colour scales:
     the `midpoint` argument. \indexf{scale_colour_gradient2}
     \indexf{scale_fill_gradient2}
     
-    It's artificial to use the colour scale with this dataset, but we can
+    It's artificial to use this colour scale with this dataset, but we can
     force it by using the median of the density as the mid point. Note that the 
     blues are much more intense than the reds (which you only see as a very pale
     pink)
@@ -757,7 +761,7 @@ There are four continuous colour scales:
     vector of values between 0 and 1.
 
 *   `scale_color_distiller()` and `scale_fill_gradient()` apply the ColorBrewer 
-    colour scales to continous data. You use it the same way as
+    colour scales to continuous data. You use it the same way as
     `scale_fill_brewer()`, described below:
 
     ```{r}
@@ -780,7 +784,7 @@ p + scale_fill_gradient(low = "black", high = "white", na.value = "red")
 
 #### Discrete {#ssub:colour-discrete}
 
-There are four colour scales for discrete data. We'll illustrate them with a barchar that encodes both position and fill to the same variable:
+There are four colour scales for discrete data. We illustrate them with a barchart that encodes both position and fill to the same variable:
 
 `r columns(3, 1)`
 ```{r}
@@ -933,10 +937,10 @@ ggplot(luv_colours, aes(u, v)) +
   coord_equal()
 ```
 
-### Exericses
+### Exercises
 
 1.  Compare and contrast with the four continuous colour scales with the four
     discrete scales.
     
-1.  Explore the distribution of the built-in in `colors()` using the 
+1.  Explore the distribution of the built-in `colors()` using the 
     `luv_colours` dataset.
