@@ -176,7 +176,7 @@ Here we map x-position to `displ`, y-position to `hwy`, and colour to `class`. T
 aes(displ, hwy, colour = class)
 ```
 
-While you can do data manipulation in `aes()`, e.g. `aes(log(carat), log(price))`, it's best to only do simple calculations. It's better to move complex transformations out of `aes()` call and into an explicit `mutate()` call, as you'll learn about in [mutate](#mutate). This makes it easier to check your work and it's often faster (because you need only do the transformation once, not every time the plot is drawn).
+While you can do data manipulation in `aes()`, e.g. `aes(log(carat), log(price))`, it's best to only do simple calculations. It's better to move complex transformations out of `aes()` call and into an explicit `dplyr::mutate()` call, as you'll learn about in [mutate](#mutate). This makes it easier to check your work and it's often faster (because you need only do the transformation once, not every time the plot is drawn).
 
 Avoid referring to variables that are not in the data (e.g., with `diamonds$carat`). This breaks containment, so that the plot no longer contains everything it needs. This model is a slight simplification: every ggplot has an environment associated with it, so you can refer to objects in that environment and it will work. However, it's best not to rely on this as it prevents the plot from being self-contained. ggplot2 was written before I fully understood non-standard evaluation in R, so it's not as reliable as it could be.
 
@@ -195,7 +195,7 @@ ggplot(mpg) +
   geom_point(aes(displ, hwy, colour = class))
 ```
 
-You can add, override, or remove mappings:
+Within each layer, you can add, override, or remove mappings:
 
 |Operation |Layer aesthetics    |Result                       |
 |:---------|:-------------------|:----------------------------|
@@ -203,7 +203,7 @@ You can add, override, or remove mappings:
 |Override  |`aes(y = disp)`     |`aes(mpg, disp)`             |
 |Remove    |`aes(y = NULL)`     |`aes(mpg)`                   |
 
-If you only have one layer in the plot, the way you specify aesthetics doesn't make any matter. However, the distinction is important when you start adding additional layers. These two plots are both valid and interesting, but focus on quite different aspects of the data:
+If you only have one layer in the plot, the way you specify aesthetics doesn't make any difference. However, the distinction is important when you start adding additional layers. These two plots are both valid and interesting, but focus on quite different aspects of the data:
 
 `r columns(2, 2 / 3)`
 ```{r, message = FALSE, warning = FALSE}
@@ -304,7 +304,7 @@ Geometric objects, or **geoms** for short, perform the actual rendering of the l
         * `geom_bar()`: display distribution of discrete variable.
     * Continuous
         * `geom_histogram()`: bin and count continuous variable, display with bars.
-        * `geom_density()`: smoothed density estimate
+        * `geom_density()`: smoothed density estimate.
         * `geom_dotplot()`: stack individual points into a dot plot.
         * `geom_freqpoly()`: bin and count continuous variable, display with lines.
 
@@ -323,15 +323,14 @@ Geometric objects, or **geoms** for short, perform the actual rendering of the l
         * `geom_count()`: count number of point at distinct locations
         * `geom_jitter()`: randomly jitter overlapping points.
     * One continuous, one discrete:
-        * `geom_bar(stat = "identity")`: a bar chart of precomputed summaries
+        * `geom_bar(stat = "identity")`: a bar chart of precomputed summaries.
         * `geom_boxplot()`: boxplots.
-        * `geom_dotplot()`: carefully adjust location of overlapping points.
         * `geom_violin()`: show density of values in each group.
     * One time, one continuous
         * `geom_area()`: area plot.
         * `geom_line()`: line plot.
         * `geom_step()`: step plot.
-    * Display error:
+    * Display uncertainty:
         * `geom_crossbar()`: vertical bar with center.
         * `geom_errorbar()`: error bars.
         * `geom_linerange()`: vertical line.
@@ -344,7 +343,7 @@ Geometric objects, or **geoms** for short, perform the actual rendering of the l
     * `geom_tile()`: tile the plane with rectangles.
     * `geom_raster()`: fast version of `geom_tile()` for equal sized tiles.
   
-Each geom has a set of aesthetics that it understands, some of which _must_ be provided. For example, the point geoms requires x and y position, and understands colour, size and shape aesthetics. A bar requires height (`ymax`), and understands width, border colour and fill colour. Each geom lists its aesthetics in the docuementation.
+Each geom has a set of aesthetics that it understands, some of which _must_ be provided. For example, the point geoms requires x and y position, and understands colour, size and shape aesthetics. A bar requires height (`ymax`), and understands width, border colour and fill colour. Each geom lists its aesthetics in the documentation.
 
 Some geoms differ primarily in the way that they are parameterised. For example, you can draw a square in three ways:
 
@@ -398,7 +397,7 @@ If alternative parameterisations are available, picking the right one for your d
 
 ## Stats {#sec:stat}
 
-A statistical transformation, or **stat**, transforms the data, typically by summarising it in some manner. For example, a useful stat is the smoother, which calculates the smoothed mean of y, conditional on x. You've already used many of ggplot2's stats because they're used behind the scenes for to generate many important geoms:
+A statistical transformation, or **stat**, transforms the data, typically by summarising it in some manner. For example, a useful stat is the smoother, which calculates the smoothed mean of y, conditional on x. You've already used many of ggplot2's stats because they're used behind the scenes to generate many important geoms:
 
 * `stat_bin()`: `geom_bar()`, `geom_freqpoly()`, `geom_histogram()`
 * `stat_bin2d()`: `geom_bin2d()`
@@ -487,7 +486,7 @@ The result of this plot is rather surprising: low quality diamonds seem to be mo
     ggplot(mpg, aes(displ)) + stat_ecdf()
     ggplot(mpg, aes(sample = displ)) + stat_qq()
     ggplot(mpg, aes(displ)) + 
-      geom_density(aes(colour = "data"), show_guide = FALSE, adjust = 3/4) + 
+      geom_density(aes(colour = "data"), show.legend = FALSE, adjust = 3/4) + 
       stat_function(
         aes(colour = "normal"),
         fun = "dnorm", 
@@ -504,25 +503,24 @@ The result of this plot is rather surprising: low quality diamonds seem to be mo
 
 Position adjustments apply minor tweaks to the position of elements within a layer. Three adjustments apply primarily to bars: \index{Position adjustments} \index{Adjustments!position}  \index{Positioning!position adjustments} \indexf{geom_bar}
 
-* `position_dodge()`: place overlapping bars (or boxplots) side-by-side.
-   \index{Dodging} \index{Side-by-side|see{Dodging}} \indexf{position_dodge} 
 * `position_stack()`: stack overlapping bars (or areas) on top of each other.
   \index{Stacking} \indexf{position_stack}
 * `position_fill()`: stack overlapping bars, scaling so the top is always at 1.
   \indexf{position_fill}   
+* `position_dodge()`: place overlapping bars (or boxplots) side-by-side.
+   \index{Dodging} \index{Side-by-side|see{Dodging}} \indexf{position_dodge} 
 
 `r columns(3, 2 / 3)`
 ```{r position-bar}
 dplot <- ggplot(diamonds, aes(clarity, fill = cut)) + 
   theme(legend.position = "none")
+# position stack is the default for bars, so `geom_bar()` is equivalent to `geom_bar(position = "stack")`.
 dplot + geom_bar()
 dplot + geom_bar(position = "fill")
 dplot + geom_bar(position = "dodge")
 ```
 
-Stacking is the default position adjustment for bars, so `geom_bar()` is equivalent to `geom_bar(position = "stack")`.
-
-There's also a position adjustment that does nothing: `position_identity()`. The identity position adjustment is not useful for bars, because each bar obscures the bars behind. A frequency polygon is a better technique here:
+There's also a position adjustment that does nothing: `position_identity()`. The identity position adjustment is not useful for bars, because each bar obscures the bars behind, but there are many geoms that probably don't need an adjustment, such as a frequency polygon:
 
 `r columns(2, 2 / 3)`
 ```{r position-identity}
