@@ -13,7 +13,7 @@ if (length(path) == 0) {
   base$knitr$opts_chunk$out.width <- "0.49\\linewidth"
 
   chap <- sub("\\.rmd", "", path)
-  base$knitr$opts_chunk$fig.path <- paste0("figures/", chap, "/")
+  base$knitr$opts_chunk$fig.path <- paste0("_figures/", chap, "/")
   base$knitr$opts_chunk$cache.path <- paste0("_cache/", chap, "/")
   base$knitr$opts_chunk$cache <- TRUE
 

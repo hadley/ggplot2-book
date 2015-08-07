@@ -9,8 +9,8 @@ book/ggplot2-book.pdf: $(TEXDIR)/ggplot2-book.pdf
 
 # compile tex to pdf
 $(TEXDIR)/ggplot2-book.pdf: $(TEXDIR) $(TEXDIR)/ggplot2-book.tex $(TEXDIR)/krantz.cls $(TEX_CHAPTERS)
-	mkdir -p $(TEXDIR)/figures && cp -r figures/* $(TEXDIR)/figures
-	mkdir -p $(TEXDIR)/diagrams && cp -r diagrams/* $(TEXDIR)/diagrams
+	cp -R _figures/* $(TEXDIR)/_figures
+	cp -R diagrams/* $(TEXDIR)/diagrams
 	cd $(TEXDIR) && latexmk -xelatex -interaction=batchmode ggplot2-book.tex
 
 # copy over LaTeX templates and style files
@@ -28,8 +28,10 @@ toc.rds: $(RMD_CHAPTERS)
 
 $(TEXDIR):
 	mkdir -p $(TEXDIR)
+	mkdir -p $(TEXDIR)/_figures
+	mkdir -p $(TEXDIR)/diagrams
 
 clean:
 	rm -rf $(TEXDIR)
-	rm -rf figures
+	rm -rf _figures
 	rm -rf _cache
