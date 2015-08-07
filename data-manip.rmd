@@ -5,7 +5,7 @@ bibliography: references.bib
 ---
 
 ```{r data, include = FALSE}
-chapter <- "data_manip"
+chapter <- "data-manip"
 source("common.R")
 
 diamonds <- diamonds %>% tbl_df()
@@ -196,7 +196,9 @@ ggplot(diamonds_ok, aes(size, sym)) +
 This plot has two advantages: we can more easily see the pattern that the bulk on the points lie on, and we can easily select outliers. Here, it doesn't seem important whether the outliers are positive (i.e. x is bigger than y) or negative (i.e. y is bigger x). So we can use the absolute value of the symmetry variable to pull out the outliers. 0.25 seems a reasonable threshold. We'll check out the results with a histogram.
 
 ```{r}
-qplot(size, abs(sym), data = diamonds_ok)
+ggplot(diamonds_ok, aes(size, sym)) + 
+  stat_bin2d()
+
 diamonds_ok2 <- filter(diamonds_ok, abs(sym) < 0.25)
 ggplot(diamonds_ok2, aes(size, sym)) + 
   stat_bin2d()
@@ -366,9 +368,9 @@ ggplot(ba, aes(ab, ba)) +
 
 The highest batting averages occur for the players with the smallest number of at bats - it's not hard to hit the ball every time if you've only had two pitches.  We can make the pattern a little more clear by getting rid of the players with less than 10 at bats.
 
-```{r, dev = "png"}
+```{r}
 ggplot(filter(ba, ab >= 10), aes(ab, ba)) + 
-  geom_point(alpha = 1/5) + 
+  geom_bin2d() + 
   geom_smooth()
 ```
 
