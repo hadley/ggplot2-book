@@ -14,7 +14,7 @@ book/CHAPTERS: $(TEX_CHAPTERS)
 	cp -R _figures/* $(TEXDIR)/_figures
 	cp -R diagrams/* $(TEXDIR)/diagrams
 	# strip bad ICC metadata
-	find $(TEXDIR) -type f -name "*.png" -exec pngcrush -q -rem iCCP -ow {} \;
+	find $(TEXDIR) -type f -name "*.png" -exec optipng -strip all -o0 -clobber -quiet {} \;
 	touch book/CHAPTERS
 
 $(TEXDIR)/%.tex: %.rmd
