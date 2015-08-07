@@ -4,7 +4,10 @@ options(digits = 3, dplyr.print_min = 6)
 
 knitr::opts_chunk$set(
   comment = "#>",
-  collapse = TRUE
+  collapse = TRUE,
+  fig.path = "_figures/",
+  cache = TRUE,
+  cache.path = "_cache/"
 )
 
 is_latex <- function() {
