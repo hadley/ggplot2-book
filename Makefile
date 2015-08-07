@@ -8,7 +8,7 @@ book/ggplot2-book.pdf: $(TEXDIR)/ggplot2-book.pdf
 	cp $(TEXDIR)/ggplot2-book.pdf book/ggplot2-book.pdf
 
 # compile tex to pdf
-$(TEXDIR)/ggplot2-book.pdf: $(TEXDIR)/ggplot2-book.tex $(TEXDIR)/krantz.cls $(TEX_CHAPTERS)
+$(TEXDIR)/ggplot2-book.pdf: $(TEXDIR) $(TEXDIR)/ggplot2-book.tex $(TEXDIR)/krantz.cls $(TEX_CHAPTERS)
 	mkdir -p $(TEXDIR)/figures && cp -r figures/* $(TEXDIR)/figures
 	mkdir -p $(TEXDIR)/diagrams && cp -r diagrams/* $(TEXDIR)/diagrams
 	cd $(TEXDIR) && latexmk -xelatex -interaction=batchmode ggplot2-book.tex
