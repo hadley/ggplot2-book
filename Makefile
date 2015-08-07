@@ -8,15 +8,14 @@ book/ggplot2-book.pdf: $(TEXDIR)/ggplot2-book.pdf
 	cp $(TEXDIR)/ggplot2-book.pdf book/ggplot2-book.pdf
 
 # compile tex to pdf
-$(TEXDIR)/ggplot2-book.pdf: $(TEXDIR) $(TEXDIR)/ggplot2-book.tex $(TEXDIR)/krantz.cls $(TEX_CHAPTERS)
+$(TEXDIR)/ggplot2-book.pdf: $(TEXDIR) $(TEXDIR)/ggplot2-book.tex $(TEX_CHAPTERS)
 	cp -R _figures/* $(TEXDIR)/_figures
 	cp -R diagrams/* $(TEXDIR)/diagrams
-	find $(TEXDIR) -type f -name "*.png" -exec pngcrush -q -rem iCCP -ow {} \; # strip bad ICC metadata
+	cp -R book/springer/* $(TEXDIR)
+	# strip bad ICC metadata
+	find $(TEXDIR) -type f -name "*.png" -exec pngcrush -q -rem iCCP -ow {} \;
 	cd $(TEXDIR) && latexmk -xelatex -interaction=batchmode ggplot2-book.tex
 
-# copy over LaTeX templates and style files
-$(TEXDIR)/krantz.cls: book/krantz.cls
-	cp book/krantz.cls $(TEXDIR)/krantz.cls
 $(TEXDIR)/ggplot2-book.tex: book/ggplot2-book.tex
 	cp book/ggplot2-book.tex $(TEXDIR)/ggplot2-book.tex
 
