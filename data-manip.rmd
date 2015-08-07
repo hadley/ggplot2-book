@@ -5,6 +5,7 @@ bibliography: references.bib
 ---
 
 ```{r data, include = FALSE}
+chapter <- "data_manip"
 source("common.R")
 
 diamonds <- diamonds %>% tbl_df()
@@ -37,8 +38,10 @@ Filtering is also useful for extracting outliers. Generally, you don't want to j
 
 For example, look at this plot that shows how the x and y dimensions of the diamonds are related:
 
-```{r, dev = "png", fig.show = "hold", fig.width = 3, fig.height = 3}
-qplot(x, y, data = diamonds) + theme(aspect.ratio = 1)
+`r columns(1, 1)`
+```{r}
+ggplot(diamonds, aes(x, y)) + 
+  geom_bin2d()
 ```
 
 There are around 50,000 points in this dataset: most of them lie along the diagonal, but there are a handful of outliers. One clear set of incorrect values are those diamonds with zero dimensions. We can use `filter()` to pull them out.
@@ -53,11 +56,12 @@ This is equivalent to the base R code `diamonds[diamonds$x == 0 | diamonds$y == 
 
 Once we've looked at these outliers, we probably want on the clearly good values so we can more clearly see the pattern. To save a little typing, we can take advantage of the fact that multiple arguments to `filter()` are combined with and.
 
-```{r, dev = "png"}
+```{r}
 diamonds_ok <- filter(diamonds, x > 0, y > 0, y < 20)
-qplot(x, y, data = diamonds_ok) + 
-  theme(aspect.ratio = 1) + 
-  geom_abline(slope = 1, colour = "red")
+ggplot(diamonds_ok, aes(x, y)) +
+  geom_bin2d() +
+  geom_abline(slope = 1, colour = "red") + 
+  coord_equal()
 ```
 
 This plot is now more informative - we can see a very strong relationship between x and y (and the reference abline helps us see exactly what that relationship is). However, this plot still has problems: 
@@ -178,14 +182,15 @@ To better explore the relationship between x and y, it's useful to "rotate" the 
 
 To create new variables we can use `mutate()`. Like `filter()` it takes a data frame as its first argument and returns a data frame. It's second and subsequent arguments are named expressions that generate new variables. Like `filter()` you can refer to variables just by their name, you don't need to also include the name of the dataset.
 
-```{r, dev = "png"}
+```{r}
 diamonds_ok <- mutate(diamonds_ok,
   sym = x - y,
   size = sqrt(x ^ 2 + y ^ 2)
 )
 
 diamonds_ok
-qplot(size, sym, data = diamonds_ok)
+ggplot(diamonds_ok, aes(size, sym)) + 
+  stat_bin2d()
 ```
 
 This plot has two advantages: we can more easily see the pattern that the bulk on the points lie on, and we can easily select outliers. Here, it doesn't seem important whether the outliers are positive (i.e. x is bigger than y) or negative (i.e. y is bigger x). So we can use the absolute value of the symmetry variable to pull out the outliers. 0.25 seems a reasonable threshold. We'll check out the results with a histogram.
@@ -193,7 +198,8 @@ This plot has two advantages: we can more easily see the pattern that the bulk o
 ```{r}
 qplot(size, abs(sym), data = diamonds_ok)
 diamonds_ok2 <- filter(diamonds_ok, abs(sym) < 0.25)
-qplot(sym, data = diamonds_ok2, binwidth = 0.01) 
+ggplot(diamonds_ok2, aes(size, sym)) + 
+  stat_bin2d()
 ```
 
 That's an interesting histogram! While most diamonds are close to being symmetric there are very few that are perfectly symmetric (i.e. `x == y`.)
@@ -349,12 +355,12 @@ ggplot(ba, aes(ba)) +
 
 Wow, there are a lot of players who can hit the ball every single time! Would you want them on your fantasy baseball team?  Let's double check they're really that good by calibrating also showing the total number of at bats:
 
-```{r, dev = "png"}
+```{r}
 ba <- summarise(per_player, 
   ba = sum(H, na.rm = TRUE) / sum(AB, na.rm = TRUE),
   ab = sum(AB))
 ggplot(ba, aes(ab, ba)) + 
-  geom_point(alpha = 1/5) + 
+  geom_bin2d(bins = 100) + 
   geom_smooth()
 ```
 
@@ -446,7 +452,7 @@ x %>% f(y) %>% g(z)
 
 1.  What does the following pipe do?
 
-    ```{r}
+    ```{r, eval = FALSE}
     library(magrittr)
     x <- runif(100)
     x %>%

@@ -34,3 +34,5 @@ clean:
 	rm -rf $(TEXDIR)
 	rm -rf _figures
 	rm -rf _cache
+	rm -rf *.html
+	rm -rf *.pdf
