@@ -1,5 +1,5 @@
 TEXDIR := book/tex
-RMD_CHAPTERS := $(shell find . -name '*.rmd' -depth 1)
+RMD_CHAPTERS := $(shell find . -depth 1 -name '*.rmd')
 TEX_CHAPTERS := $(patsubst ./%.rmd, $(TEXDIR)/%.tex, $(RMD_CHAPTERS))
 
 all: book/ggplot2-book.pdf
