@@ -1,5 +1,3 @@
-library("bookdown")
-library("rmarkdown")
 library("methods") # avoids weird broom error
 
 path <- commandArgs(trailingOnly = TRUE)
@@ -17,5 +15,5 @@ if (length(path) == 0) {
   base$knitr$opts_chunk$cache.path <- paste0("_cache/", chap, "/")
   base$knitr$opts_chunk$cache <- TRUE
 
-  render(path, base, output_dir = "book/tex", envir = globalenv(), quiet = TRUE)
+  rmarkdown::render(path, base, output_dir = "book/tex", envir = globalenv(), quiet = TRUE)
 }
