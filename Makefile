@@ -1,5 +1,5 @@
 TEXDIR := book/tex
-RMD_CHAPTERS := $(shell find . -depth 1 -name '*.rmd')
+RMD_CHAPTERS := $(shell ls ./*.rmd)
 TEX_CHAPTERS := $(patsubst ./%.rmd, $(TEXDIR)/%.tex, $(RMD_CHAPTERS))
 
 all: book/ggplot2-book.pdf
@@ -14,12 +14,11 @@ $(TEXDIR)/ggplot2-book.pdf: $(TEXDIR) $(TEXDIR)/ggplot2-book.tex $(TEXDIR)/krant
 	cd $(TEXDIR) && latexmk -xelatex -interaction=batchmode ggplot2-book.tex
 
 # copy over LaTeX templates and style files
-$(TEXDIR)/krantz.cls:
+$(TEXDIR)/krantz.cls: book/krantz.cls
 	cp book/krantz.cls $(TEXDIR)/krantz.cls
 $(TEXDIR)/ggplot2-book.tex: book/ggplot2-book.tex
 	cp book/ggplot2-book.tex $(TEXDIR)/ggplot2-book.tex
 
-# rmd -> tex
 $(TEXDIR)/%.tex: %.rmd toc.rds
 	Rscript book/render-tex.R $<
 
