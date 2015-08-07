@@ -4,23 +4,24 @@ TEX_CHAPTERS := $(patsubst ./%.rmd, $(TEXDIR)/%.tex, $(RMD_CHAPTERS))
 
 all: book/ggplot2-book.pdf
 
-book/ggplot2-book.pdf: $(TEXDIR)/ggplot2-book.pdf
+# compile tex to pdf
+book/ggplot2-book.pdf: $(TEXDIR) $(TEXDIR)/ggplot2-book.tex book/CHAPTERS
+	cp -R book/springer/* $(TEXDIR)
+	cd $(TEXDIR) && latexmk -xelatex -interaction=batchmode ggplot2-book.tex
 	cp $(TEXDIR)/ggplot2-book.pdf book/ggplot2-book.pdf
 
-# compile tex to pdf
-$(TEXDIR)/ggplot2-book.pdf: $(TEXDIR) $(TEXDIR)/ggplot2-book.tex $(TEX_CHAPTERS)
+book/CHAPTERS: $(TEX_CHAPTERS)
 	cp -R _figures/* $(TEXDIR)/_figures
 	cp -R diagrams/* $(TEXDIR)/diagrams
-	cp -R book/springer/* $(TEXDIR)
 	# strip bad ICC metadata
 	find $(TEXDIR) -type f -name "*.png" -exec pngcrush -q -rem iCCP -ow {} \;
-	cd $(TEXDIR) && latexmk -xelatex -interaction=batchmode ggplot2-book.tex
+	touch book/CHAPTERS
+
+$(TEXDIR)/%.tex: %.rmd
+	Rscript book/render-tex.R $<
 
 $(TEXDIR)/ggplot2-book.tex: book/ggplot2-book.tex
 	cp book/ggplot2-book.tex $(TEXDIR)/ggplot2-book.tex
-
-$(TEXDIR)/%.tex: %.rmd toc.rds
-	Rscript book/render-tex.R $<
 
 toc.rds: $(RMD_CHAPTERS)
 	Rscript -e "bookdown::index()"
@@ -36,3 +37,4 @@ clean:
 	rm -rf _cache
 	rm -rf *.html
 	rm -rf *.pdf
+	rm -rf book/ggplot2-book.pdf
