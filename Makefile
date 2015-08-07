@@ -30,5 +30,6 @@ $(TEXDIR):
 	mkdir -p $(TEXDIR)
 
 clean:
-	rm -r $(TEXDIR)
-	rm -r figures
+	rm -rf $(TEXDIR)
+	rm -rf figures
+	rm -rf _cache
