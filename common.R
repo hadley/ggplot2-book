@@ -7,6 +7,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   fig.path = paste0("_figures/", chapter, "/"),
   fig.show = "hold",
+  dpi = 300,
   cache = TRUE,
   cache.path = paste0("_cache/", chapter, "/")
 )
