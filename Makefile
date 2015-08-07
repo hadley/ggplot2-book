@@ -11,6 +11,7 @@ book/ggplot2-book.pdf: $(TEXDIR)/ggplot2-book.pdf
 $(TEXDIR)/ggplot2-book.pdf: $(TEXDIR) $(TEXDIR)/ggplot2-book.tex $(TEXDIR)/krantz.cls $(TEX_CHAPTERS)
 	cp -R _figures/* $(TEXDIR)/_figures
 	cp -R diagrams/* $(TEXDIR)/diagrams
+	find $(TEXDIR) -type f -name "*.png" -exec pngcrush -q -rem iCCP -ow {} \; # strip bad ICC metadata
 	cd $(TEXDIR) && latexmk -xelatex -interaction=batchmode ggplot2-book.tex
 
 # copy over LaTeX templates and style files
