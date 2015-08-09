@@ -7,7 +7,8 @@ all: book/ggplot2-book.pdf
 # compile tex to pdf
 book/ggplot2-book.pdf: $(TEXDIR) $(TEXDIR)/ggplot2-book.tex book/CHAPTERS
 	cp -R book/springer/* $(TEXDIR)
-	cd $(TEXDIR) && latexmk -xelatex -interaction=batchmode ggplot2-book.tex
+	cp book/latexmk $(TEXDIR)/
+	cd $(TEXDIR) && ./latexmk -xelatex -interaction=batchmode ggplot2-book.tex
 	cp $(TEXDIR)/ggplot2-book.pdf book/ggplot2-book.pdf
 	cp $(TEXDIR)/ggplot2-book.log book/ggplot2-book.log
 
