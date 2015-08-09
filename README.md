@@ -18,16 +18,24 @@ If you use RStudio, you can press Cmd/Ctrl + Shift + B to run make.
 
 ## Installing dependencies
 
-To successfully build this book, you'll need R [package development prerequisites](https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites), [pandoc and pandoc-citeproc](http://pandoc.org/installing.html), potentially the [Inconsolata font](http://www.ctan.org/tex-archive/fonts/inconsolata/), and a number of R packages. The CRAN packages we depend on are listed in the DESCRIPTION, so you can install them quickly via [devtools](http://cran.r-project.org/web/packages/devtools/):
+To successfully build this book, you'll need:
+
+* R [package development prerequisites](https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites)
+* [pandoc and pandoc-citeproc](http://pandoc.org/installing.html),
+* the [Inconsolata font](http://www.ctan.org/tex-archive/fonts/inconsolata/)
+
+Quite a few R packages:
 
 ```r
-devtools::install_deps("path/to/ggplot2-book", dependencies = TRUE)
-```
-
-There are also a couple GitHub packages which we depend on:
-
-```r
-devtools::install_github(c("adletaw/captioner", "hadley/bookdown"))
+devtools::install_github(c(
+  "hadley/bookdown", 
+  "hadley/scales", 
+  "hadley/ggplot2", 
+  "hadley/ggplot2movies", 
+  "hadley/directlabels", 
+  "jrnold/ggthemes", 
+))
+devtools::install_deps(".", dependencies = TRUE)
 ```
 
 ## Internal links
