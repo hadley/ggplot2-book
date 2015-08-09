@@ -33,7 +33,7 @@ devtools::install_github(c(
   "hadley/ggplot2", 
   "hadley/ggplot2movies", 
   "hadley/directlabels", 
-  "jrnold/ggthemes", 
+  "jrnold/ggthemes"
 ))
 devtools::install_deps(".", dependencies = TRUE)
 ```
