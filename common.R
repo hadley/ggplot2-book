@@ -23,12 +23,12 @@ columns <- function(n, aspect_ratio = 1, max_width = if (n == 1) 0.65 else 1) {
     out_width <- paste0(round(max_width * 100 / n, 1), "%")
   }
 
-  width <- 8 / n * max_width
+  width <- 6 / n * max_width
 
   knitr::opts_chunk$set(
     fig.width = width,
     fig.height = width * aspect_ratio,
-    fig.align = if (n == 1) "center" else "default",
+    fig.align = if (max_width < 1) "center" else "default",
     fig.show = if (n == 1) "asis" else "hold",
     out.width = out_width,
     out.extra = if (!is_latex())

@@ -38,8 +38,7 @@ In this chapter we'll mostly use one data set that's bundled with ggplot2: `mpg`
 
 ```{r}
 library(ggplot2)
-dim(mpg)
-head(mpg)
+mpg
 ```
 
 The variables are mostly self-explanatory:
@@ -52,21 +51,26 @@ The variables are mostly self-explanatory:
 
 * `model` is the model of car. There are 38 models, selected because they had a 
    new edition every year between 1999 and 2008.
+   
+* `class` (not shown), is a categorical variable describing the "type" of 
+  car: two seater, SUV, compact, etc.
 
-This dataset suggests many interesting questions. How are engine size and fuel economy related?  Do certain manufacturers care more about economy than others? Has fuel economy improved in the last ten years? We will try to answer some of these questions and in the process learn how to create some basic plots with ggplot2.
+This dataset suggests many interesting questions. How are engine size and fuel economy related? Do certain manufacturers care more about economy than others? Has fuel economy improved in the last ten years? We will try to answer some of these questions and in the process learn how to create some basic plots with ggplot2.
 
 ### Exercises
 
-1.  List five functions that you could use to get more information about this 
-    dataset.
+1.  List five functions that you could use to get more information about the
+    `mpg` dataset.
     
-1.  Apart from the US, most countries use fuel consumption (amount of fuel 
-    needed to travel a fixed distance) rather than fuel economy (distance that
-    can be travelled with a fixed amount of fuel). How could you convert `cty` 
-    and `hwy` into the European standard l/100km? 
+1.  How can you find out what other datasets are included with ggplot2?
     
-1.  Which manufacturer has most models in this dataset? Which model has the
-    most variations? Does your answer change if you remove the redundant
+1.  Apart from the US, most countries use fuel consumption (fuel consumed
+    over fixed distance) rather than fuel economy (distance travelled with
+    fixed amount of fuel). How could you convert `cty` and `hwy` into the
+    European standard of l/100km? 
+    
+1.  Which manufacturer has most the models in this dataset? Which model has 
+    the most variations? Does your answer change if you remove the redundant
     specification of drive train from the model name?
 
 ## Key components {#sec:basic-use}
@@ -78,8 +82,8 @@ Every ggplot2 plot has three key components:
 1. A set of __aesthetic mappings__ between variables in the data and 
    visual properties, and 
 
-1. At least one __geom__, geometric object, which describes how to render
-   each observation.
+1. At least one layer which describes how to render each observation. Layers
+   are usually created with a __geom__ function.
 
 Here's a simple example: \index{Scatterplot}
 
@@ -93,18 +97,18 @@ This produces a scatterplot defined by:
 1. Data: `mpg`.
 1. Aesthetic mapping: engine size mapped to x position, fuel economy to y
    position.
-1. Geom: points.
+1. Layer: points.
 
-Pay attention to the structure of this function call: data and aesthetic mappings are supplied in `ggplot()`, then geoms are added on with `+`. This is an important pattern and as you learn more about ggplot2 you'll construct increasingly sophisticated plots by adding on more types of components.
+Pay attention to the structure of this function call: data and aesthetic mappings are supplied in `ggplot()`, then layers are added on with `+`. This is an important pattern and as you learn more about ggplot2 you'll construct increasingly sophisticated plots by adding on more types of components.
 
-Almost every plot maps a variable to `x` and `y`, so naming these aesthetics is tedious. For that reason, the first two unnamed arguments to `aes()` will be mapped to `x` and `y`. That means that following code is identical to the example above:
+Almost every plot maps a variable to `x` and `y`, so naming these aesthetics is tedious, and first two unnamed arguments to `aes()` will be mapped to `x` and `y`. That means that following code is identical to the example above:
 
 ```{r, eval = FALSE}
 ggplot(mpg, aes(displ, hwy)) +
   geom_point()
 ```
 
-I'll stick to that style throughout the book, so remember that the first two arguments to `aes()` are `x` and `y`.
+I'll stick to that style throughout the book, so don't forget that the first two arguments to `aes()` are `x` and `y`.
 
 The plot shows a strong correlation: as the engine size gets bigger, the fuel economy gets worse. There are also some interesting outliers: some cars with large engines get higher fuel economy than average. What sort of cars do you think they are?
 
@@ -128,7 +132,7 @@ The plot shows a strong correlation: as the engine size gets bigger, the fuel ec
 
 ## Colour, size, shape and other aesthetic attributes {#aesthetics}
 
-To add additional variables to a plot, we can use other aesthetics like colour, shape, and size (NB: while I use British spelling throughout this book, ggplot2 also accepts American spellings). These work in the same way as the `x` and `y` aesthetics are added into the call to `aes()`: \index{Aesthetics}
+To add additional variables to a plot, we can use other aesthetics like colour, shape, and size (NB: while I use British spelling throughout this book, ggplot2 also accepts American spellings). These work in the same way as the `x` and `y` aesthetics, and are added into the call to `aes()`: \index{Aesthetics}
 
 * `aes(displ, hwy, colour = class)`
 * `aes(displ, hwy, shape = drv)`
@@ -144,9 +148,10 @@ ggplot(mpg, aes(displ, cty, colour = class)) +
 ```
 
 This gives each point a unique colour corresponding to its class. The legend allows us read data values from the colour, showing us that the group of cars with unusually high fuel economy for their engine size are two seaters: cars with big engines, but lightweight bodies. 
-If you want to set an aesthetic to a fixed value, without scaling it, do so in the individual geom, and outside of `aes()`. Compare the following two plots:
 
-`r columns(2)`
+If you want to set an aesthetic to a fixed value, without scaling it, do so in the individual layer outside of `aes()`. Compare the following two plots:
+
+`r columns(2, 2/3)`
 ```{r}
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point(aes(colour = "blue"))
@@ -169,8 +174,8 @@ When using aesthetics in a plot, less is usually more. It's difficult to see the
 1.  What happens if you map a continuous variable to shape? Why? What happens
     if you map `trans` to shape? Why?
     
-1.  How is the drivetrain related to fuel economy? How is the drivetrain
-    related to engine size and class?
+1.  How is drive train related to fuel economy? How is drive train related to
+    engine size and class?
 
 ## Faceting {#sec:qplot-faceting}
 
@@ -178,7 +183,7 @@ Another technique for displaying additional categorical variables on a plot is f
 
 There are two types of facetting: grid and wrapped. Wrapped is the most useful, so we'll discuss it here, and you can learn about grid facetting later. To facet a plot you simply add a facetting specification:
 
-`r columns(1, 2 / 3)`
+`r columns(1, 2 / 3, 1)`
 ```{r facet}
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
@@ -195,7 +200,7 @@ You might wonder when to use faceting, and when to use aesthetics. You'll learn 
     `hwy`? What about `cyl`?  What's the key difference?
   
 1.  Use facetting to explore the 3-way relationship between fuel economy,
-    engine size and number of cylinders. How does facetting by number of
+    engine size, and number of cylinders. How does facetting by number of
     cylinders change your assessement of the relationship between
     engine size and fuel economy?
 
@@ -210,28 +215,26 @@ You might wonder when to use faceting, and when to use aesthetics. You'll learn 
 You might guess that by substituting `geom_point()` for a different geom function, you'd get a different type of plot. That's a great guess! In the following sections, you'll learn about some of the other important geoms provided in ggplot2. This isn't an exhaustive list, but should cover the most commonly used plot types. You'll learn more geoms in [the toolbox](#cha:toolbox).
 
 * `geom_smooth()` fits a smoother to the data and displays the smooth and its 
-  standard error, see [adding a smoother to a plot](#sub:smooth).
+  standard error.
 
 * `geom_boxplot()` produces a box-and-whisker plot to summarise the distribution 
-  of a set of points, see [boxplots and jittered points](#sub:boxplot).
+  of a set of points.
 
-* `geom_histogram()` and `geom_freqpoly()` show the distribution of continuous
-  variables, see [histogram and frequency polygons](#sub:distribution).
+* `geom_histogram()` and `geom_freqpoly()` show the distribution of 
+  continuous variables.
 
-* `geom_bar()` shows the distribution of categorical variables, see 
-  [bar charts](#sub:bar).
+* `geom_bar()` shows the distribution of categorical variables.
 
 * `geom_path()` and `geom_line()` draw lines between the data points.
   A line plot is constrained to produce lines that travel from left to right, 
-  while paths can go in any direction, see 
-  [time series with line and path plots](#sub:line). Lines are typically used 
-  to explore relationships between time and another variable, and paths to join 
-  observations connected in some other way.  
+  while paths can go in any direction. Lines are typically used to explore 
+  how things change over time.
 
 ### Adding a smoother to a plot {#sub:smooth}
 
 If you have a scatterplot with a lot of noise, it can be hard to see the dominant pattern. In this case it's useful to add a smoothed line to the plot with `geom_smooth()`: \index{Smoothing} \indexf{geom\_smooth}
 
+`r columns(1, 2/3)`
 ```{r qplot-smooth}
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
@@ -248,7 +251,7 @@ An important argument to `geom_smooth()` is the `method`, which allows you to ch
     to 1 (not so wiggly). \index{Model!loess}
       
     `r columns(2, 2/3)`
-    ```{r smooth-loess}
+    ```{r smooth-loess, fig.align = "default"}
     ggplot(mpg, aes(displ, hwy)) + 
       geom_point() + 
       geom_smooth(span = 0.2)
@@ -268,7 +271,7 @@ An important argument to `geom_smooth()` is the `method`, which allows you to ch
     \index{Package!mgcv} \index{Model!generalised additive}
 
     `r columns(1, 2/3)`
-    ```{r smooth-gam, message = FALSE}
+    ```{r smooth-gam, message = FALSE, fig.align = "default"}
     library(mgcv)
     ggplot(mpg, aes(displ, hwy)) + 
       geom_point() + 
@@ -278,7 +281,7 @@ An important argument to `geom_smooth()` is the `method`, which allows you to ch
 *   `method = "lm"` fits a linear model, giving the line of best fit.     
     \index{Model!linear}
 
-    ```{r smooth-lm}
+    ```{r smooth-lm, fig.align = "default"}
     ggplot(mpg, aes(displ, hwy)) + 
       geom_point() + 
       geom_smooth(method = "lm")
@@ -291,7 +294,14 @@ An important argument to `geom_smooth()` is the `method`, which allows you to ch
 
 ### Boxplots and jittered points {#sub:boxplot}
 
-When a set of data includes a categorical variable and one or more continuous variables, you will probably be interested to know how the values of the continuous variables vary with the levels of the categorical variable. There are three useful techniques that help see the distribution:
+When a set of data includes a categorical variable and one or more continuous variables, you will probably be interested to know how the values of the continuous variables vary with the levels of the categorical variable. Say we're interested in seeing how fuel economy varies within car class. We might start with a scatterplot like this:
+
+```{r}
+ggplot(mpg, aes(drv, hwy)) + 
+  geom_point()
+```
+
+But because there are few unique values of both class and hwy, there is a lot of overplotting. Many points are plotted in the same location, and it's difficult to see the distribution. There are three useful techniques that help alleviate the problem distribution:
 
 * Jittering, `geom_jitter()`, adds a little random noise to the data which can help avoid overplotting. \index{Jittering}  \indexf{geom\_jitter}
   
@@ -301,17 +311,10 @@ When a set of data includes a categorical variable and one or more continuous va
 * Violin plots, `geom_violin()`, show a compact representation of the
   "density" of the distribution, highlighting the areas where more points
   are found. \index{Violin plot} \indexf{geom\_violin} 
+  
+These are illustrated below:
 
-Say we're interested in seeing how fuel economy varies within car class. We might start with a scatterplot like this:
-
-```{r}
-ggplot(mpg, aes(drv, hwy)) + 
-  geom_point()
-```
-
-But because there are few unique values of both class and hwy, there is a lot of overplotting. Many points are plotted in the same location, and it's difficult to see the distribution.
-
-`r columns(3, 2/3)`
+`r columns(3, 1)`
 ```{r jitter-boxplot}
 ggplot(mpg, aes(drv, hwy)) + 
   geom_jitter()
@@ -345,34 +348,37 @@ You can control the width of the bins with the `binwidth` argument (if you don't
 
 ```{r}
 ggplot(mpg, aes(hwy)) + 
+  geom_freqpoly(binwidth = 2.5)
+ggplot(mpg, aes(hwy)) + 
   geom_freqpoly(binwidth = 1)
-ggplot(mpg, aes(displ)) + 
-  geom_freqpoly(binwidth = 0.5)
 ```
 
-(An alternative to the frequency polygon is the density plot, `geom_density()`. I prefer to avoid density plots because they are harder to interpret since the underlying computations are more complex. They also make assumptions that are not true for all data, namely that the underlying distribution is continuous, unbounded, and smooth.)
+(An alternative to the frequency polygon is the density plot, `geom_density()`. I'm not a fan of density plots because they are harder to interpret since the underlying computations are more complex. They also make assumptions that are not true for all data, namely that the underlying distribution is continuous, unbounded, and smooth.)
 
-To compare the distributions of different subgroups, you can map a categorical variable to either fill (for `geom_histogram()`) or colour (for `geom_freqpoly()`). It's better to compare distributions with using the frequency polygon because the perceptual task is easier: you can compare the heights against a common baseline. You can also use facetting: this makes comparisons it a bit more difficult, but it's easier to see the distribution of each group.
+To compare the distributions of different subgroups, you can map a categorical variable to either fill (for `geom_histogram()`) or colour (for `geom_freqpoly()`). It's easier to compare distributions using the frequency polygon because the underlying perceptual task is easier. You can also use facetting: this makes comparisons a little harder, but it's easier to see the distribution of each group.
 
+`r columns(2, 1)`
 ```{r dist-fill}
 ggplot(mpg, aes(displ, colour = drv)) + 
   geom_freqpoly(binwidth = 0.5)
 ggplot(mpg, aes(displ, fill = drv)) + 
   geom_histogram(binwidth = 0.5) + 
-  facet_wrap(~ drv, ncol = 1)
+  facet_wrap(~drv, ncol = 1)
 ```
 
 ### Bar charts {#sub:bar}
 
 The discrete analogue of the histogram is the bar chart, `geom_bar()`. It's easy to use: \index{Barchart} \indexf{geom\_bar}
 
-`r columns(1, 2/3)`
+`r columns(1, 1 / 2.5, 1)`
 ```{r dist-bar}
 ggplot(mpg, aes(manufacturer)) + 
   geom_bar()
 ```
 
-Bar charts can be confusing because there are two rather different plots that are both commonly called bar charts. The above form expects you to have unsummarised data - each observations contributes one unit to the height of each bar. The other form of bar chart is used for presummarised data. For example, you might have three drugs with their average effect:
+(You'll learn how to fix the labels in [axis labels](#sub:theme-axis)).
+
+Bar charts can be confusing because there are two rather different plots that are both commonly called bar charts. The above form expects you to have unsummarised data, and each observation contributes one unit to the height of each bar. The other form of bar chart is used for presummarised data. For example, you might have three drugs with their average effect:
 
 ```{r}
 drugs <- data.frame(
@@ -383,12 +389,13 @@ drugs <- data.frame(
 
 To display this sort of data, you need to tell `geom_bar()` to not run the default statistical transformation which bins and counts the data:.
 
+`r columns(1, 2/3, 0.5)`
 ```{r}
 ggplot(drugs, aes(drug, effect)) +
   geom_bar(stat = "identity")
 ```
 
-But if you have this sort of data, you should seriously consider using `geom_point()` instead: they take up less space, and don't require that the y axis includes 0.
+But if you have this sort of data, you should seriously consider using `geom_point()` instead: points take up less space than bars, and don't require that the y axis includes 0.
 
 ### Time series with line and path plots {#sub:line}
 
@@ -461,7 +468,7 @@ With longitudinal data, you often want to display multiple time series on each p
 
 You'll learn the full range of options available in [scales](#cha:scales), but two families of useful helpers let you make the most common modifications. `xlab()` and `ylab()` modify the x- and y-axis labels:
 
-`r columns(2, 1)`
+`r columns(2, 1, 0.75)`
 ```{r}
 ggplot(mpg, aes(cty, hwy)) +
   geom_point() + 
@@ -475,7 +482,7 @@ ggplot(mpg, aes(cty, hwy)) +
   ylab(NULL)
 ```
 
-`xlim()` and `ylim()` modify the limits of axes:
+`xlim()` and `ylim()` modify the limits of axes: \indexf{xlim} \indexf{ylim}
 
 ```{r}
 ggplot(mpg, aes(drv, hwy)) +
@@ -493,7 +500,6 @@ ggplot(mpg, aes(drv, hwy)) +
 
 Most of the time you create a plot object and immediately plot it. But you can also save a plot to a variable and manipulate it:
 
-`r columns(1, 2 / 3)`
 ```{r variable}
 p <- ggplot(mpg, aes(displ, hwy, colour = factor(cyl))) +
   geom_point()
@@ -505,7 +511,8 @@ Once you have a plot object, there are a few things you can do with it:
     running interactively, but inside a loop or function, you'll need to
     `print()` it yourself. \indexf{print}
     
-    ```{r}
+    `r columns(1, 1 / 2)`
+    ```{r, fig.align = "default"}
     print(p)
     ```
   
@@ -523,8 +530,8 @@ Once you have a plot object, there are a few things you can do with it:
     ```
     
   * Save a cached copy of it to disk, with `saveRDS()`. This saves a complete
-    copy of the plot object, so you can easily re-create that exact plot with 
-    `readRDS()`. \indexf{saveRDS} \indexf{readRDS}
+    copy of the plot object, so you can easily re-create it with `readRDS()`.
+    \indexf{saveRDS} \indexf{readRDS}
     
     ```{r summary}
     saveRDS(p, "plot.rds")
@@ -542,10 +549,9 @@ You'll learn more about how to manipulate these objects in [programming with ggp
 
 In some cases, you will want to create a quick, simple plot that uses all of the ggplot2 defaults. In these cases you may prefer to use `qplot()` over `ggplot()`. `qplot()` let's you define a plot in a single call, picking a geom by default if you don't supply one. To use it, provide a set of aesthetics and a data set: \indexf{qplot}
 
-`r columns(3, 2 / 3)`
+`r columns(2, 2 / 3)`
 ```{r}
 qplot(displ, hwy, data = mpg)
-qplot(displ, hwy, colour = class, data = mpg)
 qplot(displ, data = mpg)
 ```
 
@@ -553,10 +559,10 @@ Unless otherwise specified, `qplot()` tries to pick a sensible geometry and stat
 
 `qplot()` assumes that all variables should be scaled by default. If you want to set an aesthetic to a constant, you need to use `I()`:
 
-`r columns(3, 2 / 3)`
+`r columns(2, 2 / 3)`
 ```{r}
 qplot(displ, hwy, data = mpg, colour = "blue")
-qplot(displ, hwy, data = mpg, colour = I("red"))
+qplot(displ, hwy, data = mpg, colour = I("blue"))
 ```
 
 If you're used to `plot()` you may find `qplot()` to be a useful crutch to get up and running quickly. However, while it's possible to use `qplot()` to access all of the customizability of ggplot2, I don't recommend it. If you find yourself making a more complex graph, e.g. using different aesthetics in different layers, or manually setting visual properties, use `ggplot()`, not `qplot()`.
