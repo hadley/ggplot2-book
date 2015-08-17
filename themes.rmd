@@ -10,63 +10,9 @@ source("common.R")
 
 # Themes {#cha:polishing}
 
-In this chapter you will learn how to use the ggplot2 theme system, which allows you to exercise fine control over the non-data elements of your plot. The theme system does not affect how the data is rendered by geoms, or how it is transformed by scales. Themes don't change the perceptual properties of the plot, but they do help you make the plot aesthetically pleasing or match existing style guides. Themes give you control over things like the fonts in all parts of the plot: the title, axis labels, axis tick labels, strips, legend labels and legend key labels; and the colour of ticks, grid lines and backgrounds (panel, plot, strip and legend). \index{Themes} \index{Publication!themes}
+In this chapter you will learn how to use the ggplot2 theme system, which allows you to exercise fine control over the non-data elements of your plot. The theme system does not affect how the data is rendered by geoms, or how it is transformed by scales. Themes don't change the perceptual properties of the plot, but they do help you make the plot aesthetically pleasing or match an existing style guide. Themes give you control over things like fonts, ticks, panel strips, and backgrounds. \index{Themes} \index{Publication!themes}
 
-This separation of control into data and non-data parts is quite different than base and lattice graphics. In base and lattice graphics, most functions take a large number of arguments that specify both data and non-data appearance, which makes the functions complicated and hard to learn. ggplot2 takes a different approach: when creating the plot you determine how the data is displayed, then *after* it has been created you can edit every detail of the rendering, using the theming system. 
-
-For example, imagine you've made the following plot of your data.
-
-`r columns(1, 2/3)`
-```{r}
-base <- ggplot(mpg, aes(cty, hwy, color = factor(cyl))) +
-  geom_jitter() + 
-  geom_abline(colour = "grey50", size = 2)
-base
-```
-
-It's served it's purpose for you: you've learned that `cty` and `hwy` are highly correlated, both are highly related to `cyl`, and that `hwy` is always greater than `cty` (and the difference increases as `cty` increases). Now you want to share the plot with others, perhaps by publishing it in a paper. That requires some changes. First, we need to make sure the plot can stand alone by:
-
-* Improving the axes and legend labels.
-* Adding a title for the plot.
-* Tweaking the colour scale.
-
-Fortunately you know how to do that already because you've read the scales chapter:
-
-```{r}
-labelled <- base +
-  labs(
-    x = "City mileage/gallon",
-    y = "Highway mileage/gallon",
-    colour = "Cylinders",
-    title = "Highway and city mileage are highly correlated"
-  ) +
-  scale_colour_brewer(type = "seq", palette = "Spectral")
-labelled
-```
-
-Next, you need to make sure the plot matches the style guidelines of your journal:
-
-* The background should be white, not pale grey.
-* The legend should be placed inside the plot, if there's room.
-* No minor gridlines, and major gridlines should be a pale grey.
-* The plot title should be 12pt bold text.
-
-In this chapter, you'll learn how to use the theming system to make those changes, as shown below:
-
-```{r theme-ex1a}
-styled <- labelled +
-  theme_bw() + 
-  theme(
-    plot.title = element_text(face = "bold", size = 12),
-    legend.background = element_rect(fill = "white", size = 4, colour = "white"),
-    legend.justification = c(0, 1),
-    legend.position = c(0, 1),
-    axis.ticks = element_line(colour = "grey70", size = 0.2),
-    panel.grid.major = element_line(colour = "grey70", size = 0.2),
-    panel.grid.minor = element_blank()
-  )
-styled
-```
+This separation of control into data and non-data parts is quite different from base and lattice graphics. In base and lattice graphics, most functions take a large number of arguments that specify both data and non-data appearance, which makes the functions complicated and harder to learn. ggplot2 takes a different approach: when creating the plot you determine how the data is displayed, then *after* it has been created you can edit every detail of the rendering, using the theming system. 
 
 The theming system is composed of four main components:
 
@@ -86,36 +32,92 @@ The theming system is composed of four main components:
 * Complete _themes_, like `theme_grey()` set all of the theme elements to 
   values designed to work together harmoniously.
 
+For example, imagine you've made the following plot of your data.
+
+`r columns(1, 2/3)`
+```{r motivation-1}
+base <- ggplot(mpg, aes(cty, hwy, color = factor(cyl))) +
+  geom_jitter() + 
+  geom_abline(colour = "grey50", size = 2)
+base
+```
+
+It's served it's purpose for you: you've learned that `cty` and `hwy` are highly correlated, both are tightly coupled with to `cyl`, and that `hwy` is always greater than `cty` (and the difference increases as `cty` increases). Now you want to share the plot with others, perhaps by publishing it in a paper. That requires some changes. First, you need to make sure the plot can stand alone by:
+
+* Improving the axes and legend labels.
+* Adding a title for the plot.
+* Tweaking the colour scale.
+
+Fortunately you know how to do that already because you've read [the scales chapter](#cha:scales):
+
+```{r motivation-2}
+labelled <- base +
+  labs(
+    x = "City mileage/gallon",
+    y = "Highway mileage/gallon",
+    colour = "Cylinders",
+    title = "Highway and city mileage are highly correlated"
+  ) +
+  scale_colour_brewer(type = "seq", palette = "Spectral")
+labelled
+```
+
+Next, you need to make sure the plot matches the style guidelines of your journal:
+
+* The background should be white, not pale grey.
+* The legend should be placed inside the plot if there's room.
+* Major gridlines should be a pale grey and minor gridlines should be removed.
+* The plot title should be 12pt bold text.
+
+In this chapter, you'll learn how to use the theming system to make those changes, as shown below:
+
+```{r motivation-3}
+styled <- labelled +
+  theme_bw() + 
+  theme(
+    plot.title = element_text(face = "bold", size = 12),
+    legend.background = element_rect(fill = "white", size = 4, colour = "white"),
+    legend.justification = c(0, 1),
+    legend.position = c(0, 1),
+    axis.ticks = element_line(colour = "grey70", size = 0.2),
+    panel.grid.major = element_line(colour = "grey70", size = 0.2),
+    panel.grid.minor = element_blank()
+  )
+styled
+```
+
 Finally, the journal wants the figure as a 600 dpi TIFF file. You'll learn the fine details of `ggsave()` in [saving your output](#sec:saving).
 
-## Themes {#sec:themes}
+## Complete themes {#sec:themes}
 
-ggplot2 comes with a number of built in themes. \index{Themes!built-in} The most important is `theme_grey()`, the signature ggplot2 theme with a light grey background and white gridlines. The theme is designed to put the data forward while supporting comparisons, following the advice of [@tufte:2006; @brewer:1994; @carr:2002; @carr:1994; @carr:1999]. We can still see the gridlines to aid in the judgement of position [@cleveland:1993a], but they have little visual impact and we can easily 'tune' them out. The grey background gives the plot a similar typographic  colour to the text, ensuring that the graphics fit in with the flow of a 
-document without jumping out with a bright white background. Finally, the  grey background creates a continuous field of colour which ensures that the plot is perceived as a single visual entity. \indexf{theme\_grey}
+ggplot2 comes with a number of built in themes. The most important is `theme_grey()`, the signature ggplot2 theme with a light grey background and white gridlines. The theme is designed to put the data forward while supporting comparisons, following the advice of [@tufte:2006; @brewer:1994; @carr:2002; @carr:1994; @carr:1999]. We can still see the gridlines to aid in the judgement of position [@cleveland:1993a], but they have little visual impact and we can easily 'tune' them out. The grey background gives the plot a similar typographic  colour to the text, ensuring that the graphics fit in with the flow of a 
+document without jumping out with a bright white background. Finally, the grey background creates a continuous field of colour which ensures that the plot is perceived as a single visual entity. \index{Themes!built-in} \indexf{theme\_grey}
   
 There are seven other themes built in to ggplot2 1.1.0:
   
 * `theme_bw()`: a variation on `theme_grey()` that uses a white background
-  and thin grey grid lines. 
+  and thin grey grid lines.  \indexf{theme\_bw}
   
 * `theme_linedraw()`: A theme with only black lines of various widths on white 
-  backgrounds, reminiscent of a line drawing.
+  backgrounds, reminiscent of a line drawing.  \indexf{theme\linedraw}
   
 * `theme_light()`: similar to `theme_linedraw()` but with light grey lines and 
-  axes, to direct more attention towards the data.}
+  axes, to direct more attention towards the data.  \indexf{theme\_light}
 
 * `theme_dark()`: the dark cousin of `theme_light()`, with similar line sizes 
   but a dark background. Useful to make thin coloured lines pop out.
+  \indexf{theme\_dark}
   
 * `theme_minimal()`: A minimalistic theme with no background annotations.
+   \indexf{theme\_minimal}
 
 * `theme_classic()`: A classic-looking theme, with x and y axis lines and no 
-   gridlines.
+   gridlines.  \indexf{theme\_classic}
    
-* `theme_void()`: A completely empty theme. 
+* `theme_void()`: A completely empty theme.  \indexf{theme\void}
 
-`r columns(3, 2/3)`
-```{r}
+`r columns(3, 3/4)`
+```{r built-in}
 df <- data.frame(x = 1:3, y = 1:3)
 base <- ggplot(df, aes(x, y)) + geom_point()
 base + theme_grey() + ggtitle("theme_grey()")
@@ -128,13 +130,13 @@ base + theme_classic() + ggtitle("theme_classic()")
 base + theme_void() + ggtitle("theme_void()")
 ```
 
-All themes have a `base_size` parameter which controls the base font size. The base font size is the size that the axis titles use: the plot title is usually bigger (1.2x), and the tick and strip labels are smaller (0.8x). If you want to control these sizes separately, you'll need to modify the individual elements as described in the following section.
+All themes have a `base_size` parameter which controls the base font size. The base font size is the size that the axis titles use: the plot title is usually bigger (1.2x), and the tick and strip labels are smaller (0.8x). If you want to control these sizes separately, you'll need to modify the individual elements as described below.
 
 As well as applying themes a plot at-a-time, you can change the default theme with `theme_set()`. For example, if you really hate the default grey background, run `theme_set(theme_bw())` to use a white background for all plots. \indexf{theme\_set}
 
-You're not limited to the themes built-in to ggplot2. Other packages, like ggtheme by Jeffrey Arnold, add even more. Here's a few of my favourite from ggtheme:
+You're not limited to the themes built-in to ggplot2. Other packages, like ggtheme by Jeffrey Arnold, add even more. Here's a few of my favourite from ggtheme: \index{ggtheme}
 
-```{r}
+```{r ggtheme}
 library(ggthemes)
 base + theme_tufte() + ggtitle("theme_tufte()")
 base + theme_solarized() + ggtitle("theme_solarized()")
@@ -143,11 +145,21 @@ base + theme_excel() + ggtitle("theme_excel()") # ;)
 
 The complete themes are a great place to start but don't give you a lot of control. To modify individual elements, you need to use `theme()` to override the default setting for an element with an element function.
 
+### Exercises
+
+1.  Try out all the themes in ggthemes. Which do you like the best?
+
+1.  What aspects of the default theme do you like? What don't you like?   
+    What would you change?
+
+1.  Look at the plots in your favourite scientific journal. What theme
+    do they most resemble? What are the main differences?
+
 ## Modifying theme components
 
-Modifying an individual theme component looks like `plot + theme(element.name = element_function())`.  In this section you'll learn about the basic element functions, and then in the next section, you'll see all the elements that you can modify.
+Modifying an individual theme component looks like `plot + theme(element.name = element_function())`.  In this section you'll learn about the basic element functions, and then in the next section, you'll see all the elements that you can modify. \indexf{theme}
 
-There are four basic types of built-in element functions: text, lines and segments, rectangles and blank. Each element function has a set of parameters that control the appearance as described below:
+There are four basic types of built-in element functions: text, lines, rectangles, and blank. Each element function has a set of parameters that control the appearance:
 
 *   `element_text()` draws labels and headings. You can control the font 
     `family`, `face`, `colour`, `size` (in points), `hjust`, `vjust`, `angle` 
@@ -156,19 +168,19 @@ There are four basic types of built-in element functions: text, lines and segmen
     Setting the font face is particularly challenging.
     \index{Themes!labels} \indexf{element\_text}
   
-    ```{r theme-text}
+    ```{r element_text}
     base_t <- base + labs(title = "This is a ggplot")
     base_t + theme(plot.title = element_text(size = 20))
     base_t + theme(plot.title = element_text(face = "bold", colour = "red"))
     base_t + theme(plot.title = element_text(hjust = 0))
     ```
     
-    You can control the margins around the text with the `margin` argument that
-    should be fed the results of the `margin()` function. `margin()` has four 
-    arguments: the amount of space (in points) to add to the top, right, bottom 
-    and left sides of the text. Any elements not specified default to 0.
+    You can control the margins around the text with the `margin` argument and
+    `margin()` function. `margin()` has four arguments: the amount of space 
+    (in points) to add to the top, right, bottom and left sides of the text. 
+    Any elements not specified default to 0.
 
-    ```{r theme-text-margin}
+    ```{r element_text-margin}
     # The margins here look asymmetric because there are also plot margins
     base_t + theme(plot.title = element_text(margin = margin()))
     base_t + theme(plot.title = element_text(margin = margin(t = 10, b = 10)))
@@ -178,7 +190,7 @@ There are four basic types of built-in element functions: text, lines and segmen
 *  `element_line()` draws lines parameterised by `colour`, `size` and
    `linetype`: \indexf{element\_line}
 
-    ```{r theme-line}
+    ```{r element_line}
     base + theme(panel.grid.major = element_line(colour = "black"))
     base + theme(panel.grid.major = element_line(size = 2))
     base + theme(panel.grid.major = element_line(linetype = "dotted"))
@@ -188,22 +200,22 @@ There are four basic types of built-in element functions: text, lines and segmen
    by `fill` colour and border `colour`, `size` and `linetype`.  
    \index{Background} \index{Themes!background} \indexf{theme\_rect}
   
-    ```{r theme-background}
+    ```{r element_rect}
     base + theme(plot.background = element_rect(fill = "grey80", colour = NA))
     base + theme(plot.background = element_rect(colour = "red", size = 2))
     base + theme(panel.background = element_rect(fill = "linen"))
     ```
 
-*   `element_blank()` draws nothing.  Use this element if you don't want 
-    anything drawn, and no space allocated for that element.  The following
-    example uses `element_blank()` to progressively suppress the appearance of 
-    elements we're not interested in. Notice how the plot automatically reclaims 
+*   `element_blank()` draws nothing. Use this if you don't want anything drawn,
+    and no space allocated for that element. The following example uses
+    `element_blank()` to progressively suppress the appearance of elements 
+    we're not interested in. Notice how the plot automatically reclaims 
     the space previously used by these elements: if you don't want this to 
     happen (perhaps because they need to line up with other plots on the page), 
     use `colour = NA, fill = NA` as parameter to create invisible elements that 
     still take up space. \indexf{element\_blank}
 
-    ```{r theme-blank}
+    ```{r element_blank}
     base
     last_plot() + theme(panel.grid.minor = element_blank())
     last_plot() + theme(panel.grid.major = element_blank())
@@ -231,27 +243,9 @@ theme_set(old_theme)
 base
 ```
 
-### Exercises
-
-1.  Try out all the themes in ggthemes. Which do you like the best?
-
-1.  What aspects of the default theme do you like? What don't you like?   
-    What would you change?
-
-1.  Look at the plots in your favourite scientific journal. What theme
-    do they most resemble? What are the main differences?
-
 ## Theme elements {#sec:theme-elements}
 
-There are around 40 unique elements that control the appearance of the plot. They can be roughly grouped into five categories: \index{Themes!elements}
-
-* plot elements
-* axis elements
-* legends elements
-* panel elements
-* facet elements
-
-I'll describe each category with a few examples.
+There are around 40 unique elements that control the appearance of the plot. They can be roughly grouped into five categories: plot, axis, legend, panel and facet. The following sections describe each in turn. \index{Themes!elements}
 
 ### Plot elements
 
@@ -263,12 +257,12 @@ plot.background       | `element_rect()` | plot background
 plot.title            | `element_text()` | plot title
 plot.margin           | `margin()`       | margins around plot
 
-`plot.background` draws a rectangle that underlies everything else on the plot. By default, it's uses a white background which ensures that the plot is usable wherever it might end up (e.g. even if you save and put on a black background). When exporting plots to use in other systems, you might want to make it transparent (it won't look any different on screen). Similarly, if you're embedding a plot in a system that already has margins you might want to eliminate the built-in margins (a small margin is still necessary if you want to draw a border).
+`plot.background` draws a rectangle that underlies everything else on the plot. By default, ggplot2 uses a white background which ensures that the plot is usable wherever it might end up (e.g. even if you save as a png and put on a slide with a black background). When exporting plots to use in other systems, you might want to make the background transparent with `fill = NA`. Similarly, if you're embedding a plot in a system that already has margins you might want to eliminate the built-in margins. Note that a small margin is still necessary if you want to draw a border around the plot.
 
-```{r plot-bkgrd-ex}
-base + theme(plot.background = element_rect(colour = "grey50"))
+```{r plot}
+base + theme(plot.background = element_rect(colour = "grey50", size = 2))
 base + theme(
-  plot.background = element_rect(colour = "grey50"),
+  plot.background = element_rect(colour = "grey50", size = 2),
   plot.margin = margin(2, 2, 2, 2)
 )
 base + theme(plot.background = element_rect(fill = "lightblue"))
@@ -280,7 +274,7 @@ The axis elements control the apperance of the axes:
 
 Element             | Setter            | Description               
 --------------------|-------------------|---------------------------
-axis.line           | `element_line()`  | line parallel to axis (not shown by default)
+axis.line           | `element_line()`  | line parallel to axis (hidden in default themes)
 axis.text           | `element_text()`  | tick labels               
 axis.text.x         | `element_text()`  | x-axis tick labels        
 axis.text.y         | `element_text()`  | y-axis tick labels        
@@ -290,9 +284,9 @@ axis.title.y        | `element_text()`  | y-axis title
 axis.ticks          | `element_line()`  | axis tick marks           
 axis.ticks.length   | `unit()`          | length of tick marks      
 
-Note that `axis.text` (and `axis.title`) comes in three forms: `axis.text`, `axis.text.x`, and `axis.text.y`. Use the first form if you want to modify the properties of both axes at once: any properties that you don't explicitly set in `axis.text.x` and `axis.text.y`  will be inherited from `axis.text`.
+Note that `axis.text` (and `axis.title`) comes in three forms: `axis.text`, `axis.text.x`, and `axis.text.y`. Use the first form if you want to modify the properties of both axes at once: any properties that you don't explicitly set in `axis.text.x` and `axis.text.y` will be inherited from `axis.text`.
 
-```{r theme-axis}
+```{r axis}
 df <- data.frame(x = 1:3, y = 1:3)
 base <- ggplot(df, aes(x, y)) + geom_point()
 
@@ -306,7 +300,7 @@ base + theme(axis.text.x = element_text(angle = -90, vjust = 0.5))
 
 ### Legend elements
 
-The legend elements control the apperance of all legend. To modify the appearance of a single legend, set the corresponding element in `guide_legend()` or `guide_colourbar()`.
+The legend elements control the apperance of all legends. You can also modify the appearance of individiual legends, by modifying the same elements in `guide_legend()` or `guide_colourbar()`.
 
 Element             | Theme function            | Description                                 |
 --------------------|---------------------------|---------------------------------------------|
@@ -323,7 +317,7 @@ legend.title.align  |  0--1                     | legend name alignment (0 = rig
 
 These options are illustrated below:
 
-```{r theme-legend}
+```{r legend}
 df <- data.frame(x = 1:4, y = 1:4, z = rep(c("a", "b"), each = 2))
 base <- ggplot(df, aes(x, y, colour = z)) + geom_point()
 
@@ -361,7 +355,7 @@ aspect.ratio        | numeric           | plot aspect ratio                     
 
 The main difference is between `panel.background` and `panel.border` is that the background is drawn underneath the data, and the border is drawn on top of it. For that reason, you'll always need to assign `fill = NA` when overriding `panel.border`.
 
-```{r panel-bkgd-ex}
+```{r panel}
 base <- ggplot(df, aes(x, y)) + geom_point()
 # Modify background
 base + theme(panel.background = element_rect(fill = "lightblue"))
@@ -372,9 +366,9 @@ base + theme(panel.grid.major = element_line(color = "gray60", size = 0.8))
 base + theme(panel.grid.major.x = element_line(color = "gray60", size = 0.8))
 ```
 
-The aspect ratio affects each panel, not the overall plot:
+Note that aspect ratio controls the aspect ratio of the _panel_, not the overall plot:
 
-```{r aspect-ratio-ex}
+```{r aspect-ratio}
 base2 <- base + theme(plot.background = element_rect(colour = "grey50"))
 # Wide screen
 base2 + theme(aspect.ratio = 9 / 16)
@@ -400,7 +394,7 @@ panel.margin.y      | `unit()`         | margin between facets (horizontal) |
 
 Element `strip.text.x` affects both `facet_wrap()` or `facet_grid()`; `strip.text.y` only affects `facet_grid()`.
 
-```{r panel-margin-ex}
+```{r facetting}
 df <- data.frame(x = 1:4, y = 1:4, z = c("a", "a", "b", "b"))
 base_f <- ggplot(df, aes(x, y)) + geom_point() + facet_wrap(~z)
 
@@ -418,10 +412,10 @@ base_f + theme(
     University of Tennessee - Knoxville)
     
 1.  `theme_dark()` makes the inside of the plot dark, but not the 
-    outside. Change the plot background to black, and then update all the
+    outside. Change the plot background to black, and then update the
     text settings so you can still read the labels.
     
-1.  Make an elegant theme that uses linen as the background colour and
+1.  Make an elegant theme that uses "linen" as the background colour and
     a serif font for the text.
 
 1.  Systematically explore the effects of `hjust` when you have a multiline
@@ -429,9 +423,18 @@ base_f + theme(
 
 ## Saving your output {#sec:saving}
 
-You have two basic choices of output: raster or vector. Vector graphics describe a plot as sequence of operation: draw a line from $(x_1, y_1)$ to $(x_2, y_2)$, draw a circle at $(x_3, x_4)$ with radius $r$. This means that they are effectively 'infinitely' zoomable; there is no loss of detail. Raster graphics are stored as an array of pixel colours and have a fixed optimal viewing size. Figure \ref{fig:vector-raster} illustrates the basic differences for a basic circle. A good description is available at <http://tinyurl.com/rstrvctr>. \index{Saving} \index{Exporting} \index{Publication!saving output}
+When saving a plot to use in another program, you have two basic choices of  output: raster or vector: \index{Saving} \index{Exporting} \index{Publication!saving output}
 
-The most useful vector graphic formats are pdf and svg. The most useful raster graphic format is png.
+* Vector graphics describe a plot as sequence of operations: draw a line 
+  from $(x_1, y_1)$ to $(x_2, y_2)$, draw a circle at $(x_3, x_4)$ with 
+  radius $r$. This means that they are effectively 'infinitely' zoomable; 
+  there is no loss of detail. The most useful vector graphic formats are 
+  pdf and svg.
+  
+* Raster graphics are stored as an array of pixel colours and have a fixed 
+  optimal viewing size. The most useful raster graphic format is png.
+  
+Figure \ref{fig:vector-raster} illustrates the basic differences for with circle. A good description is available at <http://tinyurl.com/rstrvctr>. 
 
 \begin{figure}[htbp]
   \centering
@@ -440,17 +443,15 @@ The most useful vector graphic formats are pdf and svg. The most useful raster g
   \label{fig:vector-raster}
 \end{figure}
 
-Unless there is a compelling reason not to, use vector graphics: they look better in more places. There are two main reasons not to use vector graphics:
+Unless there is a compelling reason not to, use vector graphics: they look better in more places. There are two main reasons to use raster graphics:
 
-* You have a plot (e.g. a scatterplot) with you have thousands of graphical 
-  objects (i.e. points). A vector versions might be large and slow to render.
+* You have a plot (e.g. a scatterplot) with thousands of graphical objects 
+  (i.e. points). A vector version will large and slow to render.
 
 * You want to embed the graphic in MS Office. MS has poor support for vector
   graphics (except for their own DrawingXML format which is not currently
   easy to make from R), so raster graphics are easier.
   
-For printed use, a high-resolution (e.g., 600 dpi) raster graphic will give equivalent quality, but may be large. 
-
 There are two ways to save output from ggplot2. You can use the standard R approach where you open a graphics device, generate the plot, then close the device:
 
 ```R
@@ -470,14 +471,15 @@ ggsave("output.pdf")
 
 * The first argument, `path`, specifies the path where the image should be 
   saved. The file extension will be used to automatically select the correct 
-  graphics device.
+  graphics device. `ggsave()` can produce `.eps`, `.pdf`, `.svg`, `.wmf`,
+  `.png`, `.jpg`, `.bmp`, and `.tiff`.
 
 * `width` and `height` control the output size. If left blank, they'll use the
   size of the on-screen graphics device.
   
 * For raster graphics (i.e. `.png`), the `dpi` argument controls the resolution 
   of the plot.  It defaults to 300, which is appropriate for most printers, but 
-  you may want to use 600 for particularly high-resolution output, or 72 for 
+  you may want to use 600 for particularly high-resolution output, or 96 for 
   on-screen (e.g., web) display.
 
 See `?ggsave` for more details.
