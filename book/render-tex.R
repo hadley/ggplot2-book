@@ -6,7 +6,7 @@ if (length(path) == 0) {
   message("No input supplied")
 } else {
   base <- bookdown::tex_chapter()
-  base$knitr$opts_knit$width <- 67
+  base$knitr$opts_knit$width <- 69
 
   rmarkdown::render(path, base, output_dir = "book/tex", envir = globalenv(), quiet = TRUE)
 }
