@@ -19,8 +19,10 @@ is_latex <- function() {
 columns <- function(n, aspect_ratio = 1, max_width = if (n == 1) 0.65 else 1) {
   if (is_latex()) {
     out_width <- paste0(round(max_width / n, 3), "\\linewidth")
+    knitr::knit_hooks$set(plot = plot_hook_bookdown)
   } else {
     out_width <- paste0(round(max_width * 100 / n, 1), "%")
+    knitr::knit_hooks$set(plot = NULL)
   }
 
   width <- 6 / n * max_width
@@ -36,7 +38,6 @@ columns <- function(n, aspect_ratio = 1, max_width = if (n == 1) 0.65 else 1) {
   )
 }
 
-
 # Draw parts of plots -----------------------------------------------------
 
 draw_legends <- function(...) {
@@ -48,5 +49,66 @@ draw_legends <- function(...) {
 
   grid::grid.newpage()
   grid::grid.draw(one)
+}
+
+
+# Customised plot layout --------------------------------------------------
+
+plot_hook_bookdown <- function(x, options) {
+  paste0(
+    begin_figure(x, options),
+    include_graphics(x, options),
+    end_figure(x, options)
+  )
+}
+
+begin_figure <- function(x, options) {
+  if (!knitr_first_plot(options))
+    return("")
+
+  paste0(
+    "\\begin{figure}[H]\n",
+    if (options$fig.align == "center") "  \\centering\n"
+  )
+}
+end_figure <- function(x, options) {
+  if (!knitr_last_plot(options))
+    return("")
+
+  paste0(
+    if (!is.null(options$fig.cap)) {
+      paste0(
+        '  \\caption{', options$fig.cap, '}\n',
+        '  \\label{fig:', options$label, '}\n'
+      )
+    },
+    "\\end{figure}\n"
+  )
+}
+include_graphics <- function(x, options) {
+  opts <- c(
+    sprintf('width=%s', options$out.width),
+    sprintf('height=%s', options$out.height),
+    options$out.extra
+  )
+  if (length(opts) > 0) {
+    opts_str <- paste0("[", paste(opts, collapse = ", "), "]")
+  } else {
+    opts_str <- ""
+  }
+
+  paste0("  \\includegraphics",
+    opts_str,
+    "{", knitr:::sans_ext(x), "}",
+    if (options$fig.cur != options$fig.num) "%",
+    "\n"
+  )
+}
+
+knitr_first_plot <- function(x) {
+  x$fig.show != "hold" || x$fig.cur == 1L
+}
+knitr_last_plot <- function(x) {
+  x$fig.show != "hold" || x$fig.cur == x$fig.num
 }
 
