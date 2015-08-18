@@ -11,7 +11,7 @@ source("common.R")
 
 # Data transformation {#cha:dplyr}
 
-Tidy data is important, but it's not the end of the road. Often you won't have quite the right variables, or your data might need a little aggregation before you visualise it. This chapter will show you how to solve these problems (and more!) with the dplyr package.
+Tidy data is important, but it's not the end of the road. Often you won't have quite the right variables, or your data might need a little aggregation before you visualise it. This chapter will show you how to solve these problems (and more!) with the dplyr package. \index{Data!manipulating} \index{dplyr} \index{Grammar!of data manipulation}
 
 The goal of dplyr is to provide verbs (functions) that help you solve the most common 95% of data manipulation problems. dplyr is similar to ggplot2, but instead of providing a grammar of graphics, it provides a grammar of data manipulation. Like ggplot2, dplyr helps you not just by giving you functions, but it also helps you think about data manipulation. In particular, dplyr helps by constraining you: instead of struggling to think about which of the thousands of functions that might help, you can just pick from a handful that are design to be very likely to be helpful. In this chapter you'll learn four of the most important dplyr verbs:
 
@@ -27,7 +27,7 @@ This chapter only scratches the surface of dplyr's capabilities but it should be
 
 ## Filter observations
 
-It's common to only want to explore one part of a dataset. A great data analysis strategy is to start with just one obseravation unit (one person, one city, etc), and understand how it works before attempting to generalise the conclusion to others. This is a great technique if you ever feel overwhelmed by an analysis: zoom down to a small subset, master it, and then zoom back out, to apply your conclusions to the ful dataset.
+It's common to only want to explore one part of a dataset. A great data analysis strategy is to start with just one obseravation unit (one person, one city, etc), and understand how it works before attempting to generalise the conclusion to others. This is a great technique if you ever feel overwhelmed by an analysis: zoom down to a small subset, master it, and then zoom back out, to apply your conclusions to the full dataset. \indexf{filter}
 
 Filtering is also useful for extracting outliers. Generally, you don't want to just throw outliers away, as they're often highly revealing, but it's useful to think about partioning the data into the common and the unusual. You summarise the common to look at the broad trends; you examine the outliers individually to see if you can figure out what's going on.
 
@@ -105,7 +105,7 @@ The rules for `NA` are a bit trickier, so I'll explain them next.
 
 ### Missing values
 
-`NA`, R's missing value indicator, can be frustrating to work with. R's underlying philosophy is to force you to recognise that you have missing values, and make a deliberate choice to deal with them: missing values never silently go missing. This is a pain because you almost always want to just get rid of them, but it's a good principle to force you to think about the correct option.  
+`NA`, R's missing value indicator, can be frustrating to work with. R's underlying philosophy is to force you to recognise that you have missing values, and make a deliberate choice to deal with them: missing values never silently go missing. This is a pain because you almost always want to just get rid of them, but it's a good principle to force you to think about the correct option.  \indexc{NA} \index{Missing values}
 
 The most important thing to understand about missing values is that they are infectious: with few exceptions, the result of any operation that includes a missing value will be a missing value. This happens because `NA` represents an unknown value, and there are few operations that turn an unknown value into a known value.
 
@@ -123,7 +123,7 @@ x == NA
 x != NA
 ```
 
-But that doesn't work! A little thought reveals why: there's no reason why two unknown values should be the same. Instead, use `is.na(X)` to determine if a value is missing:
+But that doesn't work! A little thought reveals why: there's no reason why two unknown values should be the same. Instead, use `is.na(X)` to determine if a value is missing: \indexf{is.na}
 
 ```{r is-na}
 is.na(x)
@@ -166,7 +166,7 @@ is.na(x)
 
 ## Create new variables {#mutate}
 
-To better explore the relationship between `x` and `y`, it's useful to "rotate" the plot so that the data is flat, not diagonal. We can do that by creating two new variables: one that represents the difference between `x` and `y` (which in this context represents the symmetry of the diamond) and one that represents its size (the length of the diagonal).
+To better explore the relationship between `x` and `y`, it's useful to "rotate" the plot so that the data is flat, not diagonal. We can do that by creating two new variables: one that represents the difference between `x` and `y` (which in this context represents the symmetry of the diamond) and one that represents its size (the length of the diagonal). \indexf{mutate} \index{Data!creating new variables}
 
 To create new variables use `mutate()`. Like `filter()` it takes a data frame as its first argument and returns a data frame. It's second and subsequent arguments are named expressions that generate new variables. Like `filter()` you can refer to variables just by their name, you don't need to also include the name of the dataset.
 
@@ -207,7 +207,7 @@ Typically, transformations will be suggested by your domain knowledge. However, 
 * Relative difference: If you're interested in the relative difference between 
   two variables, use `log(x / y)`. It's better than `x / y` because it's 
   symmetric: if x < y, `x / y` takes values [0, 1), but if x > y, `x / y` takes
-  values (1, Inf). See @tornqvist:1985 for more details.
+  values (1, Inf). See @tornqvist:1985 for more details. \indexf{log}
   
 * Sometimes integrating or differentiating might make the data more 
   interpretable: if you have distance and time, would speed or acceleration be 
@@ -250,7 +250,7 @@ There are also a few useful ways to transform pairs of variables:
 
 ## Group-wise summaries
 
-Many insightful visualisations require that you reduce the full dataset down to a meaningful summary. ggplot2 provides a number of geoms that will do summaries for you. But it's often useful to do summaries by hand: that gives you more flexibility and and you can use the summaries for other purposes.
+Many insightful visualisations require that you reduce the full dataset down to a meaningful summary. ggplot2 provides a number of geoms that will do summaries for you. But it's often useful to do summaries by hand: that gives you more flexibility and and you can use the summaries for other purposes. \indexf{group\_by} \indexf{summarise}
 
 Dplyr does summaries in two steps:
 
@@ -388,7 +388,7 @@ You'll often see a similar pattern whenever you plot number of observations vs. 
 
 ## Transformation pipelines
 
-Most real analyses require you to string together multiple `mutate()`s, `filter()`s, `group_by()`s , and `summarise()`s. For example, above, we created a frequency polygon by hand by with a combination of all four verbs:
+Most real analyses require you to string together multiple `mutate()`s, `filter()`s, `group_by()`s , and `summarise()`s. For example, above, we created a frequency polygon by hand by with a combination of all four verbs: \indexc{\%>\%}
 
 ```{r pipe1, results = "hide"}
 # By using intermediate values
@@ -429,7 +429,7 @@ cut_depth <- diamonds %>%
   mutate(prop = n / sum(n))
 ```
 
-This makes it easier to understand what's going on as we can read it almost like an English sentence: first group, then summarise, then filter, then mutate. In fact, the best way to pronounce `%>%` when reading a sequence of code is as "then". `%>%` comes from the magrittr package, by Stefan Milton Brache. It provides a number of other tools that dplyr doesn't expose by default, so I highly recommend that you check out the [magrittr website](https://github.com/smbache/magrittr).
+This makes it easier to understand what's going on as we can read it almost like an English sentence: first group, then summarise, then filter, then mutate. In fact, the best way to pronounce `%>%` when reading a sequence of code is as "then". `%>%` comes from the magrittr package, by Stefan Milton Brache. It provides a number of other tools that dplyr doesn't expose by default, so I highly recommend that you check out the [magrittr website](https://github.com/smbache/magrittr). \index{magrittr}
 
 `%>%` works by taking the thing on the left hand side (LHS) and supplying it as the first argument to the function on the righ hand side (RHS). Each of these pairs of calls is equivalent:
 
