@@ -18,16 +18,16 @@ So far, every example in this book has started with a nice dataset that's easy t
 The goal of this part of the book is to show you how to integrate ggplot2 with other tools needed for a complete data analysis:
 
 * In this chapter, you'll learn the principles of tidy data [@tidy-data],
-  which help you organise your data in a way that makes it easy to visualise 
-  with ggplot2, manipulate with dplyr and model with the many modelling 
+  which help you organise your data in a way that makes it easy to visualise
+  with ggplot2, manipulate with dplyr and model with the many modelling
   packages. The principles of tidy data are supported by the __tidyr__ package,
   which helps you tidy messy datasets.
-  
-* Most visualisations require some data transformation whether it's 
-  creating a new variable from existing variables, or performing simple 
+
+* Most visualisations require some data transformation whether it's
+  creating a new variable from existing variables, or performing simple
   aggregations so you can see the forest for the tree. [dplyr](#cha:dplyr)
   will show you how to do this with the __dplyr__ package.
-  
+
 * If you're using R, you're almost certainly using it for it's fantastic
   modelling capabilities. While there's an R package for almost every type
   of model that you can think of, the results of these models can be hard to
@@ -44,14 +44,14 @@ The principle behind tidy data is simple: storing your data in a consistent way 
 1. Variables go in columns.
 1. Observations go in rows.
 
-Tidy data is particularly important for ggplot2 because the job of ggplot2 is to map variables to visual properties: if your data isn't tidy, you'll have a hard time visualising it. 
+Tidy data is particularly important for ggplot2 because the job of ggplot2 is to map variables to visual properties: if your data isn't tidy, you'll have a hard time visualising it.
 
 Sometimes you'll find a dataset that you have no idea how to plot. That's normally because it's not tidy. For example, take this data frame that contains monthly employment data for the United States:
 
 ```{r ec2, echo = FALSE, message = FALSE}
 library("lubridate")
-ec2 <- 
-  ggplot2::economics %>% 
+ec2 <-
+  ggplot2::economics %>%
   tbl_df() %>%
   transmute(year = year(date), month = month(date), rate = uempmed) %>%
   filter(year > 2005) %>%
@@ -67,7 +67,7 @@ Imagine you want to plot a time series showing how unemployment has changed over
 * `year` is spread across the column names.
 * `rate` is the value of each cell.
 
-To make it possible to plot this data we first need to tidy it. There are two important pairs of tools: 
+To make it possible to plot this data we first need to tidy it. There are two important pairs of tools:
 
 * Spread & gather.
 * Separate & unite.
@@ -88,7 +88,7 @@ knitr::kable(indexed)
 knitr::kable(matrix)
 ```
 
-If you study them for a little while, you'll notice that they contain the same data in different forms.  I call first form __indexed__ data, because you look up a value using an index (the values of the `x` and `y` variables). I call the second form is called __Cartesian__ data, because you find a value by looking at intersection of a row and a column. We can't tell if these datasets are tidy or not. Either form could be tidy depending on what the values "A", "B", "C", "D" mean. 
+If you study them for a little while, you'll notice that they contain the same data in different forms.  I call first form __indexed__ data, because you look up a value using an index (the values of the `x` and `y` variables). I call the second form is called __Cartesian__ data, because you find a value by looking at intersection of a row and a column. We can't tell if these datasets are tidy or not. Either form could be tidy depending on what the values "A", "B", "C", "D" mean.
 
 (Also note the missing values: missing values that are explicit in one form maybe implicit in the other. An `NA` is the presence of an absense; but sometimes a missing value is the absense of a presence.)
 
@@ -106,8 +106,8 @@ Tidying your data will often require translating Cartesian → indexed forms, ca
    from the row names, and the value is the name of the variable that will
    be created from the cell values.
 
-* `...`: which variables to gather. You can specify individually, 
-  `A, B, C, D`, or as a range `A:D`. Alternatively, you can specify which 
+* `...`: which variables to gather. You can specify individually,
+  `A, B, C, D`, or as a range `A:D`. Alternatively, you can specify which
   columns are _not_ to be gathered with `-`: `-E, -F`.
 
 To tidy the economics dataset shown above, you first need to identify the variables: `year`, `month` and `rate`. `month` is already in a column, but `year` and `rate` are in Cartesian form, and we want them in indexed form, so we need to use `gather()`. In this example, the key is `year`, the value is `unemp` and we want to select columns from `2006` to `2015`:
@@ -116,7 +116,7 @@ To tidy the economics dataset shown above, you first need to identify the variab
 gather(ec2, key = year, value = unemp, `2006`:`2015`)
 ```
 
-Note that the columns have names that are not standard varible names in R (they don't start with a letter). This means that we need to surround them in backticks, i.e. `` `2006` `` to refer to them. 
+Note that the columns have names that are not standard varible names in R (they don't start with a letter). This means that we need to surround them in backticks, i.e. `` `2006` `` to refer to them.
 
 Alternatively, we could gather all columns except `month`:
 
@@ -127,11 +127,11 @@ gather(ec2, key = year, value = unemp, -month)
 To be most useful, we can provide two extra arguments:
 
 ```{r ec2-gather-extra-args}
-economics <- gather(ec2, year, rate, `2006`:`2015`, 
+economics <- gather(ec2, year, rate, `2006`:`2015`,
   convert = TRUE, na.rm = TRUE)
 ```
 
-We use `convert = TRUE` to automatically convert the years from character strings to numbers, and `na.rm = TRUE` to remove the months with no data. (In some sense the data isn't actually missing because it represents dates that haven't occured yet.) 
+We use `convert = TRUE` to automatically convert the years from character strings to numbers, and `na.rm = TRUE` to remove the months with no data. (In some sense the data isn't actually missing because it represents dates that haven't occured yet.)
 
 When the data is in this form, it's easy to visualise in many different ways. For example, we can choose to emphasise either long term trend or seasonal variations:
 
@@ -170,15 +170,15 @@ spread(weather, key = obs, value = val)
 
 1.  How can you convert back and forth between the `economics` and
     `economics_long` datasets built into ggplot2?
-    
+
 1.  Install the EDAWR package from <https://github.com/rstudio/EDAWR>.
     Tidy the `storms`, `population` and `tb` datasets.
-  
+
 ## Separate and unite {#sec:separate-unite}
 
 Spread and gather help when the variables are in the wrong place in the dataset. Separate and unite help when multiple variables are crammed into one column, or spread across multiple columns. \indexf{separate} \indexf{unite}
 
-For example, the following dataset stores some information about the response to a medical treatment. There are three variables (time, treatment and value), but time and treatment are jammed in one variable together: 
+For example, the following dataset stores some information about the response to a medical treatment. There are three variables (time, treatment and value), but time and treatment are jammed in one variable together:
 
 ```{r trt}
 trt <- dplyr::data_frame(
@@ -197,10 +197,10 @@ The `separate()` function makes it easy to tease apart multiple variables stored
 * `into`: a character vector giving the names of the new variables.
 
 * `sep`: a description of how to split the variable apart. This can either be
-  a regular expression, e.g. `_` to split by underscores, or `[^a-z]` to split 
+  a regular expression, e.g. `_` to split by underscores, or `[^a-z]` to split
   by any non-letter, or an integer giving a position.
 
-In this case, we want to split by the `_` character:  
+In this case, we want to split by the `_` character:
 
 ```{r trt-separate}
 separate(trt, var, c("time", "treatment"), "_")
@@ -215,7 +215,7 @@ separate(trt, var, c("time", "treatment"), "_")
 1.  Install the EDAWR package from <https://github.com/rstudio/EDAWR>.
     Tidy the `who` dataset.
 
-1.  Work through the demos included in the tidyr package 
+1.  Work through the demos included in the tidyr package
     (`demo(package = "tidyr")`)
 
 ## Case studies {#sec:tidy-case-study}
@@ -227,7 +227,7 @@ For most real datasets, you'll need to use more than one tidying verb. There man
 The first step when tidying a new dataset is always to identify the variables. Take the following simulated medical data. There are seven variables in this dataset: name, age, start date, week, systolic & diastolic blood pressure. Can you see how they're stored?
 
 ````{r bp0}
-# Adapted from example by Barry Rowlingson, 
+# Adapted from example by Barry Rowlingson,
 # http://barryrowlingson.github.io/hadleyverse/
 bpd <- readr::read_table(
 "name age      start  week1  week2  week3
@@ -247,7 +247,7 @@ bpd_1
 This is tidier, but we have two variables combined together in the `bp` variable. This is a common way of writing down the blood pressure, but analysis is easier if we break into two variables.  That's the job of separate:
 
 ```{r bp2}
-bpd_2 <- separate(bpd_1, bp, c("sys", "dia"), "/")
+bpd_2 <- separate(bpd_1, bp, c("sys", "dia"), "/", extra = c("drop"))
 bpd_2
 ```
 
@@ -311,7 +311,7 @@ Data tidying is a big topic and this chapter only scratches the surface. I recom
   of Statistical Software_. It describes the ideas of tidy data in more depth
   and shows other types of messy data. Unfortunately the paper was written
   before tidyr existed, so to see how to use tidyr instead of reshape2, consult
-  the 
+  the
   [tidyr vignette](http://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html).
 
 * The [data wrangling cheatsheet](http://rstudio.com/cheatsheets) by RStudio,
