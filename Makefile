@@ -25,9 +25,6 @@ $(TEXDIR)/%.tex: %.rmd
 $(TEXDIR)/ggplot2-book.tex: book/ggplot2-book.tex
 	cp book/ggplot2-book.tex $(TEXDIR)/ggplot2-book.tex
 
-toc.rds: $(RMD_CHAPTERS)
-	Rscript -e "bookdown::index()"
-
 $(TEXDIR):
 	mkdir -p $(TEXDIR)
 	mkdir -p $(TEXDIR)/_figures
