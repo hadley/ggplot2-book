@@ -27,7 +27,7 @@ There's nothing to see yet, so we need to add a layer:
 p + geom_point()
 ```
 
-`geom_point()` is a shortcut. Behind the scenes it calls the `layer()` function to create a new layer:
+`geom_point()` is a shortcut. Behind the scenes it calls the `layer()` function to create a new layer: \indexf{layer}
 
 ```{r layer2, eval = FALSE}
 p + layer(
@@ -82,7 +82,7 @@ It's useful to understand the `layer()` function so you have a better mental mod
 
 ## Data {#sec:data}
 
-Every layer must have some data associated with it, and that data must be in a data frame. This is a strong restriction, but there are good reasons for it: \index{Data} \indexc{data.frame}
+Every layer must have some data associated with it, and that data must be in a tidy data frame. You'll learn about tidy data in [tidy data](#cha:data), but for now, all you need to know is that a tidy data frame has variables in the columns and observations in the rows. This is a strong restriction, but there are good reasons for it: \index{Data} \indexf{data.frame}
 
 * Your data is very important, so it's best to be explicit about it.
 
@@ -97,17 +97,18 @@ The data on each layer doesn't need to be the same, and it's often useful to com
 
 ```{r loess-pred}
 mod <- loess(hwy ~ displ, data = mpg)
-grid <- data.frame(displ = seq(min(mpg$displ), max(mpg$displ), length = 50))
+grid <- data_frame(displ = seq(min(mpg$displ), max(mpg$displ), length = 50))
 grid$hwy <- predict(mod, newdata = grid)
 
-head(grid)
+grid
 ```
 
 Next, I'll isolate observations that are particularly far away from their predicted values:
 
 ```{r loess-outlier}
 std_resid <- resid(mod) / mod$s
-outlier <- subset(mpg, abs(std_resid) > 2)
+outlier <- filter(mpg, abs(std_resid) > 2)
+outlier
 ```
 
 I've generated these datasets because it's common to enhance the display of raw data with a statistical summary and some annotations. With these new datasets, I can improve our initial scatterplot by overlaying a smoothed line, and labelling the outlying points:
@@ -119,9 +120,9 @@ ggplot(mpg, aes(displ, hwy)) +
   geom_text(data = outlier, aes(label = model))
 ```
 
-(The text labels aren't particularly easy to read, but you'll learn how to improve those in [polishing](#cha:polishing).)
+(The labels aren't particularly easy to read, but you can fix that with some manual tweaking.)
 
-In this example, every layer uses a different dataset. We could define the same plot in another way, omitting the default dataset:
+In this example, every layer uses a different dataset. We could define the same plot in another way, omitting the default dataset, and specifying a dataset for each layer:
 
 ```{r, eval = FALSE}
 ggplot(mapping = aes(displ, hwy)) + 
@@ -130,9 +131,7 @@ ggplot(mapping = aes(displ, hwy)) +
   geom_text(data = outlier, aes(label = model))
 ```
 
-For this case, I don't particularly like this style because it makes it less clear what the primary dataset is (and because of the way that the arguments to `ggplot()` are ordered, it actually requires more keypresses!). However, you may prefer it in cases where there isn't a clear primary dataset, or where the aesthetics also vary from layer to layer. 
-
-NB: if you omit the data set in the call to `ggplot()` you must explicitly supply a dataset for every layer. Also note that facetting will not work without a default dataset: faceting affects all layers so it needs to have a base dataset that defines the set of facets. See [missing faceting variables](#sub:missing-faceting-columns) for more details. 
+I don't particularly like this style here because it makes it less clear what the primary dataset is (and because of the way that the arguments to `ggplot()` are ordered, it actually requires more keystrokes). However, you may prefer it in cases where there isn't a clear primary dataset, or where the aesthetics also vary from layer to layer. 
 
 ### Exercises
 
@@ -163,7 +162,7 @@ NB: if you omit the data set in the call to `ggplot()` you must explicitly suppl
 
 ## Aesthetic mappings {#sec:aes}
 
-The aesthetic mappings, defined with `aes()`, describe how variables are mapped to visual properties or __aesthetics__. `aes()` takes a sequence of aesthetic-variable pairs like this: \index{Mappings} \index{Aesthetics!mappings|see{Mappings}} \indexf{aes}
+The aesthetic mappings, defined with `aes()`, describe how variables are mapped to visual properties or __aesthetics__. `aes()` takes a sequence of aesthetic-variable pairs like this: \index{Aesthetic!mappings} \indexf{aes}
 
 ```{r layer11, results = "hide"}
 aes(x = displ, y = hwy, colour = class)
@@ -177,13 +176,13 @@ Here we map x-position to `displ`, y-position to `hwy`, and colour to `class`. T
 aes(displ, hwy, colour = class)
 ```
 
-While you can do data manipulation in `aes()`, e.g. `aes(log(carat), log(price))`, it's best to only do simple calculations. It's better to move complex transformations out of `aes()` call and into an explicit `dplyr::mutate()` call, as you'll learn about in [mutate](#mutate). This makes it easier to check your work and it's often faster (because you need only do the transformation once, not every time the plot is drawn).
+While you can do data manipulation in `aes()`, e.g. `aes(log(carat), log(price))`, it's best to only do simple calculations. It's better to move complex transformations out of `aes()` call and into an explicit `dplyr::mutate()` call, as you'll learn about in [mutate](#mutate). This makes it easier to check your work and it's often faster because you need only do the transformation once, not every time the plot is drawn.
 
-Avoid referring to variables that are not in the data (e.g., with `diamonds$carat`). This breaks containment, so that the plot no longer contains everything it needs. This model is a slight simplification: every ggplot has an environment associated with it, so you can refer to objects in that environment and it will work. However, it's best not to rely on this as it prevents the plot from being self-contained. ggplot2 was written before I fully understood non-standard evaluation in R, so it's not as reliable as it could be.
+Never refer to a variable with `$` (e.g., `diamonds$carat`). This breaks containment, so that the plot no longer contains everything it needs, and causes problems if ggplot2 changes the order of the rows, as it does when facetting. \indexc{\$}
 
 ### Specifying the aesthetics in the plot vs. in the layers {#sub:plots-and-layers}
 
-Aesthetic mappings can be supplied in the initial `ggplot()` call, in individual layers, or in some combination of both. All of these calls create the same plot specification:
+Aesthetic mappings can be supplied in the initial `ggplot()` call, in individual layers, or in some combination of both. All of these calls create the same plot specification: \index{Aesthetics!plot vs. layer}
 
 ```{r, eval = FALSE}
 ggplot(mpg, aes(displ, hwy, colour = class)) + 
@@ -207,14 +206,16 @@ Within each layer, you can add, override, or remove mappings:
 If you only have one layer in the plot, the way you specify aesthetics doesn't make any difference. However, the distinction is important when you start adding additional layers. These two plots are both valid and interesting, but focus on quite different aspects of the data:
 
 `r columns(2, 2 / 3)`
-```{r, message = FALSE, warning = FALSE}
+```{r}
 ggplot(mpg, aes(displ, hwy, colour = class)) + 
   geom_point() + 
-  geom_smooth(se = FALSE)
+  geom_smooth(method = "lm", se = FALSE) +
+  theme(legend.position = "none")
 
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point(aes(colour = class)) + 
-  geom_smooth(se = FALSE)
+  geom_smooth(method = "lm", se = FALSE) + 
+  theme(legend.position = "none")
 ```
 
 Generally, you want to set up the mappings to illuminate the structure underlying the graphic and minimise typing. It may take some time before the best approach is immediately obvious, so if you've iterated your way to a complex graphic, it may be worthwhile to rewrite it to make the structure more clear.
@@ -225,7 +226,7 @@ Instead of mapping an aesthetic property to a variable, you can set it to a _sin
 
 The following plots are created with similar code, but have rather different outputs. The second plot **maps** (not sets) the colour to the value 'darkblue'. This effectively creates a new variable containing only the value 'darkblue' and then scales it with a colour scale. Because this value is discrete, the default colour scale uses evenly spaced colours on the colour wheel, and since there is only one value this colour is pinkish. 
 
-`r columns(2, 1)`
+`r columns(2, 2/3)`
 ```{r layer15}
 ggplot(mpg, aes(cty, hwy)) + 
   geom_point(colour = "darkblue") 
@@ -236,6 +237,7 @@ ggplot(mpg, aes(cty, hwy)) +
 
 A third approach is to map the value, but override the default scale:
 
+`r columns(1, 2 / 3, 0.5)`
 ```{r}
 ggplot(mpg, aes(cty, hwy)) + 
   geom_point(aes(colour = "darkblue")) + 
@@ -251,10 +253,9 @@ It's sometimes useful to map aesthetics to constants. For example, if you want t
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point() +
   geom_smooth(aes(colour = "loess"), method = "loess", se = FALSE) + 
-  geom_smooth(aes(colour = "lm"), method = "lm", se = FALSE)
+  geom_smooth(aes(colour = "lm"), method = "lm", se = FALSE) +
+  labs(colour = "Smoother")
 ```
-
-The default legend title isn't very useful, but you can easily override it as you'll learn in [legends and axes](#sec:guides).
 
 ### Exercises
 
@@ -346,7 +347,7 @@ Geometric objects, or **geoms** for short, perform the actual rendering of the l
   
 Each geom has a set of aesthetics that it understands, some of which _must_ be provided. For example, the point geoms requires x and y position, and understands colour, size and shape aesthetics. A bar requires height (`ymax`), and understands width, border colour and fill colour. Each geom lists its aesthetics in the documentation.
 
-Some geoms differ primarily in the way that they are parameterised. For example, you can draw a square in three ways:
+Some geoms differ primarily in the way that they are parameterised. For example, you can draw a square in three ways: \index{Geoms!parameterisation}
 
 * By giving `geom_tile()` the location (`x` and `y`) and dimensions 
   (`width` and `height`). \indexf{geom\_tile}
@@ -378,18 +379,20 @@ If alternative parameterisations are available, picking the right one for your d
     
 1.  For each of the plots below, identify the geom used to draw it.
 
-    `r columns(2, 2 /3)`
+    `r columns(2, 2 / 3)`
     ```{r, echo = FALSE}
     ggplot(mpg, aes(drv, displ)) + geom_violin()
-    ggplot(mpg, aes(hwy, cty)) + geom_count(alpha = 1/3)
+    ggplot(mpg, aes(hwy, cty)) + 
+      geom_count(alpha = 1/3) + 
+      theme(legend.position = "none")
     ```
     
-    ```{r}
-    ggplot(mpg, aes(hwy, cty)) + geom_hex()
+    ```{r, echo = FALSE}
+    ggplot(mpg, aes(hwy, cty)) + geom_hex(bins = 10) + theme(legend.position = "none")
     ggplot(mpg, aes(cyl, drv)) + geom_jitter(width = 0.2, height = 0.2)
     ```
     
-    ```{r}
+    ```{r, echo = FALSE}
     ggplot(economics, aes(date, psavert)) + geom_area()
     ggplot(economics, aes(uempmed, psavert)) + geom_path()
     ```
@@ -451,26 +454,30 @@ Internally, a stat takes a data frame as input and returns a data frame as outpu
 * `density`, the density of observations in each bin (percentage of total / bar width)
 * `x`, the centre of the bin
 
-These generated variables can be used instead of the variables present in the original dataset. For example, the default histogram geom assigns the height of the bars to the number of observations (`count`), but if you'd prefer a more traditional histogram, you can use the density (`density`). To refer to a generated variable like density, the name must be surrounded with `..`. This prevents confusion in case the original dataset includes a variable with the same name as a generated variable, and it makes it clear to any later reader of the code that this variable was generated by a stat. Each statistic lists the variables that it creates in its documentation. \indexc{..} The following example shows a density histogram of `carat` from the diamonds dataset.
+These generated variables can be used instead of the variables present in the original dataset. For example, the default histogram geom assigns the height of the bars to the number of observations (`count`), but if you'd prefer a more traditional histogram, you can use the density (`density`). To refer to a generated variable like density, the name must be surrounded with `..`. This prevents confusion in case the original dataset includes a variable with the same name as a generated variable, and it makes it clear to any later reader of the code that this variable was generated by a stat. Each statistic lists the variables that it creates in its documentation. \indexc{..} Compare the y-axes on these two plots:
 
+`r columns(2, 2/3)`
 ```{r hist}
+ggplot(diamonds, aes(price)) + 
+  geom_histogram(binwidth = 500)
 ggplot(diamonds, aes(price)) + 
   geom_histogram(aes(y = ..density..), binwidth = 500)
 ```
 
-
 This technique is particularly useful when you want to compare the distribution of multiple groups that have very different sizes. For example, it's hard to compare the the distribution of `price` within `cut` because some groups are quite small. It's easier to compare if we standardise each group to take up the same area:
 
-`r columns(2, 1/2)`
-```{r freqpoly}
+`r columns(2, 2/3)`
+```{r freqpoly, message = FALSE}
 ggplot(diamonds, aes(price, colour = cut)) + 
-  geom_freqpoly(binwidth = 500)
+  geom_freqpoly(binwidth = 500) +
+  theme(legend.position = "none")
+
 ggplot(diamonds, aes(price, colour = cut)) + 
-  geom_freqpoly(aes(y = ..density..), binwidth = 500)
+  geom_freqpoly(aes(y = ..density..), binwidth = 500) + 
+  theme(legend.position = "none")
 ```
 
-
-The result of this plot is rather surprising: low quality diamonds seem to be more expensive on average. We'll come back to this surprising result in [removing trend](#sub:trend).
+The result of this plot is rather surprising: low quality diamonds seem to be more expensive on average. We'll come back to this result in [removing trend](#sub:trend).
 
 ### Exercises
 
@@ -507,20 +514,20 @@ The result of this plot is rather surprising: low quality diamonds seem to be mo
     `trans`.
 
 ## Position adjustments {#sec:position}
+\index{Position adjustments}
 
-Position adjustments apply minor tweaks to the position of elements within a layer. Three adjustments apply primarily to bars: \index{Position adjustments}  \index{Positioning!position adjustments} \indexf{geom\_bar}
+Position adjustments apply minor tweaks to the position of elements within a layer. Three adjustments apply primarily to bars: 
+
+\index{Dodging} \index{Side-by-side|see{Dodging}} \indexf{position\_dodge} \index{Stacking} \indexf{position\_stack} \indexf{position\_fill}   
 
 * `position_stack()`: stack overlapping bars (or areas) on top of each other.
-  \index{Stacking} \indexf{position\_stack}
 * `position_fill()`: stack overlapping bars, scaling so the top is always at 1.
-  \indexf{position\_fill}   
 * `position_dodge()`: place overlapping bars (or boxplots) side-by-side.
-   \index{Dodging} \index{Side-by-side|see{Dodging}} \indexf{position\_dodge} 
 
 `r columns(3, 2 / 3)`
 ```{r position-bar}
-dplot <- ggplot(diamonds, aes(clarity, fill = cut)) + 
-  theme(legend.position = "none")
+dplot <- ggplot(diamonds, aes(color, fill = cut)) + 
+  xlab(NULL) + ylab(NULL) + theme(legend.position = "none")
 # position stack is the default for bars, so `geom_bar()` 
 # is equivalent to `geom_bar(position = "stack")`.
 dplot + geom_bar()
@@ -528,14 +535,15 @@ dplot + geom_bar(position = "fill")
 dplot + geom_bar(position = "dodge")
 ```
 
-There's also a position adjustment that does nothing: `position_identity()`. The identity position adjustment is not useful for bars, because each bar obscures the bars behind, but there are many geoms that probably don't need an adjustment, such as a frequency polygon:
+There's also a position adjustment that does nothing: `position_identity()`. The identity position adjustment is not useful for bars, because each bar obscures the bars behind, but there are many geoms that don't need adjusting, like the frequency polygon:
 
 `r columns(2, 2 / 3)`
 ```{r position-identity}
-dplot + geom_bar(position = "identity")
+dplot + geom_bar(position = "identity", alpha = 1 / 2, colour = "grey50")
 
-ggplot(diamonds, aes(clarity, colour = cut)) + 
+ggplot(diamonds, aes(color, colour = cut)) + 
   geom_freqpoly(aes(group = cut)) + 
+  xlab(NULL) + ylab(NULL) + 
   theme(legend.position = "none")
 ```
 
@@ -546,19 +554,25 @@ There are three position adjustments that are primarily useful for points:
 * `position_jitterdodge()`: dodge points within groups, then add a little 
   random noise.
 
+\indexf{position\_nudge} \indexf{position\_jitter} \indexf{position\_jitterdodge}
+
+Position adjustments are most useful for discrete data. Continuous data typically doesn't overlap exactly, and when it does (because of high data density) minor adjustments, like jittering, are often insufficient to fix the problem.
+
 Note that the way you pass parameters to position adjustments differs to stats and geoms. Instead of including additional arguments in `...`, you construct a position adjustment object, supplying additional arguments in the call:
   
-`r columns(2, 1)`
 ```{r position-point}
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point(position = "jitter")
 ggplot(mpg, aes(displ, hwy)) + 
-  geom_point(position = position_jitter(width = 0.02, height = 0.2))
+  geom_point(position = position_jitter(width = 0.05, height = 0.5))
 ```
 
-This is rather verbose, so `geom_jitter()` provides a convenient shortcut.
+This is rather verbose, so `geom_jitter()` provides a convenient shortcut:
 
-Position adjustments are most useful for discrete data. Continuous data typically doesn't overlap exactly, and when it does (because of high data density) minor adjustments, like jittering, are often insufficient to fix the problem.
+```{r, eval = FALSE}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_jitter(width = 0.05, height = 0.5)
+```
 
 ### Exercises
 
