@@ -178,7 +178,7 @@ aes(displ, hwy, colour = class)
 
 While you can do data manipulation in `aes()`, e.g. `aes(log(carat), log(price))`, it's best to only do simple calculations. It's better to move complex transformations out of `aes()` call and into an explicit `dplyr::mutate()` call, as you'll learn about in [mutate](#mutate). This makes it easier to check your work and it's often faster because you need only do the transformation once, not every time the plot is drawn.
 
-Never refer to a variable with `$` (e.g., `diamonds$carat`). This breaks containment, so that the plot no longer contains everything it needs, and causes problems if ggplot2 changes the order of the rows, as it does when facetting. \indexc{\$}
+Never refer to a variable with `$` (e.g., `diamonds$carat`) in a `ggplot()` command. This breaks containment, so that the plot no longer contains everything it needs, and causes problems if ggplot2 changes the order of the rows, as it does when facetting. \indexc{\$}
 
 ### Specifying the aesthetics in the plot vs. in the layers {#sub:plots-and-layers}
 
@@ -254,7 +254,7 @@ ggplot(mpg, aes(displ, hwy)) +
   geom_point() +
   geom_smooth(aes(colour = "loess"), method = "loess", se = FALSE) + 
   geom_smooth(aes(colour = "lm"), method = "lm", se = FALSE) +
-  labs(colour = "Smoother")
+  labs(colour = "Method")
 ```
 
 ### Exercises
@@ -556,8 +556,6 @@ There are three position adjustments that are primarily useful for points:
 
 \indexf{position\_nudge} \indexf{position\_jitter} \indexf{position\_jitterdodge}
 
-Position adjustments are most useful for discrete data. Continuous data typically doesn't overlap exactly, and when it does (because of high data density) minor adjustments, like jittering, are often insufficient to fix the problem.
-
 Note that the way you pass parameters to position adjustments differs to stats and geoms. Instead of including additional arguments in `...`, you construct a position adjustment object, supplying additional arguments in the call:
   
 ```{r position-point}
@@ -573,6 +571,8 @@ This is rather verbose, so `geom_jitter()` provides a convenient shortcut:
 ggplot(mpg, aes(displ, hwy)) + 
   geom_jitter(width = 0.05, height = 0.5)
 ```
+
+Continuous data typically doesn't overlap exactly, and when it does (because of high data density) minor adjustments, like jittering, are often insufficient to fix the problem. For this reason, position adjustments are generally most useful for discrete data.
 
 ### Exercises
 
