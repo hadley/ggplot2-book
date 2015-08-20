@@ -11,7 +11,7 @@ source("common.R")
 
 ## Introduction
 
-A major requirement of a good data analysis is flexibility. If your data changes, or you discover something that makes you rethink your basic assumptions, you need to be able to easily change many plots at once. The main inhibitor of flexibility is code duplication. If you have the same plotting statement repeated over and over again, you'll have to make the same change in many different places. Often just the thought of making all those changes is exhausting! This chapter will help you overcome that by problem by showing you how to program with ggplto2.
+A major requirement of a good data analysis is flexibility. If your data changes, or you discover something that makes you rethink your basic assumptions, you need to be able to easily change many plots at once. The main inhibitor of flexibility is code duplication. If you have the same plotting statement repeated over and over again, you'll have to make the same change in many different places. Often just the thought of making all those changes is exhausting! This chapter will help you overcome that by problem by showing you how to program with ggplto2. \index{Programming}
 
 To make your code more flexible, you need to reduce duplicated code by writing functions. When you notice you're doing the same thing over and over again, think about how you might generalise it and turn it into a function. If you're not that familiar with how functions work in R, you might want to brush up your knowledge at <http://adv-r.had.co.nz/Functions.html>. 
 
@@ -61,7 +61,7 @@ ggplot(mpg, aes(displ, 1 / hwy)) +
   geom_lm(y ~ poly(x, 2), size = 1, colour = "red")
 ```
 
-Pay close attention to the use of `...`. When included in the function definition `...` allows a function to accept arbitrary additional arguments. Inside the function, you can then use `...` to pass those arguments on to another function. Here we pass `...` onto `geom_smooth()` so the user can still modify all the other arguments we haven't explicit overridden. When you write your own component functions, it's a good idea to always use `...` is this way.
+Pay close attention to the use of `...`. When included in the function definition `...` allows a function to accept arbitrary additional arguments. Inside the function, you can then use `...` to pass those arguments on to another function. Here we pass `...` onto `geom_smooth()` so the user can still modify all the other arguments we haven't explicit overridden. When you write your own component functions, it's a good idea to always use `...` is this way. \indexc{\ldots}
 
 Finally, note that you can only _add_ components to a plot: you can't modify or remove existing objects.
 
@@ -130,16 +130,16 @@ You're not just limited to adding layers in this way. You can also include any o
 
 ### Annotation
 
-It's often useful to add standard annotations to a plot. In this case, your function will also set the data in the layer function, rather than inheriting it from the plot. There are two other options that you should set when you do this. These ensure that the layer is self-contained:
+It's often useful to add standard annotations to a plot. In this case, your function will also set the data in the layer function, rather than inheriting it from the plot. There are two other options that you should set when you do this. These ensure that the layer is self-contained: \index{Annotation!functions}
 
 * `inherit.aes = FALSE` prevents the layer from inheriting aesthetics from the 
   parent plot. This ensures your annotation works regardless of what else is on 
-  the plot.
+  the plot. \indexc{inherit.aes}
   
 * `show.legend = FALSE` ensures that your annotation won't appear in the
-  legend.
+  legend. \indexc{show.legend}
   
-One example of this technique is the `borders()` function built into ggplot2.  It's designed to add map borders from one of the datasets in the maps package:
+One example of this technique is the `borders()` function built into ggplot2.  It's designed to add map borders from one of the datasets in the maps package: \indexf{borders}
 
 ```{r}
 borders <- function(database = "world", regions = ".", fill = NA, 
@@ -155,9 +155,9 @@ borders <- function(database = "world", regions = ".", fill = NA,
 
 ### Additional arguments
 
-If you want to pass additional arguments to the components in your function, `...` is no: there's no way to direct different arguments to different components. Instead, you'll need to think about how you want your function to work, balancing the benefits of having one function that does it all vs. the cost of having a complex function that's harder to understand. 
+If you want to pass additional arguments to the components in your function, `...` is no good: there's no way to direct different arguments to different components. Instead, you'll need to think about how you want your function to work, balancing the benefits of having one function that does it all vs. the cost of having a complex function that's harder to understand. \indexc{\ldots}
 
-To get your start, here's one approach using `modifyList()` and `do.call()`:
+To get your start, here's one approach using `modifyList()` and `do.call()`: \indexf{modifyList} \indexf{do.call}
 
 ```{r}
 geom_mean <- function(..., bar.params = list(), errorbar.params = list()) {
@@ -207,7 +207,7 @@ If you need more complex behaviour, it might be easier to create a custom geom o
 
 ## Plot functions {#sec:functions}
 
-Creating small reusable components is most in line with the ggplot2 spirit: you can recombine them flexibly to create whatever plot you want. But sometimes you're creating the same plot over and over again, and you don't need that flexibility. Instead of creating components, you might want to write a function that takes data and parameters and returns a complete plot.
+Creating small reusable components is most in line with the ggplot2 spirit: you can recombine them flexibly to create whatever plot you want. But sometimes you're creating the same plot over and over again, and you don't need that flexibility. Instead of creating components, you might want to write a function that takes data and parameters and returns a complete plot. \index{Plot functions}
 
 For example, you could wrap up the complete code needed to make a piechart:
 
@@ -225,7 +225,7 @@ piechart(mpg, aes(factor(1), fill = class))
 
 This is much less flexible than the component based approach, but equally, it's much more concise.
 
-You can take a similar approach to drawing parallel coordinates plots (PCPs). PCPs require a transformation of the data, so I recommend writing two functions: one that does the transformation and one that generates the plot. Keeping these two piece separate makes life much easier if you later want to reuse the same transformation for a different visualisation.
+You can take a similar approach to drawing parallel coordinates plots (PCPs). PCPs require a transformation of the data, so I recommend writing two functions: one that does the transformation and one that generates the plot. Keeping these two piece separate makes life much easier if you later want to reuse the same transformation for a different visualisation. \index{Parallel coordinate plots}
 
 `r columns(2, 2/3)`
 ```{r pcp_data}
@@ -253,7 +253,7 @@ pcp(mpg)
 pcp(mpg, aes(colour = drv))
 ```
 
-A complete exploration of this idea is `qplot()`, which provides a fairly deep wrapper around the most common `ggplot()` options. I recommend studying the source code if you want to see how far these basic techniques can take you.
+A complete exploration of this idea is `qplot()`, which provides a fairly deep wrapper around the most common `ggplot()` options. I recommend studying the source code if you want to see how far these basic techniques can take you. \indexf{qplot}
 
 ### Indirectly referring to variables
 
@@ -266,10 +266,10 @@ x_var <- "displ"
 aes(x_var)
 ```
 
-Instead we need to use `aes_()`, which uses regular evaluation. There are two basic ways to create a mapping with `aes_()`:
+Instead we need to use `aes_()`, which uses regular evaluation. There are two basic ways to create a mapping with `aes_()`: \indexf{aes\_}
 
 *   Using a _quoted call_, created by `quote()`, `substitute()`, `as.name()`, 
-    or `parse()`.
+    or `parse()`. \indexf{quote} \indexf{substitute} \indexf{parse} \indexf{as.name}
     
     ```{r}
     aes_(quote(displ))
@@ -287,7 +287,7 @@ Instead we need to use `aes_()`, which uses regular evaluation. There are two ba
     `parse()` will turn it into the function call `a + b`. (If this is
     confusing <http://adv-r.had.co.nz/Expressions.html> might help).
 
-*   Using a formula, created with `~`.
+*   Using a formula, created with `~`. \indexc{\textasciitilde}
 
     ```{r}
     aes_(~displ)
@@ -313,11 +313,11 @@ piechart3 <- function(data, var, ...) {
 piechart3(mpg, class) + theme(legend.position = "none")
 ```
 
-There's another advantage to `aes_()` over `aes()` if you're writing ggplot2 plots inside a package: using `aes_(~x, ~y)` instead of `aes(x, y)` avoids the global variables NOTE in `R CMD check`.
+There's another advantage to `aes_()` over `aes()` if you're writing ggplot2 plots inside a package: using `aes_(~x, ~y)` instead of `aes(x, y)` avoids the global variables NOTE in `R CMD check`. \index{Global variables}
 
 ### The plot environment
 
-As you create more sophisticated plotting functions, you'll need to understand a bit more about ggplot2's scoping rules. ggplot2 was written well before I understood the full intricacies of non-standard evaluation so it has a rather simple scoping system. If a variable is not found in the `data`, it is looked for in _the_ plot environment. There is only one environment for a plot (not one for each layer), and it is the environment in which `ggplot()` is called from (i.e. the `parent.frame()`).
+As you create more sophisticated plotting functions, you'll need to understand a bit more about ggplot2's scoping rules. ggplot2 was written well before I understood the full intricacies of non-standard evaluation so it has a rather simple scoping system. If a variable is not found in the `data`, it is looked for in _the_ plot environment. There is only one environment for a plot (not one for each layer), and it is the environment in which `ggplot()` is called from (i.e. the `parent.frame()`). \index{Environments} \indexf{parent.frame}
 
 This means that the following function won't work because `n` is not stored in an environment accessible when the expressions in `aes()` are evaluated. 
 
@@ -366,7 +366,7 @@ If you need to use a different environment for the plot, you can specify it with
 
 ## Functional programming
 
-Since ggplot2 objects are just regular R objects, you can put them in a list. This means you can apply all of R's great functional programming tools. For example, if you wanted to add different geoms to the same base plot, you could put them in a list and use `lapply()`.
+Since ggplot2 objects are just regular R objects, you can put them in a list. This means you can apply all of R's great functional programming tools. For example, if you wanted to add different geoms to the same base plot, you could put them in a list and use `lapply()`. \index{Functional programming} \indexf{lapply}
 
 `r columns(3, 1, 1)`
 ```{r}
