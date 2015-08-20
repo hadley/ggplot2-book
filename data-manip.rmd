@@ -173,25 +173,25 @@ To better explore the relationship between `x` and `y`, it's useful to "rotate" 
 To create new variables use `mutate()`. Like `filter()` it takes a data frame as its first argument and returns a data frame. It's second and subsequent arguments are named expressions that generate new variables. Like `filter()` you can refer to variables just by their name, you don't need to also include the name of the dataset.
 
 ```{r mutate1}
-diamonds_ok <- mutate(diamonds_ok,
+diamonds_ok2 <- mutate(diamonds_ok,
   sym = x - y,
   size = sqrt(x ^ 2 + y ^ 2)
 )
-diamonds_ok
+diamonds_ok2
 
-ggplot(diamonds_ok, aes(size, sym)) + 
+ggplot(diamonds_ok2, aes(size, sym)) + 
   stat_bin2d()
 ```
 
-This plot has two advantages: we can more easily see the pattern followed by most diamonds, and we can easily select outliers. Here, it doesn't seem important whether the outliers are positive (i.e. `x` is bigger than `y`) or negative (i.e. `y` is bigger `x`). So we can use the absolute value of the symmetry variable to pull out the outliers. Based on the plot, and a little experimentation, I came up with the threshold of 0.20. We'll check out the results with a histogram.
+This plot has two advantages: we can more easily see the pattern followed by most diamonds, and we can easily select outliers. Here, it doesn't seem important whether the outliers are positive (i.e. `x` is bigger than `y`) or negative (i.e. `y` is bigger `x`). So we can use the absolute value of the symmetry variable to pull out the outliers. Based on the plot, and a little experimentation, I came up with a threshold of 0.20. We'll check out the results with a histogram.
 
 `r columns(2, 1)`
 ```{r sym-hist}
-ggplot(diamonds_ok, aes(abs(sym))) + 
+ggplot(diamonds_ok2, aes(abs(sym))) + 
   geom_histogram(binwidth = 0.10)
 
-diamonds_ok2 <- filter(diamonds_ok, abs(sym) < 0.20)
-ggplot(diamonds_ok2, aes(abs(sym))) + 
+diamonds_ok3 <- filter(diamonds_ok2, abs(sym) < 0.20)
+ggplot(diamonds_ok3, aes(abs(sym))) + 
   geom_histogram(binwidth = 0.01)
 ```
 
@@ -269,7 +269,7 @@ sum_clarity
 
 ggplot(sum_clarity, aes(clarity, price)) + 
   geom_line(aes(group = 1), colour = "grey80") +
-  geom_point(size = 4)
+  geom_point(size = 2)
 ```
 
 You might be surprised by this pattern: why do diamonds with better clarities have lower prices? We'll see why this is the case and what to do about it in [removing trend](#sub:trend).
@@ -320,7 +320,8 @@ When summarising with the mean or median, it's always a good idea to include a c
 
 The following example extends our previous summary of the average price by clarity to also include the number of obseravtions in each group, and the upper and lower quartiles. It suggests the mean might be a bad summary for this data - the distributions of price are so highly skewed that the mean is higher than the upper quartile for some of the groups!
 
-```{r}
+`r columns(1, 2/3)`
+```{r }
 by_clarity <- diamonds %>%
   group_by(clarity) %>%
   summarise(
