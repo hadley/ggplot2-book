@@ -12,7 +12,7 @@ source("common.R")
 
 ## Introduction
 
-In this chapter you will learn how to use the ggplot2 theme system, which allows you to exercise fine control over the non-data elements of your plot. The theme system does not affect how the data is rendered by geoms, or how it is transformed by scales. Themes don't change the perceptual properties of the plot, but they do help you make the plot aesthetically pleasing or match an existing style guide. Themes give you control over things like fonts, ticks, panel strips, and backgrounds. \index{Themes} \index{Publication!themes}
+In this chapter you will learn how to use the ggplot2 theme system, which allows you to exercise fine control over the non-data elements of your plot. The theme system does not affect how the data is rendered by geoms, or how it is transformed by scales. Themes don't change the perceptual properties of the plot, but they do help you make the plot aesthetically pleasing or match an existing style guide. Themes give you control over things like fonts, ticks, panel strips, and backgrounds. \index{Themes}
 
 This separation of control into data and non-data parts is quite different from base and lattice graphics. In base and lattice graphics, most functions take a large number of arguments that specify both data and non-data appearance, which makes the functions complicated and harder to learn. ggplot2 takes a different approach: when creating the plot you determine how the data is displayed, then *after* it has been created you can edit every detail of the rendering, using the theming system. 
 
@@ -125,9 +125,15 @@ base <- ggplot(df, aes(x, y)) + geom_point()
 base + theme_grey() + ggtitle("theme_grey()")
 base + theme_bw() + ggtitle("theme_bw()")
 base + theme_linedraw() + ggtitle("theme_linedraw()")
+```
+
+```{r}
 base + theme_light() + ggtitle("theme_bw()")
 base + theme_dark() + ggtitle("theme_dark()")
 base + theme_minimal()  + ggtitle("theme_minimal()")
+```
+
+```{r}
 base + theme_classic() + ggtitle("theme_classic()")
 base + theme_void() + ggtitle("theme_void()")
 ```
@@ -138,7 +144,7 @@ As well as applying themes a plot at-a-time, you can change the default theme wi
 
 You're not limited to the themes built-in to ggplot2. Other packages, like ggtheme by Jeffrey Arnold, add even more. Here's a few of my favourite from ggtheme: \index{ggtheme}
 
-```{r ggtheme}
+```{r ggtheme, message = FALSE}
 library(ggthemes)
 base + theme_tufte() + ggtitle("theme_tufte()")
 base + theme_solarized() + ggtitle("theme_solarized()")
@@ -171,10 +177,10 @@ There are four basic types of built-in element functions: text, lines, rectangle
     \index{Themes!labels} \indexf{element\_text}
   
     ```{r element_text}
-    base_t <- base + labs(title = "This is a ggplot")
-    base_t + theme(plot.title = element_text(size = 20))
+    base_t <- base + labs(title = "This is a ggplot") + xlab(NULL) + ylab(NULL)
+    base_t + theme(plot.title = element_text(size = 16))
     base_t + theme(plot.title = element_text(face = "bold", colour = "red"))
-    base_t + theme(plot.title = element_text(hjust = 0))
+    base_t + theme(plot.title = element_text(hjust = 1))
     ```
     
     You can control the margins around the text with the `margin` argument and
@@ -190,7 +196,7 @@ There are four basic types of built-in element functions: text, lines, rectangle
     ```
 
 *  `element_line()` draws lines parameterised by `colour`, `size` and
-   `linetype`: \indexf{element\_line}
+   `linetype`: \indexf{element\_line} \index{Themes!lines}
 
     ```{r element_line}
     base + theme(panel.grid.major = element_line(colour = "black"))
@@ -221,6 +227,8 @@ There are four basic types of built-in element functions: text, lines, rectangle
     base
     last_plot() + theme(panel.grid.minor = element_blank())
     last_plot() + theme(panel.grid.major = element_blank())
+    ```
+    ```{r element_blank-2}
     last_plot() + theme(panel.background = element_blank())
     last_plot() + theme(
       axis.title.x = element_blank(), 
@@ -231,8 +239,9 @@ There are four basic types of built-in element functions: text, lines, rectangle
     
 A few other settings take grid units. Create them with `unit(1, "cm")` or `unit(0.25, "in")`.
 
-To modify theme elements for all future plots, use `theme_update()`. It returns the previous theme settings, so you can easily restore the original parameters once you're done. \index{Themes!updating} \indexf{theme\_get} \indexf{theme}
+To modify theme elements for all future plots, use `theme_update()`. It returns the previous theme settings, so you can easily restore the original parameters once you're done. \index{Themes!updating} \indexf{theme\_set}
 
+`r columns(2, 3/4, 2/3)`
 ```{r theme-update}
 old_theme <- theme_update(
   plot.background = element_rect(fill = "lightblue3", colour = NA),
@@ -250,6 +259,7 @@ base
 There are around 40 unique elements that control the appearance of the plot. They can be roughly grouped into five categories: plot, axis, legend, panel and facet. The following sections describe each in turn. \index{Themes!elements}
 
 ### Plot elements
+\index{Themes!plot}
 
 Some elements affect the plot as a whole:
 
@@ -261,6 +271,7 @@ plot.margin           | `margin()`       | margins around plot
 
 `plot.background` draws a rectangle that underlies everything else on the plot. By default, ggplot2 uses a white background which ensures that the plot is usable wherever it might end up (e.g. even if you save as a png and put on a slide with a black background). When exporting plots to use in other systems, you might want to make the background transparent with `fill = NA`. Similarly, if you're embedding a plot in a system that already has margins you might want to eliminate the built-in margins. Note that a small margin is still necessary if you want to draw a border around the plot.
 
+`r columns(3, 3/4)`
 ```{r plot}
 base + theme(plot.background = element_rect(colour = "grey50", size = 2))
 base + theme(
@@ -271,6 +282,7 @@ base + theme(plot.background = element_rect(fill = "lightblue"))
 ```
 
 ### Axis elements {#sub:theme-axis}
+\index{Themes!axis} \index{Axis!styling}
 
 The axis elements control the apperance of the axes:
 
@@ -295,12 +307,29 @@ base <- ggplot(df, aes(x, y)) + geom_point()
 # Accentuate the axes
 base + theme(axis.line = element_line(colour = "grey50", size = 1))
 # Style both x and y axis labels
-base + theme(axis.text = element_text(color = "blue", size = 15))
+base + theme(axis.text = element_text(color = "blue", size = 12))
 # Useful for long labels
 base + theme(axis.text.x = element_text(angle = -90, vjust = 0.5))
 ```
 
+The most common adjustment is to rotate the x-axis labels to avoid long overlapping labels. If you do this, note negative angles tend to look best and you should set `hjust = 0` and `vjust = 1`:
+
+`r columns(2, 3/4)`
+```{r axis-labels}
+df <- data.frame(
+  x = c("label", "a long label", "an even longer label"), 
+  y = 1:3
+)
+base <- ggplot(df, aes(x, y)) + geom_point()
+base
+base + 
+  theme(axis.text.x = element_text(angle = -30, vjust = 1, hjust = 0)) + 
+  xlab(NULL) + 
+  ylab(NULL)
+```
+
 ### Legend elements
+\index{Theme!legend} \index{Legend!styling}
 
 The legend elements control the apperance of all legends. You can also modify the appearance of individiual legends, by modifying the same elements in `guide_legend()` or `guide_colourbar()`.
 
@@ -319,12 +348,17 @@ legend.title.align  |  0--1                     | legend name alignment (0 = rig
 
 These options are illustrated below:
 
+`r columns(3, 3/4)`
 ```{r legend}
 df <- data.frame(x = 1:4, y = 1:4, z = rep(c("a", "b"), each = 2))
 base <- ggplot(df, aes(x, y, colour = z)) + geom_point()
 
 base + theme(
-  legend.background = element_rect(fill = "lemonchiffon", colour = "grey50", size = 1)
+  legend.background = element_rect(
+    fill = "lemonchiffon", 
+    colour = "grey50", 
+    size = 1
+  )
 )
 base + theme(
   legend.key = element_rect(color = "grey50"),
@@ -340,20 +374,21 @@ base + theme(
 There are four other properties that control how legends are laid out in the context of the plot (`legend.position`, `legend.direction`, `legend.justification`, `legend.box`). They are described in [legend layout](#sub:legend-layout).
 
 ### Panel elements
+\index{Theme!panel}
 
 Panel elements control the appearance of the plotting panels:
 
-Element             | Theme function    | Description                                       |
---------------------|-------------------|---------------------------------------------------|
-panel.background    | `element_rect()`  | background of graphics region (drawn beneath data)|  
-panel.border        | `element_rect()`  | border of graphics region (drawn on top of data)  |
-panel.grid.major    | `element_line()`  | major grid lines                                  |
-panel.grid.major.x  | `element_line()`  | vertical major grid lines                         |
-panel.grid.major.y  | `element_line()`  | horizontal major grid lines                       |
-panel.grid.minor    | `element_line()`  | minor grid lines                                  |
-panel.grid.minor.x  | `element_line()`  | vertical minor grid lines                         |
-panel.grid.minor.y  | `element_line()`  | horizontal minor grid lines                       |
-aspect.ratio        | numeric           | plot aspect ratio                                 |
+Element             | Theme function    | Description
+--------------------|-------------------|-------------------------------
+panel.background    | `element_rect()`  | panel background (under data
+panel.border        | `element_rect()`  | panel border (over data)
+panel.grid.major    | `element_line()`  | major grid lines
+panel.grid.major.x  | `element_line()`  | vertical major grid lines
+panel.grid.major.y  | `element_line()`  | horizontal major grid lines
+panel.grid.minor    | `element_line()`  | minor grid lines
+panel.grid.minor.x  | `element_line()`  | vertical minor grid lines
+panel.grid.minor.y  | `element_line()`  | horizontal minor grid lines
+aspect.ratio        | numeric           | plot aspect ratio
 
 The main difference is between `panel.background` and `panel.border` is that the background is drawn underneath the data, and the border is drawn on top of it. For that reason, you'll always need to assign `fill = NA` when overriding `panel.border`.
 
@@ -363,9 +398,13 @@ base <- ggplot(df, aes(x, y)) + geom_point()
 base + theme(panel.background = element_rect(fill = "lightblue"))
 
 # Tweak major grid lines
-base + theme(panel.grid.major = element_line(color = "gray60", size = 0.8))
+base + theme(
+  panel.grid.major = element_line(color = "gray60", size = 0.8)
+)
 # Just in one direction  
-base + theme(panel.grid.major.x = element_line(color = "gray60", size = 0.8))
+base + theme(
+  panel.grid.major.x = element_line(color = "gray60", size = 0.8)
+)
 ```
 
 Note that aspect ratio controls the aspect ratio of the _panel_, not the overall plot:
@@ -381,6 +420,7 @@ base2 + theme(aspect.ratio = 1)
 ```
 
 ### Facetting elements
+\index{Theme!facets} \index{Faceting!styling}
 
 The following theme elements are associated with faceted ggplots:
 
@@ -425,7 +465,7 @@ base_f + theme(
 
 ## Saving your output {#sec:saving}
 
-When saving a plot to use in another program, you have two basic choices of  output: raster or vector: \index{Saving} \index{Exporting} \index{Publication!saving output}
+When saving a plot to use in another program, you have two basic choices of  output: raster or vector: \index{Saving} \index{Exporting} \index{Saving output}
 
 * Vector graphics describe a plot as sequence of operations: draw a line 
   from $(x_1, y_1)$ to $(x_2, y_2)$, draw a circle at $(x_3, x_4)$ with 
@@ -454,7 +494,7 @@ Unless there is a compelling reason not to, use vector graphics: they look bette
   graphics (except for their own DrawingXML format which is not currently
   easy to make from R), so raster graphics are easier.
   
-There are two ways to save output from ggplot2. You can use the standard R approach where you open a graphics device, generate the plot, then close the device:
+There are two ways to save output from ggplot2. You can use the standard R approach where you open a graphics device, generate the plot, then close the device: \indexf{pdf}
 
 ```R
 pdf("output.pdf", width = 6, height = 6)
