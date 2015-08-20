@@ -47,15 +47,15 @@ It is useful to think about the purpose of each layer before it is added. In gen
 
 This chapter is broken up into the following sections, each of which deals with a particular graphical challenge. This is not an exhaustive or exclusive categorisation, and there are many other possible ways to break up graphics into different categories. Each geom can be used for many different purposes, especially if you are creative. However, this breakdown should cover many common tasks and help you learn about some of the possibilities.
 
-* Basic plot types to produce common, 'named' graphics like scatterplots and 
+* Basic plot types that produce common, 'named' graphics like scatterplots and 
   line charts, [link to section](#sec:basics).
 
 * Displaying text, [link to section](#sec:labelling).
 
 * Adding arbitrary additional anotations, [annotations](#sec:annotations).
 
-* Working with __collective__ geoms that are composed of multiple observations,
-  [working with groups](#sec:grouping).
+* Working with collective geoms, like lines and polygons, that eah display 
+  multiple rows of data, [working with groups](#sec:grouping).
 
 * Surface plots to display 3d surfaces in 2d, [link to section](#sec:surface).
 
@@ -66,7 +66,7 @@ This chapter is broken up into the following sections, each of which deals with 
 
 * Weighted data, [link to section](#sec:weighting).
 
-We'll then take a brief break and introduce the larger diamonds dataset in [diamonds](#sec:diamonds). The final three sections use this dataset to illustrate techniques for visualising larger datasets:
+In [diamonds](#sec:diamonds), you'll learn about the diamonds dataset. The final three sections use this data to discuss techniques for visualising larger datasets:
 
 * Displaying distributions, continuous and discrete, 1d and 2d, joint and 
   conditional, [link to section](#sec:distributions).
@@ -77,7 +77,7 @@ We'll then take a brief break and introduce the larger diamonds dataset in [diam
 * Displaying statistical summaries instead of the raw data,
   [link to section](#sec:summary).
 
-The chapter concludes with some pointers to other packages, built on top of ggplot2, that provide additional layers.
+The chapter concludes in [other packages](#sec:elsewhere) with some pointers to other useful packages built on top of ggplot2.
 
 ## Basic plot types {#sec:basics}
 
@@ -164,11 +164,9 @@ p + geom_polygon() + ggtitle("polygon")
     What about `geom_boxplot()` and `geom_violin()`? 
 
 ## Labels {#sec:labelling}
-\index{Labels} \indexf{geom\_text}
+\index{Labels} \index{Text} \indexf{geom\_text}
 
 Adding text to a plot can be quite tricky. ggplot2 doesn't have all the answers, but does provide some tools to make your life a little easier. The main tool is `geom_text()`, which adds `label`s at the specified `x` and `y` positions. 
-
-From ggplot2's perpsective, the "width" and "height" of a label are 0, so you can't stack or dodge labels, and axis limits are not automatically expanded to include all text. Obviously, labels do have height and width, but they are physical units, not data units. The amount of space they occupy on that plot is not constant in data units: when you resize a plot, the labels stay the same size, but the size of the axes changes. This means that good labels often requires some manual tweaking of the axis limits.
 
 `geom_text()` has the most aesthetics of any geom, because there are so many ways to control the appearance of a text:
 
@@ -209,13 +207,16 @@ From ggplot2's perpsective, the "width" and "height" of a label are 0, so you ca
     "right", "inward", "outward") and `vjust` ("bottom", "middle", "top", 
     "inward", "outward") aesthetics. The default alignment is centered. One
     of the most useful alignments is "inward": it aligns text towards the middle
-    of the plot: \index{Text!justification}
+    of the plot: \index{Font!justification}
     
     ```{r text-justification}
     df <- data.frame(
       x = c(1, 1, 2, 2, 1.5),
       y = c(1, 2, 1, 2, 1.5),
-      text = c("bottom-left", "bottom-right", "top-left", "top-right", "center")
+      text = c(
+        "bottom-left", "bottom-right", 
+        "top-left", "top-right", "center"
+      )
     )
     ggplot(df, aes(x, y)) +
       geom_text(aes(label = text))
@@ -223,16 +224,14 @@ From ggplot2's perpsective, the "width" and "height" of a label are 0, so you ca
       geom_text(aes(label = text), vjust = "inward", hjust = "inward")
     ```
 
-*   `size` controls the font size. Unusually, it's measured in mm, rather
-    than the usual unit of points. This makes it consistent with other size
+*   `size` controls the font size. Unlike most tools, ggplot2 uses mm, rather
+    than the usual points (pts). This makes it consistent with other size
     units in ggplot2. (There are 72.27 pts in a inch, so to convert from 
     points to mm, just multiply by 72.27 / 25.4). \index{Font!size}
 
 *   `angle` specifies the rotation of the text in degrees.
 
-You can map data values to these aesthetics, but use restraint: it is hard to percieve the relationship between variables mapped to these aesthetics.
-
-`geom_text()` also has three parameters. Unlike the aesthetics, these only take single values so must be the same for all labels:
+You can map data values to these aesthetics, but use restraint: it is hard to percieve the relationship between variables mapped to these aesthetics. `geom_text()` also has three parameters. Unlike the aesthetics, these only take single values so must be the same for all labels:
 
 *   Often you want to label existing points on the plot. You don't want the
     text to overlap with the points (or bars etc), so it's useful to offset
@@ -243,29 +242,41 @@ You can map data values to these aesthetics, but use restraint: it is hard to pe
     df <- data.frame(trt = c("a", "b", "c"), resp = c(1.2, 3.4, 2.5))
     ggplot(df, aes(resp, trt)) + 
       geom_point() + 
-      geom_text(aes(label = paste0("(", resp, ")")), nudge_y = -0.25)
+      geom_text(aes(label = paste0("(", resp, ")")), nudge_y = -0.25) + 
+      xlim(1, 3.6)
     ```
+    
+    (Note that I manually tweaked the x-axis limits to make sure all the 
+    text fit on the plot.)
 
 *   If `check_overlap = TRUE`, overlapping labels will be automatically 
     removed. The algorithm is simple: labels are plotted in the order they 
     appear in the data frame; if a label would overlap with an existing point, 
-    it's omitted. \indexc{check\_overlap}
+    it's omitted. This is not incredibly useful, but can be handy. 
+    \indexc{check\_overlap}
     
     ```{r text-overlap}
     ggplot(mpg, aes(displ, hwy)) + 
-      geom_text(aes(label = model))
+      geom_text(aes(label = model)) + 
+      xlim(1, 8)
     ggplot(mpg, aes(displ, hwy)) + 
-      geom_text(aes(label = model), check_overlap = TRUE)
+      geom_text(aes(label = model), check_overlap = TRUE) + 
+      xlim(1, 8)
     ```
 
 A variation on `geom_text()` is `geom_label()`: it draws a rounded rectangle behind the text. This makes it useful for adding labels to plots with busy backgrounds: \indexc{geom\_label}
 
+`r columns(1, 2/3)`
 ```{r label}
-label <- data.frame(waiting = 70, eruptions = 3.45, label = "middle")
+label <- data.frame(
+  waiting = c(55, 80), 
+  eruptions = c(2, 4.3), 
+  label = c("peak one", "peak two")
+)
 
 ggplot(faithfuld, aes(waiting, eruptions)) +
   geom_tile(aes(fill = density)) + 
-  geom_label(data = label, aes(label = label), alpha = 0.25)
+  geom_label(data = label, aes(label = label))
 ```
 
 Labelling data well poses some challenges:
@@ -286,6 +297,7 @@ Labelling data well poses some challenges:
 
 Text labels can also serve as an alternative to a legend. This usually makes the plot easier to read because it puts the labels closer to the data. The [directlabels](https://github.com/tdhock/directlabels) package, by Toby Dylan Hocking, provides a number of tools to make this easier: \index{directlabels}
 
+`r columns(2, 1)`
 ```{r}
 ggplot(mpg, aes(displ, hwy, colour = class)) + 
   geom_point()
@@ -299,12 +311,11 @@ Directlabels provides a number of position methods. `smart.grid` is a reasonable
 
 ## Annotations {#sec:annotations}
 
-Annotations add metadata to your plot. But metadata is just data, so you can use: \index{Annotation}
+Annotations add metadata to your plot. But metadata is just data, so you can use: \index{Annotation} \index{Metadata}
 
-* `geom_text()` to add text descriptions or to label points.  Most plots 
-  will not benefit from adding text to every single observation on the plot.
-  However, pulling out just a few observations (using subset) can be very useful.
-  Typically you will want to label outliers or other important points.
+* `geom_text()` to add text descriptions or to label points  Most plots 
+  will not benefit from adding text to every single observation on the plot,
+  but labelling outliers and other important points is very useful.
   \index{Labels} \indexc{geom\_text}
 
 * `geom_rect()` to highlight interesting rectangular regions of the plot.
@@ -372,7 +383,7 @@ ggplot(economics, aes(date, unemploy)) +
   )
 ```
 
-It's easier to use the `annotate()` helper function which creates the data frame for you:
+It's easier to use the `annotate()` helper function which creates the data frame for you: \indexc{annotate}
 
 ```{r}
 ggplot(economics, aes(date, unemploy)) + 
@@ -382,7 +393,7 @@ ggplot(economics, aes(date, unemploy)) +
   )
 ```
 
-Annotations, particularly reference lines are also useful when comparing groups across facets. In the following plot, it's much easier to see the subtle differences if we add a reference line.
+Annotations, particularly reference lines, are also useful when comparing groups across facets. In the following plot, it's much easier to see the subtle differences if we add a reference line.
 
 `r columns(1, 1 / 4, 1)`
 ```{r}
@@ -398,13 +409,13 @@ ggplot(diamonds, aes(log10(carat), log10(price))) +
   facet_wrap(~cut, nrow = 1)
 ```
 
-## Grouped data {#sec:grouping}
+## Collective geoms {#sec:grouping}
 
-Geoms can be roughly divided into individual and collective geoms. An __individual__ geom draws a distinct graphical object for each observation (row). For example, the point geom draws one point per row. A __collective__ geom displays multiple observations with one geometric object. This may be a result of a statistical summary, like a boxplot, or may be fundamental to the display of the geom, like a polygon. Lines and paths fall somewhere in between: each line is composed of a set of straight segments, but each segment represents two points. How do we control to assignment of observations to graphical elements?  This is the job of the `group` aesthetic. \index{Grouping} \indexc{group}
+Geoms can be roughly divided into individual and collective geoms. An __individual__ geom draws a distinct graphical object for each observation (row). For example, the point geom draws one point per row. A __collective__ geom displays multiple observations with one geometric object. This may be a result of a statistical summary, like a boxplot, or may be fundamental to the display of the geom, like a polygon. Lines and paths fall somewhere in between: each line is composed of a set of straight segments, but each segment represents two points. How do we control to assignment of observations to graphical elements?  This is the job of the `group` aesthetic. \index{Grouping} \indexc{group} \index{Geoms!collective}
 
 By default, the `group` aesthetic is mapped to the interaction of all discrete variables in the plot. This often partitions the data correctly, but when it does not, or when no discrete variable is used in a plot, you'll need to explicitly define the grouping structure, by mapping group to a variable that has a different value for each group.
 
-There are three common cases where the default is not enough, and we will consider each one below. In the following examples, we will use a simple longitudinal dataset, `Oxboys`, from the nlme package.  It records the heights (`height`) and centered ages (`age`) of 26 boys (`Subject`), measured on nine occasions (`Occasion`). `Subject` and `Occassion` are stored as ordered factors. \index{nlme}
+There are three common cases where the default is not enough, and we will consider each one below. In the following examples, we will use a simple longitudinal dataset, `Oxboys`, from the nlme package.  It records the heights (`height`) and centered ages (`age`) of 26 boys (`Subject`), measured on nine occasions (`Occasion`). `Subject` and `Occassion` are stored as ordered factors. \index{nlme} \index{Data!Oxboys@\texttt{Oxboys}}
 
 ```{r oxboys}
 data(Oxboys, package = "nlme")
@@ -415,7 +426,7 @@ head(Oxboys)
 
 In many situations, you want to separate your data into groups, but render them in the same way. In other words, you want to be able to distinguish individual subjects, but not identify them. This is common in longitudinal studies with many subjects, where the plots are often descriptively called spaghetti plots. For example, the following plot shows the growth trajectory for each boy (each `Subject`): \index{Data!longitudinal} \indexf{geom\_line}
 
-`r columns(1, 2 / 3)`
+`r columns(1, 2 / 3, 0.6)`
 ```{r oxboys-line}
 ggplot(Oxboys, aes(age, height, group = Subject)) + 
   geom_point() + 
@@ -430,7 +441,7 @@ ggplot(Oxboys, aes(age, height)) +
   geom_line()
 ```
 
-If a group isn't defined by a single variable, but instead by a combination of multiple variables, use `interaction()` to combine them, e.g. `aes(group = interaction(school_id, student_id))`.
+If a group isn't defined by a single variable, but instead by a combination of multiple variables, use `interaction()` to combine them, e.g. `aes(group = interaction(school_id, student_id))`. \indexf{interaction}
 
 ### Different groups on different layers
 
@@ -446,7 +457,7 @@ This is not what we wanted; we have inadvertently added a smoothed line for each
 
 Instead of setting the grouping aesthetic in `ggplot()`, where it will apply to all layers, we set it in `geom_line()` so it applies only to the lines. There are no discrete variables in the plot so the default grouping variable will be a constant and we get one smooth:
 
-```{r layer19, eval = FALSE}
+```{r layer19}
 ggplot(Oxboys, aes(age, height)) + 
   geom_line(aes(group = Subject)) + 
   geom_smooth(method = "lm", size = 2, se = FALSE)
@@ -454,7 +465,7 @@ ggplot(Oxboys, aes(age, height)) +
 
 ### Overriding the default grouping
 
-Some plots have a discrete x scale, but you still want to draw lines connect *across* groups. This is the strategy used in interaction plots, profile plots, and parallel coordinate plots, among others. For example, imagine we've drawn boxplots of height at each measurement occasion: \indexf{geom\_boxplot}
+Some plots have a discrete x scale, but you still want to draw lines connecting *across* groups. This is the strategy used in interaction plots, profile plots, and parallel coordinate plots, among others. For example, imagine we've drawn boxplots of height at each measurement occasion: \indexf{geom\_boxplot}
 
 ```{r oxbox}
 ggplot(Oxboys, aes(Occasion, height)) + 
@@ -573,19 +584,18 @@ The bars will be stacked in the order defined by the grouping variable. If you n
 
 1.  Install the babynames package. It contains data about the popularity of
     babynames in the US. Run the following code and fix the resulting graph.
+    Why does this graph make me unhappy?
     
-    ```{r}
+    ```{r, eval = FALSE}
     library(babynames)
     hadley <- dplyr::filter(babynames, name == "Hadley")
     ggplot(hadley, aes(year, n)) + 
       geom_line()
     ```
-    
-    Why does this graph make me unhappy?
 
 ## Surface plots {#sec:surface}
 
-ggplot2 does not support true 3d surfaces. However, it does support many common tools for representing 3d surfaces in 2d: contours, coloured tiles and bubble plots. These all work similarly, differing only in the aesthetic used for the 3d dimension. \index{Surface plots} \index{Contour plot} \indexc{geom\_contour}
+ggplot2 does not support true 3d surfaces. However, it does support many common tools for representing 3d surfaces in 2d: contours, coloured tiles and bubble plots. These all work similarly, differing only in the aesthetic used for the third dimension. \index{Surface plots} \index{Contour plot} \indexc{geom\_contour} \index{3d}
 
 ```{r}
 ggplot(faithfuld, aes(eruptions, waiting)) + 
@@ -606,6 +616,7 @@ ggplot(small, aes(eruptions, waiting)) +
 For interactive 3d plots, including true 3d surfaces, see RGL, <http://rgl.neoscientists.org/about.shtml>. \index{3d graphics} 
 
 ## Drawing maps {#sec:maps}
+\index{Maps} \index{Data!spatial}
 
 There are four types of map data you might want to visualise: vector boundaries, point metadata, area metadata, and raster images. Typically, assembling these datasets is the most challenging part of drawing maps. Unforuntately ggplot2 can help you with that part of the analysis, but I'll provide some hints about other R packages that you might want to look at.
 
@@ -613,15 +624,15 @@ I'll illustrate each of the four types of map data with some maps of Michigan.
 
 ### Vector boundaries
 
-A data frame with one row for each "corner" of boundaries of a geographical region like a country, state, or county. It requires four variables:
+Vector boundaries are defined by a data frame with one row for each "corner" of a geographical region like a country, state, or county. It requires four variables:
 
-* `lat` and `long`, giving the location of a point
-* `group`, a unique identifier for each contiguous region
-* `id`, the name of the boundary.
+* `lat` and `long`, giving the location of a point.
+* `group`, a unique identifier for each contiguous region.
+* `id`, the name of the region.
 
-Separate `group` and `id` variables are necessary because sometimes a geographical unit isn't a contiguous polygon. For example, Hawaii, is composed of multiple islands that can't be drawn using a single polygon. 
+Separate `group` and `id` variables are necessary because sometimes a geographical unit isn't a contiguous polygon. For example, Hawaii is composed of multiple islands that can't be drawn using a single polygon. 
 
-The following code extracts that data from the built in maps package using `ggplot2::map_data()`. The maps package isn't particularly accurate or up-to-date, but it's built into R so it's a reasonable place to start.
+The following code extracts that data from the built in maps package using `ggplot2::map_data()`. The maps package isn't particularly accurate or up-to-date, but it's built into R so it's a reasonable place to start. \indexf{map\_data}
 
 ```{r}
 mi_counties <- map_data("county", "michigan") %>% 
@@ -629,7 +640,7 @@ mi_counties <- map_data("county", "michigan") %>%
 head(mi_counties)
 ```
 
-You can visualise vector boundary data with `geom_polygon()`:
+You can visualise vector boundary data with `geom_polygon()`: \indexf{geom\_polygon}
 
 `r columns(2, 2/3)`
 ```{r}
@@ -646,9 +657,9 @@ Note the use of `coord_quickmap()`: it's a quick and dirty adjustment that ensur
 
 Other useful source of vector boundary data are:
 
-* The USAboundaries package which contains state, county and zip code
-  data for the US. As well as current boundaries, it also has state and
-  county boundaries going back to the 1600's.
+* The USAboundaries package, <https://github.com/ropensci/USAboundaries> which 
+  contains state, county and zip code data for the US. As well as current 
+  boundaries, it also has state and county boundaries going back to the 1600's.
   
 * The tigris package, <https://github.com/walkerke/tigris>, makes it easy to
   access the US Census TIGRIS shapefiles. It contains state, county, zipcode,
@@ -659,9 +670,9 @@ Other useful source of vector boundary data are:
   and borders for the top-level region within each country (e.g.
   states in the USA, regions in France, counties in the UK).
 
-* The osmar package wraps up the OpenStreetMap API so you can 
-  access a wide range of vector data including indvidual streets
-  and buildings
+* The osmar package, <https://cran.r-project.org/package=osmar> wraps up the 
+  OpenStreetMap API so you can access a wide range of vector data including 
+  indvidual streets and buildings
   
 * You may have your own shape files (`.shp`). You can load them into
   R with `maptools::readShapeSpatial()`.
@@ -670,15 +681,14 @@ These sources all generate spatial data frames defined by the sp package. Conver
 
 ### Point metadata
 
-Point metadata connects locations (defined by lat and lon) with other variables. For example, the code below extracts the biggest cities in MI 
-(as of 2006):
+Point metadata connects locations (defined by lat and lon) with other variables. For example, the code below extracts the biggest cities in MI (as of 2006):
 
 ```{r}
-data("us.cities", package = "maps")
-mi_cities <- us.cities %>% 
+mi_cities <- maps::us.cities %>% 
   tbl_df() %>%
   filter(country.etc == "MI") %>%
-  select(-country.etc, lon = long)
+  select(-country.etc, lon = long) %>%
+  arrange(desc(pop))
 mi_cities
 ```
 
@@ -700,13 +710,16 @@ ggplot(mi_cities, aes(lon, lat)) +
 
 ### Raster images
 
-Instead of displaying context with vector boundaries, you might want to draw a traditional map underneath. This is called a raster image. The easiest way to get a raster map of a given area is to use the ggmap package. Downloading the raster data is often time consuming so it's a good idea to cache it in a rds file.
+Instead of displaying context with vector boundaries, you might want to draw a traditional map underneath. This is called a raster image. The easiest way to get a raster map of a given area is to use the ggmap package, which allows you to get data from variety of online mapping sources including OpenStreetMap and Google Maps. Downloading the raster data is often time consuming so it's a good idea to cache it in a rds file. \index{ggmap} \index{Raster data}
 
 ```{r}
 if (file.exists("mi_raster.rds")) {
   mi_raster <- readRDS("mi_raster.rds")
 } else {
-  bbox <- c(min(mi_counties$lon), min(mi_counties$lat), max(mi_counties$lon), max(mi_counties$lat))
+  bbox <- c(
+    min(mi_counties$lon), min(mi_counties$lat), 
+    max(mi_counties$lon), max(mi_counties$lat)
+  )
   mi_raster <- ggmap::get_openstreetmap(bbox, scale = 8735660)
   saveRDS(mi_raster, "mi_raster.rds")
 }
@@ -714,7 +727,8 @@ if (file.exists("mi_raster.rds")) {
 
 (Finding the appropriate `scale` required a lot of manual tweaking.)
 
-<!-- TODO: get this working -->
+You can then plot it with:
+<!-- TODO: Get this working! -->
 ```{r, eval = FALSE}
 ggmap::ggmap(mi_raster)
 
@@ -723,7 +737,7 @@ ggmap::ggmap(mi_raster) +
   scale_size_area()
 ```
 
-`ggmap()` allows you to get raster data from a variety of online mapping sources including google maps. If you have raster data from the raster package, you can convert it to the form needed by ggplot2 with the following code:
+If you have raster data from the raster package, you can convert it to the form needed by ggplot2 with the following code:
 
 ```{r, eval = FALSE}
 df <- as.data.frame(raster::rasterToPoints(x))
@@ -743,9 +757,10 @@ mi_census <- midwest %>%
   filter(state == "MI") %>% 
   mutate(county = tolower(county)) %>%
   select(county, area, poptotal, percwhite, percblack)
+mi_census
 ```
 
-We can not map this data directly because it has no spatial component. Instead, we must first join it to the vector boundaries data. This is not particularly space efficient, but it makes it easy to see exactly what data is being plotted.
+We can't map this data directly because it has no spatial component. Instead, we must first join it to the vector boundaries data. This is not particularly space efficient, but it makes it easy to see exactly what data is being plotted. Here I use `dplyr::left_join()` to combine the two datasets and create a choropleth map. \index{Choropleth}
 
 ```{r}
 census_counties <- left_join(mi_census, mi_counties, by = c("county" = "id"))
@@ -769,7 +784,7 @@ If you have information about the uncertainty present in your data, whether it b
 * Continuous x, range: `geom_ribbon()`
 * Continuous x, range & center: `geom_smooth(stat = "identity")`
 
-These geoms assume that you are interested in the distribution of y conditional on x and use the aesthetics `ymin` and `ymax` to determine the range of the y values. If you want the opposite, see [cartesian coordinate systems](#sub:cartesian). \index{Uncertainty!visualising} \index{Error bar} \index{Error band} \indexf{geom\_ribbon} \indexf{geom\_smooth} \indexf{geom\_errorbar} \indexf{geom\_linerange} \indexf{geom\_crossbar} \indexf{geom\_pointrange}
+These geoms assume that you are interested in the distribution of y conditional on x and use the aesthetics `ymin` and `ymax` to determine the range of the y values. If you want the opposite, see [coord_flip](#sub:coord-flip). \index{Uncertainty!visualising} \index{Error bars} \indexf{geom\_ribbon} \indexf{geom\_smooth} \indexf{geom\_errorbar} \indexf{geom\_linerange} \indexf{geom\_crossbar} \indexf{geom\_pointrange}
 
 `r columns(3, 1)`
 ```{r}
@@ -818,7 +833,7 @@ ggplot(midwest, aes(percwhite, percbelowpoverty)) +
 
 For more complicated grobs which involve some statistical transformation, we specify weights with the `weight` aesthetic. These weights will be passed on to the statistical summary function. Weights are supported for every case where it makes sense: smoothers, quantile regressions, boxplots, histograms, and density plots. You can't see this weighting variable directly, and it doesn't produce a legend, but it will change the results of the statistical summary. The following code shows how weighting by population density affects the relationship between percent white and percent below the poverty line.
 
-```r columns(2, 2/3)`
+`r columns(2, 2/3)`
 ```{r weight-lm} 
 # Unweighted
 ggplot(midwest, aes(percwhite, percbelowpoverty)) + 
@@ -846,12 +861,10 @@ ggplot(midwest, aes(percbelowpoverty)) +
 
 ## Diamonds data {#sec:diamonds}
 
-To demonstrate many of the tools in the ggplot2 toolbox, we'll use the built in `diamonds` dataset, which consists of price and quality information for ~54,000 diamonds:
+To demonstrate tools for large datasets, we'll use the built in `diamonds` dataset, which consists of price and quality information for ~54,000 diamonds:
 
 ```{r}
-library(ggplot2)
-dim(diamonds)
-head(diamonds)
+diamonds
 ```
 
 The data contains the four C's of diamond quality, carat, cut, colour and clarity; and five physical measurements, depth, table, x, y and z, as described in Figure \ref{fig:diamond-dim}. \index{Data!diamonds@\texttt{diamonds}}
@@ -880,7 +893,9 @@ ggplot(diamonds, aes(depth)) +
   xlim(55, 70)
 ```
 
-It is important to experiment with binning to find a revealing view. You can change the `binwidth`, or specify the exact location of the `breaks`. Never rely on the default parameters to get a revealing view of the distribution. Zooming in on the x axis, `xlim(55, 70)`, and selecting a smaller bin width, `binwidth = 0.1`, reveals far more detail. When publishing figures, don't forget to include information about important parameters (like bin width) in the caption. \index{Histogram!choosing bins} 
+It is important to experiment with binning to find a revealing view. You can change the `binwidth`, or specify the exact location of the `breaks`. Never rely on the default parameters to get a revealing view of the distribution. Zooming in on the x axis, `xlim(55, 70)`, and selecting a smaller bin width, `binwidth = 0.1`, reveals far more detail. \index{Histogram!choosing bins} 
+
+When publishing figures, don't forget to include information about important parameters (like bin width) in the caption.
 
 If you want to compare the distribution between groups, you have a few options: 
 
@@ -890,31 +905,34 @@ If you want to compare the distribution between groups, you have a few options:
 * Use a "conditional density plot", `geom_histogram(position = "fill")`. 
   \index{Conditional density plot} 
 
-The frequency polygon and conditional density plots are shown below. The conditional density plot uses `position_fill()` to stack each bin, scaling it to the same height. This plot is perceptually challenging because you need to compare bar heights, not positions, but you can see the strongest patterns.  
+The frequency polygon and conditional density plots are shown below. The conditional density plot uses `position_fill()` to stack each bin, scaling it to the same height. This plot is perceptually challenging because you need to compare bar heights, not positions, but you can see the strongest patterns. \indexf{position\_fill}
 
 `r columns(2, 2 / 3)`
 ```{r compare-dist} 
 ggplot(diamonds, aes(depth)) + 
-  geom_freqpoly(aes(colour = cut), binwidth = 0.1) +
+  geom_freqpoly(aes(colour = cut), binwidth = 0.1, na.rm = TRUE) +
   xlim(58, 68) + 
   theme(legend.position = "none")
 ggplot(diamonds, aes(depth)) + 
-  geom_histogram(aes(fill = cut), binwidth = 0.1, position = "fill") +
+  geom_histogram(aes(fill = cut), binwidth = 0.1, position = "fill", 
+    na.rm = TRUE) +
   xlim(58, 68) + 
   theme(legend.position = "none")
 ```
 
+(I've suppressed the legends to focus on the display of the data.)
+
 Both the histogram and frequency polygon geom use the same underlying statistical transformation: `stat = "bin"`. This statistic produces two output variables `count` and `density`. By default, count is mapped to y-position, because it's most interpretable. The density is the count divided by the total count multiplied by the bin width, and is useful when you want to compare the shape of the distributions, not the overall size. \indexf{stat\_bin}
 
-An alternative to a bin-based visualisation is a density estimate. `geom_density()` places a little normal distribution at each data point and sums up all the curves. It has desirable theoretical properties, but is more difficult to relate back to the data. Use a density plot when you know that the underlying density is smooth, continuous and unbounded. You can use the `adjust` parameter to make the density more or less smooth. \index{Density!plot}  \indexf{geom\_density}.
+An alternative to a bin-based visualisation is a density estimate. `geom_density()` places a little normal distribution at each data point and sums up all the curves. It has desirable theoretical properties, but is more difficult to relate back to the data. Use a density plot when you know that the underlying density is smooth, continuous and unbounded. You can use the `adjust` parameter to make the density more or less smooth. \index{Density plot}  \indexf{geom\_density}.
   
 ```{r geom-density} 
 ggplot(diamonds, aes(depth)) +
-  geom_density() + 
+  geom_density(na.rm = TRUE) + 
   xlim(58, 68) + 
   theme(legend.position = "none")
-ggplot(diamonds, aes(depth, fill = cut)) +
-  geom_density(alpha = 0.2) + 
+ggplot(diamonds, aes(depth, fill = cut, colour = cut)) +
+  geom_density(alpha = 0.2, na.rm = TRUE) + 
   xlim(58, 68) + 
   theme(legend.position = "none")
 ```
@@ -931,7 +949,8 @@ The histogram, frequency polygon and density display a detailed view of the dist
     
     You can use boxplot with both categorical and continuous x. For continuous
     x, you'll also need to set the group aesthetic to define how the x variable
-    is broken up into bins. A useful helper function is `cut_width()`:
+    is broken up into bins. A useful helper function is `cut_width()`: 
+    \indexf{cut\_width}
 
     `r columns(2, 2 / 3)`
     ```{r geom-boxplot} 
@@ -954,17 +973,9 @@ The histogram, frequency polygon and density display a detailed view of the dist
       xlim(NA, 2.05)
     ```
   
-*   `geom_dotplot()`: draw one point for each observation, carefully adjusted in 
+*   `geom_dotplot()`: draws one point for each observation, carefully adjusted in 
     space to show avoid overlaps and show the distribution. It is useful for 
-    smaller datasets is the dotplot.
-
-    `r columns(2, 1)`
-    ```{r}
-    ggplot(mpg, aes(displ)) + 
-      geom_dotplot()
-    ggplot(mpg, aes(drv, displ, fill = drv)) + 
-      geom_dotplot(binaxis = "y", stackdir = "center")
-    ```
+    smaller datasets.  \indexf{geom\_dotplot} \index{Dot plot}
 
 ### Exercises
 
@@ -993,16 +1004,16 @@ There are a number of ways to deal with it depending on the size of the data and
     `r columns(3, 1)`
     ```{r overp-glyph, dev='png'} 
     df <- data.frame(x = rnorm(2000), y = rnorm(2000))
-    norm <- ggplot(df, aes(x, y))
+    norm <- ggplot(df, aes(x, y)) + xlab(NULL) + ylab(NULL)
     norm + geom_point()
     norm + geom_point(shape = 1) # Hollow circles
     norm + geom_point(shape = ".") # Pixel sized
     ```
   
 *   For larger datasets with more overplotting, you can use alpha blending 
-    (transparency) to make the points transparent. If you specify alpha as a 
+    (transparency) to make the points transparent. If you specify `alpha` as a 
     ratio, the denominator gives the number of points that must be overplotted 
-    to give a solid colour. Values smaller than ~1/500 are rounded down to zero,
+    to give a solid colour. Values smaller than ~$1/500$ are rounded down to zero,
     giving completely transparent points.
     \indexc{alpha} \index{Transparency} \index{Colour!transparency}
     
@@ -1013,34 +1024,34 @@ There are a number of ways to deal with it depending on the size of the data and
     ```
 
 *   If there is some discreteness in the data, you can randomly jitter the 
-    points to alleviate some overlaps. This can be particularly useful in 
-    conjunction with transparency. By default, the amount of jitter added is 
-    40% of the resolution of the data, which leaves a small gap between 
-    adjacent regions. You can override the default with `width` and `height`
-    arguments.
+    points to alleviate some overlaps with `geom_jitter()`. This can be 
+    particularly useful in conjunction with transparency. By default, the 
+    amount of jitter added is 40% of the resolution of the data, which leaves a 
+    small gap between adjacent regions. You can override the default with 
+    `width` and `height` arguments.
 
 Alternatively, we can think of overplotting as a 2d density estimation problem, which gives rise to two more approaches: 
 
 *   Bin the points and count the number in each bin, then visualise that count 
-    (the 2d generalisation of the histogram). Breaking the plot into many small 
-    squares can produce distracting visual artefacts. [@carr:1987] suggests 
-    using hexagons instead, and this is implemented with `geom_hex()`, using 
-    the __hexbin__ package [@hexbin].
+    (the 2d generalisation of the histogram), `geom_bin2d()`. Breaking the plot 
+    into many small squares can produce distracting visual artefacts. 
+    [@carr:1987] suggests using hexagons instead, and this is implemented in 
+    `geom_hex()`, using the __hexbin__ package [@hexbin]. \index{hexbin}
     
     The code below compares square and hexagonal bins, using parameters `bins` 
     and `binwidth` to control the number and size of the bins.
-    \index{Binning!1d|see{Histogram}} \index{Binning!2d} \indexf{geom\_hexagon} 
-    \indexf{stat\_binhex} \indexf{stat\_bin2d}
+    \index{Histogram!2d} \indexf{geom\_hexagon} 
+    \indexf{geom\_hex} \indexf{geom\_bin2d} 
   
     `r columns(2, 2/3)`
     ```{r overp-bin}
-    norm + stat_bin2d()
-    norm + stat_bin2d(bins = 10)
+    norm + geom_bin2d()
+    norm + geom_bin2d(bins = 10)
     ```
     
     ```{r overp-bin-hex}
-    norm + stat_binhex()
-    norm + stat_binhex(bins = 10)
+    norm + geom_hex()
+    norm + geom_hex(bins = 10)
     ```
   
 *   Estimate the 2d density with `stat_density2d()`, and then display using one
@@ -1054,70 +1065,74 @@ Another approach to dealing with overplotting is to add data summaries to help g
 
 ## Statistical summaries {#sec:summary}
 
-`stat_bar()`, `stat_bin()`, `stat_bin2d()`, and `stat_binhex()` summarise the data by dividing into bins and counting the number of observations in each bin. `stat_summary()`, `stat_summary_bin()`, `stat_summary_2d()`, and `stat_summary_hex()` generalise this idea to allow you to summarise an additional variable using the function of your choice. 
+\indexf{stat\_summary\_bin} \indexf{stat\_summary\_2d} \index{Stats!summary}
 
-\index{Summary!statistical} \indexf{stat\_summary} \index{Stats!summary}
+`geom_histogram()` and `geom_bin2d()` use a familiar geom, `geom_bar()` and `geom_raster()`, combined with a new statistical transformation, `stat_bin()` and `stat_bin2d()`. `stat_bin()` and `stat_bin2d()` combine the data into bins and count the number of observations in each bin. But what if we want a summary other than count? So far, we've just used the default statistical transformation associated with each geom. Now we're going to explore how to use  `stat_summary_bin()` to `stat_summary_2d()` compute different summaries. 
+
+Let's start with a couple of examples with the diamonds data. The first example in each pair shows how we can count the number of diamonds in each bin; the second shows how we can compute the average price.
 
 `r columns(2, 2/3)`
 ```{r}
-ggplot(diamonds, aes(cut)) + 
+ggplot(diamonds, aes(color)) + 
   geom_bar()
 
-ggplot(diamonds, aes(cut, price)) + 
-  geom_bar(stat = "summary", fun.y = mean)
+ggplot(diamonds, aes(color, price)) + 
+  geom_bar(stat = "summary_bin", fun.y = mean)
 ```
 
 ```{r}
 ggplot(diamonds, aes(table, depth)) + 
-  stat_bin2d() + 
+  geom_bin2d(binwidth = 1, na.rm = TRUE) + 
   xlim(50, 70) + 
   ylim(50, 70)
 
 ggplot(diamonds, aes(table, depth, z = price)) + 
-  stat_summary_2d(fun = mean) + 
+  geom_raster(binwidth = 1, stat = "summary_2d", fun = mean, na.rm = TRUE) + 
   xlim(50, 70) + 
   ylim(50, 70)
 ```
 
-`stat_summary()` is designed to show the summary in the `y` aesthetic; `stat_summary_2d()` and `stat_summary_hex()` are designed to show the aesthetics in the fill. That makes `stat_summary()` a bit more flexible because it can also use the `ymin` and `ymax` aesthetics with interval geoms. You can either supply (up to) 3 individual functions with `fun.ymin`, `fun.y` and `fun.ymax` or a single summary function that returns a named vector with `fun.data`.
+To get more help on the arguments associated the two transformations, look at the help for `stat_summary_bin()` and `stat_summary_2d()`. You can control the size of the bins and the summary functions. `stat_summary_bin()` can produce `y`, `ymin` and `ymax` aesthetics, also making it useful for displaying measures of spread. See the docs for more details.
 
 These summary functions are quite constrained but are often useful for a quick first pass at a problem. If you find them restraining, you'll need to do the summaries yourself. See [group-wise summaries](#sec:summarise) for more details.
 
-## Add-on packages
+## Add-on packages {#sec:elsewhere}
 
-If the built-in tools in ggplot2 don't do what you need, you might want to use a special purpose tool built into one of the packages built on top of ggplot2:
+If the built-in tools in ggplot2 don't do what you need, you might want to use a special purpose tool built into one of the packages built on top of ggplot2. Some of the packages that I was familiar with when the book was published include:
 
-* cowplot [cran]: publication ready theme, better tools for arranging multiple 
-  ggplots on one page (<https://github.com/wilkelab/cowplot>)
+* animInt, <https://github.com/tdhock/animint>, lets you make you ggplot2
+  graphics interactive, adding querying, filtering and linking.
 
-* GGally [cran] 
+* GGally, <https://github.com/ggobi/ggally>, provides a very flexible 
+  scatterplot matrix, amongst other tools.
 
-* ggbio [bioconductor]
+* ggbio, <http://www.tengfei.name/ggbio/>, provides a number of specialised
+  geoms for genomic data.
 
-* ggdendro [CRAN]:
+* ggdendro, <https://github.com/andrie/ggdendro>, turns data from tree methods
+  in to data frames that can easily be displayed with ggplot2.
 
-* ggenealogy: genealogies
+* ggenealogy, <https://cran.r-project.org/package=ggenealogy>, helps
+  explore and visualise genealogy data.
 
-* ggmap [cran]:
+* ggmcmc, <http://xavier-fim.net/packages/ggmcmc/>, provides a set of flexible
+  tools for visualising the samples generated by MCMC methods.
 
-* ggmcmc [cran]:
+* ggparallel, <https://cran.r-project.org/package=ggparallel>: easily draw
+  parallel coordinates plots, and the closely related hammock and common angle 
+  plots.
 
-* ggparallel [cran]: parallel coordinates plots, hammock plots & common angle plots.
+* ggsubplot, <https://github.com/garrettgman/ggsubplot>: embed subplots within 
+  larger graphics.
 
-* ggsubplot [cran]: embed subplots within larger graphics
+* ggtern, <http://www.ggtern.com>, lets you use ggplot2 to draw ternary 
+  diagrams, used when you have three variables that always sum to one.
 
-* ggtern [cran]: ternarny plots, http://www.ggtern.com
+* granovaGG, <https://github.com/briandk/granovaGG>, provides tools to visualise
+  ANOVA results.
 
-* ggthemes [cran]:
-
-* granovaGG [cran]: visualaisation of ANOVA results.
-
-* plotluck [github]: ggplot2 version of "I'm feeling lucky". Automatically creates 
-  plots for one, two or three variables (
-  <https://github.com/stefan-schroedl/plotluck>).
-
-<!-- TODO
-  No love for animint or plotly? ;)
--->
+* plotluck, <https://github.com/stefan-schroedl/plotluck>: the ggplot2 version 
+  of google's "I'm feeling lucky". It automatically creates plots for one, two 
+  or three variables.
 
 ## References
