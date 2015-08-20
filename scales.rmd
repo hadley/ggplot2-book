@@ -217,11 +217,22 @@ axs + scale_y_continuous(labels = scales::dollar_format("$"))
 leg + scale_colour_continuous(labels = scales::unit_format("k", 1e-3))
 ```
 
-You can adjust the minor breaks (the faint grid lines that appear between the major grid lines) by supplying a numeric vector of positions to the `minor_breaks` argument. By default minor grid lines are spaced evenly in the original data space: this gives the common behaviour of log-log plots where major grid lines are evenly spaced on the log scale, and minor grid lines are evenly spaced on the log scale.
+You can adjust the minor breaks (the faint grid lines that appear between the major grid lines) by supplying a numeric vector of positions to the `minor_breaks` argument. This is particularly useful for log scales: \index{Minor breaks}
 
-<!-- TODO
-  This last sentence is complicated, and I think an example would help demonstrate, or at least mention that this is revisted in [Continuous position scales](#sub:scale-position) ^^^
--->
+`r columns(2, 2/3)`
+```{r}
+df <- data.frame(x = c(2, 3, 5, 10, 200, 3000), y = 1)
+ggplot(df, aes(x, y)) + 
+  geom_point() + 
+  scale_x_log10()
+
+mb <- as.numeric(1:10 %o% 10 ^ (0:4))
+ggplot(df, aes(x, y)) + 
+  geom_point() + 
+  scale_x_log10(minor_breaks = log10(mb))
+```
+
+Note the use of `%o%` to quickly generate expand the multiplication table, and that the minor breaks must be supplied on the transformed scale. \index{Log ticks}
 
 ### Exercises
 
