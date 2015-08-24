@@ -13,7 +13,7 @@ source("common.R")
 
 ## Introduction
 
-Tidy data is important, but it's not the end of the road. Often you won't have quite the right variables, or your data might need a little aggregation before you visualise it. This chapter will show you how to solve these problems (and more!) with the dplyr package. \index{Data!manipulating} \index{dplyr} \index{Grammar!of data manipulation}
+Tidy data is important, but it's not the end of the road. Often you won't have quite the right variables, or your data might need a little aggregation before you visualise it. This chapter will show you how to solve these problems (and more!) with the __dplyr__ package. \index{Data!manipulating} \index{dplyr} \index{Grammar!of data manipulation}
 
 The goal of dplyr is to provide verbs (functions) that help you solve the most common 95% of data manipulation problems. dplyr is similar to ggplot2, but instead of providing a grammar of graphics, it provides a grammar of data manipulation. Like ggplot2, dplyr helps you not just by giving you functions, but it also helps you think about data manipulation. In particular, dplyr helps by constraining you: instead of struggling to think about which of the thousands of functions that might help, you can just pick from a handful that are design to be very likely to be helpful. In this chapter you'll learn four of the most important dplyr verbs:
 
@@ -21,7 +21,7 @@ The goal of dplyr is to provide verbs (functions) that help you solve the most c
 * `mutate()`
 * `group_by()` & `summarise()`
 
-These verbs are easy to learn because they all work the same way: they take a data frame as the first argument, and return a modified data frame. The second and subsequent arguments control the details of the transformation, and are always interpreted in the context of the data frame so you can refer to variables directly. I'll also explain each in the same way: I'll show you a motivating examples using the `diamonds` data, give you more details about how the function works, and finish up with some exercises for you to practice your skills with.
+These verbs are easy to learn because they all work the same way: they take a data frame as the first argument, and return a modified data frame. The other arguments control the details of the transformation, and are always interpreted in the context of the data frame so you can refer to variables directly. I'll also explain each in the same way: I'll show you a motivating examples using the `diamonds` data, give you more details about how the function works, and finish up with some exercises for you to practice your skills with.
 
 You'll also learn how to create data transformation pipelines using `%>%`. `%>%` plays a similar role to `+` in ggplot2: it allows you to solve complex problems by combining small pieces that are easily understood in isolation.
   
@@ -29,9 +29,9 @@ This chapter only scratches the surface of dplyr's capabilities but it should be
 
 ## Filter observations
 
-It's common to only want to explore one part of a dataset. A great data analysis strategy is to start with just one obseravation unit (one person, one city, etc), and understand how it works before attempting to generalise the conclusion to others. This is a great technique if you ever feel overwhelmed by an analysis: zoom down to a small subset, master it, and then zoom back out, to apply your conclusions to the full dataset. \indexf{filter}
+It's common to only want to explore one part of a dataset. A great data analysis strategy is to start with just one observation unit (one person, one city, etc), and understand how it works before attempting to generalise the conclusion to others. This is a great technique if you ever feel overwhelmed by an analysis: zoom down to a small subset, master it, and then zoom back out, to apply your conclusions to the full dataset. \indexf{filter}
 
-Filtering is also useful for extracting outliers. Generally, you don't want to just throw outliers away, as they're often highly revealing, but it's useful to think about partioning the data into the common and the unusual. You summarise the common to look at the broad trends; you examine the outliers individually to see if you can figure out what's going on.
+Filtering is also useful for extracting outliers. Generally, you don't want to just throw outliers away, as they're often highly revealing, but it's useful to think about partitioning the data into the common and the unusual. You summarise the common to look at the broad trends; you examine the outliers individually to see if you can figure out what's going on.
 
 For example, look at this plot that shows how the x and y dimensions of the diamonds are related:
 
@@ -49,9 +49,9 @@ filter(diamonds, x == 0 | y == 0)
 
 This is equivalent to the base R code `diamonds[diamonds$x == 0 | diamonds$y == 0, ]`, but is more concise because `filter()` when you refer to (e.g.) the bare `x`, dplyr knows to look first in the data frame.
 
-(If you've used `subset()` before, you'll notice that it has very similar behaviour. The biggest difference is that `subset()` can select both observations and variables, where in dplyr, `filter()` works with exclusuively with observations and `select()` with variables. There are some other subtle differences, but the main advantage to using `filter()` is that it behaves identically to the other dplyr verbs.)
+(If you've used `subset()` before, you'll notice that it has very similar behaviour. The biggest difference is that `subset()` can select both observations and variables, where in dplyr, `filter()` works exclusively with observations and `select()` with variables. There are some other subtle differences, but the main advantage to using `filter()` is that it behaves identically to the other dplyr verbs.)
 
-In a real analysis, you'd look at the outliers in more detail to see if you can find the root cause of the data quality problem. In this case, we're just going to throw them out and focus on what remains. To save a little typing, we can take advantage of the fact that multiple arguments to `filter()` are combined with and.
+In a real analysis, you'd look at the outliers in more detail to see if you can find the root cause of the data quality problem. In this case, we're just going to throw them out and focus on what remains. To save some typing, we may provide multiple arguments to `filter()` which combines them.
 
 ```{r diamonds-ok}
 diamonds_ok <- filter(diamonds, x > 0, y > 0, y < 20)
@@ -60,7 +60,7 @@ ggplot(diamonds_ok, aes(x, y)) +
   geom_abline(slope = 1, colour = "white", size = 1, alpha = 0.5)
 ```
 
-This plot is now more informative - we can see a very strong relationship between `x` and `y`. I've added the reference line to make it clear that for most diamands, `x` and `y` are very similar. However, this plot still has problems: 
+This plot is now more informative - we can see a very strong relationship between `x` and `y`. I've added the reference line to make it clear that for most diamonds, `x` and `y` are very similar. However, this plot still has problems: 
 
 * The plot is mostly empty, because most of the data lies along the diagonal. 
   
@@ -86,7 +86,7 @@ And combine them with logical operators:
 * `x & y`: `TRUE` if both `x` and `y` are `TRUE`.
 * `x | y`: `TRUE` if either `x` or `y` are `TRUE`.
 * `xor(x, y)`: `TRUE` if either `x` or `y` are `TRUE`, but not both 
-  (e__x__clusive or).
+  (exclusive or).
 
 Most real queries involve some combination of both:
 
@@ -154,13 +154,16 @@ is.na(x)
     ?                | •        |         | •
     ?                |          | •       | •
 
+<!-- TODO
+  I'm finding it difficult to understand the setup of this problem. Are the missing spots only where '?' appears? Is this telling us to assume that x is TRUE? If so, why is `NA` marked for `is.na(x)`?
+-->
+
 1.  Repeat the analysis of outlying values with `z`. Compared to `x` and `y`,
     how would you characterise the relationship of `x` and `z`, or `y` and
     `z`?
 
-1.  Install ggplot2movies and look at the movies that have a missing budget. 
-    How are they different from the movies with a budget? (Hint: try a 
-    frequency polygon plus `colour = is.na(budget)`.)
+1.  Install the __ggplot2movies__ package and look at the movies that have a missing budget. 
+    How are they different from the movies with a budget? (Hint: try a frequency polygon plus `colour = is.na(budget)`.)
 
 1.  What is `NA & FALSE` and `NA | TRUE`? Why? Why doesn't `NA * 0` equal zero? 
     What number times zero does not equal 0? What do you expect `NA ^ 0` to 
@@ -201,7 +204,7 @@ That's an interesting histogram! While most diamonds are close to being symmetri
 
 Typically, transformations will be suggested by your domain knowledge. However, there are a few transformations that are useful in a surprisingly wide domain range of circumstances. 
 
-* Log-transformations are often useful. They turn multiplicate relationships 
+* Log-transformations are often useful. They turn multiplicative relationships 
   into additive relationships; they compress data that varies over orders of 
   magnitude; they convert power relationships to linear relationship.
   See examples at <http://stats.stackexchange.com/questions/27951>
@@ -252,7 +255,7 @@ There are also a few useful ways to transform pairs of variables:
 
 ## Group-wise summaries {#sec:summarise}
 
-Many insightful visualisations require that you reduce the full dataset down to a meaningful summary. ggplot2 provides a number of geoms that will do summaries for you. But it's often useful to do summaries by hand: that gives you more flexibility and and you can use the summaries for other purposes. \indexf{group\_by} \indexf{summarise}
+Many insightful visualisations require that you reduce the full dataset down to a meaningful summary. ggplot2 provides a number of geoms that will do summaries for you. But it's often useful to do summaries by hand: that gives you more flexibility and you can use the summaries for other purposes. \indexf{group\_by} \indexf{summarise}
 
 Dplyr does summaries in two steps:
 
@@ -272,7 +275,7 @@ ggplot(sum_clarity, aes(clarity, price)) +
   geom_point(size = 2)
 ```
 
-You might be surprised by this pattern: why do diamonds with better clarities have lower prices? We'll see why this is the case and what to do about it in [removing trend](#sub:trend).
+You might be surprised by this pattern: why do diamonds with better clarity have lower prices? We'll see why this is the case and what to do about it in [removing trend](#sub:trend).
 
 Supply additional variables to `group_by()` to create groups based on more than one variable. The next example shows how we can compute (by hand) a frequency polygon that shows how cut and depth interact. The special summary function `n()` counts the number of observations in each group.
 
@@ -318,7 +321,7 @@ Most summary functions have a `na.rm` argument: `na.rm = TRUE` tells the summary
 
 When summarising with the mean or median, it's always a good idea to include a count and a measure of spread. This helps you calibrate your assessments - if you don't include them you're likely to think that the data is less variable than it really is, and potentially draw unwarranted conclusions.
 
-The following example extends our previous summary of the average price by clarity to also include the number of obseravtions in each group, and the upper and lower quartiles. It suggests the mean might be a bad summary for this data - the distributions of price are so highly skewed that the mean is higher than the upper quartile for some of the groups!
+The following example extends our previous summary of the average price by clarity to also include the number of observations in each group, and the upper and lower quartiles. It suggests the mean might be a bad summary for this data - the distributions of price are so highly skewed that the mean is higher than the upper quartile for some of the groups!
 
 `r columns(1, 2/3)`
 ```{r }
@@ -337,7 +340,7 @@ ggplot(by_clarity, aes(clarity, mean)) +
   geom_point(aes(size = n))
 ```
 
-Another example of this comes from baseball. Let's take the MLB batting data from the Lahman package and calculate the batting average, the number of hits divded by the number of at bats. This is the proportion that a batter hits the ball. Who's the best batter according to this metric?
+Another example of this comes from baseball. Let's take the MLB batting data from the Lahman package and calculate the batting average, the number of hits divided by the number of at bats. Who's the best batter according to this metric?
 
 `r columns(1, 2/3)`
 ```{r}
@@ -373,7 +376,7 @@ You'll often see a similar pattern whenever you plot number of observations vs. 
 
 ### Exercises
 
-1.  For each year in the movies data (in ggplot2movies,) determine the percent 
+1.  For each year in the movies data (in ggplot2movies), determine the percent 
     of movies with missing budgets. Visualise the result.
     
 1.  How does the average length of a movie change over time? Display your 
@@ -383,7 +386,7 @@ You'll often see a similar pattern whenever you plot number of observations vs. 
     count the number of diamonds, the average price and the average size. 
     Visualise the results.
 
-1.  Compute a histogram of carat by "hand". Use a binwidth of 0.1. 
+1.  Compute a histogram of carat by "hand" using a binwidth of 0.1. 
     (Hint: you might need to create a new variable first).
 
 1.  In the baseball example, the batting average seems to increase as the 
@@ -434,7 +437,7 @@ cut_depth <- diamonds %>%
 
 This makes it easier to understand what's going on as we can read it almost like an English sentence: first group, then summarise, then filter, then mutate. In fact, the best way to pronounce `%>%` when reading a sequence of code is as "then". `%>%` comes from the magrittr package, by Stefan Milton Brache. It provides a number of other tools that dplyr doesn't expose by default, so I highly recommend that you check out the [magrittr website](https://github.com/smbache/magrittr). \index{magrittr}
 
-`%>%` works by taking the thing on the left hand side (LHS) and supplying it as the first argument to the function on the righ hand side (RHS). Each of these pairs of calls is equivalent:
+`%>%` works by taking the thing on the left hand side (LHS) and supplying it as the first argument to the function on the right hand side (RHS). Each of these pairs of calls is equivalent:
 
 ```{r pipe-ex, eval = FALSE}
 f(x, y)
@@ -469,21 +472,21 @@ x %>% f(y) %>% g(z)
 
 dplyr provides a number of other verbs that are less useful for visualisation, but important to know about in general:
 
-* `arrange()`, that can be useful when you're looking at the data from the 
-  console. It doesn't affect visualisations because ggplot2 doesn't care about 
-  the order of the rows. 
+* `arrange()` orders observations according to variable(s). This is most useful
+  when you're looking at the data from the console. It doesn't affect
+  visualisations because ggplot2 doesn't care about the order of the rows. 
   
 * `select()` picks variables based on their names. Useful when you have 
-  very many variables and want to focus on just a few for analysis.
+  many variables and want to focus on just a few for analysis.
 
 * `rename()` allows you to change the name of variables.
 
 * Grouped mutates and filters are also useful, but more advanced. See
-  `vignette("window-functions") for more details.
+  `vignette("window-functions", package = "dplyr")` for more details.
 
 * There are a number of verbs designed to work with two tables of data 
   at a time. These include SQL joins (like the base `merge()` function) 
-  and set operations. Learn more about them in `vignette("two-table")`.
+  and set operations. Learn more about them in `vignette("two-table", package = "dplyr")`.
 
 * Dplyr can work directly with data stored in a database - you use the same
   R code as you do for local data and dplyr generates SQL to send to the
