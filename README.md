@@ -31,7 +31,8 @@ devtools::install_github(c(
   "hadley/bookdown", 
   "hadley/scales", 
   "hadley/ggplot2", 
-  "hadley/ggplot2movies", 
+  "hadley/ggplot2movies",
+  "hadley/tidyr", 
   "hadley/directlabels", 
   "jrnold/ggthemes"
 ))
