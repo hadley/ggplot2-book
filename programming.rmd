@@ -11,7 +11,7 @@ source("common.R")
 
 ## Introduction
 
-A major requirement of a good data analysis is flexibility. If your data changes, or you discover something that makes you rethink your basic assumptions, you need to be able to easily change many plots at once. The main inhibitor of flexibility is code duplication. If you have the same plotting statement repeated over and over again, you'll have to make the same change in many different places. Often just the thought of making all those changes is exhausting! This chapter will help you overcome that by problem by showing you how to program with ggplto2. \index{Programming}
+A major requirement of a good data analysis is flexibility. If your data changes, or you discover something that makes you rethink your basic assumptions, you need to be able to easily change many plots at once. The main inhibitor of flexibility is code duplication. If you have the same plotting statement repeated over and over again, you'll have to make the same change in many different places. Often just the thought of making all those changes is exhausting! This chapter will help you overcome that by problem by showing you how to program with ggplot2. \index{Programming}
 
 To make your code more flexible, you need to reduce duplicated code by writing functions. When you notice you're doing the same thing over and over again, think about how you might generalise it and turn it into a function. If you're not that familiar with how functions work in R, you might want to brush up your knowledge at <http://adv-r.had.co.nz/Functions.html>. 
 
@@ -23,7 +23,7 @@ In this chapter I'll show how to write functions that create:
 
 And then I'll finish off with a brief illustration of how you can apply functional programming techniques to ggplot2 objects.
 
-You might also find the [cowplot](https://github.com/wilkelab/cowplot) and [ggthemes](https://github.com/jrnold/ggthemes) packages helpful. As well as providing resuable components that help you directly, you can also read the source code of the packages to figure out how they work.
+You might also find the [cowplot](https://github.com/wilkelab/cowplot) and [ggthemes](https://github.com/jrnold/ggthemes) packages helpful. As well as providing reusable components that help you directly, you can also read the source code of the packages to figure out how they work.
 
 ## Single components
 
@@ -81,7 +81,7 @@ Finally, note that you can only _add_ components to a plot: you can't modify or 
 
 ## Multiple components
 
-It's not alway possible to achieve your goals with a single componens. Fortunately, ggplot2 has a convenient way of adding multiple components to a plot in one step with a list. The following function adds two layers: one to show the mean, and one to show its standard error:
+It's not always possible to achieve your goals with a single component. Fortunately, ggplot2 has a convenient way of adding multiple components to a plot in one step with a list. The following function adds two layers: one to show the mean, and one to show its standard error:
 
 `r columns(2, 2/3, 0.75)`
 ```{r geom-mean-1}
@@ -108,6 +108,10 @@ geom_mean <- function(se = TRUE) {
 ggplot(mpg, aes(class, cty)) + geom_mean()
 ggplot(mpg, aes(class, cty)) + geom_mean(se = FALSE)
 ```
+
+<!-- TODO
+  The x-axis tick labels are hard to read on these `geom_mean()` plots. Perhaps increase the width or add coord_flip()?
+-->
 
 ### Plot components
 
@@ -157,7 +161,7 @@ borders <- function(database = "world", regions = ".", fill = NA,
 
 If you want to pass additional arguments to the components in your function, `...` is no good: there's no way to direct different arguments to different components. Instead, you'll need to think about how you want your function to work, balancing the benefits of having one function that does it all vs. the cost of having a complex function that's harder to understand. \indexc{...}
 
-To get your start, here's one approach using `modifyList()` and `do.call()`: \indexf{modifyList} \indexf{do.call}
+To get you started, here's one approach using `modifyList()` and `do.call()`: \indexf{modifyList} \indexf{do.call}
 
 ```{r}
 geom_mean <- function(..., bar.params = list(), errorbar.params = list()) {
