@@ -5,7 +5,7 @@
 Tidy data is important, but it's not the end of the road. Often you
 won't have quite the right variables, or your data might need a little
 aggregation before you visualise it. This chapter will show you how to
-solve these problems (and more!) with the dplyr package.
+solve these problems (and more!) with the \textbf{dplyr} package.
 \index{Data!manipulating} \index{dplyr}
 \index{Grammar!of data manipulation}
 
@@ -21,7 +21,7 @@ to be helpful. In this chapter you'll learn four of the most important
 dplyr verbs:
 
 \begin{itemize}
-\itemsep1pt\parskip0pt\parsep0pt
+\tightlist
 \item
   \texttt{filter()}
 \item
@@ -32,13 +32,12 @@ dplyr verbs:
 
 These verbs are easy to learn because they all work the same way: they
 take a data frame as the first argument, and return a modified data
-frame. The second and subsequent arguments control the details of the
-transformation, and are always interpreted in the context of the data
-frame so you can refer to variables directly. I'll also explain each in
-the same way: I'll show you a motivating examples using the
-\texttt{diamonds} data, give you more details about how the function
-works, and finish up with some exercises for you to practice your skills
-with.
+frame. The other arguments control the details of the transformation,
+and are always interpreted in the context of the data frame so you can
+refer to variables directly. I'll also explain each in the same way:
+I'll show you a motivating examples using the \texttt{diamonds} data,
+give you more details about how the function works, and finish up with
+some exercises for you to practice your skills with.
 
 You'll also learn how to create data transformation pipelines using
 \texttt{\%\textgreater{}\%}. \texttt{\%\textgreater{}\%} plays a similar
@@ -52,7 +51,7 @@ learn more by using the resources discussed at the end of the chapter.
 \section{Filter observations}
 
 It's common to only want to explore one part of a dataset. A great data
-analysis strategy is to start with just one obseravation unit (one
+analysis strategy is to start with just one observation unit (one
 person, one city, etc), and understand how it works before attempting to
 generalise the conclusion to others. This is a great technique if you
 ever feel overwhelmed by an analysis: zoom down to a small subset,
@@ -61,7 +60,7 @@ dataset. \indexf{filter}
 
 Filtering is also useful for extracting outliers. Generally, you don't
 want to just throw outliers away, as they're often highly revealing, but
-it's useful to think about partioning the data into the common and the
+it's useful to think about partitioning the data into the common and the
 unusual. You summarise the common to look at the broad trends; you
 examine the outliers individually to see if you can figure out what's
 going on.
@@ -113,23 +112,23 @@ incorrect values are those diamonds with zero dimensions. We can use
 \end{Shaded}
 
 This is equivalent to the base R code
-\texttt{diamonds{[}diamonds\$x == 0 \textbar{} diamonds\$y == 0, {]}},
+\texttt{diamonds{[}diamonds\$x\ ==\ 0\ \textbar{}\ diamonds\$y\ ==\ 0,\ {]}},
 but is more concise because \texttt{filter()} when you refer to (e.g.)
 the bare \texttt{x}, dplyr knows to look first in the data frame.
 
 (If you've used \texttt{subset()} before, you'll notice that it has very
 similar behaviour. The biggest difference is that \texttt{subset()} can
 select both observations and variables, where in dplyr,
-\texttt{filter()} works with exclusuively with observations and
+\texttt{filter()} works exclusively with observations and
 \texttt{select()} with variables. There are some other subtle
 differences, but the main advantage to using \texttt{filter()} is that
 it behaves identically to the other dplyr verbs.)
 
 In a real analysis, you'd look at the outliers in more detail to see if
 you can find the root cause of the data quality problem. In this case,
-we're just going to throw them out and focus on what remains. To save a
-little typing, we can take advantage of the fact that multiple arguments
-to \texttt{filter()} are combined with and.
+we're just going to throw them out and focus on what remains. To save
+some typing, we may provide multiple arguments to \texttt{filter()}
+which combines them.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -147,7 +146,7 @@ to \texttt{filter()} are combined with and.
 
 This plot is now more informative - we can see a very strong
 relationship between \texttt{x} and \texttt{y}. I've added the reference
-line to make it clear that for most diamands, \texttt{x} and \texttt{y}
+line to make it clear that for most diamonds, \texttt{x} and \texttt{y}
 are very similar. However, this plot still has problems:
 
 \begin{itemize}
@@ -173,67 +172,67 @@ not, you'll get an error. Typically you create the logical vector with
 the comparison operators:
 
 \begin{itemize}
-\itemsep1pt\parskip0pt\parsep0pt
+\tightlist
 \item
-  \texttt{x == y}: x and y are equal.
+  \texttt{x\ ==\ y}: x and y are equal.
 \item
-  \texttt{x != y}: x and y are not equal.
+  \texttt{x\ !=\ y}: x and y are not equal.
 \item
-  \texttt{x \%in\% c("a", "b", "c")}: \texttt{x} is one of the values in
-  the right hand side.
+  \texttt{x\ \%in\%\ c("a",\ "b",\ "c")}: \texttt{x} is one of the
+  values in the right hand side.
 \item
-  \texttt{x \textgreater{} y}, \texttt{x \textgreater{}= y},
-  \texttt{x \textless{} y}, \texttt{x \textless{}= y}: greater than,
+  \texttt{x\ \textgreater{}\ y}, \texttt{x\ \textgreater{}=\ y},
+  \texttt{x\ \textless{}\ y}, \texttt{x\ \textless{}=\ y}: greater than,
   greater than or equal to, less than, less than or equal to.
 \end{itemize}
 
 And combine them with logical operators:
 
 \begin{itemize}
-\itemsep1pt\parskip0pt\parsep0pt
+\tightlist
 \item
   \texttt{!x} (pronounced ``not x''), flips \texttt{TRUE} and
   \texttt{FALSE} so it keeps all the values where \texttt{x} is
   \texttt{FALSE}.
 \item
-  \texttt{x \& y}: \texttt{TRUE} if both \texttt{x} and \texttt{y} are
+  \texttt{x\ \&\ y}: \texttt{TRUE} if both \texttt{x} and \texttt{y} are
   \texttt{TRUE}.
 \item
-  \texttt{x \textbar{} y}: \texttt{TRUE} if either \texttt{x} or
+  \texttt{x\ \textbar{}\ y}: \texttt{TRUE} if either \texttt{x} or
   \texttt{y} are \texttt{TRUE}.
 \item
-  \texttt{xor(x, y)}: \texttt{TRUE} if either \texttt{x} or \texttt{y}
-  are \texttt{TRUE}, but not both (e\_\_x\_\_clusive or).
+  \texttt{xor(x,\ y)}: \texttt{TRUE} if either \texttt{x} or \texttt{y}
+  are \texttt{TRUE}, but not both (exclusive or).
 \end{itemize}
 
 Most real queries involve some combination of both:
 
 \begin{itemize}
-\itemsep1pt\parskip0pt\parsep0pt
+\tightlist
 \item
-  Price less than \$500: \texttt{price \textless{} 500}
+  Price less than \$500: \texttt{price\ \textless{}\ 500}
 \item
   Size between 1 and 2 carats:
-  \texttt{carat \textgreater{}= 1 \& carat \textless{} 2}
+  \texttt{carat\ \textgreater{}=\ 1\ \&\ carat\ \textless{}\ 2}
 \item
   Cut is ideal or premium:
-  \texttt{cut == "Premium" \textbar{} cut == "Ideal"}, or
-  \texttt{cut \%in\% c("Premium", "Ideal")} (note that R is case
+  \texttt{cut\ ==\ "Premium"\ \textbar{}\ cut\ ==\ "Ideal"}, or
+  \texttt{cut\ \%in\%\ c("Premium",\ "Ideal")} (note that R is case
   sensitive)
 \item
   Worst colour, cut and clarify:
-  \texttt{cut == "Fair" \& color == "J" \& clarity == "SI2"}
+  \texttt{cut\ ==\ "Fair"\ \&\ color\ ==\ "J"\ \&\ clarity\ ==\ "SI2"}
 \end{itemize}
 
 You can also use functions in the filtering expression:
 
 \begin{itemize}
-\itemsep1pt\parskip0pt\parsep0pt
+\tightlist
 \item
-  Size is between 1 and 2 carats: \texttt{floor(carat) == 1}
+  Size is between 1 and 2 carats: \texttt{floor(carat)\ ==\ 1}
 \item
   An average dimension greater than 3:
-  \texttt{(x + y + z) / 3 \textgreater{} 3}
+  \texttt{(x\ +\ y\ +\ z)\ /\ 3\ \textgreater{}\ 3}
 \end{itemize}
 
 This is useful for simple expressions, but as things get more
@@ -297,9 +296,9 @@ why two unknown values should be the same. Instead, use
 \texttt{filter()} only includes observations where all arguments are
 \texttt{TRUE}, so \texttt{NA} values are automatically dropped. If you
 want to include missing values, be explicit:
-\texttt{x \textgreater{} 10 \textbar{} is.na(x)}. In other parts of R,
-you'll sometimes need to convert missing values into \texttt{FALSE}. You
-can do that with \texttt{x \textgreater{} 10 \& !is.na(x)}
+\texttt{x\ \textgreater{}\ 10\ \textbar{}\ is.na(x)}. In other parts of
+R, you'll sometimes need to convert missing values into \texttt{FALSE}.
+You can do that with \texttt{x\ \textgreater{}\ 10\ \&\ !is.na(x)}
 
 \subsection{Exercises}
 
@@ -309,7 +308,7 @@ can do that with \texttt{x \textgreater{} 10 \& !is.na(x)}
   Practice your filtering skills by:
 
   \begin{itemize}
-  \itemsep1pt\parskip0pt\parsep0pt
+  \tightlist
   \item
     Finding all the diamonds with equal x and y dimensions.
   \item
@@ -338,18 +337,23 @@ can do that with \texttt{x \textgreater{} 10 \& !is.na(x)}
   ? & & • & •\tabularnewline
   \bottomrule
   \end{longtable}
+\end{enumerate}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
 \item
   Repeat the analysis of outlying values with \texttt{z}. Compared to
   \texttt{x} and \texttt{y}, how would you characterise the relationship
   of \texttt{x} and \texttt{z}, or \texttt{y} and \texttt{z}?
 \item
-  Install ggplot2movies and look at the movies that have a missing
-  budget. How are they different from the movies with a budget? (Hint:
-  try a frequency polygon plus \texttt{colour = is.na(budget)}.)
+  Install the \textbf{ggplot2movies} package and look at the movies that
+  have a missing budget. How are they different from the movies with a
+  budget? (Hint: try a frequency polygon plus
+  \texttt{colour\ =\ is.na(budget)}.)
 \item
-  What is \texttt{NA \& FALSE} and \texttt{NA \textbar{} TRUE}? Why? Why
-  doesn't \texttt{NA * 0} equal zero? What number times zero does not
-  equal 0? What do you expect \texttt{NA \^{} 0} to equal? Why?
+  What is \texttt{NA\ \&\ FALSE} and \texttt{NA\ \textbar{}\ TRUE}? Why?
+  Why doesn't \texttt{NA\ *\ 0} equal zero? What number times zero does
+  not equal 0? What do you expect \texttt{NA\ \^{}\ 0} to equal? Why?
 \end{enumerate}
 
 \section{Create new variables}\label{mutate}
@@ -434,7 +438,7 @@ results with a histogram.
 
 That's an interesting histogram! While most diamonds are close to being
 symmetric there are very few that are perfectly symmetric (i.e.
-\texttt{x == y}).
+\texttt{x\ ==\ y}).
 
 \subsection{Useful tools}
 
@@ -444,17 +448,17 @@ surprisingly wide domain range of circumstances.
 
 \begin{itemize}
 \item
-  Log-transformations are often useful. They turn multiplicate
+  Log-transformations are often useful. They turn multiplicative
   relationships into additive relationships; they compress data that
   varies over orders of magnitude; they convert power relationships to
   linear relationship. See examples at
   \url{http://stats.stackexchange.com/questions/27951}
 \item
   Relative difference: If you're interested in the relative difference
-  between two variables, use \texttt{log(x / y)}. It's better than
-  \texttt{x / y} because it's symmetric: if x \textless{} y,
-  \texttt{x / y} takes values {[}0, 1), but if x \textgreater{} y,
-  \texttt{x / y} takes values (1, Inf). See T{ö}rnqvist, Vartia, and
+  between two variables, use \texttt{log(x\ /\ y)}. It's better than
+  \texttt{x\ /\ y} because it's symmetric: if x \textless{} y,
+  \texttt{x\ /\ y} takes values {[}0, 1), but if x \textgreater{} y,
+  \texttt{x\ /\ y} takes values (1, Inf). See Törnqvist, Vartia, and
   Vartia (1985) for more details. \indexf{log}
 \item
   Sometimes integrating or differentiating might make the data more
@@ -478,8 +482,8 @@ There are also a few useful ways to transform pairs of variables:
   next chapter.
 \item
   Sometimes its useful to change positions to polar coordinates (or vice
-  versa): distance (\texttt{sqrt(x\^{}2 + y\^{}2)}) and angle
-  (\texttt{atan2(y, x)}).
+  versa): distance (\texttt{sqrt(x\^{}2\ +\ y\^{}2)}) and angle
+  (\texttt{atan2(y,\ x)}).
 \end{itemize}
 
 \subsection{Exercises}
@@ -491,7 +495,7 @@ There are also a few useful ways to transform pairs of variables:
   variables:
 
   \begin{itemize}
-  \itemsep1pt\parskip0pt\parsep0pt
+  \tightlist
   \item
     The approximate volume of the diamond (using x, y, and z).
   \item
@@ -503,7 +507,7 @@ There are also a few useful ways to transform pairs of variables:
   \end{itemize}
 \item
   How can you improve the data density of
-  \texttt{ggplot(diamonds, aes(x, z)) + stat\_bin2d()}. What
+  \texttt{ggplot(diamonds,\ aes(x,\ z))\ +\ stat\_bin2d()}. What
   transformation makes it easier to extract outliers?
 \item
   The depth variable is just the width of the diamond (average of
@@ -521,14 +525,14 @@ There are also a few useful ways to transform pairs of variables:
 Many insightful visualisations require that you reduce the full dataset
 down to a meaningful summary. ggplot2 provides a number of geoms that
 will do summaries for you. But it's often useful to do summaries by
-hand: that gives you more flexibility and and you can use the summaries
-for other purposes. \indexf{group\_by} \indexf{summarise}
+hand: that gives you more flexibility and you can use the summaries for
+other purposes. \indexf{group\_by} \indexf{summarise}
 
 Dplyr does summaries in two steps:
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
-\itemsep1pt\parskip0pt\parsep0pt
+\tightlist
 \item
   Define the grouping variables with \texttt{group\_by()}.
 \item
@@ -568,8 +572,8 @@ clarity, then summarise
 \end{figure}
 
 You might be surprised by this pattern: why do diamonds with better
-clarities have lower prices? We'll see why this is the case and what to
-do about it in \hyperref[sub:trend]{removing trend}.
+clarity have lower prices? We'll see why this is the case and what to do
+about it in \hyperref[sub:trend]{removing trend}.
 
 Supply additional variables to \texttt{group\_by()} to create groups
 based on more than one variable. The next example shows how we can
@@ -630,7 +634,7 @@ of \(n\) values and always return a single value. Those functions
 include:
 
 \begin{itemize}
-\itemsep1pt\parskip0pt\parsep0pt
+\tightlist
 \item
   Counts: \texttt{n()}, \texttt{n\_distinct(x)}.
 \item
@@ -640,7 +644,7 @@ include:
 \item
   Extremes: \texttt{quartile(x)}, \texttt{min(x)}, \texttt{max(x)}.
 \item
-  Positions: \texttt{first(x)}, \texttt{last(x)}, \texttt{nth(x, 2)}.
+  Positions: \texttt{first(x)}, \texttt{last(x)}, \texttt{nth(x,\ 2)}.
 \end{itemize}
 
 Another extremely useful technique is to use \texttt{sum()} or
@@ -667,7 +671,7 @@ or equal to 4, and the proportion of diamonds that cost less than
 \end{Shaded}
 
 Most summary functions have a \texttt{na.rm} argument:
-\texttt{na.rm = TRUE} tells the summary function to remove any missing
+\texttt{na.rm\ =\ TRUE} tells the summary function to remove any missing
 values prior to summiarisation. This is a convenient shortcut: rather
 than removing the missing values then summarising, you can do it in one
 step.
@@ -681,7 +685,7 @@ data is less variable than it really is, and potentially draw
 unwarranted conclusions.
 
 The following example extends our previous summary of the average price
-by clarity to also include the number of obseravtions in each group, and
+by clarity to also include the number of observations in each group, and
 the upper and lower quartiles. It suggests the mean might be a bad
 summary for this data - the distributions of price are so highly skewed
 that the mean is higher than the upper quartile for some of the groups!
@@ -722,9 +726,8 @@ that the mean is higher than the upper quartile for some of the groups!
 
 Another example of this comes from baseball. Let's take the MLB batting
 data from the Lahman package and calculate the batting average, the
-number of hits divded by the number of at bats. This is the proportion
-that a batter hits the ball. Who's the best batter according to this
-metric?
+number of hits divided by the number of at bats. Who's the best batter
+according to this metric?
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -791,7 +794,7 @@ observations vs.~an average. Be aware!
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
 \item
-  For each year in the movies data (in ggplot2movies,) determine the
+  For each year in the movies data (in ggplot2movies), determine the
   percent of movies with missing budgets. Visualise the result.
 \item
   How does the average length of a movie change over time? Display your
@@ -801,7 +804,7 @@ observations vs.~an average. Be aware!
   clarity), count the number of diamonds, the average price and the
   average size. Visualise the results.
 \item
-  Compute a histogram of carat by ``hand''. Use a binwidth of 0.1.
+  Compute a histogram of carat by ``hand'' using a binwidth of 0.1.
   (Hint: you might need to create a new variable first).
 \item
   In the baseball example, the batting average seems to increase as the
@@ -878,7 +881,7 @@ doesn't expose by default, so I highly recommend that you check out the
 
 \texttt{\%\textgreater{}\%} works by taking the thing on the left hand
 side (LHS) and supplying it as the first argument to the function on the
-righ hand side (RHS). Each of these pairs of calls is equivalent:
+right hand side (RHS). Each of these pairs of calls is equivalent:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -924,28 +927,29 @@ visualisation, but important to know about in general:
 
 \begin{itemize}
 \item
-  \texttt{arrange()}, that can be useful when you're looking at the data
-  from the console. It doesn't affect visualisations because ggplot2
-  doesn't care about the order of the rows.
+  \texttt{arrange()} orders observations according to variable(s). This
+  is most useful when you're looking at the data from the console. It
+  doesn't affect visualisations because ggplot2 doesn't care about the
+  order of the rows.
 \item
   \texttt{select()} picks variables based on their names. Useful when
-  you have very many variables and want to focus on just a few for
-  analysis.
+  you have many variables and want to focus on just a few for analysis.
 \item
   \texttt{rename()} allows you to change the name of variables.
 \item
   Grouped mutates and filters are also useful, but more advanced. See
-  `vignette(``window-functions'') for more details.
+  \texttt{vignette("window-functions",\ package\ =\ "dplyr")} for more
+  details.
 \item
   There are a number of verbs designed to work with two tables of data
   at a time. These include SQL joins (like the base \texttt{merge()}
   function) and set operations. Learn more about them in
-  \texttt{vignette("two-table")}.
+  \texttt{vignette("two-table",\ package\ =\ "dplyr")}.
 \item
   Dplyr can work directly with data stored in a database - you use the
   same R code as you do for local data and dplyr generates SQL to send
-  to the database. See \texttt{vignette("databases", package = "dplyr")}
-  for the details.
+  to the database. See
+  \texttt{vignette("databases",\ package\ =\ "dplyr")} for the details.
 \end{itemize}
 
 Finally, RStudio provides a handy dplyr cheatsheet that will help jog
@@ -955,6 +959,7 @@ your memory when you're wondering which function to use. Get it from
 \section*{References}
 \addcontentsline{toc}{section}{References}
 
-T{ö}rnqvist, Leo, Pentti Vartia, and Yrj{ö} O Vartia. 1985. ``How Should
+\hyperdef{}{ref-tornqvist:1985}{\label{ref-tornqvist:1985}}
+Törnqvist, Leo, Pentti Vartia, and Yrjö O Vartia. 1985. ``How Should
 Relative Changes Be Measured?'' \emph{The American Statistician} 39 (1):
 43--46.

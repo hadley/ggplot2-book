@@ -14,8 +14,9 @@ I want to explore in this chapter: \index{Modelling}
   allows you to see surprises more easily.
 \item
   Other times you have a lot of data, too much to show on a handful of
-  plots.\\ Models can be a powerful tool for summarising data so that
-  you get a higher level view.
+  plots.\\
+   Models can be a powerful tool for summarising data so that you get a
+  higher level view.
 \end{itemize}
 
 In this chapter, I'm going to focus on the use of linear models to
@@ -25,7 +26,7 @@ learns at least the basics of how to use them. To this end, I highly
 recommend two books by Julian J. Faraway:
 
 \begin{itemize}
-\itemsep1pt\parskip0pt\parsep0pt
+\tightlist
 \item
   Linear Models with R \url{http://amzn.com/1439887330}
 \item
@@ -329,6 +330,7 @@ Let's start with an overview: a time series of sales for each city:
 \begin{Highlighting}[]
 \KeywordTok{ggplot}\NormalTok{(txhousing, }\KeywordTok{aes}\NormalTok{(date, sales)) +}\StringTok{ }
 \StringTok{  }\KeywordTok{geom_line}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{group =} \NormalTok{city), }\DataTypeTok{alpha =} \DecValTok{1}\NormalTok{/}\DecValTok{2}\NormalTok{)}
+\CommentTok{#> Warning: Removed 430 rows containing missing values (geom_path).}
 \end{Highlighting}
 \end{Shaded}
 
@@ -356,6 +358,7 @@ We can fix the first problem by plotting log sales:
 \begin{Highlighting}[]
 \KeywordTok{ggplot}\NormalTok{(txhousing, }\KeywordTok{aes}\NormalTok{(date, }\KeywordTok{log}\NormalTok{(sales))) +}\StringTok{ }
 \StringTok{  }\KeywordTok{geom_line}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{group =} \NormalTok{city), }\DataTypeTok{alpha =} \DecValTok{1}\NormalTok{/}\DecValTok{2}\NormalTok{)}
+\CommentTok{#> Warning: Removed 430 rows containing missing values (geom_path).}
 \end{Highlighting}
 \end{Shaded}
 
@@ -389,7 +392,7 @@ that if something goes wrong you can more easily pinpoint the problem.
 \end{figure}
 
 We can apply this transformation to every city with \texttt{group\_by()}
-and \texttt{mutate()}. Note the use of \texttt{na.action = na.exclude}
+and \texttt{mutate()}. Note the use of \texttt{na.action\ =\ na.exclude}
 argument to \texttt{lm()}. Counterintuitively this ensures that missing
 values in the input are matched with missing values in the output
 predictions and residuals. Without this argument, missing values are
@@ -415,6 +418,9 @@ the mean relative sales across all cities.
 \KeywordTok{ggplot}\NormalTok{(txhousing, }\KeywordTok{aes}\NormalTok{(date, rel_sales)) +}
 \StringTok{  }\KeywordTok{geom_line}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{group =} \NormalTok{city), }\DataTypeTok{alpha =} \DecValTok{1}\NormalTok{/}\DecValTok{5}\NormalTok{) +}\StringTok{ }
 \StringTok{  }\KeywordTok{geom_line}\NormalTok{(}\DataTypeTok{stat =} \StringTok{"summary"}\NormalTok{, }\DataTypeTok{fun.y =} \StringTok{"mean"}\NormalTok{, }\DataTypeTok{colour =} \StringTok{"red"}\NormalTok{)}
+\CommentTok{#> Warning: Removed 568 rows containing non-finite values}
+\CommentTok{#> (stat_summary).}
+\CommentTok{#> Warning: Removed 430 rows containing missing values (geom_path).}
 \end{Highlighting}
 \end{Shaded}
 
@@ -433,7 +439,7 @@ see the trend for each city relative to its average number of sales.)
   The final plot shows a lot of short-term noise in the overall trend.
   How could you smooth this further to focus on long-term changes?
 \item
-  If you look closely (e.g. \texttt{+ xlim(2005, 2015)}) at the
+  If you look closely (e.g. \texttt{+\ xlim(2005,\ 2015)}) at the
   long-term trend you'll notice a weird pattern in 2009-2011. It looks
   like there was a big dip in 2010. Is this dip ``real''? (i.e.~can you
   spot it in the original data)
@@ -647,10 +653,11 @@ noisy.
   McAllen, Harlingen and Brownsville seem to have much more year-to-year
   variation than Midland, Irving and Denton County. How does the model
   change if you also include a linear trend for year? (i.e.
-  \texttt{log(sales) \textasciitilde{} factor(month) + year}).
+  \texttt{log(sales)\ \textasciitilde{}\ factor(month)\ +\ year}).
 \item
   Create a faceted plot that shows the seasonal patterns for all
-  cities.\\Order the facets by the \(R^2\) for the city.
+  cities.\\
+  Order the facets by the \(R^2\) for the city.
 \end{enumerate}
 
 \section{Coefficient-level summaries}
@@ -761,7 +768,7 @@ seasonal effects.
   of strong seasonal patterns?
 \item
   Group the diamonds data by cut, clarity and colour. Fit a linear model
-  \texttt{log(price) \textasciitilde{} log(carat)}. What does the
+  \texttt{log(price)\ \textasciitilde{}\ log(carat)}. What does the
   intercept tell you? What does the slope tell you? How do the slope and
   intercept vary across the groups? Answer with a plot.
 \end{enumerate}
@@ -860,6 +867,7 @@ In a real analysis, you'd want to look into these cities in more detail.
 \section*{References}
 \addcontentsline{toc}{section}{References}
 
+\hyperdef{}{ref-model-vis-paper}{\label{ref-model-vis-paper}}
 Wickham, Hadley, Dianne Cook, and Heike Hofmann. 2015. ``Visualizing
 Statistical Models: Removing the Blindfold.'' \emph{Statistical Analysis
 and Data Mining: The ASA Data Science Journal} 8 (4): 203--25.
