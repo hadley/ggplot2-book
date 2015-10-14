@@ -5,8 +5,8 @@
 So far, every example in this book has started with a nice dataset
 that's easy to plot. That's great for learning (because you don't want
 to struggle with data handling while you're learning visualisation), but
-in real-life data hardly ever comes in exactly the right structure. To
-use ggplot2 in practice, you'll need to learn some data wrangling
+in real life, datasets hardly ever come in exactly the right structure.
+To use ggplot2 in practice, you'll need to learn some data wrangling
 skills. Indeed, in my experience, visualisation is often the easiest
 part of the data analysis process: once you have the right data, in the
 right format, aggregated in the right way, the right visualisation is
@@ -25,7 +25,7 @@ ggplot2 with other tools needed for a complete data analysis:
 \item
   Most visualisations require some data transformation whether it's
   creating a new variable from existing variables, or performing simple
-  aggregations so you can see the forest for the tree.
+  aggregations so you can see the forest for the trees.
   \hyperref[cha:dplyr]{dplyr} will show you how to do this with the
   \textbf{dplyr} package.
 \item
@@ -70,40 +70,24 @@ Sometimes you'll find a dataset that you have no idea how to plot.
 That's normally because it's not tidy. For example, take this data frame
 that contains monthly employment data for the United States:
 
-\begin{longtable}[c]{@{}rrrrrrrrrrr@{}}
-\toprule
-month & 2006 & 2007 & 2008 & 2009 & 2010 & 2011 & 2012 & 2013 & 2014 &
-2015\tabularnewline
-\midrule
-\endhead
-1 & 8.6 & 8.3 & 9.0 & 10.7 & 20.0 & 21.6 & 21.0 & 16.2 & 15.9 &
-13.4\tabularnewline
-2 & 9.1 & 8.5 & 8.7 & 11.7 & 19.9 & 21.1 & 19.8 & 17.5 & 16.2 &
-13.1\tabularnewline
-3 & 8.7 & 9.1 & 8.7 & 12.3 & 20.4 & 21.5 & 19.2 & 17.7 & 15.9 &
-12.2\tabularnewline
-4 & 8.4 & 8.6 & 9.4 & 13.1 & 22.1 & 20.9 & 19.1 & 17.1 & 15.6 &
-11.7\tabularnewline
-5 & 8.5 & 8.2 & 7.9 & 14.2 & 22.3 & 21.6 & 19.9 & 17.0 & 14.5 &
-NA\tabularnewline
-6 & 7.3 & 7.7 & 9.0 & 17.2 & 25.2 & 22.3 & 20.1 & 16.6 & 13.2 &
-NA\tabularnewline
-7 & 8.0 & 8.7 & 9.7 & 16.0 & 22.3 & 22.0 & 17.5 & 16.3 & 13.5 &
-NA\tabularnewline
-8 & 8.4 & 8.8 & 9.7 & 16.3 & 21.0 & 22.4 & 18.5 & 16.8 & 13.3 &
-NA\tabularnewline
-9 & 8.0 & 8.7 & 10.2 & 17.8 & 20.3 & 22.0 & 18.8 & 16.5 & 13.3 &
-NA\tabularnewline
-10 & 7.9 & 8.4 & 10.4 & 18.9 & 21.2 & 20.5 & 19.7 & 16.1 & 13.5 &
-NA\tabularnewline
-11 & 8.3 & 8.6 & 9.8 & 19.8 & 21.0 & 20.9 & 18.5 & 17.0 & 12.8 &
-NA\tabularnewline
-12 & 7.5 & 8.4 & 10.5 & 20.1 & 21.9 & 20.5 & 17.6 & 17.0 & 12.6 &
-NA\tabularnewline
-\bottomrule
-\end{longtable}
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ec2}
+\CommentTok{#> Source: local data frame [12 x 11]}
+\CommentTok{#> }
+\CommentTok{#>    month  2006  2007  2008  2009  2010  2011  2012  2013  2014  2015}
+\CommentTok{#>    (dbl) (dbl) (dbl) (dbl) (dbl) (dbl) (dbl) (dbl) (dbl) (dbl) (dbl)}
+\CommentTok{#> 1      1   8.6   8.3   9.0  10.7  20.0  21.6  21.0  16.2  15.9  13.4}
+\CommentTok{#> 2      2   9.1   8.5   8.7  11.7  19.9  21.1  19.8  17.5  16.2  13.1}
+\CommentTok{#> 3      3   8.7   9.1   8.7  12.3  20.4  21.5  19.2  17.7  15.9  12.2}
+\CommentTok{#> 4      4   8.4   8.6   9.4  13.1  22.1  20.9  19.1  17.1  15.6  11.7}
+\CommentTok{#> 5      5   8.5   8.2   7.9  14.2  22.3  21.6  19.9  17.0  14.5    NA}
+\CommentTok{#> 6      6   7.3   7.7   9.0  17.2  25.2  22.3  20.1  16.6  13.2    NA}
+\CommentTok{#> ..   ...   ...   ...   ...   ...   ...   ...   ...   ...   ...   ...}
+\end{Highlighting}
+\end{Shaded}
 
-(If it looks familiar it's because it's derived from the
+(If it looks familiar, it's because it's derived from the
 \texttt{economics} dataset that we used earlier in the book.)
 
 Imagine you want to plot a time series showing how unemployment has
@@ -258,8 +242,20 @@ To be most useful, we can provide two extra arguments:
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{economics <-}\StringTok{ }\KeywordTok{gather}\NormalTok{(ec2, year, rate, }\StringTok{`}\DataTypeTok{2006}\StringTok{`}\NormalTok{:}\StringTok{`}\DataTypeTok{2015}\StringTok{`}\NormalTok{, }
+\NormalTok{economics_2 <-}\StringTok{ }\KeywordTok{gather}\NormalTok{(ec2, year, rate, }\StringTok{`}\DataTypeTok{2006}\StringTok{`}\NormalTok{:}\StringTok{`}\DataTypeTok{2015}\StringTok{`}\NormalTok{, }
   \DataTypeTok{convert =} \OtherTok{TRUE}\NormalTok{, }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{)}
+\NormalTok{economics_2}
+\CommentTok{#> Source: local data frame [112 x 3]}
+\CommentTok{#> }
+\CommentTok{#>    month  year  rate}
+\CommentTok{#>    (dbl) (int) (dbl)}
+\CommentTok{#> 1      1  2006   8.6}
+\CommentTok{#> 2      2  2006   9.1}
+\CommentTok{#> 3      3  2006   8.7}
+\CommentTok{#> 4      4  2006   8.4}
+\CommentTok{#> 5      5  2006   8.5}
+\CommentTok{#> 6      6  2006   7.3}
+\CommentTok{#> ..   ...   ...   ...}
 \end{Highlighting}
 \end{Shaded}
 
@@ -274,10 +270,10 @@ seasonal variations:
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\KeywordTok{ggplot}\NormalTok{(economics, }\KeywordTok{aes}\NormalTok{(year +}\StringTok{ }\NormalTok{(month -}\StringTok{ }\DecValTok{1}\NormalTok{) /}\StringTok{ }\DecValTok{12}\NormalTok{, rate)) +}
+\KeywordTok{ggplot}\NormalTok{(economics_2, }\KeywordTok{aes}\NormalTok{(year +}\StringTok{ }\NormalTok{(month -}\StringTok{ }\DecValTok{1}\NormalTok{) /}\StringTok{ }\DecValTok{12}\NormalTok{, rate)) +}
 \StringTok{  }\KeywordTok{geom_line}\NormalTok{()}
 
-\KeywordTok{ggplot}\NormalTok{(economics, }\KeywordTok{aes}\NormalTok{(month, rate, }\DataTypeTok{group =} \NormalTok{year)) +}
+\KeywordTok{ggplot}\NormalTok{(economics_2, }\KeywordTok{aes}\NormalTok{(month, rate, }\DataTypeTok{group =} \NormalTok{year)) +}
 \StringTok{  }\KeywordTok{geom_line}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{colour =} \NormalTok{year), }\DataTypeTok{size =} \DecValTok{1}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}

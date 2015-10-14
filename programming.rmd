@@ -19,7 +19,7 @@ In this chapter I'll show how to write functions that create:
 
 * A single ggplot2 component.
 * Multiple ggplot2 components.
-* A complete plot
+* A complete plot.
 
 And then I'll finish off with a brief illustration of how you can apply functional programming techniques to ggplot2 objects.
 
@@ -61,7 +61,7 @@ ggplot(mpg, aes(displ, 1 / hwy)) +
   geom_lm(y ~ poly(x, 2), size = 1, colour = "red")
 ```
 
-Pay close attention to the use of `...`. When included in the function definition `...` allows a function to accept arbitrary additional arguments. Inside the function, you can then use `...` to pass those arguments on to another function. Here we pass `...` onto `geom_smooth()` so the user can still modify all the other arguments we haven't explicit overridden. When you write your own component functions, it's a good idea to always use `...` is this way. \indexc{...}
+Pay close attention to the use of "`...`". When included in the function definition "`...`" allows a function to accept arbitrary additional arguments. Inside the function, you can then use "`...`" to pass those arguments on to another function. Here we pass "`...`" onto `geom_smooth()` so the user can still modify all the other arguments we haven't explicitly overridden. When you write your own component functions, it's a good idea to always use "`...`" in this way. \indexc{...}
 
 Finally, note that you can only _add_ components to a plot: you can't modify or remove existing objects.
 
@@ -259,7 +259,7 @@ A complete exploration of this idea is `qplot()`, which provides a fairly deep w
 
 The `piechart()` function above is a little unappealing because it requires the user to know the exact `aes()` specification that generates a pie chart. It would be more convenient if the user could simply specify the name of the variable to plot. To do that you'll need to learn a bit more about how `aes()` works.
 
-`aes()` uses non-standard evaluation: rather than looking at the values of its arguments, it looks at their expressions. This makes it difficult to work with programmatically - there's no way to store the name of a variable in an object and then refer to it later:
+`aes()` uses non-standard evaluation: rather than looking at the values of its arguments, it looks at their expressions. This makes it difficult to work with programmatically as there's no way to store the name of a variable in an object and then refer to it later:
 
 ```{r}
 x_var <- "displ"
@@ -285,7 +285,7 @@ Instead we need to use `aes_()`, which uses regular evaluation. There are two ba
     The difference between `as.name()` and `parse()` is subtle. If `x_var` 
     is "a + b", `as.name()` will turn it into a variable called `` `a + b` ``,
     `parse()` will turn it into the function call `a + b`. (If this is
-    confusing <http://adv-r.had.co.nz/Expressions.html> might help).
+    confusing, <http://adv-r.had.co.nz/Expressions.html> might help).
 
 *   Using a formula, created with `~`. \indexc{\textasciitilde}
 
@@ -317,7 +317,7 @@ There's another advantage to `aes_()` over `aes()` if you're writing ggplot2 plo
 
 ### The plot environment
 
-As you create more sophisticated plotting functions, you'll need to understand a bit more about ggplot2's scoping rules. ggplot2 was written well before I understood the full intricacies of non-standard evaluation so it has a rather simple scoping system. If a variable is not found in the `data`, it is looked for in _the_ plot environment. There is only one environment for a plot (not one for each layer), and it is the environment in which `ggplot()` is called from (i.e. the `parent.frame()`). \index{Environments} \indexf{parent.frame}
+As you create more sophisticated plotting functions, you'll need to understand a bit more about ggplot2's scoping rules. ggplot2 was written well before I understood the full intricacies of non-standard evaluation, so it has a rather simple scoping system. If a variable is not found in the `data`, it is looked for in _the_ plot environment. There is only one environment for a plot (not one for each layer), and it is the environment in which `ggplot()` is called from (i.e. the `parent.frame()`). \index{Environments} \indexf{parent.frame}
 
 This means that the following function won't work because `n` is not stored in an environment accessible when the expressions in `aes()` are evaluated. 
 

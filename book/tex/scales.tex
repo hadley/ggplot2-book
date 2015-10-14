@@ -645,7 +645,7 @@ colour scales.
 You can override the default guide using the \texttt{guide} argument of
 the corresponding scale function, or more conveniently, the
 \texttt{guides()} helper function. \texttt{guides()} works like
-\texttt{labs}: you can override the default guide associated with each
+\texttt{labs()}: you can override the default guide associated with each
 aesthetic.
 
 \begin{Shaded}
@@ -974,7 +974,7 @@ into four families:
 
 \begin{itemize}
 \item
-  Continuous position scales used to map integer, numeric, and date time
+  Continuous position scales used to map integer, numeric, and date/time
   data to x and y position.
 \item
   Colour scales, used to map continuous and discrete data to colours.
@@ -1061,9 +1061,9 @@ summaries. To transform, \emph{after} statistical computation, use
 \texttt{coord\_trans()}. See \hyperref[sub:cartesian]{cartesian
 coordinate systems} for more details.
 
-Date and date time data are continuous variables with special labels.
+Date and date/time data are continuous variables with special labels.
 ggplot2 works with \texttt{Date} (for dates) and \texttt{POSIXct} (for
-date times) classes: if your dates are in a different format you will
+date/times) classes: if your dates are in a different format you will
 need to convert them with \texttt{as.Date()} or \texttt{as.POSIXct()}.
 \index{Date/times} \index{Data!date/time} \index{Time}
 \index{Scales!date/time} \indexf{scale\_x\_datetime}
@@ -1153,30 +1153,30 @@ The code below illustrates some of these parameters.
 
 After position, the most commonly used aesthetic is colour. There are
 quite a few different ways of mapping values to colours in ggplot2: four
-different gradient based methods for continuous values, and two methods
+different gradient-based methods for continuous values, and two methods
 for mapping discrete values. But before we look at the details of the
 different methods, it's useful to learn a little bit of colour theory.
 Colour theory is complex because the underlying biology of the eye and
 brain is complex, and this introduction will only touch on some of the
-more important issues. An excellent more detailed exposition is
+more important issues. An excellent and more detailed exposition is
 available online at \url{http://tinyurl.com/clrdtls}. \index{Colour}
 \index{Scales!colour}
 
 At the physical level, colour is produced by a mixture of wavelengths of
-lights. To characterise a colour completely we need to know the complete
-mixture of wavelengths. Fortunately for us the human eye only has three
-different colour receptors, and so we can summarise the perception of
-any colour with just three numbers. You may be familiar with the rgb
-encoding of colour space, which defines a colour by the intensities of
-red, green and blue light needed to produce it. One problem with this
-space is that it is not perceptually uniform: the two colours that are
-one unit apart may look similar or very different depending on where
-they are in the colour space. This makes it difficult to create a
-mapping from a continuous variable to a set of colours. There have been
-many attempts to come up with colours spaces that are more perceptually
-uniform. We'll use a modern attempt called the hcl colour space, which
-has three components of \textbf{h} ue, \textbf{c} hroma and \textbf{l}
-uminance: \index{Colour!spaces}
+lights. To characterise a colour completely, we need to know the
+complete mixture of wavelengths. Fortunately for us the human eye only
+has three different colour receptors, and so we can summarise the
+perception of any colour with just three numbers. You may be familiar
+with the RGB encoding of colour space, which defines a colour by the
+intensities of red, green and blue light needed to produce it. One
+problem with this space is that it is not perceptually uniform: the two
+colours that are one unit apart may look similar or very different
+depending on where they are in the colour space. This makes it difficult
+to create a mapping from a continuous variable to a set of colours.
+There have been many attempts to come up with colours spaces that are
+more perceptually uniform. We'll use a modern attempt called the HCL
+colour space, which has three components of \textbf{h}ue,
+\textbf{c}hroma and \textbf{l}uminance: \index{Colour!spaces}
 
 \begin{itemize}
 \item
@@ -1203,7 +1203,7 @@ edge.
 \begin{figure}[htbp]
   \centering
     \includegraphics[width=\linewidth]{diagrams/hcl-space}
-  \caption{The shape of the hcl colour space.  Hue is mapped to angle, chroma to radius and each slice shows a different luminance.  The hcl space is a pretty odd shape, but you can see that colours near the centre of each slice are grey, and as you move towards the edges they become more intense.  Slices for luminance 0 and 100 are omitted because they would, respectively, be a single black point and a single white point.}
+  \caption{The shape of the HCL colour space.  Hue is mapped to angle, chroma to radius and each slice shows a different luminance.  The HCL space is a pretty odd shape, but you can see that colours near the centre of each slice are grey, and as you move towards the edges they become more intense.  Slices for luminance 0 and 100 are omitted because they would, respectively, be a single black point and a single white point.}
   \label{fig:hcl}
 \end{figure}
 
@@ -1328,7 +1328,7 @@ There are four continuous colour scales:
   \end{figure}
 
   By default, \texttt{colours} will evenly spaced along the range of the
-  data. To make them unevenly spaced, use the\texttt{values} argument,
+  data. To make them unevenly spaced, use the \texttt{values} argument,
   which should be a vector of values between 0 and 1.
 \item
   \texttt{scale\_color\_distiller()} and
@@ -1395,7 +1395,7 @@ a barchart that encodes both position and fill to the same variable:
 \begin{itemize}
 \item
   The default colour scheme, \texttt{scale\_colour\_hue()}, picks evenly
-  spaced hues around the hcl colour wheel. This works well for up to
+  spaced hues around the HCL colour wheel. This works well for up to
   about eight colours, but after that it becomes hard to tell the
   different colours apart. You can control the default chroma and
   luminance, and the range of hues, with the \texttt{h}, \texttt{c} and
@@ -1420,9 +1420,9 @@ a barchart that encodes both position and fill to the same variable:
   black and white, they all appear as an identical shade of grey.
   \indexf{scale\_colour\_hue}
 \item
-  \texttt{scale\_colour\_brewer()} uses hand picked ``ColorBrewer''
-  colours, \url{http://colorbrewer2.org/}. These colours have been hand
-  picked to work well in a wide variety of situations, although the
+  \texttt{scale\_colour\_brewer()} uses handpicked ``ColorBrewer''
+  colours, \url{http://colorbrewer2.org/}. These colours have been
+  designed to work well in a wide variety of situations, although the
   focus is on maps and so the colours tend to work better when displayed
   in large areas. For categorical data, the palettes most of interest
   are `Set1' and `Dark2' for points and `Set2', `Pastel1', `Pastel2' and
@@ -1530,12 +1530,12 @@ Subtle colours work well for bars, but are hard to see on points:
 
 \subsection{The manual discrete scale}\label{sub:scale-manual}
 
-The discrete scales, \texttt{scale\_linetype()}, \texttt{scale\_shape()}
-and \texttt{scale\_size\_discrete()} basically have no options. These
-scales are just a list of valid values that are mapped to the unique
-discrete values. \index{Shape} \index{Line type} \index{Size}
-\indexf{scale\_shape\_manual} \indexf{scale\_colour\_manual}
-\indexf{scale\_linetype\_manual}
+The discrete scales, \texttt{scale\_linetype()},
+\texttt{scale\_shape()}, and \texttt{scale\_size\_discrete()} basically
+have no options. These scales are just a list of valid values that are
+mapped to the unique discrete values. \index{Shape} \index{Line type}
+\index{Size} \indexf{scale\_shape\_manual}
+\indexf{scale\_colour\_manual} \indexf{scale\_linetype\_manual}
 
 If you want to customise these scales, you need to create your own new
 scale with the manual scale: \texttt{scale\_shape\_manual()},
@@ -1543,7 +1543,7 @@ scale with the manual scale: \texttt{scale\_shape\_manual()},
 The manual scale has one important argument, \texttt{values}, where you
 specify the values that the scale should produce. If this vector is
 named, it will match the values of the output to the values of the
-input, otherwise it will match in order of the levels of the discrete
+input; otherwise it will match in order of the levels of the discrete
 variable. You will need some knowledge of the valid aesthetic values,
 which are described in \texttt{vignette("ggplot2-specs")}.
 
@@ -1642,8 +1642,8 @@ approach.
 The identity scale is used when your data is already scaled, when the
 data and aesthetic spaces are the same. The code below shows an example
 where the identity scale is useful. \texttt{luv\_colours} contains the
-locations of all R's built-in colours in the Luv colour space (the space
-that hcl is based on). A legend is unnecessary, because the point colour
+locations of all R's built-in colours in the LUV colour space (the space
+that HCL is based on). A legend is unnecessary, because the point colour
 represents itself: the data and aesthetic spaces are the same.
 \index{Scales!identity} \indexf{scale\_identity}
 
@@ -1675,8 +1675,8 @@ represents itself: the data and aesthetic spaces are the same.
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
 \item
-  Compare and contrast with the four continuous colour scales with the
-  four discrete scales.
+  Compare and contrast the four continuous colour scales with the four
+  discrete scales.
 \item
   Explore the distribution of the built-in \texttt{colors()} using the
   \texttt{luv\_colours} dataset.

@@ -383,7 +383,7 @@ base + theme(legend.position = c(1, 0), legend.justification = c(1, 0))
 
 The guide functions, `guide_colourbar()` and `guide_legend()`, offer additional control over the fine details of the legend. Legend guides can be used for any aesthetic (discrete or continuous) while the colour bar guide can only be used with continuous colour scales. 
 
-You can override the default guide using the `guide` argument of the corresponding scale function, or more conveniently, the `guides()` helper function. `guides()` works like `labs`: you can override the default guide associated with each aesthetic. 
+You can override the default guide using the `guide` argument of the corresponding scale function, or more conveniently, the `guides()` helper function. `guides()` works like `labs()`: you can override the default guide associated with each aesthetic. 
 
 ```{r}
 df <- data.frame(x = 1, y = 1:3, z = 1:3)
@@ -570,7 +570,7 @@ p + scale_fill_gradient(limits = c(2, 4), oob = scales::squish)
 
 As well as tweaking the options of the default scales, you can also override them completely with new scales. Scales can be divided roughly into four families:
 
-* Continuous position scales used to map integer, numeric, and date time 
+* Continuous position scales used to map integer, numeric, and date/time 
   data to x and y position.
 
 * Colour scales, used to map continuous and discrete data to colours.
@@ -624,7 +624,7 @@ Of course, you can also perform the transformation yourself. For example, instea
 
 In either case, the transformation occurs before any statistical summaries. To transform, _after_ statistical computation, use `coord_trans()`. See [cartesian coordinate systems](#sub:cartesian) for more details.
 
-Date and date time data are continuous variables with special labels. ggplot2 works with `Date` (for dates) and `POSIXct` (for date times) classes: if your dates are in a different format you will need to convert them with `as.Date()` or `as.POSIXct()`. \index{Date/times} \index{Data!date/time} \index{Time} \index{Scales!date/time} \indexf{scale\_x\_datetime} `scale_x_date()` and `scale_x_datetime()` work similarly to `scale_x_continuous()` but have special `date_breaks` and `date_labels` arguments that work in date-friendly units:
+Date and date/time data are continuous variables with special labels. ggplot2 works with `Date` (for dates) and `POSIXct` (for date/times) classes: if your dates are in a different format you will need to convert them with `as.Date()` or `as.POSIXct()`. \index{Date/times} \index{Data!date/time} \index{Time} \index{Scales!date/time} \indexf{scale\_x\_datetime} `scale_x_date()` and `scale_x_datetime()` work similarly to `scale_x_continuous()` but have special `date_breaks` and `date_labels` arguments that work in date-friendly units:
 
 *   `date_breaks` and `date_minor_breaks()` allows you to position breaks by
     date units (years, months, weeks, days, hours, minutes, and seconds). 
@@ -682,9 +682,9 @@ base + scale_x_date(
 
 ### Colour {#sub:scale-colour}
 
-After position, the most commonly used aesthetic is colour. There are quite a few different ways of mapping values to colours in ggplot2: four different gradient based methods for continuous values, and two methods for mapping discrete values. But before we look at the details of the different methods, it's useful to learn a little bit of colour theory. Colour theory is complex because the underlying biology of the eye and brain is complex, and this introduction will only touch on some of the more important issues. An excellent more detailed exposition is available online at <http://tinyurl.com/clrdtls>. \index{Colour} \index{Scales!colour}
+After position, the most commonly used aesthetic is colour. There are quite a few different ways of mapping values to colours in ggplot2: four different gradient-based methods for continuous values, and two methods for mapping discrete values. But before we look at the details of the different methods, it's useful to learn a little bit of colour theory. Colour theory is complex because the underlying biology of the eye and brain is complex, and this introduction will only touch on some of the more important issues. An excellent and more detailed exposition is available online at <http://tinyurl.com/clrdtls>. \index{Colour} \index{Scales!colour}
 
-At the physical level, colour is produced by a mixture of wavelengths of lights. To characterise a colour completely we need to know the complete mixture of wavelengths. Fortunately for us the human eye only has three different colour receptors, and so we can summarise the perception of any colour with just three numbers. You may be familiar with the rgb encoding of colour space, which defines a colour by the intensities of red, green and blue light needed to produce it. One problem with this space is that it is not perceptually uniform: the two colours that are one unit apart may look similar or very different depending on where they are in the colour space. This makes it difficult to create a mapping from a continuous variable to a set of colours. There have been many attempts to come up with colours spaces that are more perceptually uniform.  We'll use a modern attempt called the hcl colour space, which has three components of **h** ue, **c** hroma and **l** uminance: \index{Colour!spaces}
+At the physical level, colour is produced by a mixture of wavelengths of lights. To characterise a colour completely, we need to know the complete mixture of wavelengths. Fortunately for us the human eye only has three different colour receptors, and so we can summarise the perception of any colour with just three numbers. You may be familiar with the RGB encoding of colour space, which defines a colour by the intensities of red, green and blue light needed to produce it. One problem with this space is that it is not perceptually uniform: the two colours that are one unit apart may look similar or very different depending on where they are in the colour space. This makes it difficult to create a mapping from a continuous variable to a set of colours. There have been many attempts to come up with colours spaces that are more perceptually uniform.  We'll use a modern attempt called the HCL colour space, which has three components of **h**ue, **c**hroma and **l**uminance: \index{Colour!spaces}
 
 * Hue is a number between 0 and 360 (an angle) which gives the "colour" of 
   the colour: like blue, red, orange, etc.
@@ -702,7 +702,7 @@ The combination of these three components does not produce a simple geometric sh
 \begin{figure}[htbp]
   \centering
     \includegraphics[width=\linewidth]{diagrams/hcl-space}
-  \caption{The shape of the hcl colour space.  Hue is mapped to angle, chroma to radius and each slice shows a different luminance.  The hcl space is a pretty odd shape, but you can see that colours near the centre of each slice are grey, and as you move towards the edges they become more intense.  Slices for luminance 0 and 100 are omitted because they would, respectively, be a single black point and a single white point.}
+  \caption{The shape of the HCL colour space.  Hue is mapped to angle, chroma to radius and each slice shows a different luminance.  The HCL space is a pretty odd shape, but you can see that colours near the centre of each slice are grey, and as you move towards the edges they become more intense.  Slices for luminance 0 and 100 are omitted because they would, respectively, be a single black point and a single white point.}
   \label{fig:hcl}
 \end{figure}
 
@@ -780,7 +780,7 @@ There are four continuous colour scales:
     ```
     
     By default, `colours` will evenly spaced along the range of the data. To
-    make them unevenly spaced, use the`values` argument, which should be a 
+    make them unevenly spaced, use the `values` argument, which should be a 
     vector of values between 0 and 1.
 
 *   `scale_color_distiller()` and `scale_fill_gradient()` apply the ColorBrewer 
@@ -819,7 +819,7 @@ bars <- ggplot(df, aes(x, y, fill = x)) +
 ```
 
 *   The default colour scheme, `scale_colour_hue()`, picks evenly spaced hues 
-    around the hcl colour wheel. This works well for up to about eight colours, 
+    around the HCL colour wheel. This works well for up to about eight colours, 
     but after that it becomes hard to tell the different colours apart. You
     can control the default chroma and luminance, and the range of hues, with 
     the `h`, `c` and `l` arguments:
@@ -835,8 +835,8 @@ bars <- ggplot(df, aes(x, y, fill = x)) +
     white, they all appear as an identical shade of grey. 
     \indexf{scale\_colour\_hue}
     
-*   `scale_colour_brewer()` uses hand picked "ColorBrewer" colours,
-    <http://colorbrewer2.org/>. These colours have been hand picked to work well
+*   `scale_colour_brewer()` uses handpicked "ColorBrewer" colours,
+    <http://colorbrewer2.org/>. These colours have been designed to work well
     in a wide variety of situations, although the focus is on maps and so the 
     colours tend to work better when displayed in large areas. For categorical 
     data, the palettes most of interest are 'Set1' and 'Dark2' for points and 
@@ -902,9 +902,9 @@ area + scale_fill_brewer(palette = "Pastel1")
 
 ### The manual discrete scale {#sub:scale-manual}
 
-The discrete scales, `scale_linetype()`, `scale_shape()` and `scale_size_discrete()` basically have no options. These scales are just a list of valid values that are mapped to the unique discrete values. \index{Shape} \index{Line type} \index{Size} \indexf{scale\_shape\_manual} \indexf{scale\_colour\_manual} \indexf{scale\_linetype\_manual}
+The discrete scales, `scale_linetype()`, `scale_shape()`, and `scale_size_discrete()` basically have no options. These scales are just a list of valid values that are mapped to the unique discrete values. \index{Shape} \index{Line type} \index{Size} \indexf{scale\_shape\_manual} \indexf{scale\_colour\_manual} \indexf{scale\_linetype\_manual}
 
-If you want to customise these scales, you need to create your own new scale with the manual scale: `scale_shape_manual()`, `scale_linetype_manual()`, `scale_colour_manual()`. The manual scale has one important argument, `values`, where you specify the values that the scale should produce. If this vector is named, it will match the values of the output to the values of the input, otherwise it will match in order of the levels of the discrete variable. You will need some knowledge of the valid aesthetic values, which are described in `vignette("ggplot2-specs")`. 
+If you want to customise these scales, you need to create your own new scale with the manual scale: `scale_shape_manual()`, `scale_linetype_manual()`, `scale_colour_manual()`. The manual scale has one important argument, `values`, where you specify the values that the scale should produce. If this vector is named, it will match the values of the output to the values of the input; otherwise it will match in order of the levels of the discrete variable. You will need some knowledge of the valid aesthetic values, which are described in `vignette("ggplot2-specs")`. 
 
 The following code demonstrates the use of `scale_colour_manual()`: 
 
@@ -964,7 +964,7 @@ See [multiple time series](#sec:spread-gather) for another approach.
 
 ### The identity scale {#sub:scale-identity}
 
-The identity scale is used when your data is already scaled, when the data and aesthetic spaces are the same. The code below shows an example where the identity scale is useful. `luv_colours` contains the locations of all R's built-in colours in the Luv colour space (the space that hcl is based on). A legend is unnecessary, because the point colour represents itself: the data and aesthetic spaces are the same. \index{Scales!identity} \indexf{scale\_identity}
+The identity scale is used when your data is already scaled, when the data and aesthetic spaces are the same. The code below shows an example where the identity scale is useful. `luv_colours` contains the locations of all R's built-in colours in the LUV colour space (the space that HCL is based on). A legend is unnecessary, because the point colour represents itself: the data and aesthetic spaces are the same. \index{Scales!identity} \indexf{scale\_identity}
 
 ```{r scale-identity}
 head(luv_colours)
@@ -977,7 +977,7 @@ ggplot(luv_colours, aes(u, v)) +
 
 ### Exercises
 
-1.  Compare and contrast with the four continuous colour scales with the four
+1.  Compare and contrast the four continuous colour scales with the four
     discrete scales.
     
 1.  Explore the distribution of the built-in `colors()` using the 

@@ -13,7 +13,7 @@ library(tidyr)
 
 ## Introduction
 
-So far, every example in this book has started with a nice dataset that's easy to plot. That's great for learning (because you don't want to struggle with data handling while you're learning visualisation), but in real-life data hardly ever comes in exactly the right structure. To use ggplot2 in practice, you'll need to learn some data wrangling skills. Indeed, in my experience, visualisation is often the easiest part of the data analysis process: once you have the right data, in the right format, aggregated in the right way, the right visualisation is often obvious.
+So far, every example in this book has started with a nice dataset that's easy to plot. That's great for learning (because you don't want to struggle with data handling while you're learning visualisation), but in real life, datasets hardly ever come in exactly the right structure. To use ggplot2 in practice, you'll need to learn some data wrangling skills. Indeed, in my experience, visualisation is often the easiest part of the data analysis process: once you have the right data, in the right format, aggregated in the right way, the right visualisation is often obvious.
 
 The goal of this part of the book is to show you how to integrate ggplot2 with other tools needed for a complete data analysis:
 
@@ -25,7 +25,7 @@ The goal of this part of the book is to show you how to integrate ggplot2 with o
   
 * Most visualisations require some data transformation whether it's 
   creating a new variable from existing variables, or performing simple 
-  aggregations so you can see the forest for the tree. [dplyr](#cha:dplyr)
+  aggregations so you can see the forest for the trees. [dplyr](#cha:dplyr)
   will show you how to do this with the __dplyr__ package.
   
 * If you're using R, you're almost certainly using it for it's fantastic
@@ -48,7 +48,7 @@ Tidy data is particularly important for ggplot2 because the job of ggplot2 is to
 
 Sometimes you'll find a dataset that you have no idea how to plot. That's normally because it's not tidy. For example, take this data frame that contains monthly employment data for the United States:
 
-```{r ec2, echo = FALSE, message = FALSE}
+```{r ec2, include = FALSE}
 library("lubridate")
 ec2 <- 
   ggplot2::economics %>% 
@@ -56,10 +56,12 @@ ec2 <-
   transmute(year = year(date), month = month(date), rate = uempmed) %>%
   filter(year > 2005) %>%
   spread(year, rate)
-knitr::kable(ec2)
+```
+```{r}
+ec2
 ```
 
-(If it looks familiar it's because it's derived from the `economics` dataset that we used earlier in the book.)
+(If it looks familiar, it's because it's derived from the `economics` dataset that we used earlier in the book.)
 
 Imagine you want to plot a time series showing how unemployment has changed over the last 10 years. Can you picture the ggplot2 command you'd need to do it? What if you wanted to focus on the seasonal component of unemployment by putting months on the x-axis and drawing one line for each year? It's difficult to see how to create those plots because the data is not tidy. There are three variables, month, year and unemployment rate, but each variable is stored in a different way:
 
@@ -127,8 +129,9 @@ gather(ec2, key = year, value = unemp, -month)
 To be most useful, we can provide two extra arguments:
 
 ```{r ec2-gather-extra-args}
-economics <- gather(ec2, year, rate, `2006`:`2015`, 
+economics_2 <- gather(ec2, year, rate, `2006`:`2015`, 
   convert = TRUE, na.rm = TRUE)
+economics_2
 ```
 
 We use `convert = TRUE` to automatically convert the years from character strings to numbers, and `na.rm = TRUE` to remove the months with no data. (In some sense the data isn't actually missing because it represents dates that haven't occurred yet.) 
@@ -137,10 +140,10 @@ When the data is in this form, it's easy to visualise in many different ways. Fo
 
 `r columns(2, 2/3)`
 ```{r ec2-plots}
-ggplot(economics, aes(year + (month - 1) / 12, rate)) +
+ggplot(economics_2, aes(year + (month - 1) / 12, rate)) +
   geom_line()
 
-ggplot(economics, aes(month, rate, group = year)) +
+ggplot(economics_2, aes(month, rate, group = year)) +
   geom_line(aes(colour = year), size = 1)
 ```
 

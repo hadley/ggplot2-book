@@ -217,7 +217,7 @@ ggplot(df, aes(x, y)) +
 Another useful technique is to put all the data in the background of each panel:
 
 ```{r}
-df2 <- select(df, -z)
+df2 <- dplyr::select(df, -z)
 
 ggplot(df, aes(x, y)) + 
   geom_point(data = df2, colour = "grey70") +
@@ -257,7 +257,7 @@ plot + facet_wrap(~disp_i, nrow = 1)
 plot + facet_wrap(~disp_n, nrow = 1)
 ```
 
-Note that the facetting formula does not evaluate functions so you must first create a new variable containing the discretised data.
+Note that the facetting formula does not evaluate functions, so you must first create a new variable containing the discretised data.
 
 ### Exercises
 
@@ -367,7 +367,7 @@ ggplot(mpg, aes(displ, cty)) +
 
 ### Equal scales with `coord_equal()`
 
-`coord_equal()` fixes the ratio of length on the x and y axes. The default `ratio`, ensures that the x and y axes have equal scales: i.e., 1 cm along the x axis represents the same range of data as 1 cm along the y axis. The aspect ratio will also be set to ensure that the mapping is maintained regardless of the shape of the output device.  See the documentation of `coord_equal()` for more details. \index{Aspect ratio} \index{Coordinate systems!equal} \indexf{coord\_equal}
+`coord_equal()` fixes the ratio of length on the x and y axes. The default `ratio` ensures that the x and y axes have equal scales: i.e., 1 cm along the x axis represents the same range of data as 1 cm along the y axis. The aspect ratio will also be set to ensure that the mapping is maintained regardless of the shape of the output device.  See the documentation of `coord_equal()` for more details. \index{Aspect ratio} \index{Coordinate systems!equal} \indexf{coord\_equal}
 
 ## Non-linear coordinate systems {#sub:coord-non-linear}
 
@@ -391,7 +391,7 @@ base + coord_trans(y = "log10")
 base + coord_equal()
 ```
 
-The transformation takes part in two steps. Firstly, the parameterisation of each geom is changed to be purely location-based, rather than location and dimension based. For example, a bar can be represented as an x position (a location), a height and a width (two dimensions). Interpreting height and width in a non-Cartesian coordinate system is hard because a rectangle may no longer have constant height and width, so we convert to a purely location-based representation, a polygon defined by the four corners. This effectively converts all geoms to a combination of points, lines and polygons. \index{Geoms!parameterisation} \index{Coordinate systems!transformation}
+The transformation takes part in two steps. Firstly, the parameterisation of each geom is changed to be purely location-based, rather than location- and dimension-based. For example, a bar can be represented as an x position (a location), a height and a width (two dimensions). Interpreting height and width in a non-Cartesian coordinate system is hard because a rectangle may no longer have constant height and width, so we convert to a purely location-based representation, a polygon defined by the four corners. This effectively converts all geoms to a combination of points, lines and polygons. \index{Geoms!parameterisation} \index{Coordinate systems!transformation}
 
 Once all geoms have a location-based representation, the next step is to transform each location into the new coordinate system. It is easy to transform points, because a point is still a point no matter what coordinate system you are in. Lines and polygons are harder, because a straight line may no longer be straight in the new coordinate system. To make the problem tractable we assume that all coordinate transformations are smooth, in the sense that all very short lines will still be very short straight lines in the new coordinate system. With this assumption in hand, we can transform lines and polygons by breaking them up into many small line segments and transforming each segment. This process is called munching and is illustrated below: \index{Munching}
 
