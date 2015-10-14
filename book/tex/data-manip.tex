@@ -122,7 +122,8 @@ select both observations and variables, where in dplyr,
 \texttt{filter()} works exclusively with observations and
 \texttt{select()} with variables. There are some other subtle
 differences, but the main advantage to using \texttt{filter()} is that
-it behaves identically to the other dplyr verbs.)
+it behaves identically to the other dplyr verbs and it tends to be a bit
+faster than \texttt{subset()}.)
 
 In a real analysis, you'd look at the outliers in more detail to see if
 you can find the root cause of the data quality problem. In this case,
@@ -477,8 +478,8 @@ There are also a few useful ways to transform pairs of variables:
   and residuals is often useful. You'll learn more about that in the
   next chapter.
 \item
-  Sometimes its useful to change positions to polar coordinates (or vice
-  versa): distance (\texttt{sqrt(x\^{}2\ +\ y\^{}2)}) and angle
+  Sometimes it's useful to change positions to polar coordinates (or
+  vice versa): distance (\texttt{sqrt(x\^{}2\ +\ y\^{}2)}) and angle
   (\texttt{atan2(y,\ x)}).
 \end{itemize}
 
@@ -730,10 +731,11 @@ according to this metric?
 \KeywordTok{data}\NormalTok{(Batting, }\DataTypeTok{package =} \StringTok{"Lahman"}\NormalTok{)}
 \NormalTok{batters <-}\StringTok{ }\KeywordTok{filter}\NormalTok{(Batting, AB >}\StringTok{ }\DecValTok{0}\NormalTok{)}
 \NormalTok{per_player <-}\StringTok{ }\KeywordTok{group_by}\NormalTok{(batters, playerID)}
-\NormalTok{ba <-}\StringTok{ }\KeywordTok{summarise}\NormalTok{(per_player, }\DataTypeTok{ba =} \KeywordTok{sum}\NormalTok{(H, }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{) /}\StringTok{ }\KeywordTok{sum}\NormalTok{(AB, }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{))}
+\NormalTok{ba <-}\StringTok{ }\KeywordTok{summarise}\NormalTok{(per_player, }
+  \DataTypeTok{ba =} \KeywordTok{sum}\NormalTok{(H, }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{) /}\StringTok{ }\KeywordTok{sum}\NormalTok{(AB, }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{)}
+\NormalTok{)}
 \KeywordTok{ggplot}\NormalTok{(ba, }\KeywordTok{aes}\NormalTok{(ba)) +}\StringTok{ }
-\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{()}
-\CommentTok{#> `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{binwidth =} \FloatTok{0.01}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -751,7 +753,7 @@ at bats:
 \begin{Highlighting}[]
 \NormalTok{ba <-}\StringTok{ }\KeywordTok{summarise}\NormalTok{(per_player, }
   \DataTypeTok{ba =} \KeywordTok{sum}\NormalTok{(H, }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{) /}\StringTok{ }\KeywordTok{sum}\NormalTok{(AB, }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{),}
-  \DataTypeTok{ab =} \KeywordTok{sum}\NormalTok{(AB)}
+  \DataTypeTok{ab =} \KeywordTok{sum}\NormalTok{(AB, }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{)}
 \NormalTok{)}
 \KeywordTok{ggplot}\NormalTok{(ba, }\KeywordTok{aes}\NormalTok{(ab, ba)) +}\StringTok{ }
 \StringTok{  }\KeywordTok{geom_bin2d}\NormalTok{(}\DataTypeTok{bins =} \DecValTok{100}\NormalTok{) +}\StringTok{ }
@@ -801,6 +803,7 @@ observations vs.~an average. Be aware!
   average size. Visualise the results.
 \item
   Compute a histogram of carat by ``hand'' using a binwidth of 0.1.
+  Display the results with \texttt{geom\_bar(stat\ =\ "identity")}.
   (Hint: you might need to create a new variable first).
 \item
   In the baseball example, the batting average seems to increase as the
@@ -870,7 +873,7 @@ almost like an English sentence: first group, then summarise, then
 filter, then mutate. In fact, the best way to pronounce
 \texttt{\%\textgreater{}\%} when reading a sequence of code is as
 ``then''. \texttt{\%\textgreater{}\%} comes from the magrittr package,
-by Stefan Milton Brache. It provides a number of other tools that dplyr
+by Stefan Milton Bache. It provides a number of other tools that dplyr
 doesn't expose by default, so I highly recommend that you check out the
 \href{https://github.com/smbache/magrittr}{magrittr website}.
 \index{magrittr}
@@ -925,8 +928,8 @@ visualisation, but important to know about in general:
 \item
   \texttt{arrange()} orders observations according to variable(s). This
   is most useful when you're looking at the data from the console. It
-  doesn't affect visualisations because ggplot2 doesn't care about the
-  order of the rows.
+  can also be useful for visualisations if you want to control which
+  points are plotted on top.
 \item
   \texttt{select()} picks variables based on their names. Useful when
   you have many variables and want to focus on just a few for analysis.

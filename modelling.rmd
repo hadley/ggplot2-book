@@ -25,30 +25,30 @@ Modelling is an essential tool for visualisation. There are two particularly str
   Models can be a powerful tool for summarising data so that you get a higher
   level view.
 
-In this chapter, I'm going to focus on the use of linear models to acheive these goals. Linear models are a basic, but powerful tool of statistics, and I recommend that everyone serious about visualisation learns at least the basics of how to use them. To this end, I highly recommend two books by Julian J. Faraway:
+In this chapter, I'm going to focus on the use of linear models to acheive these goals. Linear models are a basic, but powerful, tool of statistics, and I recommend that everyone serious about visualisation learns at least the basics of how to use them. To this end, I highly recommend two books by Julian J. Faraway:
 
 * Linear Models with R <http://amzn.com/1439887330>
 * Extending the Linear Model with R <http://amzn.com/158488424X>
 
 These books cover some of the theory of linear models, but are pragmatic and focussed on how to to actually use linear models (and their extensions) in R. \index{Linear models}
 
-There are many other modelling tools, which I don't have the space to show. If you understand how linear models can help improve your visualisations, you should be able to translate the basic idea to other families of models. This chapter just scratches the surface of what you can do. But hopefully it reinforces how visualisation can play combine with modelling to help you build a powerful data analysis toolbox. For more ideas, check out @model-vis-paper.
+There are many other modelling tools, which I don't have the space to show. If you understand how linear models can help improve your visualisations, you should be able to translate the basic idea to other families of models. This chapter just scratches the surface of what you can do. But hopefully it reinforces how visualisation can combine with modelling to help you build a powerful data analysis toolbox. For more ideas, check out @model-vis-paper.
 
 This chapter only scratches the surface of the intersection between visualisation and modelling. In my opinion, mastering the combination of visualisations and models is key being an effective data scientist. Unfortunately most books (like this one!) only focus on either visualisation or modelling, but not both. There's a lot of interesting work to be done.
 
 ## Removing trend {#sub:trend}
 
-So far our analysis of the diamonds data has been plagued by the powerful relationship between size and price. It makes it very difficult to see the impact of cut, colour and clarity because higher quality diamonds tend to be smaller, and hence cheaper. We can use a linear model to remove the effect of size on price. Instead of looking at the raw price, we can look at the relative price: how valuable is this diamond relative to the average diamond of the same size. \index{Removing trend}
+So far our analysis of the diamonds data has been plagued by the powerful relationship between size and price. It makes it very difficult to see the impact of cut, colour and clarity because higher quality diamonds tend to be smaller, and hence cheaper. This challenge is often called confounding. We can use a linear model to remove the effect of size on price. Instead of looking at the raw price, we can look at the relative price: how valuable is this diamond relative to the average diamond of the same size. \index{Removing trend}
 
-To get started, we'll focus on diamonds of size two carats or less (96% of the dataset). This avoids some incidental problems that you can explore in the exercises, if you're interested. We'll also create two new variables: log price and log carat. These variables are useful because they produce a plot with a strong linear trend.
+To get started, we'll focus on diamonds of size two carats or less (96% of the dataset). This avoids some incidental problems that you can explore in the exercises if you're interested. We'll also create two new variables: log price and log carat. These variables are useful because they produce a plot with a strong linear trend.
 
 `r columns(1, 1/2, 0.75)`
 ```{r}
 diamonds2 <- diamonds %>% 
   filter(carat <= 2) %>%
   mutate(
-    lcarat = log(carat),
-    lprice = log(price)
+    lcarat = log2(carat),
+    lprice = log2(price)
   )
 diamonds2
 
@@ -64,23 +64,25 @@ mod <- lm(lprice ~ lcarat, data = diamonds2)
 coef(summary(mod))
 ```
 
-If you're familiar with linear models, you might want to interpret those coefficients: $\log(price) = 8.5 + 1.7 \cdot \log(carat)$, which implies $price =  4900 \cdot carat ^ {1.7}$. Interpreting those coefficients certainly is useful, but even if you don't understand them, the model can still be useful. We can use it to subtract the trend away by looking at the residuals: the price of each diamond minus its predicted price, based on weight alone. Geometrically, the residuals are the vertical distance between each point and the line of best fit. They tell us the price relative to the "average" diamond of that size. \indexf{resid}
+If you're familiar with linear models, you might want to interpret those coefficients: $\log_2(price) = 12.2 + 1.7 \cdot \log_2(carat)$, which implies $price =  4900 \cdot carat ^ {1.7}$. Interpreting those coefficients certainly is useful, but even if you don't understand them, the model can still be useful. We can use it to subtract the trend away by looking at the residuals: the price of each diamond minus its predicted price, based on weight alone. Geometrically, the residuals are the vertical distance between each point and the line of best fit. They tell us the price relative to the "average" diamond of that size. \indexf{resid}
 
 ```{r}
 diamonds2 <- diamonds2 %>% mutate(rel_price = resid(mod))
-ggplot(diamonds2, aes(carat, rel_price)) + geom_bin2d()
+ggplot(diamonds2, aes(carat, rel_price)) + 
+  geom_bin2d()
 ```
 
 A relative price of zero means that the diamond was at the average price; positive means that it's means that it's more expensive than expected (based on its size), and negative means that it's cheaper than expected. 
 
-Interpreting the values precisely is a little tricky here because we've log-transformed price. The residuals give the absolute difference ($x - expected$), but here we have $log(price) - log(expected price)$, or equivalently $log(price / expected price)$. If we "back-transform" to the original scale by applying the opposite transformation (`exp()`) we get $price / expected price$. This makes the values more interpretable, at the cost of the nice symmetry property of the logged alues (i.e. both relatively cheaper and relatively more expensive diamonds have the same range). We can make a little table to help interpret the values: 
+Interpreting the values precisely is a little tricky here because we've log-transformed price. The residuals give the absolute difference ($x - expected$), but here we have $\log_2(price) - \log_2(expected price)$, or equivalently $\log_2(price / expected price)$. If we "back-transform" to the original scale by applying the opposite transformation ($2 ^ x$) we get $price / expected price$. This makes the values more interpretable, at the cost of the nice symmetry property of the logged values (i.e. both relatively cheaper and relatively more expensive diamonds have the same range). We can make a little table to help interpret the values: 
 
 ```{r}
-xgrid <- seq(-1.5, 1.5, length = 11)
-data.frame(logx = xgrid, x = round(exp(xgrid), 2))
+xgrid <- seq(-2, 1, by = 1/3)
+data.frame(logx = xgrid, x = round(2 ^ xgrid, 2))
 ```
 
-For example, a `rel_price` of 0.6 means that it's 1.8x of the expected price (i.e 80% more expensive than expected); a relative price of -0.3 means that it's 0.74x of the expected price (i.e. 26% cheaper than expected). \index{Log!transform}
+This table illustrates why we used `log2()` rather than `log()`: a change of 1 unit on the logged scale, corresponding to a doubling on the original scale. 
+For example, a `rel_price` of -1 means that it's half of the expected price; a relative price of 1 means that it's twice the expected price. \index{Log!transform}
 
 Let's use both price and relative price to see how color and cut affect the value of a diamond. We'll compute the average price and average relative price for each combination of colour and cut:
 
@@ -102,7 +104,7 @@ ggplot(colour_cut, aes(color, price)) +
   geom_point(aes(colour = cut))
 ```
 
-If however, we plot the relative price, you see the pattern that you expect: as the quality of the diamonds decreases, the relative price decreases. The worst quality diamond is 0.61x ($exp( -0.49)) the price of an "average" diamond.
+If however, we plot the relative price, you see the pattern that you expect: as the quality of the diamonds decreases, the relative price decreases. The worst quality diamond is 0.61x ($2 ^ {-0.7}$) the price of an "average" diamond.
 
 ```{r}
 ggplot(colour_cut, aes(color, rel_price)) + 
@@ -185,7 +187,7 @@ txhousing <- txhousing %>%
   mutate(rel_sales = resid(lm(log(sales) ~ factor(month), na.action = na.exclude)))
 ```
 
-With this data in hand, we can re-plot the data. Now that we have log-transformed the data and removed the strong seasonal affects we can see there is a strong common pattern: a consistent increase from 2000-2007, a drop until 2010 (with quite some noise), and then a gradual rebound. To make that more clear, I included a summary line that shows the mean relative sales across all cities. 
+With this data in hand, we can re-plot the data. Now that we have log-transformed the data and removed the strong seasonal effects we can see there is a strong common pattern: a consistent increase from 2000-2007, a drop until 2010 (with quite some noise), and then a gradual rebound. To make that more clear, I included a summary line that shows the mean relative sales across all cities. 
 
 `r columns(1, 3 / 5, 1)`
 ```{r}
@@ -201,7 +203,7 @@ ggplot(txhousing, aes(date, rel_sales)) +
 1.  The final plot shows a lot of short-term noise in the overall trend. How
     could you smooth this further to focus on long-term changes?
     
-1.  If you look closely (e.g. `+ xlim(2005, 2015)`) at the long-term trend 
+1.  If you look closely (e.g. `+ xlim(2008, 2012)`) at the long-term trend 
     you'll notice a weird pattern in 2009-2011. It looks like there was a big 
     dip in 2010. Is this dip "real"? (i.e. can you spot it in the original data)
 
@@ -238,7 +240,7 @@ To take advantage of this data, we need to store the models. We can do this usin
 models <- txhousing %>% 
   group_by(city) %>%
   do(mod = lm(
-    log(sales) ~ factor(month), 
+    log2(sales) ~ factor(month), 
     data = ., 
     na.action = na.exclude
   ))
@@ -288,7 +290,7 @@ model_sum <- models %>% glance(mod)
 model_sum
 ```
 
-This creates a variable with one row for each city, and variables that either summarises complexity (e.g. `df`) or fit (e.g. `r.squared`, `p.value`, `AIC`). Since all the models we fit have the same complexity (12 terms: one for each month), we'll focus on the model fit summaries. $R^2$ is a reasonable place to start because it's well known. We can use a dot plot to see the variation across cities:
+This creates a variable with one row for each city, and variables that either summarise complexity (e.g. `df`) or fit (e.g. `r.squared`, `p.value`, `AIC`). Since all the models we fit have the same complexity (12 terms: one for each month), we'll focus on the model fit summaries. $R^2$ is a reasonable place to start because it's well known. We can use a dot plot to see the variation across cities:
 
 `r columns(1, 2 / 1)`
 ```{r}
@@ -300,8 +302,8 @@ It's hard to picture exactly what those values of $R^2$ mean, so it's helpful to
 
 `r columns(1, 1)`
 ```{r}
-top3 <- c("Midland", "Irving", "Denton County")
-bottom3 <- c("Brownsville", "Harlingen", "McAllen")
+top3 <- c("Bryan-College Station", "Lubbock", "NE Tarrant County")
+bottom3 <- c("McAllen", "Brownsville", "Harlingen")
 extreme <- txhousing %>% ungroup() %>%
   filter(city %in% c(top3, bottom3), !is.na(sales)) %>%
   mutate(city = factor(city, c(top3, bottom3)))
@@ -315,8 +317,8 @@ The cities with low $R^2$ have weaker seasonal patterns and more variation betwe
 
 ### Exercises
 
-1.  Do your conclusions change if you use a different measurement of model fit?
-    Why/why not?
+1.  Do your conclusions change if you use a different measurement of model fit
+    like AIC or deviance? Why/why not?
     
 1.  One possible hypothesis that explains why McAllen, Harlingen and Brownsville
     have lower $R^2$ is that they're smaller towns so there are fewer sales and 
@@ -348,11 +350,11 @@ months <- coefs %>%
 months
 ```
 
-This is a common pattern. You need to use your data tidying skills at many points in an analysis. Once you have the correct tidy dataset, creating the plot is usually easy. Here we'll put month on the x axis, estimate on the y-axis, and draw one line for each city. I've back-transformed (exponentiated) to make the coefficients more interpretable: these are now ratios of sales compared to January.
+This is a common pattern. You need to use your data tidying skills at many points in an analysis. Once you have the correct tidy dataset, creating the plot is usually easy. Here we'll put month on the x axis, estimate on the y-axis, and draw one line for each city. I've back-transformed to make the coefficients more interpretable: these are now ratios of sales compared to January.
 
 `r columns(1, 2/3)`
 ```{r}
-ggplot(months, aes(month, exp(estimate))) +
+ggplot(months, aes(month, 2 ^ estimate)) +
   geom_line(aes(group = city))
 ```
 
@@ -363,7 +365,7 @@ The pattern seems similar across the cities. The main difference is the strength
 coef_sum <- months %>%
   group_by(city) %>%
   summarise(max = max(estimate))
-ggplot(coef_sum, aes(max, reorder(city, max))) + 
+ggplot(coef_sum, aes(2 ^ max, reorder(city, max))) + 
   geom_point()
 ```
 
@@ -396,7 +398,9 @@ The cities with the strongest seasonal effect are College Station and San Marcos
     
 ## Observation data
 
-Observation level data, which include residual diagnostics, is most useful in the traditional model fitting scenario. It's less useful in conjunction with visualisation, but we can still find interesting patterns. It's particularly useful if we want to track down individual values that seem particularly odd. Extracting observation level data is the job of the `augment()` function. This adds one row for each observation. It includes the variables used in the original model, and a number of common influence statistics (see `?augment.lm` for more details): \indexf{augment}
+Observation level data, which include residual diagnostics, is most useful in the traditional model fitting scenario, because it can helps you find "high-leverage" points, point that have a big influence on the final model. It's also useful in conjunction with visualisation, particularly because it provides an alternative way to access the residuals. 
+
+Extracting observation level data is the job of the `augment()` function. This adds one row for each observation. It includes the variables used in the original model, the residuals, and a number of common influence statistics (see `?augment.lm` for more details): \indexf{augment}
 
 ```{r, warning=FALSE}
 obs_sum <- models %>% augment(mod)

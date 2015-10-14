@@ -94,7 +94,7 @@ If you study them for a little while, you'll notice that they contain the same d
 
 Tidying your data will often require translating Cartesian → indexed forms, called __gathering__, and less commonly, indexed → Cartesian, calling __spreading__. The tidyr package provides the `spread()` and `gather()` functions to perform these operations, as described below.
 
-(You can imagine generalising these ideas to higher dimensions. However, data is almost always stored in 2d (rows & columns), so these generalisations are fun to think about, but not that practical. I explore the idea more in @wickham:2007b)
+(You can imagine generalising these ideas to higher dimensions. However, data is almost always stored in 2d (rows & columns), so these generalisations are fun to think about, but not that practical. I explore the idea more in @wickham:2007b.
 
 ### Gather
 
@@ -255,7 +255,7 @@ This dataset is now tidy, but we could do a little more to make it easier to use
 
 ```{r bp3}
 bpd_3 <- extract(bpd_2, week, "week", "(\\d)", convert = TRUE)
-bpd_4 <- arrange(bpd_3, name, week)
+bpd_4 <- dplyr::arrange(bpd_3, name, week)
 bpd_4
 ```
 
@@ -293,7 +293,18 @@ scores_2
 A good indication that we have made a tidy dataset is that it's now easy to calculate the statistic of interest: the difference between pre- and post-intervention scores:
 
 ```{r scores3}
-mutate(scores_2, diff = post - pre)
+scores_3 <- mutate(scores_2, diff = post - pre)
+scores_3
+```
+
+And it's similarly easy to plot:
+
+```{r scores4}
+ggplot(scores_3, aes(person, diff, color = test)) +
+  geom_hline(size = 2, colour = "white", yintercept = 0) +
+  geom_point() +
+  geom_path(aes(group = person), colour = "grey50", 
+    arrow = arrow(length = unit(0.25, "cm")))
 ```
 
 (Again, you'll learn about `mutate()` in the next chapter.)
@@ -302,7 +313,7 @@ mutate(scores_2, diff = post - pre)
 
 Data tidying is a big topic and this chapter only scratches the surface. I recommend the following references which go into considerably more depth on this topic:
 
-* The documentation. I've described the most important arguments, but most
+* The tidyr documentation. I've described the most important arguments, but most
   functions have other arguments that help deal with less common situations.
   If you're struggling, make sure to read the documentation to see if there's
   an argument that might help you.

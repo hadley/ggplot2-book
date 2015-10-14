@@ -49,7 +49,7 @@ filter(diamonds, x == 0 | y == 0)
 
 This is equivalent to the base R code `diamonds[diamonds$x == 0 | diamonds$y == 0, ]`, but is more concise because `filter()` when you refer to (e.g.) the bare `x`, dplyr knows to look first in the data frame.
 
-(If you've used `subset()` before, you'll notice that it has very similar behaviour. The biggest difference is that `subset()` can select both observations and variables, where in dplyr, `filter()` works exclusively with observations and `select()` with variables. There are some other subtle differences, but the main advantage to using `filter()` is that it behaves identically to the other dplyr verbs.)
+(If you've used `subset()` before, you'll notice that it has very similar behaviour. The biggest difference is that `subset()` can select both observations and variables, where in dplyr, `filter()` works exclusively with observations and `select()` with variables. There are some other subtle differences, but the main advantage to using `filter()` is that it behaves identically to the other dplyr verbs and it tends to  be a bit faster than `subset()`.)
 
 In a real analysis, you'd look at the outliers in more detail to see if you can find the root cause of the data quality problem. In this case, we're just going to throw them out and focus on what remains. To save some typing, we may provide multiple arguments to `filter()` which combines them.
 
@@ -226,7 +226,7 @@ There are also a few useful ways to transform pairs of variables:
 * If you see a strong trend, use a model to partition it into pattern and 
   residuals is often useful. You'll learn more about that in the next chapter.
   
-* Sometimes its useful to change positions to polar coordinates (or vice
+* Sometimes it's useful to change positions to polar coordinates (or vice
   versa): distance (`sqrt(x^2 + y^2)`) and angle (`atan2(y, x)`).
 
 ### Exercises
@@ -344,9 +344,11 @@ Another example of this comes from baseball. Let's take the MLB batting data fro
 data(Batting, package = "Lahman")
 batters <- filter(Batting, AB > 0)
 per_player <- group_by(batters, playerID)
-ba <- summarise(per_player, ba = sum(H, na.rm = TRUE) / sum(AB, na.rm = TRUE))
+ba <- summarise(per_player, 
+  ba = sum(H, na.rm = TRUE) / sum(AB, na.rm = TRUE)
+)
 ggplot(ba, aes(ba)) + 
-  geom_histogram()
+  geom_histogram(binwidth = 0.01)
 ```
 
 Wow, there are a lot of players who can hit the ball every single time! Would you want them on your fantasy baseball team?  Let's double check they're really that good by calibrating also showing the total number of at bats:
@@ -354,7 +356,7 @@ Wow, there are a lot of players who can hit the ball every single time! Would yo
 ```{r}
 ba <- summarise(per_player, 
   ba = sum(H, na.rm = TRUE) / sum(AB, na.rm = TRUE),
-  ab = sum(AB)
+  ab = sum(AB, na.rm = TRUE)
 )
 ggplot(ba, aes(ab, ba)) + 
   geom_bin2d(bins = 100) + 
@@ -384,6 +386,7 @@ You'll often see a similar pattern whenever you plot number of observations vs. 
     Visualise the results.
 
 1.  Compute a histogram of carat by "hand" using a binwidth of 0.1. 
+    Display the results with `geom_bar(stat = "identity")`.
     (Hint: you might need to create a new variable first).
 
 1.  In the baseball example, the batting average seems to increase as the 
@@ -432,7 +435,7 @@ cut_depth <- diamonds %>%
   mutate(prop = n / sum(n))
 ```
 
-This makes it easier to understand what's going on as we can read it almost like an English sentence: first group, then summarise, then filter, then mutate. In fact, the best way to pronounce `%>%` when reading a sequence of code is as "then". `%>%` comes from the magrittr package, by Stefan Milton Brache. It provides a number of other tools that dplyr doesn't expose by default, so I highly recommend that you check out the [magrittr website](https://github.com/smbache/magrittr). \index{magrittr}
+This makes it easier to understand what's going on as we can read it almost like an English sentence: first group, then summarise, then filter, then mutate. In fact, the best way to pronounce `%>%` when reading a sequence of code is as "then". `%>%` comes from the magrittr package, by Stefan Milton Bache. It provides a number of other tools that dplyr doesn't expose by default, so I highly recommend that you check out the [magrittr website](https://github.com/smbache/magrittr). \index{magrittr}
 
 `%>%` works by taking the thing on the left hand side (LHS) and supplying it as the first argument to the function on the right hand side (RHS). Each of these pairs of calls is equivalent:
 
@@ -470,8 +473,8 @@ x %>% f(y) %>% g(z)
 dplyr provides a number of other verbs that are less useful for visualisation, but important to know about in general:
 
 * `arrange()` orders observations according to variable(s). This is most useful
-  when you're looking at the data from the console. It doesn't affect
-  visualisations because ggplot2 doesn't care about the order of the rows. 
+  when you're looking at the data from the console. It can also be useful
+  for visualisations if you want to control which points are plotted on top.
   
 * `select()` picks variables based on their names. Useful when you have 
   many variables and want to focus on just a few for analysis.

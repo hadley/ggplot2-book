@@ -186,7 +186,7 @@ operations, as described below.
 (You can imagine generalising these ideas to higher dimensions. However,
 data is almost always stored in 2d (rows \& columns), so these
 generalisations are fun to think about, but not that practical. I
-explore the idea more in Wickham (2007))
+explore the idea more in Wickham (2007).
 
 \subsection{Gather}
 
@@ -525,7 +525,7 @@ order the rows to keep the records for each person together.
 \begin{Shaded}
 \begin{Highlighting}[]
 \NormalTok{bpd_3 <-}\StringTok{ }\KeywordTok{extract}\NormalTok{(bpd_2, week, }\StringTok{"week"}\NormalTok{, }\StringTok{"(}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{d)"}\NormalTok{, }\DataTypeTok{convert =} \OtherTok{TRUE}\NormalTok{)}
-\NormalTok{bpd_4 <-}\StringTok{ }\KeywordTok{arrange}\NormalTok{(bpd_3, name, week)}
+\NormalTok{bpd_4 <-}\StringTok{ }\NormalTok{dplyr::}\KeywordTok{arrange}\NormalTok{(bpd_3, name, week)}
 \NormalTok{bpd_4}
 \CommentTok{#> Source: local data frame [9 x 6]}
 \CommentTok{#> }
@@ -628,7 +628,8 @@ post-intervention scores:
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\KeywordTok{mutate}\NormalTok{(scores_2, }\DataTypeTok{diff =} \NormalTok{post -}\StringTok{ }\NormalTok{pre)}
+\NormalTok{scores_3 <-}\StringTok{ }\KeywordTok{mutate}\NormalTok{(scores_2, }\DataTypeTok{diff =} \NormalTok{post -}\StringTok{ }\NormalTok{pre)}
+\NormalTok{scores_3}
 \CommentTok{#> Source: local data frame [6 x 5]}
 \CommentTok{#> }
 \CommentTok{#>   person   test  post   pre  diff}
@@ -642,6 +643,22 @@ post-intervention scores:
 \end{Highlighting}
 \end{Shaded}
 
+And it's similarly easy to plot:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(scores_3, }\KeywordTok{aes}\NormalTok{(person, diff, }\DataTypeTok{color =} \NormalTok{test)) +}
+\StringTok{  }\KeywordTok{geom_hline}\NormalTok{(}\DataTypeTok{size =} \DecValTok{2}\NormalTok{, }\DataTypeTok{colour =} \StringTok{"white"}\NormalTok{, }\DataTypeTok{yintercept =} \DecValTok{0}\NormalTok{) +}
+\StringTok{  }\KeywordTok{geom_point}\NormalTok{() +}
+\StringTok{  }\KeywordTok{geom_path}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{group =} \NormalTok{person), }\DataTypeTok{colour =} \StringTok{"grey50"}\NormalTok{, }
+    \DataTypeTok{arrow =} \KeywordTok{arrow}\NormalTok{(}\DataTypeTok{length =} \KeywordTok{unit}\NormalTok{(}\FloatTok{0.25}\NormalTok{, }\StringTok{"cm"}\NormalTok{)))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}[H]
+  \includegraphics[width=0.5\linewidth]{_figures/tidy_data/scores4-1}
+\end{figure}
+
 (Again, you'll learn about \texttt{mutate()} in the next chapter.)
 
 \section{Learning more}
@@ -652,10 +669,10 @@ depth on this topic:
 
 \begin{itemize}
 \item
-  The documentation. I've described the most important arguments, but
-  most functions have other arguments that help deal with less common
-  situations. If you're struggling, make sure to read the documentation
-  to see if there's an argument that might help you.
+  The tidyr documentation. I've described the most important arguments,
+  but most functions have other arguments that help deal with less
+  common situations. If you're struggling, make sure to read the
+  documentation to see if there's an argument that might help you.
 \item
   ``\href{http://www.jstatsoft.org/v59/i10/}{Tidy data}'', an article in
   the \emph{Journal of Statistical Software}. It describes the ideas of
