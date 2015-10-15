@@ -21,11 +21,11 @@ The goal of dplyr is to provide verbs (functions) that help you solve the most c
 * `mutate()`
 * `group_by()` & `summarise()`
 
-These verbs are easy to learn because they all work the same way: they take a data frame as the first argument, and return a modified data frame. The other arguments control the details of the transformation, and are always interpreted in the context of the data frame so you can refer to variables directly. I'll also explain each in the same way: I'll show you a motivating examples using the `diamonds` data, give you more details about how the function works, and finish up with some exercises for you to practice your skills with.
+These verbs are easy to learn because they all work the same way: they take a data frame as the first argument, and return a modified data frame. The other arguments control the details of the transformation, and are always interpreted in the context of the data frame so you can refer to variables directly. I'll also explain each in the same way: I'll show you a motivating example using the `diamonds` data, give you more details about how the function works, and finish up with some exercises for you to practice your skills with.
 
 You'll also learn how to create data transformation pipelines using `%>%`. `%>%` plays a similar role to `+` in ggplot2: it allows you to solve complex problems by combining small pieces that are easily understood in isolation.
   
-This chapter only scratches the surface of dplyr's capabilities but it should be enough to get help you with visualisation problems. You can learn more by using the resources discussed at the end of the chapter.
+This chapter only scratches the surface of dplyr's capabilities but it should be enough to help you with visualisation problems. You can learn more by using the resources discussed at the end of the chapter.
 
 ## Filter observations
 
@@ -47,7 +47,7 @@ There are around 50,000 points in this dataset: most of them lie along the diago
 filter(diamonds, x == 0 | y == 0)
 ```
 
-This is equivalent to the base R code `diamonds[diamonds$x == 0 | diamonds$y == 0, ]`, but is more concise because `filter()` when you refer to (e.g.) the bare `x`, dplyr knows to look first in the data frame.
+This is equivalent to the base R code `diamonds[diamonds$x == 0 | diamonds$y == 0, ]`, but is more concise because `filter()` knows to look for the bare `x` in the data frame.
 
 (If you've used `subset()` before, you'll notice that it has very similar behaviour. The biggest difference is that `subset()` can select both observations and variables, where in dplyr, `filter()` works exclusively with observations and `select()` with variables. There are some other subtle differences, but the main advantage to using `filter()` is that it behaves identically to the other dplyr verbs and it tends to  be a bit faster than `subset()`.)
 
@@ -67,7 +67,7 @@ This plot is now more informative - we can see a very strong relationship betwee
 * There are some clear bivariate outliers, but it's hard to select them with
   a simple filter.
   
-We'll solve both of these problem in the next section by adding a new variable that's a transformation of x and y. But before we continue on to that, lets talk more about the details of `filter()`.
+We'll solve both of these problem in the next section by adding a new variable that's a transformation of x and y. But before we continue on to that, let's talk more about the details of `filter()`.
 
 ### Useful tools
 
@@ -84,7 +84,7 @@ And combine them with logical operators:
 * `!x` (pronounced "not x"), flips `TRUE` and `FALSE` so it keeps all the values 
   where `x` is `FALSE`.
 * `x & y`: `TRUE` if both `x` and `y` are `TRUE`.
-* `x | y`: `TRUE` if either `x` or `y` are `TRUE`.
+* `x | y`: `TRUE` if either `x` or `y` (or both) are `TRUE`.
 * `xor(x, y)`: `TRUE` if either `x` or `y` are `TRUE`, but not both 
   (exclusive or).
 
@@ -94,7 +94,7 @@ Most real queries involve some combination of both:
 * Size between 1 and 2 carats: `carat >= 1 & carat < 2`
 * Cut is ideal or premium: `cut == "Premium" | cut == "Ideal"`, or 
   `cut %in% c("Premium", "Ideal")` (note that R is case sensitive)
-* Worst colour, cut and clarify: `cut == "Fair" & color == "J" & clarity == "SI2"`
+* Worst colour, cut and clarity: `cut == "Fair" & color == "J" & clarity == "SI2"`
   
 You can also use functions in the filtering expression:
 
@@ -170,7 +170,7 @@ is.na(x)
 
 To better explore the relationship between `x` and `y`, it's useful to "rotate" the plot so that the data is flat, not diagonal. We can do that by creating two new variables: one that represents the difference between `x` and `y` (which in this context represents the symmetry of the diamond) and one that represents its size (the length of the diagonal). \indexf{mutate} \index{Data!creating new variables}
 
-To create new variables use `mutate()`. Like `filter()` it takes a data frame as its first argument and returns a data frame. It's second and subsequent arguments are named expressions that generate new variables. Like `filter()` you can refer to variables just by their name, you don't need to also include the name of the dataset.
+To create new variables use `mutate()`. Like `filter()` it takes a data frame as its first argument and returns a data frame. Its second and subsequent arguments are named expressions that generate new variables. Like `filter()` you can refer to variables just by their name, you don't need to also include the name of the dataset.
 
 ```{r mutate1}
 diamonds_ok2 <- mutate(diamonds_ok,
@@ -199,7 +199,7 @@ That's an interesting histogram! While most diamonds are close to being symmetri
 
 ### Useful tools
 
-Typically, transformations will be suggested by your domain knowledge. However, there are a few transformations that are useful in a surprisingly wide domain range of circumstances. 
+Typically, transformations will be suggested by your domain knowledge. However, there are a few transformations that are useful in a surprisingly wide range of circumstances. 
 
 * Log-transformations are often useful. They turn multiplicative relationships 
   into additive relationships; they compress data that varies over orders of 
@@ -248,7 +248,7 @@ There are also a few useful ways to transform pairs of variables:
     integer. Compute the depth yourself and compare it to the existing depth
     variable. Summarise your findings with a plot.
 
-1.  Compare the distribution of symmetry for diamonds with $x > y$ vs. $y < x$.
+1.  Compare the distribution of symmetry for diamonds with $x > y$ vs. $x < y$.
 
 ## Group-wise summaries {#sec:summarise}
 
@@ -285,7 +285,7 @@ ggplot(cut_depth, aes(depth, n, colour = cut)) +
   geom_line()
 ```
 
-We can use a grouped `mutate()` to convert counts to proportions, so it's easier to compare across the cuts. `summarise()` strips one level of grouping off, so `cut_depth()` will be grouped by cut.
+We can use a grouped `mutate()` to convert counts to proportions, so it's easier to compare across the cuts. `summarise()` strips one level of grouping off, so `cut_depth` will be grouped by cut.
 
 ```{r freqpoly-scaled}
 cut_depth <- mutate(cut_depth, prop = n / sum(n))
@@ -303,7 +303,7 @@ ggplot(cut_depth, aes(depth, prop, colour = cut)) +
 * Extremes: `quartile(x)`, `min(x)`, `max(x)`.
 * Positions: `first(x)`, `last(x)`, `nth(x, 2)`.
 
-Another extremely useful technique is to use `sum()` or `mean()` with a logical vector. When logical vector is treated as numeric, `TRUE` becomes 1 and `FALSE` becomes 0. This means that `sum()` tells you the number of `TRUE`s, and `mean()` tells you the proportion of `TRUE`s. For example, the following code counts the number of diamonds with carat greater than or equal to 4, and the proportion of diamonds that cost less than $1000.
+Another extremely useful technique is to use `sum()` or `mean()` with a logical vector. When a logical vector is treated as numeric, `TRUE` becomes 1 and `FALSE` becomes 0. This means that `sum()` tells you the number of `TRUE`s, and `mean()` tells you the proportion of `TRUE`s. For example, the following code counts the number of diamonds with carat greater than or equal to 4, and the proportion of diamonds that cost less than $1000.
 
 ```{r}
 summarise(diamonds, 
@@ -337,7 +337,7 @@ ggplot(by_clarity, aes(clarity, mean)) +
   geom_point(aes(size = n))
 ```
 
-Another example of this comes from baseball. Let's take the MLB batting data from the Lahman package and calculate the batting average, the number of hits divided by the number of at bats. Who's the best batter according to this metric?
+Another example of this comes from baseball. Let's take the MLB batting data from the Lahman package and calculate the batting average: the number of hits divided by the number of at bats. Who's the best batter according to this metric?
 
 `r columns(1, 2/3)`
 ```{r}
@@ -394,7 +394,7 @@ You'll often see a similar pattern whenever you plot number of observations vs. 
 
 ## Transformation pipelines
 
-Most real analyses require you to string together multiple `mutate()`s, `filter()`s, `group_by()`s , and `summarise()`s. For example, above, we created a frequency polygon by hand by with a combination of all four verbs: \indexc{\%>\%}
+Most real analyses require you to string together multiple `mutate()`s, `filter()`s, `group_by()`s , and `summarise()`s. For example, above, we created a frequency polygon by hand with a combination of all four verbs: \indexc{\%>\%}
 
 ```{r pipe1, results = "hide"}
 # By using intermediate values

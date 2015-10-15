@@ -21,7 +21,7 @@ Modelling is an essential tool for visualisation. There are two particularly str
   effects are already known and expected, and removing them allows you to 
   see surprises more easily.
   
-* Other times you have a lot of data, too much to show on a handful of plots.  
+* Other times you have a lot of data, too much to show on a handful of plots.
   Models can be a powerful tool for summarising data so that you get a higher
   level view.
 
@@ -30,11 +30,11 @@ In this chapter, I'm going to focus on the use of linear models to acheive these
 * Linear Models with R <http://amzn.com/1439887330>
 * Extending the Linear Model with R <http://amzn.com/158488424X>
 
-These books cover some of the theory of linear models, but are pragmatic and focussed on how to to actually use linear models (and their extensions) in R. \index{Linear models}
+These books cover some of the theory of linear models, but are pragmatic and focussed on how to actually use linear models (and their extensions) in R. \index{Linear models}
 
 There are many other modelling tools, which I don't have the space to show. If you understand how linear models can help improve your visualisations, you should be able to translate the basic idea to other families of models. This chapter just scratches the surface of what you can do. But hopefully it reinforces how visualisation can combine with modelling to help you build a powerful data analysis toolbox. For more ideas, check out @model-vis-paper.
 
-This chapter only scratches the surface of the intersection between visualisation and modelling. In my opinion, mastering the combination of visualisations and models is key being an effective data scientist. Unfortunately most books (like this one!) only focus on either visualisation or modelling, but not both. There's a lot of interesting work to be done.
+This chapter only scratches the surface of the intersection between visualisation and modelling. In my opinion, mastering the combination of visualisations and models is key to being an effective data scientist. Unfortunately most books (like this one!) only focus on either visualisation or modelling, but not both. There's a lot of interesting work to be done.
 
 ## Removing trend {#sub:trend}
 
@@ -72,7 +72,7 @@ ggplot(diamonds2, aes(carat, rel_price)) +
   geom_bin2d()
 ```
 
-A relative price of zero means that the diamond was at the average price; positive means that it's means that it's more expensive than expected (based on its size), and negative means that it's cheaper than expected. 
+A relative price of zero means that the diamond was at the average price; positive means that it's more expensive than expected (based on its size), and negative means that it's cheaper than expected. 
 
 Interpreting the values precisely is a little tricky here because we've log-transformed price. The residuals give the absolute difference ($x - expected$), but here we have $\log_2(price) - \log_2(expected price)$, or equivalently $\log_2(price / expected price)$. If we "back-transform" to the original scale by applying the opposite transformation ($2 ^ x$) we get $price / expected price$. This makes the values more interpretable, at the cost of the nice symmetry property of the logged values (i.e. both relatively cheaper and relatively more expensive diamonds have the same range). We can make a little table to help interpret the values: 
 
@@ -84,31 +84,31 @@ data.frame(logx = xgrid, x = round(2 ^ xgrid, 2))
 This table illustrates why we used `log2()` rather than `log()`: a change of 1 unit on the logged scale, corresponding to a doubling on the original scale. 
 For example, a `rel_price` of -1 means that it's half of the expected price; a relative price of 1 means that it's twice the expected price. \index{Log!transform}
 
-Let's use both price and relative price to see how color and cut affect the value of a diamond. We'll compute the average price and average relative price for each combination of colour and cut:
+Let's use both price and relative price to see how colour and cut affect the value of a diamond. We'll compute the average price and average relative price for each combination of colour and cut:
 
 ```{r}
-colour_cut <- diamonds2 %>% 
+color_cut <- diamonds2 %>% 
   group_by(color, cut) %>%
   summarise(
     price = mean(price), 
     rel_price = mean(rel_price)
   )
-colour_cut
+color_cut
 ```
 
 If we look at price, it's hard to see how the quality of the diamond affects the price. The lowest quality diamonds (fair cut with colour J) have the highest average value! This is because those diamonds also tend to be larger: size and quality are confounded.
 
 ```{r}
-ggplot(colour_cut, aes(color, price)) + 
-  geom_line(aes(group = cut), color = "grey80") +
+ggplot(color_cut, aes(color, price)) + 
+  geom_line(aes(group = cut), colour = "grey80") +
   geom_point(aes(colour = cut))
 ```
 
 If however, we plot the relative price, you see the pattern that you expect: as the quality of the diamonds decreases, the relative price decreases. The worst quality diamond is 0.61x ($2 ^ {-0.7}$) the price of an "average" diamond.
 
 ```{r}
-ggplot(colour_cut, aes(color, rel_price)) + 
-  geom_line(aes(group = cut), color = "grey80") +
+ggplot(color_cut, aes(color, rel_price)) + 
+  geom_line(aes(group = cut), colour = "grey80") +
   geom_point(aes(colour = cut))
 ```
 
@@ -184,7 +184,9 @@ We can apply this transformation to every city with `group_by()` and `mutate()`.
 ```{r}
 txhousing <- txhousing %>% 
   group_by(city) %>% 
-  mutate(rel_sales = resid(lm(log(sales) ~ factor(month), na.action = na.exclude)))
+  mutate(rel_sales = resid(lm(log(sales) ~ factor(month), 
+    na.action = na.exclude))
+  )
 ```
 
 With this data in hand, we can re-plot the data. Now that we have log-transformed the data and removed the strong seasonal effects we can see there is a strong common pattern: a consistent increase from 2000-2007, a drop until 2010 (with quite some noise), and then a gradual rebound. To make that more clear, I included a summary line that shows the mean relative sales across all cities. 
@@ -219,9 +221,9 @@ ggplot(txhousing, aes(date, rel_sales)) +
 
 ## Visualising models {#sub:modelvis}
 
-The previous examples the linear model just as a tool for removing trend: we fit the model and immediately threw it away. We didn't care about the model itself, just what it could do for us. But the models themselves contain useful information and if we keep them around, there are many new problems that we can solve:
+The previous examples used the linear model just as a tool for removing trend: we fit the model and immediately threw it away. We didn't care about the model itself, just what it could do for us. But the models themselves contain useful information and if we keep them around, there are many new problems that we can solve:
 
-* We might be interested in cities where the model didn't not fit well:
+* We might be interested in cities where the model didn't fit well:
   a poorly fitting model suggests that there isn't much of a seasonal pattern,
   which contradicts our implicit hypothesis that all cities share a similar 
   pattern.
@@ -232,7 +234,7 @@ The previous examples the linear model just as a tool for removing trend: we fit
   
 * We may want to dive into the details of the model itself, and see exactly 
   what it says about each observation. For this data, it might help us find 
-  suspicious data points that might reflect data entries errors.
+  suspicious data points that might reflect data entry errors.
   
 To take advantage of this data, we need to store the models. We can do this using a new dplyr verb: `do()`. It allows us to store the result of arbitrary computation in a column. Here we'll use it to store that linear model: \indexf{do}
 
@@ -249,7 +251,7 @@ models
 
 There are two important things to note in this code:
 
-* `do()` creates a new column called `mod.` This is special type of column: 
+* `do()` creates a new column called `mod.` This is a special type of column: 
   instead of containing an atomic vector (a logical, integer, numeric, 
   or character) like usual, it's a list. Lists are R's most flexible data 
   structure and can hold anything, including linear models.
@@ -325,8 +327,8 @@ The cities with low $R^2$ have weaker seasonal patterns and more variation betwe
     more noise. Confirm or refute this hypothesis.
     
 1.  McAllen, Harlingen and Brownsville seem to have much more year-to-year
-    variation than Midland, Irving and Denton County. How does the model
-    change if you also include a linear trend for year? (i.e. 
+    variation than Bryan-College Station, Lubbock, and NE Tarrant County. How 
+    does the model change if you also include a linear trend for year? (i.e. 
     `log(sales) ~ factor(month) + year`). 
 
 1.  Create a faceted plot that shows the seasonal patterns for all cities.  
@@ -334,7 +336,7 @@ The cities with low $R^2$ have weaker seasonal patterns and more variation betwe
 
 ## Coefficient-level summaries
 
-The model fit summaries suggest that there are some important differences in seasonality between the different cities. Lets dive into those differences by using `tidy()` to extract detail about each individual coefficient: \indexf{tidy}
+The model fit summaries suggest that there are some important differences in seasonality between the different cities. Let's dive into those differences by using `tidy()` to extract detail about each individual coefficient: \indexf{tidy}
 
 ```{r}
 coefs <- models %>% tidy(mod)
@@ -350,7 +352,7 @@ months <- coefs %>%
 months
 ```
 
-This is a common pattern. You need to use your data tidying skills at many points in an analysis. Once you have the correct tidy dataset, creating the plot is usually easy. Here we'll put month on the x axis, estimate on the y-axis, and draw one line for each city. I've back-transformed to make the coefficients more interpretable: these are now ratios of sales compared to January.
+This is a common pattern. You need to use your data tidying skills at many points in an analysis. Once you have the correct tidy dataset, creating the plot is usually easy. Here we'll put month on the x-axis, estimate on the y-axis, and draw one line for each city. I've back-transformed to make the coefficients more interpretable: these are now ratios of sales compared to January.
 
 `r columns(1, 2/3)`
 ```{r}
@@ -376,7 +378,7 @@ The cities with the strongest seasonal effect are College Station and San Marcos
 1.  Pull out the three cities with highest and lowest seasonal effect. Plot
     their coefficients.
     
-1.  How does strength of seasonal effect relation to the $R^2$ for the model?
+1.  How does strength of seasonal effect relate to the $R^2$ for the model?
     Answer with a plot.
     
     ```{r, echo = FALSE, eval = FALSE}

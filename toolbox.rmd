@@ -98,8 +98,8 @@ Each of these geoms is two dimensional and requires both `x` and `y` aesthetics.
   
 *   `geom_line()` makes a __line plot__.  The `group` aesthetic determines 
     which observations are connected; see [grouping](#sec:grouping) for more 
-    detail. `geom_path()` is similar to a `geom_line()`, but lines are 
-    connected in the order they appear in the data, not from left to right.
+    detail. `geom_line()` connects points from left to right; `geom_path()` is 
+    similar but connects points in the order they appear in the data.
     Both `geom_line()` and `geom_path()` also understand the aesthetic 
     `linetype`, which maps a categorical variable to solid, dotted and dashed
     lines. \index{Line plot} \indexf{geom\_line} \indexf{geom\_path}
@@ -291,7 +291,7 @@ Labelling data well poses some challenges:
     
 *   If you want to label many points, it is difficult to avoid overlaps. 
     `check_overlap = TRUE` is useful, but offers little control over which
-    labels are removed. There are number of techniques available for base 
+    labels are removed. There are a number of techniques available for base 
     graphics, like `maptools::pointLabel()`, but they're not trivial to port 
     to the grid graphics used by ggplot2. If all else fails, you may need to
     manually label points in a drawing tool.
@@ -412,9 +412,9 @@ ggplot(diamonds, aes(log10(carat), log10(price))) +
 
 ## Collective geoms {#sec:grouping}
 
-Geoms can be roughly divided into individual and collective geoms. An __individual__ geom draws a distinct graphical object for each observation (row). For example, the point geom draws one point per row. A __collective__ geom displays multiple observations with one geometric object. This may be a result of a statistical summary, like a boxplot, or may be fundamental to the display of the geom, like a polygon. Lines and paths fall somewhere in between: each line is composed of a set of straight segments, but each segment represents two points. How do we control to assignment of observations to graphical elements?  This is the job of the `group` aesthetic. \index{Grouping} \indexc{group} \index{Geoms!collective}
+Geoms can be roughly divided into individual and collective geoms. An __individual__ geom draws a distinct graphical object for each observation (row). For example, the point geom draws one point per row. A __collective__ geom displays multiple observations with one geometric object. This may be a result of a statistical summary, like a boxplot, or may be fundamental to the display of the geom, like a polygon. Lines and paths fall somewhere in between: each line is composed of a set of straight segments, but each segment represents two points. How do we control the assignment of observations to graphical elements?  This is the job of the `group` aesthetic. \index{Grouping} \indexc{group} \index{Geoms!collective}
 
-By default, the `group` aesthetic is mapped to the interaction of all discrete variables in the plot. This often partitions the data correctly, but when it does not, or when no discrete variable is used in a plot, you'll need to explicitly define the grouping structure, by mapping group to a variable that has a different value for each group.
+By default, the `group` aesthetic is mapped to the interaction of all discrete variables in the plot. This often partitions the data correctly, but when it does not, or when no discrete variable is used in a plot, you'll need to explicitly define the grouping structure by mapping group to a variable that has a different value for each group.
 
 There are three common cases where the default is not enough, and we will consider each one below. In the following examples, we will use a simple longitudinal dataset, `Oxboys`, from the nlme package.  It records the heights (`height`) and centered ages (`age`) of 26 boys (`Subject`), measured on nine occasions (`Occasion`). `Subject` and `Occassion` are stored as ordered factors. \index{nlme} \index{Data!Oxboys@\texttt{Oxboys}}
 
@@ -619,7 +619,7 @@ For interactive 3d plots, including true 3d surfaces, see RGL, <http://rgl.neosc
 ## Drawing maps {#sec:maps}
 \index{Maps!geoms} \index{Data!spatial}
 
-There are four types of map data you might want to visualise: vector boundaries, point metadata, area metadata, and raster images. Typically, assembling these datasets is the most challenging part of drawing maps. Unfortunately ggplot2 cannot help you with that part of the analysis, but I'll provide some hints about other R packages that you might want to look at.
+There are four types of map data you might want to visualise: vector boundaries, point metadata, area metadata, and raster images. Typically, assembling these datasets is the most challenging part of drawing maps. Unfortunately ggplot2 can't help you with that part of the analysis, but I'll provide some hints about other R packages that you might want to look at.
 
 I'll illustrate each of the four types of map data with some maps of Michigan.
 
@@ -656,7 +656,7 @@ ggplot(mi_counties, aes(lon, lat)) +
 
 Note the use of `coord_quickmap()`: it's a quick and dirty adjustment that ensures that the aspect ratio of the plot is set correctly. 
 
-Other useful source of vector boundary data are:
+Other useful sources of vector boundary data are:
 
 * The USAboundaries package, <https://github.com/ropensci/USAboundaries> which 
   contains state, county and zip code data for the US. As well as current 
@@ -678,7 +678,18 @@ Other useful source of vector boundary data are:
 * You may have your own shape files (`.shp`). You can load them into
   R with `maptools::readShapeSpatial()`.
   
-These sources all generate spatial data frames defined by the sp package. Convert them into the data frame form that ggplot2 needs with `fortify()`.
+These sources all generate spatial data frames defined by the sp package. You can convert them into a data frame with `fortify()`:
+
+```{r}
+library(USAboundaries)
+c18 <- us_boundaries("1820-01-01")
+c18df <- fortify(c18)
+head(c18df)
+
+ggplot(c18df, aes(long, lat)) + 
+  geom_polygon(aes(group = group), colour = "grey50", fill = NA) +
+  coord_quickmap()
+```
 
 ### Point metadata
 
@@ -711,7 +722,7 @@ ggplot(mi_cities, aes(lon, lat)) +
 
 ### Raster images
 
-Instead of displaying context with vector boundaries, you might want to draw a traditional map underneath. This is called a raster image. The easiest way to get a raster map of a given area is to use the ggmap package, which allows you to get data from variety of online mapping sources including OpenStreetMap and Google Maps. Downloading the raster data is often time consuming so it's a good idea to cache it in a rds file. \index{ggmap} \index{Raster data}
+Instead of displaying context with vector boundaries, you might want to draw a traditional map underneath. This is called a raster image. The easiest way to get a raster map of a given area is to use the ggmap package, which allows you to get data from a variety of online mapping sources including OpenStreetMap and Google Maps. Downloading the raster data is often time consuming so it's a good idea to cache it in a rds file. \index{ggmap} \index{Raster data}
 
 ```{r}
 if (file.exists("mi_raster.rds")) {
@@ -923,9 +934,9 @@ ggplot(diamonds, aes(depth)) +
 
 (I've suppressed the legends to focus on the display of the data.)
 
-Both the histogram and frequency polygon geom use the same underlying statistical transformation: `stat = "bin"`. This statistic produces two output variables `count` and `density`. By default, count is mapped to y-position, because it's most interpretable. The density is the count divided by the total count multiplied by the bin width, and is useful when you want to compare the shape of the distributions, not the overall size. \indexf{stat\_bin}
+Both the histogram and frequency polygon geom use the same underlying statistical transformation: `stat = "bin"`. This statistic produces two output variables: `count` and `density`. By default, count is mapped to y-position, because it's most interpretable. The density is the count divided by the total count multiplied by the bin width, and is useful when you want to compare the shape of the distributions, not the overall size. \indexf{stat\_bin}
 
-An alternative to a bin-based visualisation is a density estimate. `geom_density()` places a little normal distribution at each data point and sums up all the curves. It has desirable theoretical properties, but is more difficult to relate back to the data. Use a density plot when you know that the underlying density is smooth, continuous and unbounded. You can use the `adjust` parameter to make the density more or less smooth. \index{Density plot}  \indexf{geom\_density}.
+An alternative to a bin-based visualisation is a density estimate. `geom_density()` places a little normal distribution at each data point and sums up all the curves. It has desirable theoretical properties, but is more difficult to relate back to the data. Use a density plot when you know that the underlying density is smooth, continuous and unbounded. You can use the `adjust` parameter to make the density more or less smooth. \index{Density plot} \indexf{geom\_density}
   
 ```{r geom-density} 
 ggplot(diamonds, aes(depth)) +
@@ -975,7 +986,7 @@ The histogram, frequency polygon and density display a detailed view of the dist
     ```
   
 *   `geom_dotplot()`: draws one point for each observation, carefully adjusted in 
-    space to show avoid overlaps and show the distribution. It is useful for 
+    space to avoid overlaps and show the distribution. It is useful for 
     smaller datasets.  \indexf{geom\_dotplot} \index{Dot plot}
 
 ### Exercises
@@ -988,7 +999,7 @@ The histogram, frequency polygon and density display a detailed view of the dist
 1.  How does the distribution of `price` vary with `clarity`?
 
 1.  Overlay a frequency polygon and density plot of `depth`. What computed
-    variable do you need to map `y` to make the two plots comparable? 
+    variable do you need to map to `y` to make the two plots comparable? 
     (You can either modify `geom_freqpoly()` or `geom_density()`.)
 
 ## Dealing with overplotting {#sec:overplotting}
@@ -1068,7 +1079,7 @@ Another approach to dealing with overplotting is to add data summaries to help g
 
 \indexf{stat\_summary\_bin} \indexf{stat\_summary\_2d} \index{Stats!summary}
 
-`geom_histogram()` and `geom_bin2d()` use a familiar geom, `geom_bar()` and `geom_raster()`, combined with a new statistical transformation, `stat_bin()` and `stat_bin2d()`. `stat_bin()` and `stat_bin2d()` combine the data into bins and count the number of observations in each bin. But what if we want a summary other than count? So far, we've just used the default statistical transformation associated with each geom. Now we're going to explore how to use  `stat_summary_bin()` to `stat_summary_2d()` compute different summaries. 
+`geom_histogram()` and `geom_bin2d()` use a familiar geom, `geom_bar()` and `geom_raster()`, combined with a new statistical transformation, `stat_bin()` and `stat_bin2d()`. `stat_bin()` and `stat_bin2d()` combine the data into bins and count the number of observations in each bin. But what if we want a summary other than count? So far, we've just used the default statistical transformation associated with each geom. Now we're going to explore how to use  `stat_summary_bin()` to `stat_summary_2d()` to compute different summaries. 
 
 Let's start with a couple of examples with the diamonds data. The first example in each pair shows how we can count the number of diamonds in each bin; the second shows how we can compute the average price.
 
@@ -1094,7 +1105,7 @@ ggplot(diamonds, aes(table, depth, z = price)) +
   ylim(50, 70)
 ```
 
-To get more help on the arguments associated the two transformations, look at the help for `stat_summary_bin()` and `stat_summary_2d()`. You can control the size of the bins and the summary functions. `stat_summary_bin()` can produce `y`, `ymin` and `ymax` aesthetics, also making it useful for displaying measures of spread. See the docs for more details. You'll learn more about how geoms and stats interact in [stats](#sec:stat).
+To get more help on the arguments associated with   the two transformations, look at the help for `stat_summary_bin()` and `stat_summary_2d()`. You can control the size of the bins and the summary functions. `stat_summary_bin()` can produce `y`, `ymin` and `ymax` aesthetics, also making it useful for displaying measures of spread. See the docs for more details. You'll learn more about how geoms and stats interact in [stats](#sec:stat).
 
 These summary functions are quite constrained but are often useful for a quick first pass at a problem. If you find them restraining, you'll need to do the summaries yourself. See [group-wise summaries](#sec:summarise) for more details.
 

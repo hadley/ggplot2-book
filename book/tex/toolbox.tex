@@ -129,12 +129,12 @@ tile and polygon) also understand \texttt{fill}.
   \texttt{geom\_line()} makes a \textbf{line plot}. The \texttt{group}
   aesthetic determines which observations are connected; see
   \hyperref[sec:grouping]{grouping} for more detail.
-  \texttt{geom\_path()} is similar to a \texttt{geom\_line()}, but lines
-  are connected in the order they appear in the data, not from left to
-  right. Both \texttt{geom\_line()} and \texttt{geom\_path()} also
-  understand the aesthetic \texttt{linetype}, which maps a categorical
-  variable to solid, dotted and dashed lines. \index{Line plot}
-  \indexf{geom\_line} \indexf{geom\_path}
+  \texttt{geom\_line()} connects points from left to right;
+  \texttt{geom\_path()} is similar but connects points in the order they
+  appear in the data. Both \texttt{geom\_line()} and
+  \texttt{geom\_path()} also understand the aesthetic \texttt{linetype},
+  which maps a categorical variable to solid, dotted and dashed lines.
+  \index{Line plot} \indexf{geom\_line} \indexf{geom\_path}
 \item
   \texttt{geom\_point()} produces a \textbf{scatterplot}.
   \texttt{geom\_point()} also understands the \texttt{shape} aesthetic.
@@ -425,7 +425,7 @@ Labelling data well poses some challenges:
 \item
   If you want to label many points, it is difficult to avoid overlaps.
   \texttt{check\_overlap\ =\ TRUE} is useful, but offers little control
-  over which labels are removed. There are number of techniques
+  over which labels are removed. There are a number of techniques
   available for base graphics, like \texttt{maptools::pointLabel()}, but
   they're not trivial to port to the grid graphics used by ggplot2. If
   all else fails, you may need to manually label points in a drawing
@@ -622,14 +622,14 @@ geometric object. This may be a result of a statistical summary, like a
 boxplot, or may be fundamental to the display of the geom, like a
 polygon. Lines and paths fall somewhere in between: each line is
 composed of a set of straight segments, but each segment represents two
-points. How do we control to assignment of observations to graphical
+points. How do we control the assignment of observations to graphical
 elements? This is the job of the \texttt{group} aesthetic.
 \index{Grouping} \indexc{group} \index{Geoms!collective}
 
 By default, the \texttt{group} aesthetic is mapped to the interaction of
 all discrete variables in the plot. This often partitions the data
 correctly, but when it does not, or when no discrete variable is used in
-a plot, you'll need to explicitly define the grouping structure, by
+a plot, you'll need to explicitly define the grouping structure by
 mapping group to a variable that has a different value for each group.
 
 There are three common cases where the default is not enough, and we
@@ -1019,9 +1019,9 @@ For interactive 3d plots, including true 3d surfaces, see RGL,
 There are four types of map data you might want to visualise: vector
 boundaries, point metadata, area metadata, and raster images. Typically,
 assembling these datasets is the most challenging part of drawing maps.
-Unfortunately ggplot2 cannot help you with that part of the analysis,
-but I'll provide some hints about other R packages that you might want
-to look at.
+Unfortunately ggplot2 can't help you with that part of the analysis, but
+I'll provide some hints about other R packages that you might want to
+look at.
 
 I'll illustrate each of the four types of map data with some maps of
 Michigan.
@@ -1091,7 +1091,7 @@ Note the use of \texttt{coord\_quickmap()}: it's a quick and dirty
 adjustment that ensures that the aspect ratio of the plot is set
 correctly.
 
-Other useful source of vector boundary data are:
+Other useful sources of vector boundary data are:
 
 \begin{itemize}
 \item
@@ -1119,8 +1119,32 @@ Other useful source of vector boundary data are:
 \end{itemize}
 
 These sources all generate spatial data frames defined by the sp
-package. Convert them into the data frame form that ggplot2 needs with
-\texttt{fortify()}.
+package. You can convert them into a data frame with \texttt{fortify()}:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(USAboundaries)}
+\NormalTok{c18 <-}\StringTok{ }\KeywordTok{us_boundaries}\NormalTok{(}\StringTok{"1820-01-01"}\NormalTok{)}
+\NormalTok{c18df <-}\StringTok{ }\KeywordTok{fortify}\NormalTok{(c18)}
+\CommentTok{#> Regions defined for each Polygons}
+\KeywordTok{head}\NormalTok{(c18df)}
+\CommentTok{#>    long lat order  hole piece id group}
+\CommentTok{#> 1 -87.6  35     1 FALSE     1  4   4.1}
+\CommentTok{#> 2 -87.6  35     2 FALSE     1  4   4.1}
+\CommentTok{#> 3 -87.6  35     3 FALSE     1  4   4.1}
+\CommentTok{#> 4 -87.6  35     4 FALSE     1  4   4.1}
+\CommentTok{#> 5 -87.5  35     5 FALSE     1  4   4.1}
+\CommentTok{#> 6 -87.3  35     6 FALSE     1  4   4.1}
+
+\KeywordTok{ggplot}\NormalTok{(c18df, }\KeywordTok{aes}\NormalTok{(long, lat)) +}\StringTok{ }
+\StringTok{  }\KeywordTok{geom_polygon}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{group =} \NormalTok{group), }\DataTypeTok{colour =} \StringTok{"grey50"}\NormalTok{, }\DataTypeTok{fill =} \OtherTok{NA}\NormalTok{) +}
+\StringTok{  }\KeywordTok{coord_quickmap}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}[H]
+  \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-15-1}
+\end{figure}
 
 \subsection{Point metadata}
 
@@ -1170,8 +1194,8 @@ another layer to make it interpretable.
 \end{Shaded}
 
 \begin{figure}[H]
-  \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-16-1}%
-  \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-16-2}
+  \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-17-1}%
+  \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-17-2}
 \end{figure}
 
 \subsection{Raster images}
@@ -1179,7 +1203,7 @@ another layer to make it interpretable.
 Instead of displaying context with vector boundaries, you might want to
 draw a traditional map underneath. This is called a raster image. The
 easiest way to get a raster map of a given area is to use the ggmap
-package, which allows you to get data from variety of online mapping
+package, which allows you to get data from a variety of online mapping
 sources including OpenStreetMap and Google Maps. Downloading the raster
 data is often time consuming so it's a good idea to cache it in a rds
 file. \index{ggmap} \index{Raster data}
@@ -1288,8 +1312,8 @@ combine the two datasets and create a choropleth map. \index{Choropleth}
 \end{Shaded}
 
 \begin{figure}[H]
-  \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-21-1}%
-  \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-21-2}
+  \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-22-1}%
+  \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-22-2}
 \end{figure}
 
 \hyperdef{}{sec:uncertainty}{\section{Revealing
@@ -1338,9 +1362,9 @@ to determine the range of the y values. If you want the opposite, see
 \end{Shaded}
 
 \begin{figure}[H]
-  \includegraphics[width=0.333\linewidth]{_figures/toolbox/unnamed-chunk-22-1}%
-  \includegraphics[width=0.333\linewidth]{_figures/toolbox/unnamed-chunk-22-2}%
-  \includegraphics[width=0.333\linewidth]{_figures/toolbox/unnamed-chunk-22-3}
+  \includegraphics[width=0.333\linewidth]{_figures/toolbox/unnamed-chunk-23-1}%
+  \includegraphics[width=0.333\linewidth]{_figures/toolbox/unnamed-chunk-23-2}%
+  \includegraphics[width=0.333\linewidth]{_figures/toolbox/unnamed-chunk-23-3}
 \end{figure}
 
 \begin{Shaded}
@@ -1352,9 +1376,9 @@ to determine the range of the y values. If you want the opposite, see
 \end{Shaded}
 
 \begin{figure}[H]
-  \includegraphics[width=0.333\linewidth]{_figures/toolbox/unnamed-chunk-23-1}%
-  \includegraphics[width=0.333\linewidth]{_figures/toolbox/unnamed-chunk-23-2}%
-  \includegraphics[width=0.333\linewidth]{_figures/toolbox/unnamed-chunk-23-3}
+  \includegraphics[width=0.333\linewidth]{_figures/toolbox/unnamed-chunk-24-1}%
+  \includegraphics[width=0.333\linewidth]{_figures/toolbox/unnamed-chunk-24-2}%
+  \includegraphics[width=0.333\linewidth]{_figures/toolbox/unnamed-chunk-24-3}
 \end{figure}
 
 Because there are so many different ways to calculate standard errors,
@@ -1598,7 +1622,7 @@ you can see the strongest patterns. \indexf{position\_fill}
 
 Both the histogram and frequency polygon geom use the same underlying
 statistical transformation: \texttt{stat\ =\ "bin"}. This statistic
-produces two output variables \texttt{count} and \texttt{density}. By
+produces two output variables: \texttt{count} and \texttt{density}. By
 default, count is mapped to y-position, because it's most interpretable.
 The density is the count divided by the total count multiplied by the
 bin width, and is useful when you want to compare the shape of the
@@ -1611,7 +1635,7 @@ properties, but is more difficult to relate back to the data. Use a
 density plot when you know that the underlying density is smooth,
 continuous and unbounded. You can use the \texttt{adjust} parameter to
 make the density more or less smooth. \index{Density plot}
-\indexf{geom\_density}.
+\indexf{geom\_density}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1686,12 +1710,12 @@ sacrifice quality for quantity. Here are three options:
 \end{Shaded}
 
   \begin{figure}[H]
-    \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-25-1}%
-    \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-25-2}
+    \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-26-1}%
+    \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-26-2}
   \end{figure}
 \item
   \texttt{geom\_dotplot()}: draws one point for each observation,
-  carefully adjusted in space to show avoid overlaps and show the
+  carefully adjusted in space to avoid overlaps and show the
   distribution. It is useful for smaller datasets.
   \indexf{geom\_dotplot} \index{Dot plot}
 \end{itemize}
@@ -1711,8 +1735,8 @@ sacrifice quality for quantity. Here are three options:
   \texttt{clarity}?
 \item
   Overlay a frequency polygon and density plot of \texttt{depth}. What
-  computed variable do you need to map \texttt{y} to make the two plots
-  comparable? (You can either modify \texttt{geom\_freqpoly()} or
+  computed variable do you need to map to \texttt{y} to make the two
+  plots comparable? (You can either modify \texttt{geom\_freqpoly()} or
   \texttt{geom\_density()}.)
 \end{enumerate}
 
@@ -1855,7 +1879,7 @@ combine the data into bins and count the number of observations in each
 bin. But what if we want a summary other than count? So far, we've just
 used the default statistical transformation associated with each geom.
 Now we're going to explore how to use \texttt{stat\_summary\_bin()} to
-\texttt{stat\_summary\_2d()} compute different summaries.
+\texttt{stat\_summary\_2d()} to compute different summaries.
 
 Let's start with a couple of examples with the diamonds data. The first
 example in each pair shows how we can count the number of diamonds in
@@ -1872,8 +1896,8 @@ each bin; the second shows how we can compute the average price.
 \end{Shaded}
 
 \begin{figure}[H]
-  \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-26-1}%
-  \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-26-2}
+  \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-27-1}%
+  \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-27-2}
 \end{figure}
 
 \begin{Shaded}
@@ -1892,12 +1916,12 @@ each bin; the second shows how we can compute the average price.
 \end{Shaded}
 
 \begin{figure}[H]
-  \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-27-1}%
-  \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-27-2}
+  \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-28-1}%
+  \includegraphics[width=0.5\linewidth]{_figures/toolbox/unnamed-chunk-28-2}
 \end{figure}
 
-To get more help on the arguments associated the two transformations,
-look at the help for \texttt{stat\_summary\_bin()} and
+To get more help on the arguments associated with the two
+transformations, look at the help for \texttt{stat\_summary\_bin()} and
 \texttt{stat\_summary\_2d()}. You can control the size of the bins and
 the summary functions. \texttt{stat\_summary\_bin()} can produce
 \texttt{y}, \texttt{ymin} and \texttt{ymax} aesthetics, also making it
