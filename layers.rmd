@@ -8,7 +8,7 @@ columns(1, 2 / 3)
 
 ## Introduction
 
-One of the key ideas behind ggplot2 is that it allows you to easily iterate, building up a complex plot a layer at a time. Each layer can come from a different dataset and have a different aesthetic mappings, making it possible to create sophisticated plots that display data from multiple sources. 
+One of the key ideas behind ggplot2 is that it allows you to easily iterate, building up a complex plot a layer at a time. Each layer can come from a different dataset and have a different aesthetic mapping, making it possible to create sophisticated plots that display data from multiple sources. 
 
 You've already created layers with functions like `geom_point()` and `geom_histogram()`. In this chapter, you'll dive into the details of a layer, and how you can control all five components: data, the aesthetic mappings, the geom, stat, and position adjustments. The goal here is to give you the tools to build sophisticated plots tailored to the problem at hand.
 
@@ -63,9 +63,9 @@ This call fully specifies the five components to the layer: \index{Layers!compon
     are automatically teased apart), or in a list passed to `geom_params`.
 
 *   __stat__: The name of the statistical tranformation to use. A statistical
-    transformation performs some useful statistical summary is key to histograms 
-    and smoothers. To keep the data as is, use the "identity" stat. Learn more 
-    in [statistical transformations](#sec:stat).
+    transformation performs some useful statistical summary, and is key to 
+    histograms and smoothers. To keep the data as is, use the "identity" stat. 
+    Learn more in [statistical transformations](#sec:stat).
     
     You only need to set one of stat and geom: every geom has a default stat, 
     and every stat a default geom. 
@@ -75,7 +75,7 @@ This call fully specifies the five components to the layer: \index{Layers!compon
     and geom parameters are automatically teased apart), or in a list called
     `stat_params`.
 
-*   __position__: The method used to adjusting overlapping objects, like
+*   __position__: The method used to adjust overlapping objects, like
     jittering, stacking or dodging. More details in [position](#sec:position).
 
 It's useful to understand the `layer()` function so you have a better mental model of the layer object. But you'll rarely use the full `layer()` call because it's so verbose. Instead, you'll use the shortcut `geom_` functions: `geom_point(mapping, data, ...)` is exactly equivalent to `layer(mapping, data, geom = "point", ...)`.
@@ -122,6 +122,8 @@ ggplot(mpg, aes(displ, hwy)) +
 
 (The labels aren't particularly easy to read, but you can fix that with some manual tweaking.)
 
+Note that you need the explicit `data =` in the layers, but not in the call to `ggplot()`. That's because the argument order is different. This is a little inconsistent, but it reduces typing for the common case where you specify the data once in `ggplot()` and modify aesthetics in each layer.
+
 In this example, every layer uses a different dataset. We could define the same plot in another way, omitting the default dataset, and specifying a dataset for each layer:
 
 ```{r, eval = FALSE}
@@ -131,7 +133,7 @@ ggplot(mapping = aes(displ, hwy)) +
   geom_text(data = outlier, aes(label = model))
 ```
 
-I don't particularly like this style here because it makes it less clear what the primary dataset is (and because of the way that the arguments to `ggplot()` are ordered, it actually requires more keystrokes). However, you may prefer it in cases where there isn't a clear primary dataset, or where the aesthetics also vary from layer to layer. 
+I don't particularly like this style in this example because it makes it less clear what the primary dataset is (and because of the way that the arguments to `ggplot()` are ordered, it actually requires more keystrokes). However, you may prefer it in cases where there isn't a clear primary dataset, or where the aesthetics also vary from layer to layer. 
 
 ### Exercises
 
@@ -176,7 +178,7 @@ Here we map x-position to `displ`, y-position to `hwy`, and colour to `class`. T
 aes(displ, hwy, colour = class)
 ```
 
-While you can do data manipulation in `aes()`, e.g. `aes(log(carat), log(price))`, it's best to only do simple calculations. It's better to move complex transformations out of `aes()` call and into an explicit `dplyr::mutate()` call, as you'll learn about in [mutate](#mutate). This makes it easier to check your work and it's often faster because you need only do the transformation once, not every time the plot is drawn.
+While you can do data manipulation in `aes()`, e.g. `aes(log(carat), log(price))`, it's best to only do simple calculations. It's better to move complex transformations out of the `aes()` call and into an explicit `dplyr::mutate()` call, as you'll learn about in [mutate](#mutate). This makes it easier to check your work and it's often faster because you need only do the transformation once, not every time the plot is drawn.
 
 Never refer to a variable with `$` (e.g., `diamonds$carat`) in `aes()`. This breaks containment, so that the plot no longer contains everything it needs, and causes problems if ggplot2 changes the order of the rows, as it does when facetting. \indexc{\$}
 
@@ -222,7 +224,7 @@ Generally, you want to set up the mappings to illuminate the structure underlyin
 
 ### Setting vs. mapping {#sub:setting-mapping}
 
-Instead of mapping an aesthetic property to a variable, you can set it to a _single_ value by specifying it in the layer parameters. We **map** an aesthetic to a variable (e.g., `aes(colour = cut)`) or **set**  it to a constant (e.g., `colour = "red"`). \index{Aesthetics!setting}
+Instead of mapping an aesthetic property to a variable, you can set it to a _single_ value by specifying it in the layer parameters. We **map** an aesthetic to a variable (e.g., `aes(colour = cut)`) or **set**  it to a constant (e.g., `colour = "red"`). If you want appearance to be governed by a variable, put the specification inside `aes()`; if you want override the default size or colour, put the value outside of `aes()`.  \index{Aesthetics!setting}
 
 The following plots are created with similar code, but have rather different outputs. The second plot **maps** (not sets) the colour to the value 'darkblue'. This effectively creates a new variable containing only the value 'darkblue' and then scales it with a colour scale. Because this value is discrete, the default colour scale uses evenly spaced colours on the colour wheel, and since there is only one value this colour is pinkish. 
 
@@ -285,7 +287,7 @@ ggplot(mpg, aes(displ, hwy)) +
     
 1.  What happens if you try to use a continuous variable on the x axis in 
     one layer, and a categorical variable in another layer? What happens if 
-    you do it the opposite order?
+    you do it in the opposite order?
 
 ## Geoms {#sec:geom}
 
@@ -372,7 +374,7 @@ If alternative parameterisations are available, picking the right one for your d
     reference for all the geoms.
     
 1.  Look at the documentation for the graphical primitive geoms. Which
-    aesthetics do they use? How you can summarise them in a compact form?
+    aesthetics do they use? How can you summarise them in a compact form?
     
 1.  What's the best way to master an unfamiliar geom? List three resources
     to help you get started.
@@ -454,7 +456,7 @@ Internally, a stat takes a data frame as input and returns a data frame as outpu
 * `density`, the density of observations in each bin (percentage of total / bar width)
 * `x`, the centre of the bin
 
-These generated variables can be used instead of the variables present in the original dataset. For example, the default histogram geom assigns the height of the bars to the number of observations (`count`), but if you'd prefer a more traditional histogram, you can use the density (`density`). To refer to a generated variable like density, the name must be surrounded with `..`. This prevents confusion in case the original dataset includes a variable with the same name as a generated variable, and it makes it clear to any later reader of the code that this variable was generated by a stat. Each statistic lists the variables that it creates in its documentation. \indexc{..} Compare the y-axes on these two plots:
+These generated variables can be used instead of the variables present in the original dataset. For example, the default histogram geom assigns the height of the bars to the number of observations (`count`), but if you'd prefer a more traditional histogram, you can use the density (`density`). To refer to a generated variable like density, "`..`" must surround the name. This prevents confusion in case the original dataset includes a variable with the same name as a generated variable, and it makes it clear to any later reader of the code that this variable was generated by a stat. Each statistic lists the variables that it creates in its documentation. \indexc{..} Compare the y-axes on these two plots:
 
 `r columns(2, 2/3)`
 ```{r hist}
@@ -464,7 +466,7 @@ ggplot(diamonds, aes(price)) +
   geom_histogram(aes(y = ..density..), binwidth = 500)
 ```
 
-This technique is particularly useful when you want to compare the distribution of multiple groups that have very different sizes. For example, it's hard to compare the the distribution of `price` within `cut` because some groups are quite small. It's easier to compare if we standardise each group to take up the same area:
+This technique is particularly useful when you want to compare the distribution of multiple groups that have very different sizes. For example, it's hard to compare the distribution of `price` within `cut` because some groups are quite small. It's easier to compare if we standardise each group to take up the same area:
 
 `r columns(2, 2/3)`
 ```{r freqpoly, message = FALSE}
