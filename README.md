@@ -24,6 +24,8 @@ To successfully build this book, you'll need:
 * R [package development prerequisites](https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites)
 * [pandoc and pandoc-citeproc](http://pandoc.org/installing.html),
 * the [Inconsolata font](http://www.ctan.org/tex-archive/fonts/inconsolata/)
+* CRAN R packages: `rmarkdown`, `ggthemes`, `wesanderson`, `USAboundaries`, `Lahman` 
+* R packages on github: `hadley/bookdown`, `tdhock/directlabels`
 
 Install the R dependencies with:
 
