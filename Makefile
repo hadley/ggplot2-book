@@ -9,7 +9,7 @@ book/ggplot2-book.pdf: $(TEXDIR) $(TEXDIR)/ggplot2-book.tex book/CHAPTERS
 	cp -R book/springer/* $(TEXDIR)
 	cp book/latexmk $(TEXDIR)/
 	cp book/latexmkrc $(TEXDIR)/
-	cd $(TEXDIR) && ./latexmk -xelatex -interaction=batchmode ggplot2-book.tex
+	cd $(TEXDIR) && ./latexmk -pdf -interaction=batchmode ggplot2-book.tex
 	cp $(TEXDIR)/ggplot2-book.pdf book/ggplot2-book.pdf
 
 book/CHAPTERS: $(TEX_CHAPTERS)
