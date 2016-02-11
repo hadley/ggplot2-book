@@ -182,11 +182,13 @@ ggplot(abilene, aes(date, rel_sales)) +
 We can apply this transformation to every city with `group_by()` and `mutate()`. Note the use of `na.action = na.exclude` argument to `lm()`. Counterintuitively this ensures that missing values in the input are matched with missing values in the output predictions and residuals. Without this argument, missing values are just dropped, and the residuals don't line up with the inputs.
 
 ```{r}
+deseas <- function(x, month) {
+  resid(lm(x ~ factor(month), na.action = na.exclude))
+}
+
 txhousing <- txhousing %>% 
   group_by(city) %>% 
-  mutate(rel_sales = resid(lm(log(sales) ~ factor(month), 
-    na.action = na.exclude))
-  )
+  mutate(rel_sales = deseas(sales, month))
 ```
 
 With this data in hand, we can re-plot the data. Now that we have log-transformed the data and removed the strong seasonal effects we can see there is a strong common pattern: a consistent increase from 2000-2007, a drop until 2010 (with quite some noise), and then a gradual rebound. To make that more clear, I included a summary line that shows the mean relative sales across all cities. 
