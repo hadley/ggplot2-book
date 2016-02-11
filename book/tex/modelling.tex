@@ -1,6 +1,6 @@
 \chapter{Modelling for visualisation}\label{cha:modelling}
 
-\section{Introduction}
+\section{Introduction}\label{introduction}
 
 Modelling is an essential tool for visualisation. There are two
 particularly strong connections between modelling and visualisation that
@@ -97,7 +97,7 @@ they produce a plot with a strong linear trend.
 \CommentTok{#> 5   2.75}
 \CommentTok{#> 6   2.48}
 \CommentTok{#> ..   ...}
-\CommentTok{#> Variables not shown: lcarat (dbl), lprice (dbl)}
+\CommentTok{#> Variables not shown: lcarat (dbl), lprice (dbl).}
 
 \KeywordTok{ggplot}\NormalTok{(diamonds2, }\KeywordTok{aes}\NormalTok{(lcarat, lprice)) +}\StringTok{ }
 \StringTok{  }\KeywordTok{geom_bin2d}\NormalTok{() +}\StringTok{ }
@@ -258,7 +258,7 @@ you can explicitly model a strong pattern that you see in a plot, it's
 worthwhile to use a model to remove that strong pattern so that you can
 see what interesting trends remain.
 
-\subsection{Exercises}
+\subsection{Exercises}\label{exercises}
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -279,7 +279,7 @@ see what interesting trends remain.
   How do depth and table relate to the relative price?
 \end{enumerate}
 
-\section{Texas housing data}
+\section{Texas housing data}\label{texas-housing-data}
 
 We'll continue to explore the connection between modelling and
 visualisation with the \texttt{txhousing} dataset:
@@ -397,11 +397,13 @@ just dropped, and the residuals don't line up with the inputs.
 
 \begin{Shaded}
 \begin{Highlighting}[]
+\NormalTok{deseas <-}\StringTok{ }\NormalTok{function(x, month) \{}
+  \KeywordTok{resid}\NormalTok{(}\KeywordTok{lm}\NormalTok{(x ~}\StringTok{ }\KeywordTok{factor}\NormalTok{(month), }\DataTypeTok{na.action =} \NormalTok{na.exclude))}
+\NormalTok{\}}
+
 \NormalTok{txhousing <-}\StringTok{ }\NormalTok{txhousing %>%}\StringTok{ }
 \StringTok{  }\KeywordTok{group_by}\NormalTok{(city) %>%}\StringTok{ }
-\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{rel_sales =} \KeywordTok{resid}\NormalTok{(}\KeywordTok{lm}\NormalTok{(}\KeywordTok{log}\NormalTok{(sales) ~}\StringTok{ }\KeywordTok{factor}\NormalTok{(month), }
-    \DataTypeTok{na.action =} \NormalTok{na.exclude))}
-  \NormalTok{)}
+\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{rel_sales =} \KeywordTok{deseas}\NormalTok{(sales, month))}
 \end{Highlighting}
 \end{Shaded}
 
@@ -427,7 +429,7 @@ the mean relative sales across all cities.
 (Note that removing the seasonal effect also removed the intercept - we
 see the trend for each city relative to its average number of sales.)
 
-\subsection{Exercises}
+\subsection{Exercises}\label{exercises-1}
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -561,7 +563,7 @@ challenges outlined above:
 We'll learn more about each of these functions in the following three
 sections.
 
-\section{Model-level summaries}
+\section{Model-level summaries}\label{model-level-summaries}
 
 We'll begin by looking at how well the model fit to each city with
 \texttt{glance()}: \indexf{glance}
@@ -583,7 +585,7 @@ We'll begin by looking at how well the model fit to each city with
 \CommentTok{#> 6   Beaumont     0.430         0.395 0.275      12.0 1.18e-16    12}
 \CommentTok{#> ..       ...       ...           ...   ...       ...      ...   ...}
 \CommentTok{#> Variables not shown: logLik (dbl), AIC (dbl), BIC (dbl), deviance}
-\CommentTok{#>   (dbl), df.residual (int)}
+\CommentTok{#>   (dbl), df.residual (int).}
 \end{Highlighting}
 \end{Shaded}
 
@@ -634,7 +636,7 @@ The cities with low \(R^2\) have weaker seasonal patterns and more
 variation between years. The data for Harlingen seems particularly
 noisy.
 
-\subsection{Exercises}
+\subsection{Exercises}\label{exercises-2}
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -656,7 +658,7 @@ noisy.
   Order the facets by the \(R^2\) for the city.
 \end{enumerate}
 
-\section{Coefficient-level summaries}
+\section{Coefficient-level summaries}\label{coefficient-level-summaries}
 
 The model fit summaries suggest that there are some important
 differences in seasonality between the different cities. Let's dive into
@@ -693,6 +695,7 @@ month value into a numeric variable:
 \StringTok{  }\NormalTok{tidyr::}\KeywordTok{extract}\NormalTok{(term, }\StringTok{"month"}\NormalTok{, }\StringTok{"(}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{d+)"}\NormalTok{, }\DataTypeTok{convert =} \OtherTok{TRUE}\NormalTok{)}
 \NormalTok{months}
 \CommentTok{#> Source: local data frame [506 x 6]}
+\CommentTok{#> Groups: city [46]}
 \CommentTok{#> }
 \CommentTok{#>       city month estimate std.error statistic  p.value}
 \CommentTok{#>      (chr) (int)    (dbl)     (dbl)     (dbl)    (dbl)}
@@ -748,7 +751,7 @@ San Marcos (both college towns) and Galveston and South Padre Island
 (beach cities). It makes sense that these cities would have very strong
 seasonal effects.
 
-\subsection{Exercises}
+\subsection{Exercises}\label{exercises-3}
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -769,7 +772,7 @@ seasonal effects.
   intercept vary across the groups? Answer with a plot.
 \end{enumerate}
 
-\section{Observation data}
+\section{Observation data}\label{observation-data}
 
 Observation-level data, which include residual diagnostics, is most
 useful in the traditional model fitting scenario, because it can helps
@@ -800,7 +803,7 @@ common influence statistics (see \texttt{?augment.lm} for more details):
 \CommentTok{#> 5  Abilene        7.14             5    7.46  0.0704 -0.319 0.0625}
 \CommentTok{#> 6  Abilene        7.29             6    7.54  0.0704 -0.259 0.0625}
 \CommentTok{#> ..     ...         ...           ...     ...     ...    ...    ...}
-\CommentTok{#> Variables not shown: .sigma (dbl), .cooksd (dbl), .std.resid (dbl)}
+\CommentTok{#> Variables not shown: .sigma (dbl), .cooksd (dbl), .std.resid (dbl).}
 \end{Highlighting}
 \end{Shaded}
 
@@ -849,7 +852,7 @@ individually:
 
 In a real analysis, you'd want to look into these cities in more detail.
 
-\subsection{Exercises}
+\subsection{Exercises}\label{exercises-4}
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -862,10 +865,11 @@ In a real analysis, you'd want to look into these cities in more detail.
   that have a standardised residual of greater than 2.
 \end{enumerate}
 
-\section*{References}
+\section*{References}\label{references}
 \addcontentsline{toc}{section}{References}
 
-\hyperdef{}{ref-model-vis-paper}{\label{ref-model-vis-paper}}
+\hypertarget{refs}{}
+\hypertarget{ref-model-vis-paper}{}
 Wickham, Hadley, Dianne Cook, and Heike Hofmann. 2015. ``Visualizing
 Statistical Models: Removing the Blindfold.'' \emph{Statistical Analysis
 and Data Mining: The ASA Data Science Journal} 8 (4): 203--25.
