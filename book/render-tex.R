@@ -6,7 +6,7 @@ path <- commandArgs(trailingOnly = TRUE)
 if (length(path) == 0) {
   message("No input supplied")
 } else {
-  base <- bookdown::tex_chapter()
+  base <- oldbookdown::tex_chapter()
   base$knitr$opts_knit$width <- 69
   base$pandoc$from <- "markdown"
 
