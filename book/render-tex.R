@@ -7,7 +7,7 @@ if (length(path) == 0) {
   message("No input supplied")
 } else {
   base <- oldbookdown::tex_chapter()
-  base$knitr$opts_knit$width <- 69
+  base$knitr$opts_knit$width <- 67
   base$pandoc$from <- "markdown"
 
   rmarkdown::render(path, base, output_dir = "book/tex", envir = globalenv(), quiet = TRUE)
