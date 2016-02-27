@@ -3,6 +3,9 @@ library(dplyr)
 library(tidyr)
 options(digits = 3, dplyr.print_min = 6, dplyr.print_max = 6)
 
+# suppress startup message
+library(maps)
+
 knitr::opts_chunk$set(
   comment = "#>",
   collapse = TRUE,
