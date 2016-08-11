@@ -25,7 +25,7 @@ To successfully build this book, you'll need:
 * [pandoc and pandoc-citeproc](http://pandoc.org/installing.html),
 * the [Inconsolata font](http://www.ctan.org/tex-archive/fonts/inconsolata/)
 
-Install the R dependencies with:
+Install the R dependencies by running this command from the ggplot2-book directory:
 
 ```r
 library(devtools)
