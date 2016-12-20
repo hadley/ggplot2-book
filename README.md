@@ -33,6 +33,7 @@ if (packageVersion("devtools") < "1.9.1") {
   message("Please upgrade devtools")
 }
 devtools::install_deps()
+devtools::install_github("hadley/oldbookdown")
 ```
 
 ## Internal links
