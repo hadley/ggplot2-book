@@ -678,17 +678,15 @@ Other useful sources of vector boundary data are:
 * You may have your own shape files (`.shp`). You can load them into
   R with `maptools::readShapeSpatial()`.
   
-These sources all generate spatial data frames defined by the sp package. You can convert them into a data frame with `fortify()`:
+All but one of these sources generate spatial data frames defined by the sp package, the exception being the USAbondaries package which generates simple feature (sf) objects. In both cases you can convert these into a data frame with `fortify()`:
 
 ```{r}
 library(USAboundaries)
 c18 <- us_boundaries(as.Date("1820-01-01"))
 c18df <- fortify(c18)
-head(c18df)
 
-ggplot(c18df, aes(long, lat)) + 
-  geom_polygon(aes(group = group), colour = "grey50", fill = NA) +
-  coord_quickmap()
+ggplot(c18df, aes(geometry = geometry)) + 
+  geom_sf()
 ```
 
 ### Point metadata
