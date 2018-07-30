@@ -1,0 +1,3 @@
+---
+bibliography: references.bib
+---
