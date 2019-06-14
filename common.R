@@ -1,5 +1,6 @@
 library(ggplot2)
 library(dplyr)
+conflicted::conflict_prefer("filter", "dplyr")
 library(tidyr)
 options(digits = 3, dplyr.print_min = 6, dplyr.print_max = 6)
 
