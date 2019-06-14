@@ -107,7 +107,7 @@ include_graphics <- function(x, options) {
 
   paste0("  \\includegraphics",
     opts_str,
-    "{", knitr:::sans_ext(x), "}",
+    "{", tools::file_path_sans_ext(x), "}",
     if (options$fig.cur != options$fig.num) "%",
     "\n"
   )
