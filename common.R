@@ -1,6 +1,9 @@
 library(ggplot2)
 library(dplyr)
+conflicted::conflict_prefer("filter", "dplyr")
 library(tidyr)
+conflicted::conflict_prefer("extract", "tidyr")
+
 options(digits = 3, dplyr.print_min = 6, dplyr.print_max = 6)
 
 # suppress startup message
@@ -103,7 +106,7 @@ include_graphics <- function(x, options) {
 
   paste0("  \\includegraphics",
     opts_str,
-    "{", knitr:::sans_ext(x), "}",
+    "{", tools::file_path_sans_ext(x), "}",
     if (options$fig.cur != options$fig.num) "%",
     "\n"
   )
