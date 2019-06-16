@@ -1,6 +1,6 @@
 # ggplot2 book
 
-[![Build Status](https://travis-ci.org/hadley/ggplot2-book.png?branch=master)](https://travis-ci.org/hadley/ggplot2-book)
+[![Build Status](https://travis-ci.org/hadley/ggplot2-book.svg?branch=master)](https://travis-ci.org/hadley/ggplot2-book)
 
 This is code and text behind the [ggplot2](http://ggplot2.org/book/) book. Please help us make it better by [contributing](https://github.com/hadley/ggplot2-book/blob/master/contributing.md)!
 
