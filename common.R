@@ -12,11 +12,9 @@ library(maps)
 knitr::opts_chunk$set(
   comment = "#>",
   collapse = TRUE,
-  fig.path = paste0("_figures/", chapter, "/"),
   fig.show = "hold",
   dpi = 300,
-  cache = TRUE,
-  cache.path = paste0("_cache/", chapter, "/")
+  cache = TRUE
 )
 
 is_latex <- function() {
@@ -118,4 +116,3 @@ knitr_first_plot <- function(x) {
 knitr_last_plot <- function(x) {
   x$fig.show != "hold" || x$fig.cur == x$fig.num
 }
-
