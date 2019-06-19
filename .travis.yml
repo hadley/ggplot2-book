@@ -2,7 +2,7 @@ language: R
 cache:
   packages: true
   directories:
-    - _bookdown_files  
+    - _bookdown_files
 
 pandoc_version: 2.3.1
 
@@ -16,6 +16,7 @@ addons:
       - sourceline: 'ppa:ubuntugis/ppa'
     packages:
       - optipng
+      - ghostscript
       - libudunits2-dev
       - libgdal-dev
       - libgeos-dev
@@ -23,6 +24,10 @@ addons:
 
 before_script:
   - tlmgr install index
+  - cp book/springer/* ./
 
 script:
   - Rscript -e 'bookdown::render_book("index.rmd")'
+
+after_script:
+  - Rscript -e 'bookdown::render_book("index.rmd", "bookdown::pdf_book")'
