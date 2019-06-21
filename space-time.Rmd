@@ -1,0 +1,202 @@
+# Space and time {#space-time}
+
+```{r, include = FALSE}
+source("common.R")
+columns(1, 2 / 3)
+```
+
+## Surface plots {#sec:surface}
+
+ggplot2 does not support true 3d surfaces. However, it does support many common tools for representing 3d surfaces in 2d: contours, coloured tiles and bubble plots. These all work similarly, differing only in the aesthetic used for the third dimension. \index{Surface plots} \index{Contour plot} \indexf{geom\_contour} \index{3d}
+
+```{r}
+ggplot(faithfuld, aes(eruptions, waiting)) + 
+  geom_contour(aes(z = density, colour = ..level..))
+
+ggplot(faithfuld, aes(eruptions, waiting)) + 
+  geom_raster(aes(fill = density))
+```
+
+```{r}
+# Bubble plots work better with fewer observations
+small <- faithfuld[seq(1, nrow(faithfuld), by = 10), ]
+ggplot(small, aes(eruptions, waiting)) + 
+  geom_point(aes(size = density), alpha = 1/3) + 
+  scale_size_area()
+```
+
+For interactive 3d plots, including true 3d surfaces, see RGL, <http://rgl.neoscientists.org/about.shtml>.
+
+## Drawing maps {#sec:maps}
+\index{Maps!geoms} \index{Data!spatial}
+
+There are four types of map data you might want to visualise: vector boundaries, point metadata, area metadata, and raster images. Typically, assembling these datasets is the most challenging part of drawing maps. Unfortunately ggplot2 can't help you with that part of the analysis, but I'll provide some hints about other R packages that you might want to look at.
+
+I'll illustrate each of the four types of map data with some maps of Michigan.
+
+### Vector boundaries
+
+Vector boundaries are defined by a data frame with one row for each "corner" of a geographical region like a country, state, or county. It requires four variables:
+
+* `lat` and `long`, giving the location of a point.
+* `group`, a unique identifier for each contiguous region.
+* `id`, the name of the region.
+
+Separate `group` and `id` variables are necessary because sometimes a geographical unit isn't a contiguous polygon. For example, Hawaii is composed of multiple islands that can't be drawn using a single polygon. 
+
+The following code extracts that data from the built in maps package using `ggplot2::map_data()`. The maps package isn't particularly accurate or up-to-date, but it's built into R so it's a reasonable place to start. \indexf{map\_data}
+
+```{r}
+mi_counties <- map_data("county", "michigan") %>% 
+  select(lon = long, lat, group, id = subregion)
+head(mi_counties)
+```
+
+You can visualise vector boundary data with `geom_polygon()`: \indexf{geom\_polygon}
+
+`r columns(2, 2/3)`
+```{r}
+ggplot(mi_counties, aes(lon, lat)) +
+  geom_polygon(aes(group = group)) + 
+  coord_quickmap()
+
+ggplot(mi_counties, aes(lon, lat)) +
+  geom_polygon(aes(group = group), fill = NA, colour = "grey50") + 
+  coord_quickmap()
+```
+
+Note the use of `coord_quickmap()`: it's a quick and dirty adjustment that ensures that the aspect ratio of the plot is set correctly. 
+
+Other useful sources of vector boundary data are:
+
+* The USAboundaries package, <https://github.com/ropensci/USAboundaries> which 
+  contains state, county and zip code data for the US. As well as current 
+  boundaries, it also has state and county boundaries going back to the 1600s.
+  
+* The tigris package, <https://github.com/walkerke/tigris>, makes it easy to
+  access the US Census TIGRIS shapefiles. It contains state, county, zipcode,
+  and census tract boundaries, as well as many other useful datasets.
+
+* The rnaturalearth package bundles up the free, high-quality
+  data from <http://naturalearthdata.com/>. It contains country borders,
+  and borders for the top-level region within each country (e.g.
+  states in the USA, regions in France, counties in the UK).
+
+* The osmar package, <https://cran.r-project.org/package=osmar> wraps up the 
+  OpenStreetMap API so you can access a wide range of vector data including 
+  indvidual streets and buildings
+  
+* You may have your own shape files (`.shp`). You can load them into
+  R with `maptools::readShapeSpatial()`.
+  
+These sources all generate spatial data frames defined by the sp package. You can convert them into a data frame with `fortify()`:
+
+```{r}
+library(USAboundaries)
+library(sf)
+c18 <- us_boundaries(as.Date("1820-01-01"))
+c18 <- as(c18, "Spatial")
+c18df <- fortify(c18)
+head(c18df)
+
+ggplot(c18df, aes(long, lat)) + 
+  geom_polygon(aes(group = group), colour = "grey50", fill = NA) +
+  coord_quickmap()
+```
+
+### Point metadata
+
+Point metadata connects locations (defined by lat and lon) with other variables. For example, the code below extracts the biggest cities in MI (as of 2006):
+
+```{r}
+mi_cities <- maps::us.cities %>% 
+  tbl_df() %>%
+  filter(country.etc == "MI") %>%
+  select(-country.etc, lon = long) %>%
+  arrange(desc(pop))
+mi_cities
+```
+
+We could show this data with a scatterplot, but it's not terribly useful
+without a reference. You almost always combine point metadata with another layer to make it interpretable.
+
+```{r}
+ggplot(mi_cities, aes(lon, lat)) + 
+  geom_point(aes(size = pop)) + 
+  scale_size_area() + 
+  coord_quickmap()
+
+ggplot(mi_cities, aes(lon, lat)) + 
+  geom_polygon(aes(group = group), mi_counties, fill = NA, colour = "grey50") +
+  geom_point(aes(size = pop), colour = "red") + 
+  scale_size_area() + 
+  coord_quickmap()
+```
+
+### Raster images
+
+Instead of displaying context with vector boundaries, you might want to draw a traditional map underneath. This is called a raster image. The easiest way to get a raster map of a given area is to use the ggmap package, which allows you to get data from a variety of online mapping sources including OpenStreetMap and Google Maps. Downloading the raster data is often time consuming so it's a good idea to cache it in a rds file. \index{ggmap} \index{Raster data}
+
+```{r}
+if (file.exists("mi_raster.rds")) {
+  mi_raster <- readRDS("mi_raster.rds")
+} else {
+  bbox <- c(
+    min(mi_counties$lon), min(mi_counties$lat), 
+    max(mi_counties$lon), max(mi_counties$lat)
+  )
+  mi_raster <- ggmap::get_openstreetmap(bbox, scale = 8735660)
+  saveRDS(mi_raster, "mi_raster.rds")
+}
+```
+
+(Finding the appropriate `scale` required a lot of manual tweaking.)
+
+You can then plot it with:
+<!-- TODO: Get this working! -->
+```{r, eval = FALSE}
+ggmap::ggmap(mi_raster)
+
+ggmap::ggmap(mi_raster) + 
+  geom_point(aes(size = pop), mi_cities, colour = "red") + 
+  scale_size_area()
+```
+
+If you have raster data from the raster package, you can convert it to the form needed by ggplot2 with the following code:
+
+```{r, eval = FALSE}
+df <- as.data.frame(raster::rasterToPoints(x))
+names(df) <- c("lon", "lat", "x")
+
+ggplot(df, aes(lon, lat)) + 
+  geom_raster(aes(fill = x))
+```
+
+### Area metadata
+
+Sometimes metadata is associated not with a point, but with an area. For example, we can create `mi_census` which provides census information about each county in MI:
+
+```{r}
+mi_census <- midwest %>%
+  tbl_df() %>%
+  filter(state == "MI") %>% 
+  mutate(county = tolower(county)) %>%
+  select(county, area, poptotal, percwhite, percblack)
+mi_census
+```
+
+We can't map this data directly because it has no spatial component. Instead, we must first join it to the vector boundaries data. This is not particularly space efficient, but it makes it easy to see exactly what data is being plotted. Here I use `dplyr::left_join()` to combine the two datasets and create a choropleth map. \index{Choropleth}
+
+```{r}
+census_counties <- left_join(mi_census, mi_counties, by = c("county" = "id"))
+census_counties
+
+ggplot(census_counties, aes(lon, lat, group = county)) + 
+  geom_polygon(aes(fill = poptotal)) + 
+  coord_quickmap()
+
+ggplot(census_counties, aes(lon, lat, group = county)) + 
+  geom_polygon(aes(fill = percwhite)) + 
+  coord_quickmap()
+```
+

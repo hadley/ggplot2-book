@@ -1,0 +1,255 @@
+# Annotations {#annotations}
+
+```{r, include = FALSE}
+source("common.R")
+columns(1, 2 / 3)
+```
+
+## Labels {#sec:labelling}
+\index{Labels} \index{Text} \indexf{geom\_text}
+
+Adding text to a plot can be quite tricky. ggplot2 doesn't have all the answers, but does provide some tools to make your life a little easier. The main tool is `geom_text()`, which adds `label`s at the specified `x` and `y` positions. 
+
+`geom_text()` has the most aesthetics of any geom, because there are so many ways to control the appearance of a text:
+
+*   `family` gives the name of a font. There are only three fonts that
+    are guaranteed to work everywhere: "sans" (the default), "serif", or "mono":
+    
+    `r columns(2, 1)`
+    ```{r text-family}
+    df <- data.frame(x = 1, y = 3:1, family = c("sans", "serif", "mono"))
+    ggplot(df, aes(x, y)) + 
+      geom_text(aes(label = family, family = family))
+    ```
+    
+    It's trickier to include a system font on a plot because text drawing is 
+    done differently by each graphics device (GD). There are five GDs in common 
+    use (`png()`, `pdf()`, on screen devices for Windows, Mac and Linux), so
+    to have a font work everywhere you need to configure five devices in five
+    different ways. Two packages simplify the quandary a bit: 
+    
+    * showtext, <https://github.com/yixuan/showtext>, by Yixuan Qiu, makes 
+      GD-independent plots by rendering all text as polygons. 
+    
+    * extrafont, <https://github.com/wch/extrafont>, by Winston Chang, 
+      converts fonts to a standard format that all devices can use. 
+    
+    Both approaches have pros and cons, so you will to need to try both of 
+    them and see which works best for your needs. \index{Font!family}
+    
+*   `fontface` specifies the face: "plain" (the default), "bold" or "italic".
+    \index{Font!face}
+
+    ```{r text-face}
+    df <- data.frame(x = 1, y = 3:1, face = c("plain", "bold", "italic"))
+    ggplot(df, aes(x, y)) + 
+      geom_text(aes(label = face, fontface = face))
+    ```
+
+*   You can adjust the alignment of the text with the `hjust` ("left", "center", 
+    "right", "inward", "outward") and `vjust` ("bottom", "middle", "top", 
+    "inward", "outward") aesthetics. The default alignment is centered. One
+    of the most useful alignments is "inward": it aligns text towards the middle
+    of the plot: \index{Font!justification}
+    
+    ```{r text-justification}
+    df <- data.frame(
+      x = c(1, 1, 2, 2, 1.5),
+      y = c(1, 2, 1, 2, 1.5),
+      text = c(
+        "bottom-left", "bottom-right", 
+        "top-left", "top-right", "center"
+      )
+    )
+    ggplot(df, aes(x, y)) +
+      geom_text(aes(label = text))
+    ggplot(df, aes(x, y)) +
+      geom_text(aes(label = text), vjust = "inward", hjust = "inward")
+    ```
+
+*   `size` controls the font size. Unlike most tools, ggplot2 uses mm, rather
+    than the usual points (pts). This makes it consistent with other size
+    units in ggplot2. (There are 72.27 pts in a inch, so to convert from 
+    points to mm, just multiply by 72.27 / 25.4). \index{Font!size}
+
+*   `angle` specifies the rotation of the text in degrees.
+
+You can map data values to these aesthetics, but use restraint: it is hard to percieve the relationship between variables mapped to these aesthetics. `geom_text()` also has three parameters. Unlike the aesthetics, these only take single values, so they must be the same for all labels:
+
+*   Often you want to label existing points on the plot. You don't want the
+    text to overlap with the points (or bars etc), so it's useful to offset
+    the text a little. The `nudge_x` and `nudge_y` parameters allow you to
+    nudge the text a little horizontally or vertically:
+    
+    ```{r text-nudge}
+    df <- data.frame(trt = c("a", "b", "c"), resp = c(1.2, 3.4, 2.5))
+    ggplot(df, aes(resp, trt)) + 
+      geom_point() + 
+      geom_text(aes(label = paste0("(", resp, ")")), nudge_y = -0.25) + 
+      xlim(1, 3.6)
+    ```
+    
+    (Note that I manually tweaked the x-axis limits to make sure all the 
+    text fit on the plot.)
+
+*   If `check_overlap = TRUE`, overlapping labels will be automatically 
+    removed. The algorithm is simple: labels are plotted in the order they 
+    appear in the data frame; if a label would overlap with an existing point, 
+    it's omitted. This is not incredibly useful, but can be handy. 
+    \indexc{check\_overlap}
+    
+    ```{r text-overlap}
+    ggplot(mpg, aes(displ, hwy)) + 
+      geom_text(aes(label = model)) + 
+      xlim(1, 8)
+    ggplot(mpg, aes(displ, hwy)) + 
+      geom_text(aes(label = model), check_overlap = TRUE) + 
+      xlim(1, 8)
+    ```
+
+A variation on `geom_text()` is `geom_label()`: it draws a rounded rectangle behind the text. This makes it useful for adding labels to plots with busy backgrounds: \indexf{geom\_label}
+
+`r columns(1, 2/3)`
+```{r label}
+label <- data.frame(
+  waiting = c(55, 80), 
+  eruptions = c(2, 4.3), 
+  label = c("peak one", "peak two")
+)
+
+ggplot(faithfuld, aes(waiting, eruptions)) +
+  geom_tile(aes(fill = density)) + 
+  geom_label(data = label, aes(label = label))
+```
+
+Labelling data well poses some challenges:
+
+*   Text does not affect the limits of the plot. Unfortunately there's no way
+    to make this work since a label has an absolute size (e.g. 3 cm), regardless
+    of the size of the plot. This means that the limits of a plot would need to
+    be different depending on the size of the plot --- there's just no way to
+    make that happen with ggplot2. Instead, you'll need to tweak `xlim()` and
+    `ylim()` based on your data and plot size.
+    
+*   If you want to label many points, it is difficult to avoid overlaps. 
+    `check_overlap = TRUE` is useful, but offers little control over which
+    labels are removed. There are a number of techniques available for base 
+    graphics, like `maptools::pointLabel()`, but they're not trivial to port 
+    to the grid graphics used by ggplot2. If all else fails, you may need to
+    manually label points in a drawing tool.
+
+Text labels can also serve as an alternative to a legend. This usually makes the plot easier to read because it puts the labels closer to the data. The [directlabels](https://github.com/tdhock/directlabels) package, by Toby Dylan Hocking, provides a number of tools to make this easier: \index{directlabels}
+
+`r columns(2, 1)`
+```{r}
+ggplot(mpg, aes(displ, hwy, colour = class)) + 
+  geom_point()
+
+ggplot(mpg, aes(displ, hwy, colour = class)) + 
+  geom_point(show.legend = FALSE) +
+  directlabels::geom_dl(aes(label = class), method = "smart.grid")
+```
+
+Directlabels provides a number of position methods. `smart.grid` is a reasonable place to start for scatterplots, but there are other methods that are more useful for frequency polygons and line plots. See the directlabels website, <http://directlabels.r-forge.r-project.org>, for other techniques.
+
+## Annotations {#sec:annotations}
+
+Annotations add metadata to your plot. But metadata is just data, so you can use: \index{Annotation} \index{Metadata}
+
+* `geom_text()` to add text descriptions or to label points  Most plots 
+  will not benefit from adding text to every single observation on the plot,
+  but labelling outliers and other important points is very useful.
+  \index{Labels} \indexf{geom\_text}
+
+* `geom_rect()` to highlight interesting rectangular regions of the plot.
+  `geom_rect()` has aesthetics `xmin`, `xmax`, `ymin` and `ymax`. 
+   \indexf{geom\_rect}
+
+* `geom_line()`, `geom_path()` and `geom_segment()` to add lines.  All 
+  these geoms have an `arrow` parameter, which allows you to place an arrowhead 
+  on the line.  Create arrowheads with `arrow()`, which has 
+  arguments `angle`, `length`, `ends` and `type`. \indexf{geom\_line}
+
+* `geom_vline()`, `geom_hline()` and `geom_abline()` allow you to add
+  reference lines (sometimes called rules), that span the full range of the 
+  plot. \indexf{geom\_vline} \indexf{geom\_hline} \indexf{geom\_abline}
+
+Typically, you can either put annotations in the foreground (using `alpha` if needed so you can still see the data), or in the background. With the default background, a thick white line makes a useful reference: it's easy to see but it doesn't jump out at you.
+
+To show off the basic idea, we'll draw a time series of unemployment:
+
+`r columns(1, 3 / 8, 1)`
+```{r umep}
+ggplot(economics, aes(date, unemploy)) + 
+  geom_line()
+```
+
+We can annotate this plot with which president was in power at the time. There is little new in this code - it's a straightforward manipulation of existing geoms. There is one special thing to note: the use of `-Inf` and `Inf` as positions. These refer to the top and bottom (or left and right) limits of the plot. \indexc{Inf}
+
+```{r unemp-pres}
+presidential <- subset(presidential, start > economics$date[1])
+
+ggplot(economics) + 
+  geom_rect(
+    aes(xmin = start, xmax = end, fill = party), 
+    ymin = -Inf, ymax = Inf, alpha = 0.2, 
+    data = presidential
+  ) + 
+  geom_vline(
+    aes(xintercept = as.numeric(start)), 
+    data = presidential,
+    colour = "grey50", alpha = 0.5
+  ) + 
+  geom_text(
+    aes(x = start, y = 2500, label = name), 
+    data = presidential, 
+    size = 3, vjust = 0, hjust = 0, nudge_x = 50
+  ) + 
+  geom_line(aes(date, unemploy)) + 
+  scale_fill_manual(values = c("blue", "red")) +
+  xlab("date") + 
+  ylab("unemployment")
+```
+
+You can use the same technique to add a single annotation to a plot, but it's a bit fiddly because you have to create a one row data frame:
+
+```{r, fig.show = "hide"}
+yrng <- range(economics$unemploy)
+xrng <- range(economics$date)
+caption <- paste(strwrap("Unemployment rates in the US have 
+  varied a lot over the years", 40), collapse = "\n")
+
+ggplot(economics, aes(date, unemploy)) + 
+  geom_line() + 
+  geom_text(
+    aes(x, y, label = caption), 
+    data = data.frame(x = xrng[1], y = yrng[2], caption = caption), 
+    hjust = 0, vjust = 1, size = 4
+  )
+```
+
+It's easier to use the `annotate()` helper function which creates the data frame for you: \indexf{annotate}
+
+```{r}
+ggplot(economics, aes(date, unemploy)) + 
+  geom_line() + 
+  annotate("text", x = xrng[1], y = yrng[2], label = caption,
+    hjust = 0, vjust = 1, size = 4
+  )
+```
+
+Annotations, particularly reference lines, are also useful when comparing groups across facets. In the following plot, it's much easier to see the subtle differences if we add a reference line.
+
+`r columns(1, 1 / 4, 1)`
+```{r}
+ggplot(diamonds, aes(log10(carat), log10(price))) + 
+  geom_bin2d() + 
+  facet_wrap(~cut, nrow = 1)
+
+mod_coef <- coef(lm(log10(price) ~ log10(carat), data = diamonds))
+ggplot(diamonds, aes(log10(carat), log10(price))) + 
+  geom_bin2d() + 
+  geom_abline(intercept = mod_coef[1], slope = mod_coef[2], 
+    colour = "white", size = 1) + 
+  facet_wrap(~cut, nrow = 1)
+```
