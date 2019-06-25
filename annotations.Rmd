@@ -8,12 +8,9 @@ columns(1, 2 / 3)
 ## Labels {#sec:labelling}
 \index{Labels} \index{Text} \indexf{geom\_text}
 
-Adding text to a plot can be quite tricky. ggplot2 doesn't have all the answers, but does provide some tools to make your life a little easier. The main tool is `geom_text()`, which adds `label`s at the specified `x` and `y` positions. 
+Adding text to a plot is one of the most common forms of annotation, but can be tricky due to the way that R handles fonts. The ggplot2 package doesn't have all the answers, but it does provide some tools to make your life a little easier. The main tool for labelling plots is `geom_text()`, which adds `label` text at the specified `x` and `y` positions. `geom_text()` has the most aesthetics of any geom, because there are so many ways to control the appearance of a text:
 
-`geom_text()` has the most aesthetics of any geom, because there are so many ways to control the appearance of a text:
-
-*   `family` gives the name of a font. There are only three fonts that
-    are guaranteed to work everywhere: "sans" (the default), "serif", or "mono":
+*   The `family` aesthetic provides the name of a font. This aesthetic *does* allow you to use the name of a system font, but some care is required. There are only three fonts that are guaranteed to work everywhere: "sans" (the default), "serif", or "mono". To illustrate these: 
     
     `r columns(2, 1)`
     ```{r text-family}
@@ -22,11 +19,14 @@ Adding text to a plot can be quite tricky. ggplot2 doesn't have all the answers,
       geom_text(aes(label = family, family = family))
     ```
     
-    It's trickier to include a system font on a plot because text drawing is 
-    done differently by each graphics device (GD). There are five GDs in common 
-    use (`png()`, `pdf()`, on screen devices for Windows, Mac and Linux), so
-    to have a font work everywhere you need to configure five devices in five
-    different ways. Two packages simplify the quandary a bit: 
+    The reason that it can be tricky to use system fonts in a plot is that
+    text drawing is handled differently by each graphics device (GD). There are 
+    two groups of GDs: screen devices such as `windows()` (for Windows), `quartz()`
+    (for Macs), `x11()` (mostly for Linux) and `RStudioGD()` (within RSudio) draw
+    the plot to the screen, whereas file devices such as `png()` and `pdf()` write
+    the plot to a file. Unfortunately, the devices do not specify fonts in the 
+    same way so if you want a font to work everywhere you need to configure
+    the devices in different ways. Two packages simplify the quandary a bit: 
     
     * showtext, <https://github.com/yixuan/showtext>, by Yixuan Qiu, makes 
       GD-independent plots by rendering all text as polygons. 
@@ -37,7 +37,7 @@ Adding text to a plot can be quite tricky. ggplot2 doesn't have all the answers,
     Both approaches have pros and cons, so you will to need to try both of 
     them and see which works best for your needs. \index{Font!family}
     
-*   `fontface` specifies the face: "plain" (the default), "bold" or "italic".
+*   The `fontface` aesthetic specifies the face, and can take three values: "plain" (the default), "bold" or "italic". For example:
     \index{Font!face}
 
     ```{r text-face}
@@ -48,9 +48,10 @@ Adding text to a plot can be quite tricky. ggplot2 doesn't have all the answers,
 
 *   You can adjust the alignment of the text with the `hjust` ("left", "center", 
     "right", "inward", "outward") and `vjust` ("bottom", "middle", "top", 
-    "inward", "outward") aesthetics. The default alignment is centered. One
-    of the most useful alignments is "inward": it aligns text towards the middle
-    of the plot: \index{Font!justification}
+    "inward", "outward") aesthetics. By default the aligment is centered, but there
+    are often good reasons to override this. One of the most useful alignments is "inward". 
+    It aligns text towards the middle of the plot, which ensures that
+    labels remain within the plot limits: \index{Font!justification}
     
     ```{r text-justification}
     df <- data.frame(
@@ -67,19 +68,23 @@ Adding text to a plot can be quite tricky. ggplot2 doesn't have all the answers,
       geom_text(aes(label = text), vjust = "inward", hjust = "inward")
     ```
 
-*   `size` controls the font size. Unlike most tools, ggplot2 uses mm, rather
-    than the usual points (pts). This makes it consistent with other size
-    units in ggplot2. (There are 72.27 pts in a inch, so to convert from 
-    points to mm, just multiply by 72.27 / 25.4). \index{Font!size}
+*   The font size is controlled by the `size` aesthetic. Unlike most tools, 
+    ggplot2 specifies the size in millimeters (mm), rather than the usual 
+    points (pts). The reason for this choice is that it makes it the units for
+    font sizes consistent with how other sizes are specified in ggplot2. 
+    (There are 72.27 pts in a inch, so to convert from points to mm, just 
+    multiply by 72.27 / 25.4). \index{Font!size}
 
 *   `angle` specifies the rotation of the text in degrees.
 
-You can map data values to these aesthetics, but use restraint: it is hard to percieve the relationship between variables mapped to these aesthetics. `geom_text()` also has three parameters. Unlike the aesthetics, these only take single values, so they must be the same for all labels:
+The ggplot2 package does allow you to map data values to the aesthetics used but `geom_text()`, but you should use restraint: it is hard to perceive the relationship between variables mapped to these aesthetics, and rarely useful to do so. 
 
-*   Often you want to label existing points on the plot. You don't want the
-    text to overlap with the points (or bars etc), so it's useful to offset
-    the text a little. The `nudge_x` and `nudge_y` parameters allow you to
-    nudge the text a little horizontally or vertically:
+In addition to the various aesthetics, `geom_text()` has three parameters that you can specify. Unlike the aesthetics these only take single values, so they must be the same for all labels:
+
+*   Often you want to label existing points on the plot, but you don't want the
+    text to overlap with the points (or bars etc). In this situation it's useful 
+    to offset the text a little, which you can do with the `nudge_x` and `nudge_y` 
+    parameters:
     
     ```{r text-nudge}
     df <- data.frame(trt = c("a", "b", "c"), resp = c(1.2, 3.4, 2.5))
@@ -92,10 +97,11 @@ You can map data values to these aesthetics, but use restraint: it is hard to pe
     (Note that I manually tweaked the x-axis limits to make sure all the 
     text fit on the plot.)
 
-*   If `check_overlap = TRUE`, overlapping labels will be automatically 
-    removed. The algorithm is simple: labels are plotted in the order they 
-    appear in the data frame; if a label would overlap with an existing point, 
-    it's omitted. This is not incredibly useful, but can be handy. 
+*   The third parameter is `check_overlap`. If `check_overlap = TRUE`, overlapping 
+    labels will be automatically removed from the plot. The algorithm is simple: 
+    labels are plotted in the order they appear in the data frame; if a label 
+    would overlap with an existing point, it's omitted. This is not incredibly useful, 
+    but there are cases when it can be handy. 
     \indexc{check\_overlap}
     
     ```{r text-overlap}
