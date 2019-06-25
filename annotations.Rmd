@@ -139,10 +139,18 @@ Labelling data well poses some challenges:
     
 *   If you want to label many points, it is difficult to avoid overlaps. 
     `check_overlap = TRUE` is useful, but offers little control over which
-    labels are removed. There are a number of techniques available for base 
-    graphics, like `maptools::pointLabel()`, but they're not trivial to port 
-    to the grid graphics used by ggplot2. If all else fails, you may need to
-    manually label points in a drawing tool.
+    labels are removed. A popular technique for addressing this is to use
+    the ggrepel package <https://github.com/slowkow/ggrepel>. The package 
+    supplies `geom_text_repel()`, which optimizes the label 
+    positioning to avoid overlap. It works quite well so long as the number 
+    of labels is not excessive:
+    
+`r columns(1, 2/3)`
+```{r ggrepel}
+mini_mpg <- mpg[sample(nrow(mpg), 20),]
+ggplot(mpg, aes(displ, hwy)) + geom_point(colour = "red") + 
+  ggrepel::geom_text_repel(data = mini_mpg, aes(label = class))
+```
 
 Text labels can also serve as an alternative to a legend. This usually makes the plot easier to read because it puts the labels closer to the data. The [directlabels](https://github.com/tdhock/directlabels) package, by Toby Dylan Hocking, provides a number of tools to make this easier: \index{directlabels}
 
