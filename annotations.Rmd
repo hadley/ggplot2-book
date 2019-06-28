@@ -15,7 +15,7 @@ other kinds of annotation.
 \index{Metadata}
 
 
-## Text Labels {#sec:labelling}
+## Adding Text Labels to Points {#sec:labelling}
 \index{Labels} \index{Text} \indexf{geom\_text}
 
 Adding text to a plot is one of the most common forms of annotation. Most plots 
@@ -165,24 +165,12 @@ ggplot(mpg, aes(displ, hwy)) + geom_point(colour = "red") +
   ggrepel::geom_text_repel(data = mini_mpg, aes(label = class))
 ```
 
-Text labels can also serve as an alternative to a legend. This usually makes the plot easier to read because it puts the labels closer to the data. The [directlabels](https://github.com/tdhock/directlabels) package, by Toby Dylan Hocking, provides a number of tools to make this easier: \index{directlabels}
-
-`r columns(2, 1)`
-```{r}
-ggplot(mpg, aes(displ, hwy, colour = class)) + 
-  geom_point()
-
-ggplot(mpg, aes(displ, hwy, colour = class)) + 
-  geom_point(show.legend = FALSE) +
-  directlabels::geom_dl(aes(label = class), method = "smart.grid")
-```
-
-Directlabels provides a number of position methods. `smart.grid` is a reasonable place to start for scatterplots, but there are other methods that are more useful for frequency polygons and line plots. See the directlabels website, <http://directlabels.r-forge.r-project.org>, for other techniques.
-
-## Other Annotations {#sec:annotations}
+## Building Custom Annotations {#sec:annotations}
 \index{Annotation} 
 
-Labelling data with text is an important kind of annotation, but it is not the only useful technique. The ggplot2 package provides several other tools to annotate plots. You can use:
+Labelling individual points with text is an important kind of annotation, but it is not the only useful technique. The ggplot2 package provides several other tools to annotate plots using the same geoms you would use to display data. For example you can use:
+
+* `geom_text()` and `geom_label()` to add text, as illustrated earlier.
 
 * `geom_rect()` to highlight interesting rectangular regions of the plot.
   `geom_rect()` has aesthetics `xmin`, `xmax`, `ymin` and `ymax`. 
@@ -197,9 +185,7 @@ Labelling data with text is an important kind of annotation, but it is not the o
   reference lines (sometimes called rules), that span the full range of the 
   plot. \indexf{geom\_vline} \indexf{geom\_hline} \indexf{geom\_abline}
 
-Typically, you can either put annotations in the foreground (using `alpha` if needed so you can still see the data), or in the background. With the default background, a thick white line makes a useful reference: it's easy to see but it doesn't jump out at you.
-
-To show off the basic idea, we'll draw a time series of unemployment:
+Typically, you can either put annotations in the foreground (using `alpha` if needed so you can still see the data), or in the background. With the default background, a thick white line makes a useful reference: it's easy to see but it doesn't jump out at you. To illustrate how ggplot2 tools can be used to annotate plots we'll start with a time series plotting US unemployment over time:
 
 `r columns(1, 3 / 8, 1)`
 ```{r umep}
@@ -207,7 +193,7 @@ ggplot(economics, aes(date, unemploy)) +
   geom_line()
 ```
 
-We can annotate this plot with which president was in power at the time. There is little new in this code - it's a straightforward manipulation of existing geoms. There is one special thing to note: the use of `-Inf` and `Inf` as positions. These refer to the top and bottom (or left and right) limits of the plot. \indexc{Inf}
+One useful way to annotate this plot is to use shading to indicate which president was in power at the time. To do this, we use `geom_rect()` to introduce shading, `geom_vline()` to introduce separators, `geom_text()` to add labels, and then use `geom_point()` to overlay the data on top of these background elements:
 
 ```{r unemp-pres}
 presidential <- subset(presidential, start > economics$date[1])
@@ -234,9 +220,11 @@ ggplot(economics) +
   ylab("unemployment")
 ```
 
-You can use the same technique to add a single annotation to a plot, but it's a bit fiddly because you have to create a one row data frame:
+Notice that there is little new here: for the most part, annotating plots in `ggplot2` is a straightforward manipulation of existing geoms. That said, there is one special thing to note in this code: the use of `-Inf` and `Inf` as positions. These refer to the top and bottom (or left and right) limits of the plot. \indexc{Inf} 
 
-```{r, fig.show = "hide"}
+This technique can be applied in other ways too. For instance, you can use it to add a single annotation to a plot, but it's a bit fiddly because you have to create a one row data frame:
+
+```{r annotate_hardway, fig.show = "hide"}
 yrng <- range(economics$unemploy)
 xrng <- range(economics$date)
 caption <- paste(strwrap("Unemployment rates in the US have 
@@ -251,9 +239,9 @@ ggplot(economics, aes(date, unemploy)) +
   )
 ```
 
-It's easier to use the `annotate()` helper function which creates the data frame for you: \indexf{annotate}
+This code works, and generates the desired plot, but it is very cumbersome. It would be annoying to have to do this every time you want to add a single annotation, so ggplot2 includes the `annotate()` helper function which creates the data frame for you: \indexf{annotate}
 
-```{r}
+```{r annotate_easyway}
 ggplot(economics, aes(date, unemploy)) + 
   geom_line() + 
   annotate("text", x = xrng[1], y = yrng[2], label = caption,
@@ -261,14 +249,49 @@ ggplot(economics, aes(date, unemploy)) +
   )
 ```
 
-Annotations, particularly reference lines, are also useful when comparing groups across facets. In the following plot, it's much easier to see the subtle differences if we add a reference line.
+
+## Replacing a Legend with Text Annotation
+
+There are many other ways to customise your annotation in ggplot2, particularly if you look at the broader ecosystem. As an example of this, one common annotation task is to use text labels instead of a legend or to highlight groups of points in a plot. This usually makes the plot easier to read because it puts the labels closer to the data. The [directlabels](https://github.com/tdhock/directlabels) package, by Toby Dylan Hocking, provides a number of tools to make this easier: \index{directlabels}
+
+`r columns(2, 1)`
+```{r directlabels}
+ggplot(mpg, aes(displ, hwy, colour = class)) + 
+  geom_point()
+
+ggplot(mpg, aes(displ, hwy, colour = class)) + 
+  geom_point(show.legend = FALSE) +
+  directlabels::geom_dl(aes(label = class), method = "smart.grid")
+```
+
+Directlabels provides a number of position methods. `smart.grid` is a reasonable place to start for scatterplots, but there are other methods that are more useful for frequency polygons and line plots. See the directlabels website, <http://directlabels.r-forge.r-project.org>, for other techniques.
+
+Another take on this idea comes from the ggforce package by Thomas Lin Pederson <https://github.com/thomasp85/ggforce>. The ggforce package contains a lot of useful tools to extend ggplot2 functionality, including functions such as `ggforce::geom_mark_ellipse()` that overlays a plot with circular "highlight" marks. For example:
+
+`r columns(1, 1/2, 1)`
+```{r geom_mark_ellipse}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point() + 
+  ggforce::geom_mark_ellipse(aes(label = cyl, group = cyl))
+```
+
+
+
+## Reference Lines Across Facets
+
+When used well, annotations can be a powerful tool to help your reader make sense of your data. One example of this is when you want the reader to compare groups across facets. For example, in the plot below it is easy to see the relationship within each facet, but the subtle differences across facets do not pop out:
 
 `r columns(1, 1 / 4, 1)`
-```{r}
+```{r faceted_noline}
 ggplot(diamonds, aes(log10(carat), log10(price))) + 
   geom_bin2d() + 
   facet_wrap(~cut, nrow = 1)
+```
 
+It is much easier to see these subtle differences if we add a reference line:
+
+`r columns(1, 1 / 4, 1)`
+```{r faceted_line}
 mod_coef <- coef(lm(log10(price) ~ log10(carat), data = diamonds))
 ggplot(diamonds, aes(log10(carat), log10(price))) + 
   geom_bin2d() + 
@@ -277,10 +300,14 @@ ggplot(diamonds, aes(log10(carat), log10(price))) +
   facet_wrap(~cut, nrow = 1)
 ```
 
-## Annotation Tools in Other Packages
+In this plot, each facet displays the data for one category agains the same regression line. This makes it easier to compare the facets to each other because there is shared reference line to assist the visual comparison.  
+
+
+
+## Other Annotation Techniques
 
 The annotation tools in ggplot2 are designed to be relatively flexible, but there is now a broader ecosystem of packages that build helpful functionality that can make your life easier when annotating plots. I mentioned the ggrepel and directlabels packages earlier in this chapter, but I would encourage you to look more widely at some of the other possibilities:
 
 *  The cowplot package by Claus Wilke <https://github.com/wilkelab/cowplot> provides a collection of handy tools that can be very useful in tidying a plot and making it publication-ready, or simply to overlay a plot a "draft" watermark or similar.
 
-*  The ggforce package by Thomas Lin Pederson <https://github.com/thomasp85/ggforce> includes a variety of low-level tools to extend ggplot2 functionality, including functions such as `ggforce::geom_mark_circle()` that overlays a plot with circular "highlight" marks. 
+* **[TO DO:]** Go through suggestions from twitter to pick out some handy examples.  
