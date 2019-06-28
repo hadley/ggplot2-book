@@ -165,6 +165,11 @@ ggplot(mpg, aes(displ, hwy)) + geom_point(colour = "red") +
   ggrepel::geom_text_repel(data = mini_mpg, aes(label = class))
 ```
 
+*   It can sometimes be difficult to ensure that text labels fit within the space
+    that you want. The ggfittext package <https://github.com/wilkox/ggfittext>  by 
+    Claus Wilke contains useful tools that can assist with this, including functions
+    that allow you to place text labels inside the columns in a bar chart.
+
 ## Building Custom Annotations {#sec:annotations}
 \index{Annotation} 
 
@@ -304,10 +309,17 @@ In this plot, each facet displays the data for one category agains the same regr
 
 
 
-## Other Annotation Techniques
+## Other Annotation Tools
 
-The annotation tools in ggplot2 are designed to be relatively flexible, but there is now a broader ecosystem of packages that build helpful functionality that can make your life easier when annotating plots. I mentioned the ggrepel and directlabels packages earlier in this chapter, but I would encourage you to look more widely at some of the other possibilities:
+The annotation tools in ggplot2 are designed to be relatively flexible, but there is now a broader ecosystem of packages that build helpful functionality that can make your life easier when annotating plots. I mentioned the ggrepel, ggfittext, ggforce and directlabels packages earlier in this chapter, but I would encourage you to look more widely at other possibilities. For example:
 
 *  The cowplot package by Claus Wilke <https://github.com/wilkelab/cowplot> provides a collection of handy tools that can be very useful in tidying a plot and making it publication-ready, or simply to overlay a plot a "draft" watermark or similar.
 
-* **[TO DO:]** Go through suggestions from twitter to pick out some handy examples.  
+* The gghighlight package by Hiroaki Yutani <https://github.com/yutannihilation/gghighlight> is useful for highlighting points or lines (or indeed a variety of different geoms) within a plot. This can be very helpful for longitudinal data: 
+
+```{r gghighlight}
+data(Oxboys, package = "nlme")
+ggplot(Oxboys, aes(age, height, group = Subject)) + 
+  geom_line() + geom_point() + 
+  gghighlight::gghighlight(Subject %in% 1:3)
+```
