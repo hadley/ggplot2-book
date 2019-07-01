@@ -17,7 +17,7 @@ extended ggplot2 in ways you may find helpful.
 \index{Metadata}
 
 
-## Adding Text Labels to Points {#sec:labelling}
+## Text labels {#sec:labelling}
 \index{Labels} \index{Text} \indexf{geom\_text}
 
 Adding text to a plot is one of the most common forms of annotation. Most plots 
@@ -172,7 +172,7 @@ ggplot(mpg, aes(displ, hwy)) + geom_point(colour = "red") +
     Claus Wilke contains useful tools that can assist with this, including functions
     that allow you to place text labels inside the columns in a bar chart.
 
-## Building Custom Annotations {#sec:annotations}
+## Building custom annotations {#sec:annotations}
 \index{Annotation} 
 
 Labelling individual points with text is an important kind of annotation, but it is not the only useful technique. The ggplot2 package provides several other tools to annotate plots using the same geoms you would use to display data. For example you can use:
@@ -257,7 +257,7 @@ ggplot(economics, aes(date, unemploy)) +
 ```
 
 
-## Replacing a Legend with Text Annotation
+## Direct labelling
 
 There are many other ways to customise your annotation in ggplot2, particularly if you look at the broader ecosystem. As an example of this, one common annotation task is to use text labels instead of a legend or to highlight groups of points in a plot. This usually makes the plot easier to read because it puts the labels closer to the data. The [directlabels](https://github.com/tdhock/directlabels) package, by Toby Dylan Hocking, provides a number of tools to make this easier: \index{directlabels}
 
@@ -282,9 +282,17 @@ ggplot(mpg, aes(displ, hwy)) +
   ggforce::geom_mark_ellipse(aes(label = cyl, group = cyl))
 ```
 
+A third approach to direct labelling is provided in the gghighlight package by Hiroaki Yutani <https://github.com/yutannihilation/gghighlight>. In many situations is useful for highlighting points or lines (or indeed a variety of different geoms) within a plot, particularly for longitudinal data: 
+
+```{r gghighlight}
+data(Oxboys, package = "nlme")
+ggplot(Oxboys, aes(age, height, group = Subject)) + 
+  geom_line() + geom_point() + 
+  gghighlight::gghighlight(Subject %in% 1:3)
+```
 
 
-## Reference Lines Across Facets
+## Annotation across facets
 
 When used well, annotations can be a powerful tool to help your reader make sense of your data. One example of this is when you want the reader to compare groups across facets. For example, in the plot below it is easy to see the relationship within each facet, but the subtle differences across facets do not pop out:
 
@@ -310,18 +318,3 @@ ggplot(diamonds, aes(log10(carat), log10(price))) +
 In this plot, each facet displays the data for one category agains the same regression line. This makes it easier to compare the facets to each other because there is shared reference line to assist the visual comparison.  
 
 
-
-## Other Annotation Tools
-
-The annotation tools in ggplot2 are designed to be relatively flexible, but there is now a broader ecosystem of packages that build helpful functionality that can make your life easier when annotating plots. I mentioned the ggrepel, ggfittext, ggforce and directlabels packages earlier in this chapter, but I would encourage you to look more widely at other possibilities. For example:
-
-*  The cowplot package by Claus Wilke <https://github.com/wilkelab/cowplot> provides a collection of handy tools that can be very useful in tidying a plot and making it publication-ready, or simply to overlay a plot a "draft" watermark or similar.
-
-* The gghighlight package by Hiroaki Yutani <https://github.com/yutannihilation/gghighlight> is useful for highlighting points or lines (or indeed a variety of different geoms) within a plot. This can be very helpful for longitudinal data: 
-
-```{r gghighlight}
-data(Oxboys, package = "nlme")
-ggplot(Oxboys, aes(age, height, group = Subject)) + 
-  geom_line() + geom_point() + 
-  gghighlight::gghighlight(Subject %in% 1:3)
-```
