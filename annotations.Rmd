@@ -256,35 +256,39 @@ ggplot(economics, aes(date, unemploy)) +
   )
 ```
 
-The convenience of the `annotate()` function comes in handy in other situations. For example, a common form of annotation is to highlight a subset of points by drawing larger points in a different colour underneath the main data set. To highlight vehicles manufactured by Subaru you could do this:
+The convenience of the `annotate()` function comes in handy in other situations. For example, a common form of annotation is to highlight a subset of points by drawing larger points in a different colour underneath the main data set. To highlight vehicles manufactured by Subaru you could use this to create the basic plot:
 
-```{r underplot-noshow, eval=FALSE}
-ggplot(mpg, aes(displ, hwy)) +
+```{r underplot-noshow}
+p <- ggplot(mpg, aes(displ, hwy)) +
   geom_point(data = filter(mpg, manufacturer == "subaru"), 
              colour = "orange", size = 3) +
   geom_point() 
 ```
 
-
-The problem with this is that the highlighted category would not be labelled. This is easily rectified: 
+The problem with this is that the highlighted category would not be labelled. This is easily rectified using `annotate()`
 
 `r columns(1, 2/3)`
 ```{r underplot}
-ggplot(mpg, aes(displ, hwy)) +
-  geom_point(data = filter(mpg, manufacturer == "subaru"), 
-             colour = "orange", size = 3) +
-  geom_point() + 
-  annotate(geom = "point", x = 5.5, y = 40, 
+p + annotate(geom = "point", x = 5.5, y = 40, 
            colour = "orange", size = 3) + 
   annotate(geom = "point", x = 5.5, y = 40) + 
   annotate(geom = "text", x = 5.6, y = 40, 
            label = "subaru", hjust = "left")
 ```
 
+This approach has the advantage of creating a label inside the plot region, but the drawback is that the label is distant from the points it picks out (otherwise the orange and black dot adjacent to the label might be confused for real data). An alternative approach is to use a different geom to do the work. `geom_curve()` and `geom_segment()` can be used to draw curves and lines connecting points with labels, and can be used in conjunction with `annotate()` as illustrated below:
+
+```{r curve_annotation} 
+p + annotate(geom = "curve", x = 4, y = 35, xend = 2.65, yend = 27, 
+           curvature = .3, arrow = arrow(length = unit(2, "mm"))) +
+  annotate(geom = "text", x = 4.1, y = 35, 
+           label = "subaru", hjust = "left")
+```
+
 
 ## Direct labelling
 
-There are many other ways to customise your annotation in ggplot2, particularly if you look at the broader ecosystem. As an example of this, one common annotation task is to use text labels instead of a legend or to highlight groups of points in a plot. This usually makes the plot easier to read because it puts the labels closer to the data. The [directlabels](https://github.com/tdhock/directlabels) package, by Toby Dylan Hocking, provides a number of tools to make this easier: \index{directlabels}
+The Subaru plots above provide examples of "direct labelling", in which the plot region itself contains the labels for groups of points instead of using a legend.  This usually makes the plot easier to read because it puts the labels closer to the data. The broader ggplot2 ecosystem contains a variety of other tools to accomplish this in a more automated fashion. The [directlabels](https://github.com/tdhock/directlabels) package, by Toby Dylan Hocking, provides a number of tools to make this easier: \index{directlabels}
 
 `r columns(2, 1)`
 ```{r directlabels}
