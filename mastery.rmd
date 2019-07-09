@@ -14,9 +14,9 @@ This chapter describes the theoretical basis of ggplot2: the layered grammar of 
 
 The grammar makes it easier for you to iteratively update a plot, changing a single feature at a time. The grammar is also useful because it suggests the high-level aspects of a plot that *can* be changed, giving you a framework to think about graphics, and hopefully shortening the distance from mind to paper.  It also encourages the use of graphics customised to a particular problem, rather than relying on specific chart types.
 
-This chapter begins by describing in detail the process of drawing a simple plot.  [Building a scatterplot](#sec:simple-plot) starts with a simple scatterplot, then [Adding complexity](#sec:complex-plot) makes it more complex by adding a smooth line and facetting.  While working through these examples you will be introduced to all six components of the grammar, which are then defined more precisely in [Components of the layered grammar](#sec:components).
+This chapter begins by describing in detail the process of drawing a simple plot.  Section \@ref(simple-plot) starts with a simple scatterplot, then Section \@ref(complex-plot) makes it more complex by adding a smooth line and facetting.  While working through these examples you will be introduced to all six components of the grammar, which are then defined more precisely in Section \@ref(components).
 
-## Building a scatterplot {#sec:simple-plot}
+## Building a scatterplot {#simple-plot}
 
 How are engine size and fuel economy related? We might create a scatterplot of engine displacement and highway mpg with points coloured by number of cylinders: 
 
@@ -108,7 +108,7 @@ knitr::kable(head(scaled, 8), digits = 3, align = "l")
 
 Finally, we need to render this data to create the graphical objects that are displayed on the screen.  To create a complete plot we need to combine graphical objects from three sources: the *data*, represented by the point geom; the *scales and coordinate system*, which generate axes and legends so that we can read values from the graph; and *plot annotations*, such as the background and plot title. 
 
-## Adding complexity {#sec:complex-plot} 
+## Adding complexity {#complex-plot} 
 
 With a simple example under our belts, let's now turn to look at this slightly more complicated example:
 
@@ -131,7 +131,7 @@ As well as adding an additional step to summarise the data, we also need some ex
   plot of $\log(x)$ vs. $\log(y)$ on linear scales looks the same as $x$ vs. 
   $y$ on log scales. There are many different transformations that can be used, 
   including taking square roots, logarithms and reciprocals. 
-  See [continuous scales](#sub:scale-position) for more details. 
+  See Section \@ref(scale-position) for more details. 
   
 * After the statistics are computed, each scale is trained on every dataset 
   from all the layers and facets.  The training operation combines the ranges 
@@ -140,7 +140,7 @@ As well as adding an additional step to summarise the data, we also need some ex
   overlay different layers because their positions wouldn't line up. Sometimes 
   we do want to vary position scales across facets (but never across layers), 
   and this is described more fully in 
-  [controlling scales](#sub:controlling-scales).
+  Section \@ref(controlling-scales).
   
 * Finally the scales map the data values into aesthetic values. This is a 
   local operation: the variables in each dataset are mapped to their aesthetic 
@@ -150,12 +150,12 @@ Figure \ref{fig:schematic} illustrates the complete process schematically.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=4in]{diagrams/mastery-schema}
+  \includegraphics[width=3.7in]{diagrams/mastery-schema}
   \caption{Schematic description of the plot generation process. Each square represents a layer, and this schematic represents a plot with three layers and three panels. All steps work by transforming individual data frames except for training scales, which doesn't affect the data frame and operates across all datasets simultaneously.}
   \label{fig:schematic}
 \end{figure}
 
-## Components of the layered grammar {#sec:components}
+## Components of the layered grammar {#components}
 
 In the examples above, we have seen some of the components that make up a plot: data and aesthetic mappings, geometric objects (geoms), statistical transformations (stats), scales, and facetting. We have also touched on the coordinate system. One thing we didn't mention is the position adjustment, which deals with overlapping graphic objects. Together, the data, mappings, stat, geom and position adjustment form a **layer**. A plot may have multiple layers, as in the example where we overlaid a smoothed line on a scatterplot. All together, the layered grammar defines a plot as the combination of: \index{Grammar!components}
 
@@ -173,7 +173,7 @@ In the examples above, we have seen some of the components that make up a plot: 
 
 The following sections describe each of the higher-level components more precisely, and point you to the parts of the book where they are documented.
 
-### Layers
+### Layers {#mastering-layers}
 
 **Layers** are responsible for creating the objects that we perceive on the plot.  A layer is composed of five parts: 
 
@@ -183,9 +183,9 @@ The following sections describe each of the higher-level components more precise
 1. A geometric object (geom).
 1. A position adjustment.
 
-The properties of a layer are described in Chapter \@ref(layers) and their uses for data visualisation in Chapter \@ref(toolbox).
+The properties of a layer are described in Chapter \@ref(layers) and their uses for data visualisation in are outlined in Chapters \@ref(individual-geoms) to \@ref(annotations).
 
-### Scales {#sub:scales}
+### Scales {#mastering-scales}
 
 A **scale** controls the mapping from data to aesthetic attributes, and we need a scale for every aesthetic used on a plot. Each scale operates across all the data in the plot, ensuring a consistent mapping from data to aesthetics.  Some examples are shown in Figure \ref{fig:scale-legends}.
 
@@ -207,11 +207,11 @@ The inverse function is used to draw a guide so that you can read values from th
 
 For more details, see Chapter \@ref(scales).
 
-### Coordinate system {#sub:coordinate-systems}
+### Coordinate system {#coordinate-systems}
 
 A coordinate system, or **coord** for short, maps the position of objects onto the plane of the plot. Position is often specified by two coordinates $(x, y)$, but potentially could be three or more (although this is not implemented in ggplot2). The Cartesian coordinate system is the most common coordinate system for two dimensions, while polar coordinates and various map projections are used less frequently.
 
-Coordinate systems affect all position variables simultaneously and differ from scales in that they also change the appearance of the geometric objects. For example, in polar coordinates, bar geoms look like segments of a circle. Additionally, scaling is performed before statistical transformation, while coordinate transformations occur afterward. The consequences of this are shown in [coordinate transformations](#sub:coord-non-linear).
+Coordinate systems affect all position variables simultaneously and differ from scales in that they also change the appearance of the geometric objects. For example, in polar coordinates, bar geoms look like segments of a circle. Additionally, scaling is performed before statistical transformation, while coordinate transformations occur afterward. The consequences of this are shown in Section \@ref(coord-non-linear).
 
 Coordinate systems control how the axes and grid lines are drawn. Figure \ref{fig:coord} illustrates three different types of coordinate systems.  Very little advice is available for drawing these for non-Cartesian coordinate systems, so a lot of work needs to be done to produce polished output.  See Chapter \@ref(coord) for more details.
 
@@ -227,9 +227,9 @@ p + coord_trans(y = "log10")
 p + coord_polar()
 ```
 
-### Facetting {#sub:intro-facetting}
+### Facetting {#intro-facetting}
 
-There is also another thing that turns out to be sufficiently useful that we should include it in our general framework: facetting, a general case of conditioned or trellised plots. This makes it easy to create small multiples, each showing a different subset of the whole dataset. This is a powerful tool when investigating whether patterns hold across all conditions. The facetting specification describes which variables should be used to split up the data, and whether position scales should be free or constrained. Facetting is described in [position](#cha:position).
+There is also another thing that turns out to be sufficiently useful that we should include it in our general framework: facetting, a general case of conditioned or trellised plots. This makes it easy to create small multiples, each showing a different subset of the whole dataset. This is a powerful tool when investigating whether patterns hold across all conditions. The facetting specification describes which variables should be used to split up the data, and whether position scales should be free or constrained. Facetting is described in Section \@ref(position).
 
 ## Exercises 
 
