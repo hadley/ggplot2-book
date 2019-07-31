@@ -196,13 +196,13 @@ c18 <- us_boundaries(as.Date("1820-01-01"))
 class(c18)
 ```
 
-The key column in this data set is the `geometry` variable, which specifies the spatial geometry for each of the US state borders as they stood in 1820:
+The key column in this data set is the `geometry` variable, which specifies the spatial geometry for each of the US state borders as they stood in 1820. 
 
 ```{r}
 c18[1:10, c("full_name", "geometry")]
 ```
 
-Given data in this format, we can use `geom_sf()` and `coord_sf()` to draw a serviceable map without specifying any parameters or even explicitly declaring any aesthetics:
+Each element in the `geometry` column is a multipolygon object and --- as the name suggests --- contains data specifying the vertices of one or more polygons that demark the border of a single US state. The data printed at the beginning of the output indicates that there is additional useful mapping information stored in the `geometry` column. Given data in this format, we can use `geom_sf()` and `coord_sf()` to draw a serviceable map without specifying any parameters or even explicitly declaring any aesthetics:
 
 ```{r}
 ggplot(c18) + 
@@ -228,7 +228,23 @@ This produces a plot with a conic projection. More specifically, printing the cr
 st_crs(3347)
 ```
 
-For more information about mapping using simple features, see Geocomputation with R <https://geocompr.robinlovelace.net/> by Robin Lovelace, Jakub Nowosad and Jannes Muenchow. 
+For more information about coordinate reference systems and a more detailed coverage of the fundamentals in geospatial mapping, see Geocomputation with R <https://geocompr.robinlovelace.net/> by Robin Lovelace, Jakub Nowosad and Jannes Muenchow. 
+
+Annotation etc
+
+```{r}
+ggplot(c18, aes(fill = start_date)) +
+  geom_sf(show.legend = FALSE) + 
+  coord_sf()
+
+ggplot(c18) +
+  geom_sf() + 
+  geom_sf_text(
+    aes(label = lubridate::year(c18$start_date)),  
+    check_overlap = TRUE, 
+  ) + 
+  coord_sf()
+```
 
 
 ### Outtakes to integrate later
