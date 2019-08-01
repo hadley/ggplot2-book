@@ -1,13 +1,15 @@
-# Space and time {#space-time}
+# Maps and surfaces {#space-time}
 
 ```{r, include = FALSE}
 source("common.R")
 columns(1, 2 / 3)
 ```
 
-## Surface plots {#surface}
+Up to this point the visualisation problems discussed have focused on cases where data can be suitably represented by geoms such as points and lines which tend to represent data in a straightforward fashion. We have also considered cases where more complex geoms such as densities, violins and boxplots can be used to introduce some degree of abstraction. What has not yet been considered are cases where the a three-dimensional (3d) visualisation is required (as in a surface plot) or where data need to be overlaid on a two dimensional (2d) geospatial plot (a map). These visualisation situations require somewhat different tools, and are the focus of this chapter.
 
-ggplot2 does not support true 3d surfaces. However, it does support many common tools for representing 3d surfaces in 2d: contours, coloured tiles and bubble plots. These all work similarly, differing only in the aesthetic used for the third dimension. Here is an example of a contour plot: \index{Surface plots} \index{Contour plot} \indexf{geom\_contour} \index{3d}
+## Surfaces {#surface}
+
+The ggplot2 package does not support true 3d surfaces. However, it does support many common tools for representing 3d surfaces in 2d: contours, coloured tiles and bubble plots. These all work similarly, differing only in the aesthetic used for the third dimension. Here is an example of a contour plot: \index{Surface plots} \index{Contour plot} \indexf{geom\_contour} \index{3d}
 
 ```{r}
 ggplot(faithfuld, aes(eruptions, waiting)) + 
@@ -32,12 +34,14 @@ ggplot(small, aes(eruptions, waiting)) +
 
 For interactive 3d plots, including true 3d surfaces, see RGL, <http://rgl.neoscientists.org/about.shtml>.
 
-## Drawing maps {#maps}
+## Vector maps {#maps}
 \index{Maps!geoms} \index{Data!spatial}
 
-There are four types of map data you might want to visualise: vector boundaries, point metadata, area metadata, and raster images. Typically, assembling these datasets is the most challenging part of drawing maps. Unfortunately ggplot2 can't help you with that part of the analysis, but I'll provide some hints about other R packages that you might want to look at. I'll illustrate each of the four types of map data with some maps of Michigan.
+Using maps as a tool for data visualisation can be decomposed into two linked problems: drawing the map itself, and adding metadata representing another information source to that map. These are not always separate problems in practice, but it is often convenient. 
 
-### Vector boundaries
+There are three kinds of map data you are most likely to encounter:  this section discusses mapping with vector data, raster data are discussed in Section \@ref(raster), and simple features data are covered by Section \@ref(sf).
+
+### Drawing vector boundaries
 
 Perhaps the simplest way to define a map is using vector boundaries. For this kind of map, each row in the data frame specifies the location of one "corner" of a geographical region like a country, state, or county. It requires four variables:
 
@@ -80,7 +84,7 @@ Notice that these examples both use `coord_quickmap()` to set the coordinates. T
 will be needed.
 
 
-### Point metadata
+### Adding point metadata
 
 In contrast to vector data used to define regions, point metadata is used to 
 define specific clocations (defined by lat and lon) with, and to connect 
@@ -112,51 +116,7 @@ ggplot(mi_cities, aes(lon, lat)) +
   coord_quickmap()
 ```
 
-### Raster images
-
-Instead of displaying context with vector boundaries, you might want to draw a traditional map underneath. This is called a raster image. The easiest way to get a raster map of a given area is to use the ggmap package, which allows you to get data from a variety of online mapping sources including OpenStreetMap and Google Maps. Downloading the raster data is often time consuming so it's a good idea to cache it in a rds file, as illustrated here: \index{ggmap} \index{Raster data}
-
-<!-- TODO: Note that OSM is temporarily(??) not supported -->
-<!-- works because we have the cached mi_raster.rds file -->
-<!-- see: https://github.com/dkahle/ggmap/issues/117 -->
-
-```{r}
-if (file.exists("mi_raster.rds")) {
-  mi_raster <- readRDS("mi_raster.rds")
-} else {
-  bbox <- c(
-    min(mi_counties$lon), min(mi_counties$lat), 
-    max(mi_counties$lon), max(mi_counties$lat)
-  )
-  mi_raster <- ggmap::get_openstreetmap(bbox, scale = 8735660)
-  saveRDS(mi_raster, "mi_raster.rds")
-}
-```
-
-(Note that finding the appropriate `scale` required a lot of manual tweaking). Once you have the raster data, you can use the `ggmap()` function from the
-ggmap package to create a plot showing the raster map (left panel). The output
-from this function is a ggplot object, so you can add layers to it in the 
-usual fashion to overlay the map with the desired metadata (right panel):
-
-```{r}
-ggmap::ggmap(mi_raster)
-
-ggmap::ggmap(mi_raster) + 
-  geom_point(aes(size = pop), mi_cities, colour = "red") + 
-  scale_size_area()
-```
-
-If you have raster data from the raster package, you can convert it to the form needed by ggplot2 with the following code:
-
-```{r, eval = FALSE}
-df <- as.data.frame(raster::rasterToPoints(x))
-names(df) <- c("lon", "lat", "x")
-
-ggplot(df, aes(lon, lat)) + 
-  geom_raster(aes(fill = x))
-```
-
-### Area metadata
+### Adding area metadata
 
 Sometimes metadata is associated not with a point, but with an area. For example, we can create `mi_census` which provides census information about each county in MI:
 
@@ -185,7 +145,56 @@ ggplot(census_counties, aes(lon, lat, group = county)) +
 ```
 
 
-### Mapping with simple features 
+## Raster maps {#rastermaps}
+
+Instead of displaying context with vector boundaries, you might want to draw a traditional map underneath. This is called a raster image. The easiest way to get a raster map of a given area is to use the ggmap package, which allows you to get data from a variety of online mapping sources including OpenStreetMap and Google Maps. Downloading the raster data is often time consuming so it's a good idea to cache it in a rds file, as illustrated here: \index{ggmap} \index{Raster data}
+
+<!-- TODO: Note that OSM is temporarily(??) not supported -->
+<!-- works because we have the cached mi_raster.rds file -->
+<!-- see: https://github.com/dkahle/ggmap/issues/117 -->
+
+```{r}
+if (file.exists("mi_raster.rds")) {
+  mi_raster <- readRDS("mi_raster.rds")
+} else {
+  bbox <- c(
+    min(mi_counties$lon), min(mi_counties$lat), 
+    max(mi_counties$lon), max(mi_counties$lat)
+  )
+  mi_raster <- ggmap::get_openstreetmap(bbox, scale = 8735660)
+  saveRDS(mi_raster, "mi_raster.rds")
+}
+```
+
+Note that finding the appropriate `scale` required a lot of manual tweaking. Once you have the raster data, you can use the `ggmap()` function from the
+ggmap package to create a plot showing the raster map (left panel below). 
+
+```{r}
+ggmap::ggmap(mi_raster)
+
+ggmap::ggmap(mi_raster) + 
+  geom_point(aes(size = pop), mi_cities, colour = "red") + 
+  scale_size_area()
+```
+
+
+Just like vector maps, a raster map can be linked to metadata representing an additional information source. The output
+from this function is a ggplot object, so you can add layers to it in the 
+usual fashion to overlay the map with the desired metadata (right panel above)
+
+
+If you have raster data from the raster package, you can convert it to the form needed by ggplot2 with the following code:
+
+```{r, eval = FALSE}
+df <- as.data.frame(raster::rasterToPoints(x))
+names(df) <- c("lon", "lat", "x")
+
+ggplot(df, aes(lon, lat)) + 
+  geom_raster(aes(fill = x))
+```
+
+
+## Simple feature maps {#sf} 
 
 It is quite common to encounter vector data encoded using the "simple features" standard produced by the Open Geospatial Consortium. Data in this format is typically represented in R using the sf package developed by Edzer Pebesma <https://github.com/r-spatial/sf>. The ggplot2 package supports sf data via the `geom_sf()` and `coord_sf()` functions. To that end, we use  data from the USAboundaries package, <https://github.com/ropensci/USAboundaries> which contains state, county and zip code data for the US. As well as current boundaries, it also has state and county boundaries going back to the 1600s.  
 
