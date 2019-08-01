@@ -84,7 +84,7 @@ Notice that these examples both use `coord_quickmap()` to set the coordinates. T
 will be needed.
 
 
-### Adding point metadata
+### Adding point metadata {#pointmetadata}
 
 In contrast to vector data used to define regions, point metadata is used to 
 define specific clocations (defined by lat and lon) with, and to connect 
@@ -166,8 +166,7 @@ if (file.exists("mi_raster.rds")) {
 }
 ```
 
-Note that finding the appropriate `scale` required a lot of manual tweaking. Once you have the raster data, you can use the `ggmap()` function from the
-ggmap package to create a plot showing the raster map (left panel below). 
+Note that finding the appropriate `scale` in this example required a lot of manual tweaking, so it may take some effort to obtain the data you want. Once you have the raster data, the `ggmap()` function from the ggmap package allows you to create a plot drawing the map, as illustrated in the left panel below:
 
 ```{r}
 ggmap::ggmap(mi_raster)
@@ -177,21 +176,8 @@ ggmap::ggmap(mi_raster) +
   scale_size_area()
 ```
 
+The nice thing about the `ggmap()` function is that the output is a ggplot object, so adding metadata to the plot is accomplished in the same way one would add layers to any other plot. This is illustrated in the right side plot above, which adds the `mi_cities` data to the raster map in much the same way I did for the vector map in Section \@ref(pointmetadata). 
 
-Just like vector maps, a raster map can be linked to metadata representing an additional information source. The output
-from this function is a ggplot object, so you can add layers to it in the 
-usual fashion to overlay the map with the desired metadata (right panel above)
-
-
-If you have raster data from the raster package, you can convert it to the form needed by ggplot2 with the following code:
-
-```{r, eval = FALSE}
-df <- as.data.frame(raster::rasterToPoints(x))
-names(df) <- c("lon", "lat", "x")
-
-ggplot(df, aes(lon, lat)) + 
-  geom_raster(aes(fill = x))
-```
 
 
 ## Simple feature maps {#sf} 
@@ -257,6 +243,20 @@ ggplot(c18) +
 
 
 ### Outtakes to integrate later
+
+Content that I haven't found the right way to integrate yet!
+
+If you have raster data from the raster package, you can convert it to the form needed by ggplot2 with the following code:
+
+```{r, eval = FALSE}
+df <- as.data.frame(raster::rasterToPoints(x))
+names(df) <- c("lon", "lat", "x")
+
+ggplot(df, aes(lon, lat)) +
+  geom_raster(aes(fill = x))
+```
+
+
 
 * The tigris package, <https://github.com/walkerke/tigris>, makes it easy to
   access the US Census TIGRIS shapefiles. It contains state, county, zipcode,
