@@ -1,34 +1,19 @@
-# Maps {#space-time}
+# Maps {#maps}
+
 
 ```{r, include = FALSE}
 source("common.R")
 columns(1, 2 / 3)
 ```
 
-Up to this point the visualisation problems discussed have focused on cases where data can be suitably represented by geoms such as points and lines which tend to represent data in a straightforward fashion. We have also considered cases where more complex geoms such as densities, violins and boxplots can be used to introduce some degree of abstraction. What has not yet been considered are cases where the a three-dimensional (3d) visualisation is required (as in a surface plot) or where data need to be overlaid on a two dimensional (2d) geospatial plot (a map). These visualisation situations require somewhat different tools, and are the focus of this chapter.
+Plotting geospatial data is a common visualisation task, and one that requires specialised tools. Typically the problem can be decomposed into two problems: using one data source to draw a map, and adding metadata from another information source to the map. 
 
+## Polygon maps 
+\index{Maps!geoms} 
+\index{Data!spatial}
+\index{geom\_polygon}
 
-## Vector maps {#maps}
-\index{Maps!geoms} \index{Data!spatial}
-
-Using maps as a tool for data visualisation can be decomposed into two linked problems: drawing the map itself, and adding metadata representing another information source to that map. These are not always separate problems in practice, but it is often convenient. 
-
-There are three kinds of map data you are most likely to encounter:  this section discusses mapping with vector data, raster data are discussed in Section \@ref(raster), and simple features data are covered by Section \@ref(sf).
-
-### Drawing vector boundaries
-
-Perhaps the simplest way to define a map is using vector boundaries. For this kind of map, each row in the data frame specifies the location of one "corner" of a geographical region like a country, state, or county. It requires four variables:
-
-* `lat` and `long`, giving the location of a point.
-* `group`, a unique identifier for each contiguous region.
-* `id`, the name of the region.
-
-The reason why the data frame contains separate `group` and `id` is that some  geographical units cannot be specified using a single contiguous polygon. A good
-example of this is Hawaii, which is composed of multiple islands, each requiring its own polygon.
-
-As a simple example, we'll use data from the maps package using `ggplot2::map_data()`. The maps package isn't particularly accurate or up-to-date, but it's built into R so it's a reasonable place to start. To begin
-with, let's take a look at the data:
-\indexf{map\_data}
+Perhaps the simplest approach to drawing maps is to use `geom_polygon()` to draw boundaries for different regions. For this example we take data from the maps package using `ggplot2::map_data()`. The maps package isn't particularly accurate or up-to-date, but it's built into R so it's a reasonable place to start. Here is a data set specifying the county boundaries within Michigan:
 
 ```{r}
 mi_counties <- map_data("county", "michigan") %>% 
@@ -36,12 +21,7 @@ mi_counties <- map_data("county", "michigan") %>%
 head(mi_counties)
 ```
 
-This data frame has the structure we need, so we can construct a map  
-using `geom_polygon()`, which draws each county as a distinct polygon. By 
-default `geom_polygon()` will draw filled polygons (left), but we can override
-this by setting `fill = NA` (right):
-
-\indexf{geom\_polygon}
+In this data set we have four variables: `lat` and `long` specify the latitude and longitude of a point, `id` specifies the name of a region, and `group` provides a unique identifier for a contiguous area within a region (e.g., if a region consists of multiple islands). We can construct a map using `geom_polygon()` which draws each county as a distinct polygon. By default `geom_polygon()` draws filled polygons (left), but we can override this by setting `fill = NA` (right):
 
 `r columns(2, 2/3)`
 ```{r}
@@ -54,74 +34,108 @@ ggplot(mi_counties, aes(lon, lat)) +
   coord_quickmap()
 ```
 
-Notice that these examples both use `coord_quickmap()` to set the coordinates. This function provides a quick and dirty adjustment that ensures that the aspect ratio of the plot is set correctly. For more precise mapping, other approaches
-will be needed.
 
 
-### Adding point metadata {#pointmetadata}
+## Simple features maps {#sf} 
 
-In contrast to vector data used to define regions, point metadata is used to 
-define specific clocations (defined by lat and lon) with, and to connect 
-these locations with other variables. For example, the code below extracts the biggest cities in Michigan (as of 2006):
+It is quite common to encounter vector data encoded using the "simple features" standard produced by the Open Geospatial Consortium. Data in this format is typically represented in R using the sf package developed by Edzer Pebesma <https://github.com/r-spatial/sf>. The ggplot2 package supports sf data via the `geom_sf()` and `coord_sf()` functions. 
 
-```{r}
-mi_cities <- maps::us.cities %>% 
-  tbl_df() %>%
-  filter(country.etc == "MI") %>%
-  select(-country.etc, lon = long) %>%
-  arrange(desc(pop))
-mi_cities
-```
-
-We could show this data with a scatterplot (left panel below), but this is 
-not terribly useful without a reference. You almost always combine point 
-metadata with another layer to make it interpretable (right panel)
+<!-- To that end, we use  data from the USAboundaries package, <https://github.com/ropensci/USAboundaries> which contains state, county and zip code data for the US. As well as current boundaries, it also has state and county boundaries going back to the 1600s.  -->
+<!-- ozmaps is simpler -->
 
 ```{r}
-ggplot(mi_cities, aes(lon, lat)) + 
-  geom_point(aes(size = pop)) + 
-  scale_size_area() + 
-  coord_quickmap()
-
-ggplot(mi_cities, aes(lon, lat)) + 
-  geom_polygon(aes(group = group), mi_counties, fill = NA, colour = "grey50") +
-  geom_point(aes(size = pop), colour = "red") + 
-  scale_size_area() + 
-  coord_quickmap()
+library(ozmaps)
+library(sf)
+ozvotes <- ozmaps::abs_ced
+ozvotes
 ```
 
-### Adding area metadata
-
-Sometimes metadata is associated not with a point, but with an area. For example, we can create `mi_census` which provides census information about each county in MI:
+The key column in this data set is the `geometry` variable, which specifies the spatial geometry for each of the Australian electorates. Each element in the `geometry` column is a multipolygon object and --- as the name suggests --- contains data specifying the vertices of one or more polygons that demark the border of a single electorate. The data printed at the beginning of the output indicates that there is additional useful mapping information stored in the `geometry` column. Given data in this format, we can use `geom_sf()` and `coord_sf()` to draw a serviceable map without specifying any parameters or even explicitly declaring any aesthetics:
 
 ```{r}
-mi_census <- midwest %>%
-  tbl_df() %>%
-  filter(state == "MI") %>% 
-  mutate(county = tolower(county)) %>%
-  select(county, area, poptotal, percwhite, percblack)
-mi_census
+ggplot(ozvotes) + 
+  geom_sf() + 
+  coord_sf()
 ```
 
-We can't map this data directly because it has no spatial component. Instead, we must first join it to the vector boundaries data. This is not particularly space efficient, but it makes it easy to see exactly what data is being plotted. Here I use `dplyr::left_join()` to combine the two datasets and create a choropleth map. \index{Choropleth}
+To understand what this code does, note that `geom_sf()` relies on a `geometry` aesthetic that is not used elsewhere in ggplot2. This aesthetic can be specified in one of three ways. In the simplest case (illustrated above) when the user does nothing, `geom_sf()` will attempt to map it to a column named `geometry`. However, if the `data` argument is an sf object then `geom_sf()` is able to automatically detect a column that specifies a simple features geometry (discussed below), and constructs the mapping using that column regardless of what it is named. The third possibility is that the user can specify the mapping manually in the usual way with `aes(geometry = my_column)`. 
+
+
+Multipolygon is flexible...
 
 ```{r}
-census_counties <- left_join(mi_census, mi_counties, by = c("county" = "id"))
-census_counties
 
-ggplot(census_counties, aes(lon, lat, group = county)) + 
-  geom_polygon(aes(fill = poptotal)) + 
-  coord_quickmap()
+p <- ggplot(ozvotes) +   
+  geom_sf(aes(fill = NAME == "Eden-Monaro"), show.legend = FALSE)
 
-ggplot(census_counties, aes(lon, lat, group = county)) + 
-  geom_polygon(aes(fill = percwhite)) + 
-  coord_quickmap()
+# Eden-Monaro consists of two polygons, one with hole 
+p + coord_sf(xlim = c(147.75, 150.25), ylim = c(-37.5, -34.5)) 
+p + coord_sf(xlim = c(150, 150.25), ylim = c(-36, -36.3)) 
 ```
+
+
+Layering maps...
+
+
+`r columns(n = 1, aspect_ratio = 1)`
+```{r}
+indreg <- ozmaps::abs_ireg
+
+ggplot() + 
+  geom_sf(data = ozvotes, colour = "blue") + 
+  geom_sf(data = indreg, colour = "#FF000088", fill = NA) + 
+  coord_sf()
+```
+
+Labelling...
+
+```{r}
+ggplot(ozvotes) + 
+  geom_sf(fill = "grey70") + 
+  coord_sf(xlim = c(150.97, 151.3), ylim = c(-33.98, -33.79)) + 
+  geom_sf_label(aes(label = NAME), label.padding = unit(1, "mm"))
+```
+
+Something with point metadata...
+
+Something with area metadata...
+
+
+## Map projections
+
+The second thing to comment on in this code is how the `coord_sf()` function sets the coordinates for the plot. The geometry column is usually associated with a coordinate reference system (CRS), stored internally as one of the attributes of the column. Because this information is usually available, the default behaviour of `coord_sf()` is to extract the CRS from the sf geometry column and use that to construct the coordinate system for the plot (see Chapter \@ref(coord)). 
+
+It is possible to override the default by manually passing a CRS to `coord_sf()`. You can do this with the help of the sf package, which provides the `st_crs()` function for this purpose. In the plot above the map is projected using a longitude/latitude projection that  corresponds to "EPSG code" 4326 (see <http://www.epsg-registry.org/>), and note this information was printed in the example above when we printed the `c18` object. To manually change the map projection, we use `st_crs()` as shown here:
+
+```{r}
+ggplot(ozvotes) +
+  geom_sf() + 
+  coord_sf(crs = st_crs(3347))
+```
+
+This produces a plot with a conic projection. More specifically, printing the crs object returned by the `st_crs()` function reveals the full proj4string that specifies the map projection in (slightly) human readable format as well as the EPSG code itself:
+
+```{r}
+st_crs(3347)
+```
+
+Pick a less wildly inappropriate CRS. 
+
+Go into more detail here, per: "I think this chapter needs a brief overview of latitude and longitude, CRS vs GPS, and mention geodetic datums (because for a long time thought that lat and long were sufficient for map data, which isn't true)."
+
+
+For more information about coordinate reference systems and a more detailed coverage of the fundamentals in geospatial mapping, see Geocomputation with R <https://geocompr.robinlovelace.net/> by Robin Lovelace, Jakub Nowosad and Jannes Muenchow. 
+
+
+## Manipulating simple features data
+
+Dig into the structure of sf a bit... maybe take the Dawson electorate, split the multipolygon into individual polygons and colour the islands separately??? Etc. 
 
 
 ## Raster maps {#rastermaps}
 
 Instead of displaying context with vector boundaries, you might want to draw a traditional map underneath. This is called a raster image. The easiest way to get a raster map of a given area is to use the ggmap package, which allows you to get data from a variety of online mapping sources including OpenStreetMap and Google Maps. Downloading the raster data is often time consuming so it's a good idea to cache it in a rds file, as illustrated here: \index{ggmap} \index{Raster data}
+
 
 <!-- TODO: Note that OSM is temporarily(??) not supported -->
 <!-- works because we have the cached mi_raster.rds file -->
@@ -132,7 +146,7 @@ if (file.exists("mi_raster.rds")) {
   mi_raster <- readRDS("mi_raster.rds")
 } else {
   bbox <- c(
-    min(mi_counties$lon), min(mi_counties$lat), 
+    min(mi_counties$lon), min(mi_counties$lat),
     max(mi_counties$lon), max(mi_counties$lat)
   )
   mi_raster <- ggmap::get_openstreetmap(bbox, scale = 8735660)
@@ -145,90 +159,34 @@ Note that finding the appropriate `scale` in this example required a lot of manu
 ```{r}
 ggmap::ggmap(mi_raster)
 
-ggmap::ggmap(mi_raster) + 
-  geom_point(aes(size = pop), mi_cities, colour = "red") + 
+mi_cities <- tbl_df(maps::us.cities) %>%
+  filter(country.etc == "MI") %>%
+  select(-country.etc, lon = long) 
+
+ggmap::ggmap(mi_raster) +
+  geom_point(aes(size = pop), mi_cities, colour = "red") +
   scale_size_area()
 ```
 
-The nice thing about the `ggmap()` function is that the output is a ggplot object, so adding metadata to the plot is accomplished in the same way one would add layers to any other plot. This is illustrated in the right side plot above, which adds the `mi_cities` data to the raster map in much the same way I did for the vector map in Section \@ref(pointmetadata). 
+The nice thing about the `ggmap()` function is that the output is a ggplot object, so adding metadata to the plot is accomplished in the same way one would add layers to any other plot. This is illustrated in the right side plot above, which adds the `mi_cities` data to the raster map in much the same way I did for the vector map in Section \@ref(pointmetadata).
 
 
 
-## Simple feature maps {#sf} 
+<!-- If you have raster data from the raster package, you can convert it to the form needed by ggplot2 with the following code: -->
 
-It is quite common to encounter vector data encoded using the "simple features" standard produced by the Open Geospatial Consortium. Data in this format is typically represented in R using the sf package developed by Edzer Pebesma <https://github.com/r-spatial/sf>. The ggplot2 package supports sf data via the `geom_sf()` and `coord_sf()` functions. To that end, we use  data from the USAboundaries package, <https://github.com/ropensci/USAboundaries> which contains state, county and zip code data for the US. As well as current boundaries, it also has state and county boundaries going back to the 1600s.  
+<!-- ```{r, eval = FALSE} -->
+<!-- df <- as.data.frame(raster::rasterToPoints(x)) -->
+<!-- names(df) <- c("lon", "lat", "x") -->
 
-```{r}
-library(USAboundaries)
-library(sf)
-c18 <- us_boundaries(as.Date("1820-01-01"))
-class(c18)
-```
-
-The key column in this data set is the `geometry` variable, which specifies the spatial geometry for each of the US state borders as they stood in 1820. 
-
-```{r}
-c18[1:10, c("full_name", "geometry")]
-```
-
-Each element in the `geometry` column is a multipolygon object and --- as the name suggests --- contains data specifying the vertices of one or more polygons that demark the border of a single US state. The data printed at the beginning of the output indicates that there is additional useful mapping information stored in the `geometry` column. Given data in this format, we can use `geom_sf()` and `coord_sf()` to draw a serviceable map without specifying any parameters or even explicitly declaring any aesthetics:
-
-```{r}
-ggplot(c18) + 
-  geom_sf() + 
-  coord_sf()
-```
-
-To understand what this code does, note that `geom_sf()` relies on a `geometry` aesthetic that is not used elsewhere in ggplot2. This aesthetic can be specified in one of three ways. In the simplest case (illustrated above) when the user does nothing, `geom_sf()` will attempt to map it to a column named `geometry`. However, if the `data` argument is an sf object then `geom_sf()` is able to automatically detect a column that specifies a simple features geometry (discussed below), and constructs the mapping using that column regardless of what it is named. The third possibility is that the user can specify the mapping manually in the usual way with `aes(geometry = my_column)`. 
-
-The second thing to comment on in this code is how the `coord_sf()` function sets the coordinates for the plot. The geometry column is usually associated with a coordinate reference system (CRS), stored internally as one of the attributes of the column. Because this information is usually available, the default behaviour of `coord_sf()` is to extract the CRS from the sf geometry column and use that to construct the coordinate system for the plot (see Chapter \@ref(coord)). 
-
-It is possible to override the default by manually passing a CRS to `coord_sf()`. You can do this with the help of the sf package, which provides the `st_crs()` function for this purpose. In the plot above the map is projected using a longitude/latitude projection that  corresponds to "EPSG code" 4326 (see <http://www.epsg-registry.org/>), and note this information was printed in the example above when we printed the `c18` object. To manually change the map projection, we use `st_crs()` as shown here:
-
-```{r}
-ggplot(c18) +
-  geom_sf() + 
-  coord_sf(crs = st_crs(3347))
-```
-
-This produces a plot with a conic projection. More specifically, printing the crs object returned by the `st_crs()` function reveals the full proj4string that specifies the map projection in (slightly) human readable format as well as the EPSG code itself:
-
-```{r}
-st_crs(3347)
-```
-
-For more information about coordinate reference systems and a more detailed coverage of the fundamentals in geospatial mapping, see Geocomputation with R <https://geocompr.robinlovelace.net/> by Robin Lovelace, Jakub Nowosad and Jannes Muenchow. 
-
-Annotation etc
-
-```{r}
-ggplot(c18, aes(fill = start_date)) +
-  geom_sf(show.legend = FALSE) + 
-  coord_sf()
-
-ggplot(c18) +
-  geom_sf() + 
-  geom_sf_text(
-    aes(label = lubridate::year(c18$start_date)),  
-    check_overlap = TRUE, 
-  ) + 
-  coord_sf()
-```
+<!-- ggplot(df, aes(lon, lat)) + -->
+<!--   geom_raster(aes(fill = x)) -->
+<!-- ``` -->
 
 
-### Outtakes to integrate later
 
-Content that I haven't found the right way to integrate yet!
 
-If you have raster data from the raster package, you can convert it to the form needed by ggplot2 with the following code:
 
-```{r, eval = FALSE}
-df <- as.data.frame(raster::rasterToPoints(x))
-names(df) <- c("lon", "lat", "x")
-
-ggplot(df, aes(lon, lat)) +
-  geom_raster(aes(fill = x))
-```
+## Data sources
 
 
 
@@ -246,6 +204,6 @@ ggplot(df, aes(lon, lat)) +
   indvidual streets and buildings
   
 * You may have your own shape files (`.shp`). You can load them into
-  R with `maptools::readShapeSpatial()`.
+  R with `sf::read_sf()`
 
 
