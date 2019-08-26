@@ -38,36 +38,55 @@ In both plots I use `coord_quickmap()` to adjust the axes to ensure that longitu
 
 ## Simple features maps {#sf} 
 
+There are a few limitations to the approach outlined above, not least of which is the fact that the simple "longitude-latitude" data format is not typically used in real world mapping. Vector data for maps are typically encoded using the "simple features" standard produced by the Open Geospatial Consortium. The sf package developed by Edzer Pebesma <https://github.com/r-spatial/sf> provides an excellent toolset for working with such data, and the `geom_sf()` and `coord_sf()` functions in ggplot2 are designed to work together with the sf package. 
 
+To introduce these functions, we rely on the ozmaps package by Michael Sumner <https://github.com/mdsumner/ozmaps/> which provides maps for Australian state boundaries, local government areas, electoral boundaries, and so on. To illustrate what an sf data set looks like, we import a data set depicting the borders of Australian states and territories:
 
-It is quite common to encounter vector data encoded using the "simple features" standard produced by the Open Geospatial Consortium. Data in this format is typically represented in R using the sf package developed by Edzer Pebesma <https://github.com/r-spatial/sf>. The ggplot2 package supports sf data via the `geom_sf()` and `coord_sf()` functions. 
+<!-- Dani... Hm. ozmaps is not on CRAN. That argues for USAboundaries, but to be honest I prefer a data set for which most readers will expect an explanation - I think using USA data is bad because American readers expect it to be common knowledge requiring no explanation, and no-one else does. May need to help Michael with https://github.com/mdsumner/ozmaps/issues/10 -->
 
-<!-- To that end, we use  data from the USAboundaries package, <https://github.com/ropensci/USAboundaries> which contains state, county and zip code data for the US. As well as current boundaries, it also has state and county boundaries going back to the 1600s.  -->
-<!-- ozmaps is simpler -->
-
+`r columns(1, 1)`
 ```{r}
 library(ozmaps)
 library(sf)
-ozvotes <- ozmaps::abs_ced
-ozvotes
+
+oz_states <- ozmaps::ozmap_states
+oz_states
 ```
 
-The key column in this data set is the `geometry` variable, which specifies the spatial geometry for each of the Australian electorates. Each element in the `geometry` column is a multipolygon object and --- as the name suggests --- contains data specifying the vertices of one or more polygons that demark the border of a single electorate. The data printed at the beginning of the output indicates that there is additional useful mapping information stored in the `geometry` column. Given data in this format, we can use `geom_sf()` and `coord_sf()` to draw a serviceable map without specifying any parameters or even explicitly declaring any aesthetics:
+The output prints out some of the metadata associated with the data set (discussed momentarily), and shows that the data set is essentially a tibble with 11 rows and 4 columns. One advantage to sf data is immediately apparent: Australia is comprised of six states, four territories and Macquarie Island, which is politically part of Tasmania. There are 11 distinct geographical units, and accordingly there are 11 rows to this data set (compare this with the mi_counties data, which comprises one row per polygon vertex).  
+
+The key column in this data set is the `geometry` variable, which specifies the spatial geometry for each of the Australian states and territories. Each element in the `geometry` column is a multipolygon object and --- as the name suggests --- contains data specifying the vertices of one or more polygons that demark the border of a state or territory. Given data in this format, we can use `geom_sf()` and `coord_sf()` to draw a serviceable map without specifying any parameters or even explicitly declaring any aesthetics:
 
 ```{r}
-ggplot(ozvotes) + 
+ggplot(oz_states) + 
   geom_sf() + 
   coord_sf()
 ```
 
-To understand what this code does, note that `geom_sf()` relies on a `geometry` aesthetic that is not used elsewhere in ggplot2. This aesthetic can be specified in one of three ways. In the simplest case (illustrated above) when the user does nothing, `geom_sf()` will attempt to map it to a column named `geometry`. However, if the `data` argument is an sf object then `geom_sf()` is able to automatically detect a column that specifies a simple features geometry (discussed below), and constructs the mapping using that column regardless of what it is named. The third possibility is that the user can specify the mapping manually in the usual way with `aes(geometry = my_column)`. 
+To understand why this works, note that `geom_sf()` relies on a `geometry` aesthetic that is not used elsewhere in ggplot2. This aesthetic can be specified in one of three ways. In the simplest case (illustrated above) when the user does nothing, `geom_sf()` will attempt to map it to a column named `geometry`. However, if the `data` argument is an sf object then `geom_sf()` is able to automatically detect a column that specifies a simple features geometry (discussed below), and constructs the mapping using that column regardless of what it is named. The third possibility is that the user can specify the mapping manually in the usual way with `aes(geometry = my_column)`. The `coord_sf()` function governs the map projection, discussed in Section \@ref{coord_sf}. 
 
+### Layered maps
 
-Multipolygon is flexible...
+(introduce the electoral data, use it as an excuse to show geom_sf can be layered like any other geom)
+
+`r columns(n = 1, aspect_ratio = 1)`
+```{r}
+oz_votes <- ozmaps::abs_ced
+
+ggplot() + 
+  geom_sf(data = oz_votes) + 
+  geom_sf(data = oz_states, colour = "black", fill = NA) + 
+  coord_sf()
+```
+
+### Flexible geometries
+
+(highlight that multipolygon is flexible enough to draw eden monaro)
 
 ```{r}
 
-p <- ggplot(ozvotes) +   
+
+p <- ggplot(oz_votes) +   
   geom_sf(aes(fill = NAME == "Eden-Monaro"), show.legend = FALSE)
 
 # Eden-Monaro consists of two polygons, one with hole 
@@ -75,42 +94,34 @@ p + coord_sf(xlim = c(147.75, 150.25), ylim = c(-37.5, -34.5))
 p + coord_sf(xlim = c(150, 150.25), ylim = c(-36, -36.3)) 
 ```
 
+### Labelling maps {#geom_sf_label}
 
-Layering maps...
-
-
-`r columns(n = 1, aspect_ratio = 1)`
-```{r}
-indreg <- ozmaps::abs_ireg
-
-ggplot() + 
-  geom_sf(data = ozvotes, colour = "blue") + 
-  geom_sf(data = indreg, colour = "#FF000088", fill = NA) + 
-  coord_sf()
-```
-
-Labelling...
+(how to add labels...)
 
 ```{r}
-ggplot(ozvotes) + 
+ggplot(oz_votes) + 
   geom_sf(fill = "grey70") + 
   coord_sf(xlim = c(150.97, 151.3), ylim = c(-33.98, -33.79)) + 
   geom_sf_label(aes(label = NAME), label.padding = unit(1, "mm"))
 ```
 
-Something with point metadata...
+### Adding point metadata
 
-Something with area metadata...
+TBA
+
+### Adding area metadata
+
+TBA
 
 
-## Map projections
+## Map projections {#coord_sf}
 
-The second thing to comment on in this code is how the `coord_sf()` function sets the coordinates for the plot. The geometry column is usually associated with a coordinate reference system (CRS), stored internally as one of the attributes of the column. Because this information is usually available, the default behaviour of `coord_sf()` is to extract the CRS from the sf geometry column and use that to construct the coordinate system for the plot (see Chapter \@ref(coord)). 
+In ths section I duscuss how the `coord_sf()` function sets the coordinates for the plot. The geometry column is usually associated with a coordinate reference system (CRS), stored internally as one of the attributes of the column. Because this information is usually available, the default behaviour of `coord_sf()` is to extract the CRS from the sf geometry column and use that to construct the coordinate system for the plot.
 
 It is possible to override the default by manually passing a CRS to `coord_sf()`. You can do this with the help of the sf package, which provides the `st_crs()` function for this purpose. In the plot above the map is projected using a longitude/latitude projection that  corresponds to "EPSG code" 4326 (see <http://www.epsg-registry.org/>), and note this information was printed in the example above when we printed the `c18` object. To manually change the map projection, we use `st_crs()` as shown here:
 
 ```{r}
-ggplot(ozvotes) +
+ggplot(oz_votes) +
   geom_sf() + 
   coord_sf(crs = st_crs(3347))
 ```
@@ -121,9 +132,9 @@ This produces a plot with a conic projection. More specifically, printing the cr
 st_crs(3347)
 ```
 
-Pick a less wildly inappropriate CRS. 
+(Pick a less wildly inappropriate CRS)
 
-Go into more detail here, per: "I think this chapter needs a brief overview of latitude and longitude, CRS vs GPS, and mention geodetic datums (because for a long time thought that lat and long were sufficient for map data, which isn't true)."
+(Go into more detail here, per: "I think this chapter needs a brief overview of latitude and longitude, CRS vs GPS, and mention geodetic datums (because for a long time thought that lat and long were sufficient for map data, which isn't true).")
 
 
 For more information about coordinate reference systems and a more detailed coverage of the fundamentals in geospatial mapping, see Geocomputation with R <https://geocompr.robinlovelace.net/> by Robin Lovelace, Jakub Nowosad and Jannes Muenchow. 
@@ -131,7 +142,7 @@ For more information about coordinate reference systems and a more detailed cove
 
 ## Manipulating simple features data
 
-Dig into the structure of sf a bit... maybe take the Dawson electorate, split the multipolygon into individual polygons and colour the islands separately??? Etc. 
+(Dig into the structure of sf a bit... maybe take the Dawson electorate, split the multipolygon into individual polygons and colour the islands separately??? Etc.)
 
 
 ## Raster maps {#rastermaps}
@@ -190,22 +201,14 @@ The nice thing about the `ggmap()` function is that the output is a ggplot objec
 
 ## Data sources
 
+* The USAboundaries package, <https://github.com/ropensci/USAboundaries> contains state, county and zip code data for the US. As well as current boundaries, it also has state and county boundaries going back to the 1600s.
 
+* The tigris package, <https://github.com/walkerke/tigris>, makes it easy to access the US Census TIGRIS shapefiles. It contains state, county, zipcode, and census tract boundaries, as well as many other useful datasets.
 
-* The tigris package, <https://github.com/walkerke/tigris>, makes it easy to
-  access the US Census TIGRIS shapefiles. It contains state, county, zipcode,
-  and census tract boundaries, as well as many other useful datasets.
+* The rnaturalearth package bundles up the free, high-quality data from <http://naturalearthdata.com/>. It contains country borders, and borders for the top-level region within each country (e.g. states in the USA, regions in France, counties in the UK).
 
-* The rnaturalearth package bundles up the free, high-quality
-  data from <http://naturalearthdata.com/>. It contains country borders,
-  and borders for the top-level region within each country (e.g.
-  states in the USA, regions in France, counties in the UK).
-
-* The osmar package, <https://cran.r-project.org/package=osmar> wraps up the 
-  OpenStreetMap API so you can access a wide range of vector data including 
-  indvidual streets and buildings
+* The osmar package, <https://cran.r-project.org/package=osmar> wraps up the OpenStreetMap API so you can access a wide range of vector data including individual streets and buildings
   
-* You may have your own shape files (`.shp`). You can load them into
-  R with `sf::read_sf()`
+* If you have your own shape files (`.shp`) you can load them into R with `sf::read_sf()`
 
 
