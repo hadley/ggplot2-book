@@ -67,15 +67,30 @@ To understand why this works, note that `geom_sf()` relies on a `geometry` aesth
 
 ### Layered maps
 
+
+
 (introduce the electoral data, use it as an excuse to show geom_sf can be layered like any other geom)
 
 `r columns(n = 1, aspect_ratio = 1)`
 ```{r}
 oz_votes <- ozmaps::abs_ced
 
+oz_capitals <- tibble::tribble(
+  ~city,           ~lat,     ~lon,
+  "Sydney",    151.2093, -33.8688, 
+  "Melbourne", 144.9631, -37.8136,
+  "Brisbane",  153.0251, -27.4698,
+  "Adelaide",  138.6007, -34.9285,
+  "Perth",     115.8605, -31.9505,
+  "Hobart",    138.6007, -34.9285,
+  "Canberra",  149.1300, -35.2809,
+  "Darwin",    130.8456, -12.4634
+)
+
 ggplot() + 
   geom_sf(data = oz_votes) + 
   geom_sf(data = oz_states, colour = "black", fill = NA) + 
+  geom_point(data = oz_capitals, mapping = aes(x = lat, y = lon), colour = "red") + 
   coord_sf()
 ```
 
