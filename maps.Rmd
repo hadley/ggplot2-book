@@ -83,7 +83,7 @@ ggplot() +
   coord_sf()
 ```
 
-It is worth noting that the first layer to this plot maps the `fill` aesthetic in onto a variable in the data. In this instance the `name` variable is a categorical variable, but other kinds of area metadata can be added to the plot (e.g., shading to indicate the unemployment level in each state) using the same mechanism.
+It is worth noting that the first layer to this plot maps the `fill` aesthetic in onto a variable in the data. In this instance the `name` variable is a categorical variable and does not convey any additional information, but the same approach can be used to visualise other kinds of area metadata. For example, if the oz_states data had an additional column specifying the unemployment level in each state, we could map the `fill` aesthetic to that variable. 
 
 ### Labelled maps {#geom_sf_label}
 
@@ -102,8 +102,8 @@ Though `geom_sf()` is special in some ways, it nevertheless behaves in much the 
 
 `r columns(n = 1, aspect_ratio = 1)`
 ```{r}
-oz_capitals <- tibble::tribble(
-  ~city,           ~lat,     ~lon,
+oz_capitals <- tibble::tribble( 
+  ~city,           ~lat,     ~lon, #labels are wrong!!!
   "Sydney",    151.2093, -33.8688, 
   "Melbourne", 144.9631, -37.8136,
   "Brisbane",  153.0251, -27.4698,
@@ -121,34 +121,41 @@ ggplot() +
   coord_sf()
 ```
 
-This approach can be extended to handle point metadata more generally. For example if the oz_capitals data set included an additional variable specifying the number of electorates within each metropolitan area, we could map the `size` aesthetic for the points to it. 
-
-
+In this example `geom_point` is used only to specify the locations of the capital cities, but the basic idea can be extended to handle point metadata more generally. For example if the oz_capitals data were to include an additional variable specifying the number of electorates within each metropolitan area, we could encode that data using the `size` aesthetic.
 
 ## Map projections {#mapproj}
 
-In ths section I duscuss how the `coord_sf()` function sets the coordinates for the plot. The geometry column is usually associated with a coordinate reference system (CRS), stored internally as one of the attributes of the column. Because this information is usually available, the default behaviour of `coord_sf()` is to extract the CRS from the sf geometry column and use that to construct the coordinate system for the plot.
+At the start of the chapter I drew maps by plotting longitude and latitude on a Cartesian plane, as if geospatial data were no different to other kinds of data one might want to plot. To a first approximation this is okay, but when one becomes concerned about accuracy it no longer suffices. There are two fundamental problems with the approach.
 
-It is possible to override the default by manually passing a CRS to `coord_sf()`. You can do this with the help of the sf package, which provides the `st_crs()` function for this purpose. In the plot above the map is projected using a longitude/latitude projection that  corresponds to "EPSG code" 4326 (see <http://www.epsg-registry.org/>), and note this information was printed in the example above when we printed the `c18` object. To manually change the map projection, we use `st_crs()` as shown here:
+The first issue is the shape of the planet. The Earth is neither a flat plane, nor indeed is it a perfect sphere. As a consequence, to map a co-ordinate value (longitude and latitude) to a location we need to make assumptions about all kinds of things. How ellipsoidal is the Earth? Where is the centre of the planet? Where is the origin point for longitude and latitude? Where is the sea level? How do the tectonic plates move? All these things are relevant, and depending on what assumptions one makes the same co-ordinate can be mapped to locations that are tens of meters apart. The set of assumptions about the shape of the Earth is referred to as the *geodetic datum* and while it might not matter for some data visualisations, for others it is critical. There are several different choices one might consider: if your focus is North America the "North American Datum" (NAD83) is a good choice, whereas if your perspective is global the "World Geodetic System" (WGS84) is probably better. 
+
+The second issue is the shape of your map. The Earth is approximately ellipsoidal, but in most instances your spatial data need to be drawn on a two dimensional plane. It is not possible to map the surface ellipsoid to a plane without some distortion or cutting, and you will have to make choices about what distortions you are prepared to accept when drawing a map. This is the job of the *map projection*. 
+
+Map projections are often classified in terms of the geometric properties that they preserve: area-preserving projections ensure that regions of equal area on the globe are drawn with equal area on the map, shape-preserving (or conformal) projections ensure that the local shape of regions is preserved, and so on. It is not possible for any projection to be shape-preserving and area-preserving. It is a little beyond the scope of this book to discuss map projections in detail (see Geocomputation with R <https://geocompr.robinlovelace.net/> by Robin Lovelace, Jakub Nowosad and Jannes Muenchow), other than to note that the simple features specification allows you to indicate which map projection you want to use.
+
+Taken together, the geodetic datum (e.g, WGS84), the type of map projection (e.g., Mercator) and the parameters of the projection (e.g., location of the origin) specify a *coordinate reference system*, or CRS, a complete set of assumptions used to translate the latitude and longitude information into a two dimensional map. An sf object often includes a default CRS, as illustrated below:
+
+```{r}
+st_crs(oz_votes)
+```
+
+As this output illutrates, the CRS can be described in two different ways. You can either use a numeric "EPSG code" (see <http://www.epsg-registry.org/>) or you can use the "proj4string", a more verbose and (slightly) more human-readable format. In ggplot2, the CRS is controlled by `coord_sf()` to ensure that every layer in the plot uses the same projection. By default, `coord_sf()` uses the CRS associated with the geometry column of the data (or, if there are multiple data sets with a different associated CRS, the first layer in the plot to do so). Because sf data typically supply a sensible choice of CRS, this process usually unfolds invisibly, requiring no intervention from the user. However, should you need to set the CRS yourself, you can specify the `crs` parameter. Some careful thought is required to do so, however, as the plot below illustrates:
 
 ```{r}
 ggplot(oz_votes) +
   geom_sf() + 
-  coord_sf(crs = st_crs(3347))
+  coord_sf(crs = st_crs("+proj=lcc +datum=WGS84"))
 ```
 
-This produces a plot with a conic projection. More specifically, printing the crs object returned by the `st_crs()` function reveals the full proj4string that specifies the map projection in (slightly) human readable format as well as the EPSG code itself:
+In this map I have used the WGS84 datum (quite reasonably) and  conformal conic (LCC) projection, which is often used in aeronautical applications because straight lines on the map are approximate "great circles" on the globe, and it sgenerally considered a good projection for regional maps in the middle latitudes. However, the map looks terrible because I haven't set the parameters very wisely. To fix this, I centre the map at longitude 140 and latitude -25, and fix the two standard parallels (lines at which there are no distortions) at latitudes -18 and -36.
 
 ```{r}
-st_crs(3347)
+crs <- "+proj=lcc +datum=WGS84 +lat_0=-25 +lon_0=140 +lat_1=-18 +lat_2=-36"
+ggplot(oz_votes) +
+  geom_sf() + 
+  coord_sf(crs = st_crs(crs))
 ```
-
-(Pick a less wildly inappropriate CRS)
-
-(Go into more detail here, per: "I think this chapter needs a brief overview of latitude and longitude, CRS vs GPS, and mention geodetic datums (because for a long time thought that lat and long were sufficient for map data, which isn't true).")
-
-
-For more information about coordinate reference systems and a more detailed coverage of the fundamentals in geospatial mapping, see Geocomputation with R <https://geocompr.robinlovelace.net/> by Robin Lovelace, Jakub Nowosad and Jannes Muenchow. 
+ 
 
 
 ## Working with simple features data {#sfdetail}
