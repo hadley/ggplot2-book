@@ -42,8 +42,6 @@ There are a few limitations to the approach outlined above, not least of which i
 
 To introduce these functions, we rely on the ozmaps package by Michael Sumner <https://github.com/mdsumner/ozmaps/> which provides maps for Australian state boundaries, local government areas, electoral boundaries, and so on. To illustrate what an sf data set looks like, we import a data set depicting the borders of Australian states and territories:
 
-<!-- Dani... Hm. ozmaps is not on CRAN. That argues for USAboundaries, but to be honest I prefer a data set for which most readers will expect an explanation - I think using USA data is bad because American readers expect it to be common knowledge requiring no explanation, and no-one else does. May need to help Michael with https://github.com/mdsumner/ozmaps/issues/10 -->
-
 `r columns(1, 1)`
 ```{r}
 library(ozmaps)
@@ -103,21 +101,21 @@ Though `geom_sf()` is special in some ways, it nevertheless behaves in much the 
 `r columns(n = 1, aspect_ratio = 1)`
 ```{r}
 oz_capitals <- tibble::tribble( 
-  ~city,           ~lat,     ~lon, #labels are wrong!!!
-  "Sydney",    151.2093, -33.8688, 
-  "Melbourne", 144.9631, -37.8136,
-  "Brisbane",  153.0251, -27.4698,
-  "Adelaide",  138.6007, -34.9285,
-  "Perth",     115.8605, -31.9505,
-  "Hobart",    138.6007, -34.9285,
-  "Canberra",  149.1300, -35.2809,
-  "Darwin",    130.8456, -12.4634
+  ~city,           ~lat,     ~lon,
+  "Sydney",    -33.8688, 151.2093,  
+  "Melbourne", -37.8136, 144.9631, 
+  "Brisbane",  -27.4698, 153.0251, 
+  "Adelaide",  -34.9285, 138.6007, 
+  "Perth",     -31.9505, 115.8605, 
+  "Hobart",    -34.9285, 138.6007, 
+  "Canberra",  -35.2809, 149.1300, 
+  "Darwin",    -12.4634, 130.8456, 
 )
 
 ggplot() + 
   geom_sf(data = oz_votes) + 
   geom_sf(data = oz_states, colour = "black", fill = NA) + 
-  geom_point(data = oz_capitals, mapping = aes(x = lat, y = lon), colour = "red") + 
+  geom_point(data = oz_capitals, mapping = aes(x = lon, y = lat), colour = "red") + 
   coord_sf()
 ```
 
@@ -147,7 +145,7 @@ ggplot(oz_votes) +
   coord_sf(crs = st_crs("+proj=lcc +datum=WGS84"))
 ```
 
-In this map I have used the WGS84 datum (quite reasonably) and  conformal conic (LCC) projection, which is often used in aeronautical applications because straight lines on the map are approximate "great circles" on the globe, and it sgenerally considered a good projection for regional maps in the middle latitudes. However, the map looks terrible because I haven't set the parameters very wisely. To fix this, I centre the map at longitude 140 and latitude -25, and fix the two standard parallels (lines at which there are no distortions) at latitudes -18 and -36.
+In this map I have used the WGS84 datum (quite reasonably) and Lambert conformal conic (LCC) projection, which is often used in aeronautical applications because straight lines on the map are approximate "great circles" on the globe, and it is generally considered a good projection for regional maps in the middle latitudes. However, the map looks terrible because I haven't set the parameters very wisely. To fix this, I centre the map at longitude 140 and latitude -25, and fix the two standard parallels (lines at which there are no distortions) at latitudes -18 and -36.
 
 ```{r}
 crs <- "+proj=lcc +datum=WGS84 +lat_0=-25 +lon_0=140 +lat_1=-18 +lat_2=-36"
