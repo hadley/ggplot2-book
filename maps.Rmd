@@ -156,18 +156,43 @@ ggplot(oz_votes) +
  
 
 
-## Working with simple features data {#sfdetail}
+## Working with sf data {#sfdetail}
 
-(highlight that multipolygon is flexible enough to draw eden monaro)
+One reason to prefer simple features over other representations of spatial data is that geographical units can have complicated structure. A good example of this in the Australian maps data is the electoral disctrict of Eden-Monaro. To see why, the code below plots the electoral map of Australia, zooming in on Eden-Mondaro: 
 
+`r columns(2, 2/3)`
 ```{r}
 p <- ggplot(oz_votes) +   
   geom_sf(aes(fill = NAME == "Eden-Monaro"), show.legend = FALSE)
 
-# Eden-Monaro consists of two polygons, one with hole 
 p + coord_sf(xlim = c(147.75, 150.25), ylim = c(-37.5, -34.5)) 
 p + coord_sf(xlim = c(150, 150.25), ylim = c(-36, -36.3)) 
 ```
+
+As this illustrates, Eden-Mondaro is defined in terms of two distinct polygons, a large one on the Australian mainland and a small island. However, the large region has a hole in the middle (the hole exists because the Australian Capital Territory is a distinct political unit that is wholly contained within Eden-Monaro, and as illustrated above, electoral boundaries in Australia do not cross state lines). In sf terminology this is an example of a MULTIPOLYGON geometry. In this section I'll talk about the structure of these objects and how to work with them
+
+First, let's use dplyr to grab only the geometry object:
+
+```{r}
+edenmonaro <- oz_votes %>% 
+  filter(NAME == "Eden-Monaro") %>% 
+  pull(geometry)
+
+edenmonaro
+```
+
+The metadata for the edenmonaro object can accessed using helper functions. For example, `st_geometry_type()` extracts the geometry type (e.g., MULTIPOLYGON), `st_dimension()` extracts the number of dimensions (2 for XY data, 3 for XYZ), `st_bbox()` extracts the bounding box as a numeric vector, and `st_crs()` extracts the CRS as a list with two components, one for the EPSG code and the other for the proj4string. For example: 
+
+```{r}
+st_bbox(edenmonaro)
+```
+
+Break it into the two polygons:
+
+```{r}
+st_cast(edenmonaro, "POLYGON")
+```
+
 
 
 (Dig into the structure of sf a bit... maybe take the Dawson electorate, split the multipolygon into individual polygons and colour the islands separately??? Etc.)
