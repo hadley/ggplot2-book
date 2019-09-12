@@ -158,7 +158,7 @@ ggplot(oz_votes) +
 
 ## Working with sf data {#sfdetail}
 
-One reason to prefer simple features over other representations of spatial data is that geographical units can have complicated structure. A good example of this in the Australian maps data is the electoral disctrict of Eden-Monaro. To see why, the code below plots the electoral map of Australia, zooming in on Eden-Mondaro: 
+One reason to prefer simple features over other representations of spatial data is that geographical units can have complicated structure. A good example of this in the Australian maps data is the electoral disctrict of Eden-Monaro. To see why, the code below plots the electoral map of Australia, zooming in on Eden-Monaro: 
 
 `r columns(2, 2/3)`
 ```{r}
@@ -169,16 +169,15 @@ p + coord_sf(xlim = c(147.75, 150.25), ylim = c(-37.5, -34.5))
 p + coord_sf(xlim = c(150, 150.25), ylim = c(-36, -36.3)) 
 ```
 
-As this illustrates, Eden-Mondaro is defined in terms of two distinct polygons, a large one on the Australian mainland and a small island. However, the large region has a hole in the middle (the hole exists because the Australian Capital Territory is a distinct political unit that is wholly contained within Eden-Monaro, and as illustrated above, electoral boundaries in Australia do not cross state lines). In sf terminology this is an example of a MULTIPOLYGON geometry. In this section I'll talk about the structure of these objects and how to work with them
+As this illustrates, Eden-Monaro is defined in terms of two distinct polygons, a large one on the Australian mainland and a small island. However, the large region has a hole in the middle (the hole exists because the Australian Capital Territory is a distinct political unit that is wholly contained within Eden-Monaro, and as illustrated above, electoral boundaries in Australia do not cross state lines). In sf terminology this is an example of a MULTIPOLYGON geometry. In this section I'll talk about the structure of these objects and how to work with them
 
 First, let's use dplyr to grab only the geometry object:
+
 
 ```{r}
 edenmonaro <- oz_votes %>% 
   filter(NAME == "Eden-Monaro") %>% 
   pull(geometry)
-
-edenmonaro
 ```
 
 The metadata for the edenmonaro object can accessed using helper functions. For example, `st_geometry_type()` extracts the geometry type (e.g., MULTIPOLYGON), `st_dimension()` extracts the number of dimensions (2 for XY data, 3 for XYZ), `st_bbox()` extracts the bounding box as a numeric vector, and `st_crs()` extracts the CRS as a list with two components, one for the EPSG code and the other for the proj4string. For example: 
@@ -187,16 +186,48 @@ The metadata for the edenmonaro object can accessed using helper functions. For 
 st_bbox(edenmonaro)
 ```
 
-Break it into the two polygons:
 
-```{r}
+Normally when we print the edenmonaro object the output would display all the additional information (dimension, bounding box, geodetic datum etc) but for the remainder of this section I will show only the relevant lines of the output. In this case edenmonaro is defined by a MULTIPOLYGON geometry containing one feature:
+
+```{r, output.lines = -(3:6)}
+edenmonaro 
+```
+
+However, we can "cast" the MULTIPOLYGON into the two distinct POLYGON geometries from which it is constructed using `st_cast()`:
+
+```{r, output.lines = -(3:6)} 
 st_cast(edenmonaro, "POLYGON")
 ```
 
+To illustrate when this might be useful, consider the Dawson electorate, which consists of 69 islands in addition to a coastal region on the Australian mainland.  
 
+```{r, output.lines = -(3:6)}
+dawson <- oz_votes %>% 
+  filter(NAME == "Dawson") %>% 
+  pull(geometry)
+dawson
 
-(Dig into the structure of sf a bit... maybe take the Dawson electorate, split the multipolygon into individual polygons and colour the islands separately??? Etc.)
+ggplot(dawson) + 
+  geom_sf() +
+  coord_sf()
+```
 
+Suppose, however, our interest is only in mapping the islands. If so, we can first use the `st_cast()` function to break the Dawson electorate into the constituent polygons, and then use `st_area()` to calculate the area of each polygon:
+
+```{r}
+dawson <- st_cast(dawson, "POLYGON")
+st_area(dawson)
+```
+
+The large mainland region corresponds to the 69th polygon within Dawson. Armed with this knowledge, we can draw a map showing only the islands:
+
+```{r}
+ggplot(dawson[-69]) + 
+  geom_sf() + 
+  coord_sf()
+```
+
+ETC ETC. 
 
 ## Raster maps {#rastermaps}
 
