@@ -1,19 +1,21 @@
 # Maps {#maps}
 
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 source("common.R")
 columns(1, 2 / 3)
 ```
 
-Plotting geospatial data is a common visualisation task, and one that requires specialised tools. Typically the problem can be decomposed into two problems: using one data source to draw a map, and adding metadata from another information source to the map. 
+Plotting geospatial data is a common visualisation task, and one that requires specialised tools. Typically the problem can be decomposed into two problems: using one data source to draw a map, and adding metadata from another information source to the map. This chapter will help you tackle both problems.
+
+<!-- HW: I think we need a bit more of an overview to lead into the sections below --> 
 
 ## Polygon maps 
 \index{Maps!geoms} 
 \index{Data!spatial}
 \index{geom\_polygon}
 
-Perhaps the simplest approach to drawing maps is to use `geom_polygon()` to draw boundaries for different regions. For this example we take data from the maps package using `ggplot2::map_data()`. The maps package isn't particularly accurate or up-to-date, but it's built into R so it's a reasonable place to start. Here is a data set specifying the county boundaries within Michigan:
+Perhaps the simplest approach to drawing maps is to use `geom_polygon()` to draw boundaries for different regions. For this example we take data from the maps package using `ggplot2::map_data()`. The maps package isn't particularly accurate or up-to-date, but it's built into R so it's an easy place to start. Here's a data set specifying the county boundaries for Michigan:
 
 ```{r}
 mi_counties <- map_data("county", "michigan") %>% 
@@ -21,7 +23,9 @@ mi_counties <- map_data("county", "michigan") %>%
 head(mi_counties)
 ```
 
-In this data set we have four variables: `lat` and `long` specify the latitude and longitude of a point, `id` specifies the name of a region, and `group` provides a unique identifier for a contiguous area within a region (e.g., if a region consists of multiple islands). We can construct a map using `geom_polygon()` which draws each county as a distinct polygon. By default `geom_polygon()` draws filled polygons (left), but we can override this by setting `fill = NA` (right):
+In this data set we have four variables: `lat` and `long` specify the latitude and longitude of a vertex (i.e. a corner of the polygon), `id` specifies the name of a region, and `group` provides a unique identifier for contiguous areas within a region (e.g. if a region consisted of multiple islands). We can construct a map using `geom_polygon()` which draws each county as a distinct polygon. By default `geom_polygon()` draws filled polygons (left), but we can override this by setting `fill = NA` (right):
+
+<!-- HW: maybe it would be worth displaying with a scatterplot to make it more clear what the data represents? -->
 
 `r columns(2, 2/3)`
 ```{r}
@@ -42,6 +46,8 @@ There are a few limitations to the approach outlined above, not least of which i
 
 To introduce these functions, we rely on the ozmaps package by Michael Sumner <https://github.com/mdsumner/ozmaps/> which provides maps for Australian state boundaries, local government areas, electoral boundaries, and so on. To illustrate what an sf data set looks like, we import a data set depicting the borders of Australian states and territories:
 
+<!-- HW: should we be citing these packages? -->
+
 `r columns(1, 1)`
 ```{r}
 library(ozmaps)
@@ -51,9 +57,9 @@ oz_states <- ozmaps::ozmap_states
 oz_states
 ```
 
-The output prints out some of the metadata associated with the data set (discussed momentarily), and shows that the data set is essentially a tibble with 11 rows and 4 columns. One advantage to sf data is immediately apparent: Australia is comprised of six states, four territories and Macquarie Island, which is politically part of Tasmania. There are 11 distinct geographical units, and accordingly there are 11 rows to this data set (compare this with the mi_counties data, which comprises one row per polygon vertex).  
+This output shows some of the metadata associated with the data (discussed momentarily), and tells us that the data is essentially a tibble with 11 rows and 4 columns. One advantage to sf data is immediately apparent, we can easily see the overall structure of the data: Australia is comprised of six states, four territories and Macquarie Island, which is politically part of Tasmania. There are 11 distinct geographical units, so there are 11 rows in this tibble (cf. `mi_counties data` where there is one row per polygon vertex).  
 
-The key column in this data set is the `geometry` variable, which specifies the spatial geometry for each of the Australian states and territories. Each element in the `geometry` column is a multipolygon object and --- as the name suggests --- contains data specifying the vertices of one or more polygons that demark the border of a state or territory. Given data in this format, we can use `geom_sf()` and `coord_sf()` to draw a serviceable map without specifying any parameters or even explicitly declaring any aesthetics:
+The most important column is `geometry`, which specifies the spatial geometry for each of the states and territories. Each element in the `geometry` column is a multipolygon object which, as the name suggests, contains data specifying the vertices of one or more polygons that demark the border of a region. Given data in this format, we can use `geom_sf()` and `coord_sf()` to draw a serviceable map without specifying any parameters or even explicitly declaring any aesthetics:
 
 ```{r}
 ggplot(oz_states) + 
@@ -61,11 +67,23 @@ ggplot(oz_states) +
   coord_sf()
 ```
 
-To understand why this works, note that `geom_sf()` relies on a `geometry` aesthetic that is not used elsewhere in ggplot2. This aesthetic can be specified in one of three ways. In the simplest case (illustrated above) when the user does nothing, `geom_sf()` will attempt to map it to a column named `geometry`. However, if the `data` argument is an sf object then `geom_sf()` is able to automatically detect a column that specifies a simple features geometry (discussed below), and constructs the mapping using that column regardless of what it is named. The third possibility is that the user can specify the mapping manually in the usual way with `aes(geometry = my_column)`. The `coord_sf()` function governs the map projection, discussed in Section \@ref(mapproj). 
+To understand why this works, note that `geom_sf()` relies on a `geometry` aesthetic that is not used elsewhere in ggplot2. This aesthetic can be specified in one of three ways:
+
+* In the simplest case (illustrated above) when the user does nothing, 
+  `geom_sf()` will attempt to map it to a column named `geometry`. 
+  
+* If the `data` argument is an sf object then `geom_sf()` can automatically 
+  detect a geometry column, even if it's not called `geometry`.
+  
+* You can specify the mapping manually in the usual way with 
+  `aes(geometry = my_column)`. This is useful if you have multiple geometry 
+  columns.
+
+The `coord_sf()` function governs the map projection, discussed in Section \@ref(mapproj). 
 
 ### Layered maps
 
-In some instances you may want to overlay one map on top of another. The ggplot2 package supports this by allowing you to add multiple `geom_sf()` layers to a plot. The code below draws a plot with two map layers: the first uses the oz_states data to fill the states in different colours, and the second uses the oz_votes data to draw the electoral boundaries:
+In some instances you may want to overlay one map on top of another. The ggplot2 package supports this by allowing you to add multiple `geom_sf()` layers to a plot. The code below draws a plot with two map layers: the first uses `oz_states` to fill the states in different colours, and the second uses `oz_votes` data to draw the electoral boundaries:
 
 `r columns(n = 1, aspect_ratio = 1)`
 ```{r}
@@ -81,11 +99,15 @@ ggplot() +
   coord_sf()
 ```
 
-It is worth noting that the first layer to this plot maps the `fill` aesthetic in onto a variable in the data. In this instance the `name` variable is a categorical variable and does not convey any additional information, but the same approach can be used to visualise other kinds of area metadata. For example, if the oz_states data had an additional column specifying the unemployment level in each state, we could map the `fill` aesthetic to that variable. 
+<!-- HW: this takes a very long time to render for me. I also wonder if it's worth trimming to focus on the bulk of Australia? Maybe that would be a useful example of combining sf with dplyr to filter to specified rows? -->
+
+It is worth noting that the first layer to this plot maps the `fill` aesthetic in onto a variable in the data. In this instance the `name` variable is a categorical variable and does not convey any additional information, but the same approach can be used to visualise other kinds of area metadata. For example, if `oz_states` had an additional column specifying the unemployment level in each state, we could map the `fill` aesthetic to that variable. 
+
+<!-- HW: I've tried to converted "the x data" to "`x`" everywhere -->
 
 ### Labelled maps {#geom_sf_label}
 
-Adding labels to maps is an example of annotating plots (Chapter \@ref(annotations)) and is supported by the `geom_sf_label()` and `geom_sf_text()` functions. For example, while an Australian audience might be reasonably expected to know the names of the Australian states (and are left unlabelled in the plot above) few Australians would know the names of different electorates in the Sydney metropolitan region. With this in mind, the plot below zooms in on the Sydney region by specifying `xlim` and `ylim` in `coord_sf()` and then uses `geom_sf_label()` to overlay each electorate with a label:
+Adding labels to maps is an example of annotating plots (Chapter \@ref(annotations)) and is supported by `geom_sf_label()` and `geom_sf_text()`. For example, while an Australian audience might be reasonably expected to know the names of the Australian states (and are left unlabelled in the plot above) few Australians would know the names of different electorates in the Sydney metropolitan region. With this in mind, the plot below zooms in on the Sydney region by specifying `xlim` and `ylim` in `coord_sf()` and then uses `geom_sf_label()` to overlay each electorate with a label:
 
 ```{r}
 ggplot(oz_votes) + 
@@ -94,9 +116,11 @@ ggplot(oz_votes) +
   geom_sf_label(aes(label = NAME), label.padding = unit(1, "mm"))
 ```
 
+<!-- HW: worth commenting on warning? "st_point_on_surface may not give correct results for longitude/latitude data" -->
+
 ### Adding other geoms
 
-Though `geom_sf()` is special in some ways, it nevertheless behaves in much the same fashion as any other geom, allowing additional data to be plotted on a map using standard geoms. For example, we may wish to plot the locations of the Australian capital cities on the map using `geom_point()`. The code below illustrates how this is done:
+Though `geom_sf()` is special in some ways, it nevertheless behaves in much the same fashion as any other geom, allowing additional data to be plotted on a map with standard geoms. For example, we may wish to plot the locations of the Australian capital cities on the map using `geom_point()`. The code below illustrates how this is done:
 
 `r columns(n = 1, aspect_ratio = 1)`
 ```{r}
@@ -123,21 +147,37 @@ In this example `geom_point` is used only to specify the locations of the capita
 
 ## Map projections {#mapproj}
 
-At the start of the chapter I drew maps by plotting longitude and latitude on a Cartesian plane, as if geospatial data were no different to other kinds of data one might want to plot. To a first approximation this is okay, but when one becomes concerned about accuracy it no longer suffices. There are two fundamental problems with the approach.
+At the start of the chapter I drew maps by plotting longitude and latitude on a Cartesian plane, as if geospatial data were no different to other kinds of data one might want to plot. To a first approximation this is okay, but it's not good enough if you care about accuracy. There are two fundamental problems with the approach.
 
-The first issue is the shape of the planet. The Earth is neither a flat plane, nor indeed is it a perfect sphere. As a consequence, to map a co-ordinate value (longitude and latitude) to a location we need to make assumptions about all kinds of things. How ellipsoidal is the Earth? Where is the centre of the planet? Where is the origin point for longitude and latitude? Where is the sea level? How do the tectonic plates move? All these things are relevant, and depending on what assumptions one makes the same co-ordinate can be mapped to locations that are tens of meters apart. The set of assumptions about the shape of the Earth is referred to as the *geodetic datum* and while it might not matter for some data visualisations, for others it is critical. There are several different choices one might consider: if your focus is North America the "North American Datum" (NAD83) is a good choice, whereas if your perspective is global the "World Geodetic System" (WGS84) is probably better. 
+The first issue is the shape of the planet. The Earth is neither a flat plane, nor indeed is it a perfect sphere. As a consequence, to map a co-ordinate value (longitude and latitude) to a location we need to make assumptions about all kinds of things. How ellipsoidal is the Earth? Where is the centre of the planet? Where is the origin point for longitude and latitude? Where is the sea level? How do the tectonic plates move? All these things are relevant, and depending on what assumptions one makes the same co-ordinate can be mapped to locations that are tens of meters apart. The set of assumptions about the shape of the Earth is referred to as the **geodetic datum** and while it might not matter for some data visualisations, for others it is critical. There are several different choices one might consider: if your focus is North America the "North American Datum" (NAD83) is a good choice, whereas if your perspective is global the "World Geodetic System" (WGS84) is probably better. 
 
-The second issue is the shape of your map. The Earth is approximately ellipsoidal, but in most instances your spatial data need to be drawn on a two dimensional plane. It is not possible to map the surface ellipsoid to a plane without some distortion or cutting, and you will have to make choices about what distortions you are prepared to accept when drawing a map. This is the job of the *map projection*. 
+The second issue is the shape of your map. The Earth is approximately ellipsoidal, but in most instances your spatial data need to be drawn on a two dimensional plane. It is not possible to map the surface ellipsoid to a plane without some distortion or cutting, and you will have to make choices about what distortions you are prepared to accept when drawing a map. This is the job of the **map projection**. 
 
-Map projections are often classified in terms of the geometric properties that they preserve: area-preserving projections ensure that regions of equal area on the globe are drawn with equal area on the map, shape-preserving (or conformal) projections ensure that the local shape of regions is preserved, and so on. It is not possible for any projection to be shape-preserving and area-preserving. It is a little beyond the scope of this book to discuss map projections in detail (see Geocomputation with R <https://geocompr.robinlovelace.net/> by Robin Lovelace, Jakub Nowosad and Jannes Muenchow), other than to note that the simple features specification allows you to indicate which map projection you want to use.
+<!-- HW: this discussion is great, and was sorely missing from the previous edition of the book, and indeed my understanding of spatial data when I wrote it -->
 
-Taken together, the geodetic datum (e.g, WGS84), the type of map projection (e.g., Mercator) and the parameters of the projection (e.g., location of the origin) specify a *coordinate reference system*, or CRS, a complete set of assumptions used to translate the latitude and longitude information into a two dimensional map. An sf object often includes a default CRS, as illustrated below:
+Map projections are often classified in terms of the geometric properties that they preserve, e.g.
+
+* Area-preserving projections ensure that regions of equal area on the globe are 
+  drawn with equal area on the map.
+  
+* Shape-preserving (or conformal) projections ensure that the local shape of 
+  regions is preserved.
+  
+And unfortunately, it's not possible for any projection to be shape-preserving and area-preserving. This makes it a little beyond the scope of this book to discuss map projections in detail (see Geocomputation with R <https://geocompr.robinlovelace.net/> by Robin Lovelace, Jakub Nowosad and Jannes Muenchow), other than to note that the simple features specification allows you to indicate which map projection you want to use.
+
+Taken together, the geodetic datum (e.g, WGS84), the type of map projection (e.g., Mercator) and the parameters of the projection (e.g., location of the origin) specify a **coordinate reference system**, or CRS, a complete set of assumptions used to translate the latitude and longitude information into a two dimensional map. An sf object often includes a default CRS, as illustrated below:
+
+<!-- HW: I use bold for definitions -->
 
 ```{r}
 st_crs(oz_votes)
 ```
 
-As this output illutrates, the CRS can be described in two different ways. You can either use a numeric "EPSG code" (see <http://www.epsg-registry.org/>) or you can use the "proj4string", a more verbose and (slightly) more human-readable format. In ggplot2, the CRS is controlled by `coord_sf()` to ensure that every layer in the plot uses the same projection. By default, `coord_sf()` uses the CRS associated with the geometry column of the data (or, if there are multiple data sets with a different associated CRS, the first layer in the plot to do so). Because sf data typically supply a sensible choice of CRS, this process usually unfolds invisibly, requiring no intervention from the user. However, should you need to set the CRS yourself, you can specify the `crs` parameter. Some careful thought is required to do so, however, as the plot below illustrates:
+As this output illutrates, the CRS can be described in two different ways. You can either use a numeric "EPSG code" (see <http://www.epsg-registry.org/>) or you can use the "proj4string", a more verbose and (slightly) more human-readable format. 
+
+In ggplot2, the CRS is controlled by `coord_sf()`, which ensures that every layer in the plot uses the same projection. By default, `coord_sf()` uses the CRS associated with the geometry column of the data[^first-layer]. Because sf data typically supply a sensible choice of CRS, this process usually unfolds invisibly, requiring no intervention from the user. However, should you need to set the CRS yourself, you can specify the `crs` parameter. Some careful thought is required to do so, however, as the plot below illustrates:
+
+[^first-layer]: If there are multiple data sets with a different associated CRS, it uses the CRS from the first layer.
 
 ```{r}
 ggplot(oz_votes) +
@@ -154,8 +194,6 @@ ggplot(oz_votes) +
   coord_sf(crs = st_crs(crs))
 ```
  
-
-
 ## Working with sf data {#sfdetail}
 
 One reason to prefer simple features over other representations of spatial data is that geographical units can have complicated structure. A good example of this in the Australian maps data is the electoral disctrict of Eden-Monaro. To see why, the code below plots the electoral map of Australia, zooming in on Eden-Monaro: 
@@ -169,10 +207,9 @@ p + coord_sf(xlim = c(147.75, 150.25), ylim = c(-37.5, -34.5))
 p + coord_sf(xlim = c(150, 150.25), ylim = c(-36, -36.3)) 
 ```
 
-As this illustrates, Eden-Monaro is defined in terms of two distinct polygons, a large one on the Australian mainland and a small island. However, the large region has a hole in the middle (the hole exists because the Australian Capital Territory is a distinct political unit that is wholly contained within Eden-Monaro, and as illustrated above, electoral boundaries in Australia do not cross state lines). In sf terminology this is an example of a MULTIPOLYGON geometry. In this section I'll talk about the structure of these objects and how to work with them
+As this illustrates, Eden-Monaro is defined in terms of two distinct polygons, a large one on the Australian mainland and a small island. However, the large region has a hole in the middle (the hole exists because the Australian Capital Territory is a distinct political unit that is wholly contained within Eden-Monaro, and as illustrated above, electoral boundaries in Australia do not cross state lines). In sf terminology this is an example of a `MULTIPOLYGON` geometry. In this section I'll talk about the structure of these objects and how to work with them.
 
 First, let's use dplyr to grab only the geometry object:
-
 
 ```{r}
 edenmonaro <- oz_votes %>% 
@@ -180,14 +217,13 @@ edenmonaro <- oz_votes %>%
   pull(geometry)
 ```
 
-The metadata for the edenmonaro object can accessed using helper functions. For example, `st_geometry_type()` extracts the geometry type (e.g., MULTIPOLYGON), `st_dimension()` extracts the number of dimensions (2 for XY data, 3 for XYZ), `st_bbox()` extracts the bounding box as a numeric vector, and `st_crs()` extracts the CRS as a list with two components, one for the EPSG code and the other for the proj4string. For example: 
+The metadata for the edenmonaro object can accessed using helper functions. For example, `st_geometry_type()` extracts the geometry type (e.g., `MULTIPOLYGON`), `st_dimension()` extracts the number of dimensions (2 for XY data, 3 for XYZ), `st_bbox()` extracts the bounding box as a numeric vector, and `st_crs()` extracts the CRS as a list with two components, one for the EPSG code and the other for the proj4string. For example: 
 
 ```{r}
 st_bbox(edenmonaro)
 ```
 
-
-Normally when we print the edenmonaro object the output would display all the additional information (dimension, bounding box, geodetic datum etc) but for the remainder of this section I will show only the relevant lines of the output. In this case edenmonaro is defined by a MULTIPOLYGON geometry containing one feature:
+Normally when we print the `edenmonaro` object the output would display all the additional information (dimension, bounding box, geodetic datum etc) but for the remainder of this section I will show only the relevant lines of the output. In this case edenmonaro is defined by a MULTIPOLYGON geometry containing one feature:
 
 ```{r, output.lines = -(3:6)}
 edenmonaro 
@@ -227,9 +263,9 @@ ggplot(dawson[-69]) +
   coord_sf()
 ```
 
-ETC ETC. 
-
 ## Raster maps {#rastermaps}
+
+<!-- HW: do you have any thoughts on a modern approach to this problem? -->
 
 Instead of displaying context with vector boundaries, you might want to draw a traditional map underneath. This is called a raster image. The easiest way to get a raster map of a given area is to use the ggmap package, which allows you to get data from a variety of online mapping sources including OpenStreetMap and Google Maps. Downloading the raster data is often time consuming so it's a good idea to cache it in a rds file, as illustrated here: \index{ggmap} \index{Raster data}
 
@@ -267,8 +303,6 @@ ggmap::ggmap(mi_raster) +
 
 The nice thing about the `ggmap()` function is that the output is a ggplot object, so adding metadata to the plot is accomplished in the same way one would add layers to any other plot. This is illustrated in the right side plot above.
 
-
-
 <!-- If you have raster data from the raster package, you can convert it to the form needed by ggplot2 with the following code: -->
 
 <!-- ```{r, eval = FALSE} -->
@@ -278,9 +312,6 @@ The nice thing about the `ggmap()` function is that the output is a ggplot objec
 <!-- ggplot(df, aes(lon, lat)) + -->
 <!--   geom_raster(aes(fill = x)) -->
 <!-- ``` -->
-
-
-
 
 
 ## Data sources
