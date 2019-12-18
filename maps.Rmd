@@ -21,18 +21,19 @@ mi_counties <- map_data("county", "michigan") %>%
 head(mi_counties)
 ```
 
-In this data set we have four variables: `lat` and `long` specify the latitude and longitude of a vertex (i.e. a corner of the polygon), `id` specifies the name of a region, and `group` provides a unique identifier for contiguous areas within a region (e.g. if a region consisted of multiple islands). We can construct a map using `geom_polygon()` which draws each county as a distinct polygon. By default `geom_polygon()` draws filled polygons (left), but we can override this by setting `fill = NA` (right):
+In this data set we have four variables: `lat` and `long` specify the latitude and longitude of a vertex (i.e. a corner of the polygon), `id` specifies the name of a region, and `group` provides a unique identifier for contiguous areas within a region (e.g. if a region consisted of multiple islands). To get a better sense of what the data contains, we can plot the mi_counties data using `geom_point()`, as shown in the left panel below. In this plot, each row in the data frame is plotted as a single point, producing a scatterplot that shows the corners of every county. To turn this scatterplot into a map, we use `geom_polygon()` instead, which draws each county as a distinct polygon. This is illustrated in the right panel below.
 
 <!-- HW: maybe it would be worth displaying with a scatterplot to make it more clear what the data represents? -->
+<!-- DN: makes sense: I think this version is slightly clearer -->
 
 `r columns(2, 2/3)`
 ```{r}
-ggplot(mi_counties, aes(lon, lat)) +
-  geom_polygon(aes(group = group)) + 
+ggplot(mi_counties, aes(lon, lat)) + 
+  geom_point(size = .25, show.legend = FALSE) +
   coord_quickmap()
 
-ggplot(mi_counties, aes(lon, lat)) +
-  geom_polygon(aes(group = group), fill = NA, colour = "grey50") + 
+ggplot(mi_counties, aes(lon, lat, group = group)) +
+  geom_polygon(fill = "white", colour = "grey50") + 
   coord_quickmap()
 ```
 
