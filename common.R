@@ -1,6 +1,7 @@
 library(ggplot2)
 library(dplyr)
 conflicted::conflict_prefer("filter", "dplyr")
+conflicted::conflict_prefer("pull", "dplyr") # in case git2r is loaded
 library(tidyr)
 conflicted::conflict_prefer("extract", "tidyr")
 
