@@ -21,7 +21,7 @@ mi_counties <- map_data("county", "michigan") %>%
 head(mi_counties)
 ```
 
-In this data set we have four variables: `lat` and `long` specify the latitude and longitude of a vertex (i.e. a corner of the polygon), `id` specifies the name of a region, and `group` provides a unique identifier for contiguous areas within a region (e.g. if a region consisted of multiple islands). To get a better sense of what the data contains, we can plot the mi_counties data using `geom_point()`, as shown in the left panel below. In this plot, each row in the data frame is plotted as a single point, producing a scatterplot that shows the corners of every county. To turn this scatterplot into a map, we use `geom_polygon()` instead, which draws each county as a distinct polygon. This is illustrated in the right panel below.
+In this data set we have four variables: `lat` and `long` specify the latitude and longitude of a vertex (i.e. a corner of the polygon), `id` specifies the name of a region, and `group` provides a unique identifier for contiguous areas within a region (e.g. if a region consisted of multiple islands). To get a better sense of what the data contains, we can plot `mi_counties` using `geom_point()`, as shown in the left panel below. In this plot, each row in the data frame is plotted as a single point, producing a scatterplot that shows the corners of every county. To turn this scatterplot into a map, we use `geom_polygon()` instead, which draws each county as a distinct polygon. This is illustrated in the right panel below.
 
 <!-- HW: maybe it would be worth displaying with a scatterplot to make it more clear what the data represents? -->
 <!-- DN: makes sense: I think this version is slightly clearer -->
@@ -46,6 +46,7 @@ There are a few limitations to the approach outlined above, not least of which i
 To introduce these functions, we rely on the ozmaps package by Michael Sumner <https://github.com/mdsumner/ozmaps/> which provides maps for Australian state boundaries, local government areas, electoral boundaries, and so on [@ozmaps]. To illustrate what an sf data set looks like, we import a data set depicting the borders of Australian states and territories:
 
 <!-- HW: should we be citing these packages? -->
+<!-- DN: done -->
 
 `r columns(1, 1)`
 ```{r}
@@ -82,49 +83,66 @@ The `coord_sf()` function governs the map projection, discussed in Section \@ref
 
 ### Layered maps
 
-In some instances you may want to overlay one map on top of another. The ggplot2 package supports this by allowing you to add multiple `geom_sf()` layers to a plot. The code below draws a plot with two map layers: the first uses `oz_states` to fill the states in different colours, and the second uses `oz_votes` data to draw the electoral boundaries:
+In some instances you may want to overlay one map on top of another. The ggplot2 package supports this by allowing you to add multiple `geom_sf()` layers to a plot. As an example, I'll use the `oz_states` data to draw the Australian states in different colours, and the overlay this plot with the boundaries of Australian electoral regions. To do this, there are two preprocessing steps to perform. First, I'll use `dplyr::filter()` to remove the "Other Territories" from the state boundaries.
+
+
+The code below draws a plot with two map layers: the first uses `oz_states` to fill the states in different colours, and the second uses `oz_votes` to draw the electoral boundaries. Second, I'll extract the electoral boundaries in a simplified form using the `ms_simplify()` function from the rmapshaper package [@rmapshaper]. This is generally a good idea if the original data set (in this case `ozmaps::abs_ced`) is stored at a higher resolution than your plot requires, in order to reduce the time taken to render the plot. 
 
 `r columns(n = 1, aspect_ratio = 1)`
 ```{r}
-# remove the outlying islands
-oz_states <- ozmaps::ozmap_states %>% 
-  filter(NAME != "Other Territories")
+oz_states <- ozmaps::ozmap_states %>% filter(NAME != "Other Territories")
+oz_votes <- rmapshaper::ms_simplify(ozmaps::abs_ced)
+```
 
-# simplify the electoral map
-oz_votes <- rmapshaper::ms_simplify(ozmaps::abs_ced, keep = .05)
+Now that I have data sets `oz_states` and `oz_votes` to represent the state borders and electoral borders respectively, the desired plot can be constructed by adding two `geom_sf()` layers to the plot:
 
-# plot
+```{r}
 ggplot() + 
-  geom_sf(
-    data = oz_states , 
-    mapping = aes(fill = NAME), 
-    show.legend = FALSE
-  ) +
+  geom_sf(data = oz_states, mapping = aes(fill = NAME), show.legend = FALSE) +
   geom_sf(data = oz_votes, fill = NA) + 
   coord_sf()
 ```
 
 <!-- HW: this takes a very long time to render for me. I also wonder if it's worth trimming to focus on the bulk of Australia? Maybe that would be a useful example of combining sf with dplyr to filter to specified rows? -->
+<!-- DN: done -->
 
-It is worth noting that the first layer to this plot maps the `fill` aesthetic in onto a variable in the data. In this instance the `name` variable is a categorical variable and does not convey any additional information, but the same approach can be used to visualise other kinds of area metadata. For example, if `oz_states` had an additional column specifying the unemployment level in each state, we could map the `fill` aesthetic to that variable. 
+It is worth noting that the first layer to this plot maps the `fill` aesthetic in onto a variable in the data. In this instance the `NAME` variable is a categorical variable and does not convey any additional information, but the same approach can be used to visualise other kinds of area metadata. For example, if `oz_states` had an additional column specifying the unemployment level in each state, we could map the `fill` aesthetic to that variable. 
 
 <!-- HW: I've tried to converted "the x data" to "`x`" everywhere -->
+<!-- DN: ah I was wondering -->
 
 ### Labelled maps {#geom_sf_label}
 
-Adding labels to maps is an example of annotating plots (Chapter \@ref(annotations)) and is supported by `geom_sf_label()` and `geom_sf_text()`. For example, while an Australian audience might be reasonably expected to know the names of the Australian states (and are left unlabelled in the plot above) few Australians would know the names of different electorates in the Sydney metropolitan region. With this in mind, the plot below zooms in on the Sydney region by specifying `xlim` and `ylim` in `coord_sf()` and then uses `geom_sf_label()` to overlay each electorate with a label:
+Adding labels to maps is an example of annotating plots (Chapter \@ref(annotations)) and is supported by `geom_sf_label()` and `geom_sf_text()`. For example, while an Australian audience might be reasonably expected to know the names of the Australian states (and are left unlabelled in the plot above) few Australians would know the names of different electorates in the Sydney metropolitan region. In order to draw an electoral map of Sydney, then, we would first need to extract the 
+map data for the relevant elextorates, and then add the label. The plot below zooms in on the Sydney region by specifying `xlim` and `ylim` in `coord_sf()` and then uses `geom_sf_label()` to overlay each electorate with a label:
 
 ```{r}
-sydney_map <- ozmaps::abs_ced %>%
-  filter(NAME %in% c("Sydney", "Wentworth", "Warringah", "Kingsford Smith", "Grayndler", "Lowe", "North Sydney", "Barton", "Bradfield", "Banks", "Blaxland", "Reid", "Watson", "Fowler", "Werriwa", "Prospect", "Parramatta", "Bennelong", "Mackellar", "Greenway", "Mitchell", "Chifley", "McMahon"))
+# filter electorates in the Sydney metropolitan region
+sydney_map <- ozmaps::abs_ced %>% filter(NAME %in% c(
+  "Sydney", "Wentworth", "Warringah", "Kingsford Smith", "Grayndler", "Lowe", 
+  "North Sydney", "Barton", "Bradfield", "Banks", "Blaxland", "Reid", 
+  "Watson", "Fowler", "Werriwa", "Prospect", "Parramatta", "Bennelong", 
+  "Mackellar", "Greenway", "Mitchell", "Chifley", "McMahon"
+))
 
+# draw the electoral map of Sydney
 ggplot(sydney_map) + 
   geom_sf(aes(fill = NAME), show.legend = FALSE) + 
   coord_sf(xlim = c(150.97, 151.3), ylim = c(-33.98, -33.79)) + 
   geom_sf_label(aes(label = NAME), label.padding = unit(1, "mm"))
 ```
 
+The warning message is worth noting. Internally `geom_sf_label()` uses the function
+`st_point_on_surface()` from the sf package to place labels, and the warning message 
+occurs because most algorithms used by sf to compute geometric quantities (e.g., centroids, 
+interior points) are based on an assumption that the points lie in on a flat two dimensional
+surface and parameterised with Cartesian co-ordinates. This assumption is not strictly 
+warranted, and in some cases (e.g., regions near the poles) calculations that treat
+longitude and latitude in this way will give erroneous answers. For this reason, the sf
+package produces warning messages when it relies on this approximation.
+
 <!-- HW: worth commenting on warning? "st_point_on_surface may not give correct results for longitude/latitude data" -->
+<!-- DN: is that the right answer? -->
 
 ### Adding other geoms
 
@@ -157,9 +175,9 @@ In this example `geom_point` is used only to specify the locations of the capita
 
 At the start of the chapter I drew maps by plotting longitude and latitude on a Cartesian plane, as if geospatial data were no different to other kinds of data one might want to plot. To a first approximation this is okay, but it's not good enough if you care about accuracy. There are two fundamental problems with the approach.
 
-The first issue is the shape of the planet. The Earth is neither a flat plane, nor indeed is it a perfect sphere. As a consequence, to map a co-ordinate value (longitude and latitude) to a location we need to make assumptions about all kinds of things. How ellipsoidal is the Earth? Where is the centre of the planet? Where is the origin point for longitude and latitude? Where is the sea level? How do the tectonic plates move? All these things are relevant, and depending on what assumptions one makes the same co-ordinate can be mapped to locations that are tens of meters apart. The set of assumptions about the shape of the Earth is referred to as the **geodetic datum** and while it might not matter for some data visualisations, for others it is critical. There are several different choices one might consider: if your focus is North America the "North American Datum" (NAD83) is a good choice, whereas if your perspective is global the "World Geodetic System" (WGS84) is probably better. 
+The first issue is the shape of the planet. The Earth is neither a flat plane, nor indeed is it a perfect sphere. As a consequence, to map a co-ordinate value (longitude and latitude) to a location we need to make assumptions about all kinds of things. How ellipsoidal is the Earth? Where is the centre of the planet? Where is the origin point for longitude and latitude? Where is the sea level? How do the tectonic plates move? All these things are relevant, and depending on what assumptions one makes the same co-ordinate can be mapped to locations that are many meters apart. The set of assumptions about the shape of the Earth is referred to as the **geodetic datum** and while it might not matter for some data visualisations, for others it is critical. There are several different choices one might consider: if your focus is North America the "North American Datum" (NAD83) is a good choice, whereas if your perspective is global the "World Geodetic System" (WGS84) is probably better. 
 
-The second issue is the shape of your map. The Earth is approximately ellipsoidal, but in most instances your spatial data need to be drawn on a two dimensional plane. It is not possible to map the surface ellipsoid to a plane without some distortion or cutting, and you will have to make choices about what distortions you are prepared to accept when drawing a map. This is the job of the **map projection**. 
+The second issue is the shape of your map. The Earth is approximately ellipsoidal, but in most instances your spatial data need to be drawn on a two dimensional plane. It is not possible to map the surface of an ellipsoid to a plane without some distortion or cutting, and you will have to make choices about what distortions you are prepared to accept when drawing a map. This is the job of the **map projection**. 
 
 <!-- HW: this discussion is great, and was sorely missing from the previous edition of the book, and indeed my understanding of spatial data when I wrote it -->
 
@@ -204,12 +222,11 @@ ggplot(oz_votes) +
  
 ## Working with sf data {#sfdetail}
 
-One reason to prefer simple features over other representations of spatial data is that geographical units can have complicated structure. A good example of this in the Australian maps data is the electoral disctrict of Eden-Monaro. To see why, the code below plots the electoral map of Australia, zooming in on Eden-Monaro: 
+One reason to prefer simple features over other representations of spatial data is that geographical units can have complicated structure. A good example of this in the Australian maps data is the electoral district of Eden-Monaro, plotted below:
 
 `r columns(2, 2/3)`
 ```{r}
-edenmonaro <- ozmaps::abs_ced %>%
-  filter(NAME == "Eden-Monaro")
+edenmonaro <- ozmaps::abs_ced %>% filter(NAME == "Eden-Monaro")
 
 p <- ggplot(edenmonaro) + geom_sf()
 p + coord_sf(xlim = c(147.75, 150.25), ylim = c(-37.5, -34.5)) 
