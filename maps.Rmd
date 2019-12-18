@@ -87,12 +87,18 @@ In some instances you may want to overlay one map on top of another. The ggplot2
 
 `r columns(n = 1, aspect_ratio = 1)`
 ```{r}
-oz_votes <- ozmaps::abs_ced
+# remove the outlying islands
+oz_states <- ozmaps::ozmap_states %>% 
+  filter(NAME != "Other Territories")
 
+# simplify the electoral map
+oz_votes <- rmapshaper::ms_simplify(ozmaps::abs_ced, keep = .05)
+
+# plot
 ggplot() + 
   geom_sf(
-    data = oz_states, 
-    mapping = aes(fill = name), 
+    data = oz_states , 
+    mapping = aes(fill = NAME), 
     show.legend = FALSE
   ) +
   geom_sf(data = oz_votes, fill = NA) + 
@@ -110,8 +116,11 @@ It is worth noting that the first layer to this plot maps the `fill` aesthetic i
 Adding labels to maps is an example of annotating plots (Chapter \@ref(annotations)) and is supported by `geom_sf_label()` and `geom_sf_text()`. For example, while an Australian audience might be reasonably expected to know the names of the Australian states (and are left unlabelled in the plot above) few Australians would know the names of different electorates in the Sydney metropolitan region. With this in mind, the plot below zooms in on the Sydney region by specifying `xlim` and `ylim` in `coord_sf()` and then uses `geom_sf_label()` to overlay each electorate with a label:
 
 ```{r}
-ggplot(oz_votes) + 
-  geom_sf() + 
+sydney_map <- ozmaps::abs_ced %>%
+  filter(NAME %in% c("Sydney", "Wentworth", "Warringah", "Kingsford Smith", "Grayndler", "Lowe", "North Sydney", "Barton", "Bradfield", "Banks", "Blaxland", "Reid", "Watson", "Fowler", "Werriwa", "Prospect", "Parramatta", "Bennelong", "Mackellar", "Greenway", "Mitchell", "Chifley", "McMahon"))
+
+ggplot(sydney_map) + 
+  geom_sf(aes(fill = NAME), show.legend = FALSE) + 
   coord_sf(xlim = c(150.97, 151.3), ylim = c(-33.98, -33.79)) + 
   geom_sf_label(aes(label = NAME), label.padding = unit(1, "mm"))
 ```
@@ -200,9 +209,10 @@ One reason to prefer simple features over other representations of spatial data 
 
 `r columns(2, 2/3)`
 ```{r}
-p <- ggplot(oz_votes) +   
-  geom_sf(aes(fill = NAME == "Eden-Monaro"), show.legend = FALSE)
+edenmonaro <- ozmaps::abs_ced %>%
+  filter(NAME == "Eden-Monaro")
 
+p <- ggplot(edenmonaro) + geom_sf()
 p + coord_sf(xlim = c(147.75, 150.25), ylim = c(-37.5, -34.5)) 
 p + coord_sf(xlim = c(150, 150.25), ylim = c(-36, -36.3)) 
 ```
@@ -212,9 +222,7 @@ As this illustrates, Eden-Monaro is defined in terms of two distinct polygons, a
 First, let's use dplyr to grab only the geometry object:
 
 ```{r}
-edenmonaro <- oz_votes %>% 
-  filter(NAME == "Eden-Monaro") %>% 
-  pull(geometry)
+edenmonaro <- edenmonaro %>% pull(geometry)
 ```
 
 The metadata for the edenmonaro object can accessed using helper functions. For example, `st_geometry_type()` extracts the geometry type (e.g., `MULTIPOLYGON`), `st_dimension()` extracts the number of dimensions (2 for XY data, 3 for XYZ), `st_bbox()` extracts the bounding box as a numeric vector, and `st_crs()` extracts the CRS as a list with two components, one for the EPSG code and the other for the proj4string. For example: 
@@ -238,7 +246,7 @@ st_cast(edenmonaro, "POLYGON")
 To illustrate when this might be useful, consider the Dawson electorate, which consists of 69 islands in addition to a coastal region on the Australian mainland.  
 
 ```{r, output.lines = -(3:6)}
-dawson <- oz_votes %>% 
+dawson <- ozmaps::abs_ced %>% 
   filter(NAME == "Dawson") %>% 
   pull(geometry)
 dawson
