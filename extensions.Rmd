@@ -1,0 +1,91 @@
+```{r include = FALSE}
+source("common.R")
+```
+
+# Writing ggplot2 extensions {#extensions}
+ggplot2 has been designed in a way that makes it relatively easy to extend the functionality with new types of the common grammar components. The extension system allows you to distribute these extensions as packages should you choose to, but the ease with whch extensions can be made means that writing one-off extensions to solve a particular plotting challenge is also viable (and often preferable to manipulating the gtable output).
+
+In this chapter we will go through the different ways ggplot2 can be extended, and discuss any specific issues you may need to be aware of. Later chapters will showcase the development of specific extensions.
+
+## New themes
+Themes are probably the easiest form of extensions as they only require you to write code you would normally write when creating plots with ggplot2. While it is possible to build up a new theme from the ground it is usually easier and less error-prone to modify an existing theme. This is done in ggplot2 as well as can be seen by looking at e.g. `theme_minimal()`:
+
+```{r}
+print(theme_minimal)
+```
+
+here the base is `theme_bw()` and the theme then replaces certain parts of it with its own style using the exported `%+replace%` operator. As can be seen, the code doesn't look much different to the code you normally write when styling a plot. While not adviced, it is also possible to create a theme without modifying an existing one. The general approach is to simply use the `theme()` function while setting `complete = TRUE`. It is important to make sure that at least all theme elements that do not inherit from other elements have been defined when using this approach. See e.g. `theme_gray()` for an example of this.
+
+When writing new themes it is a good idea to provide a few parameters to the user for defining overarching aspects of the theme. One important such aspect is sizing of text and lines but other aspects could be e.g. key and accent colours of the theme.
+
+>Maybe something about creating new theme elements?
+
+## New stats
+While most people tend to think of geoms as the main graphic layer to add to plots, the variety of geoms is mostly powered by different stats. It follows that extending stats is one of the most useful ways to extend the capabilities of ggplot2. One of the benefits of stats is that they are purely about data transformations, which most R users are used to be doing. As long as the needed behaviour can be encapsulated in a stat, there is no need to fiddle with any calls to grid.
+
+As discussed in the [ggplot2 internals](#internals) chapter, the main logic of a stat is encapsulated in a tiered succession of calls: `compute_layer()`, `compute_panel()`, and `compute_group()`. The default behaviour of `compute_layer()` is to split the data by the `PANEL` column, call `compute_panel()`, and reassemble the results. Likewise, the default behaviour of `compute_panel()` is to split the panel data by the `group` column, call `compute_group()`, and reassemble the results. Thus, it is only necessary to define `compute_group()`, i.e. how a single group should be transformed, in order to have a working stat. There are numerous examples of overwriting `compute_panel()` to gain better performance as it allows you to vectorise the computations and avoid an expensive split-combine step, but in general it is often beneficial to start at the `compute_group()` level and see if the performance is adequate.
+
+Outside of the `compute_*()` functions, the remaining logic is found in the `setup_params()` and `setup_data()` functions. These are called before the `compute_*()` functions and allows the Stat to react and modify itself in response to the given parameters and data (especially the data, as this is not available when the stat is constructed). The `setup_params()` function receives the parameters given during construction along with the layer data, and returns a modified list of parameters. The parameters should correspond to argument names in the `compute_*()` functions in order to be made available. The `setup_data()` function receives the modified parameters along with the layer data, and returns the modified layer data. It is important that no matter what modifications happen in `setup_data()` the `PANEL` and `group` columns remain intact. Sometimes, with related stats, all that is necessary is to make a subclass and provide new `setup_params()`/`setup_data()` methods.
+
+When creating new stats it is often a good idea to provide an accompagnying `geom_*()` constructer as most users are used to using these rather that `stat_*()` constructors. Deviations from this rule can be made if there is no obvious default geom for the new stat, or if the stat is intended to offer a slight modification to an existing geom+stat pair.
+
+## New geoms
+While many things can be achieved by creating new stats, there are situations where creating a new geom is necessary. Some of these are
+
+- It is not meaningful to return data from the stat in a form that is understandable by any current geoms.
+- The layer need to combine the output of multiple geoms.
+- The geom needs to return grobs not currently available from existing geoms.
+
+Creating new geoms can feel slightly more daunting than creating new stats as the end result is a collection of grobs rather than a modified data.frame and this is something outside of the comfort zone of many developers. Still, Apart from the last point above, it is possible to get by without having to think too much about grid and grobs. 
+
+The main functionality of geoms is, like for stats, a tiered succession of calls: `draw_layer()`, `draw_panel()`, and `draw_group()`, and it follows much the same logic as for stats. It is usually easier to implement a `draw_group()` method, but if the layer is expected to handle a large amount of distinct groups you should consider if it is possible to use `draw_panel()` instead as grid performance will take a hit when dealing with many separate grobs (e.g. 10,000 pointGrobs with a single point each vs. a single pointGrob with 10,000 points). In line with stats, geoms also have a `setup_params()`+`setup_data()` pair that function in much the same way. One note, though, is that `setup_data()` is called before any position adjustment is done as part of the build step.
+
+If you want a new geom that is a version of an existing geom, but with differnt input expectations, it can usually be handled by overwriting the `setup_data()` method of the existing geom. This approach can be seen with `geom_spoke()` which is a simple reparameterisation of `geom_segment()`:
+
+```{r}
+print(GeomSpoke$setup_data)
+```
+
+If you want to combine the functionality of multiple geoms it can usually be achieved by preparing the data for each of the geoms inside the `draw_*()` call
+and send it off to the different geoms, collecting the output in a `gList` (a list of grobs) if the call is `draw_group()` or a `gTree` (a grob containing multiple children grobs) if the call is `draw_panel()`. An example of this can be seen in `geom_smooth()` which combines `geom_line()` and `geom_ribbon()`:
+
+```{r}
+print(GeomSmooth$draw_group)
+```
+
+If you cannot leverage any existing geom implementation for creating the grobs, you'd have to implement the full `draw_*()` method from scratch. Later chapters will have examples of this.
+
+## New coords
+At its most basic, the coord is responsible for rescaling the position aesthetics into a [0, 1] range, potentially transforming them in the process. The only place where you might call any methods from a coord is in a geoms `draw_*()` method where the `transform()` method is called on the data to turn the position data into the right format before creating grobs from it. The most common (and default) is CoordCartesian, which simply rescales the position data:
+
+```{r}
+print(CoordCartesian$transform)
+```
+
+Apart from this seemingly simple use, coords have a lot of responsibility and power that extension developers can leverage, but which is probably best left alone. Coords takes care of rendering the axes, axis labels, and panel foreground and background and it can intercept both the layer data and facet layout and modify it. Still, with the introduction of `coord_sf()` there is little need for new coords as most non-cartography usecases are captured with existing coords, and `coord_sf()` supports all the various projections needed in cartography.
+
+## New scales
+There are three ways one might want to extend ggplot2 with new scales. The simplest is the case where you would like to provide a convenient wrapper for a new palette to an existing scale (this would often mean a new color/fill palette). For this case it will be sufficient to provide a new scale constructor that passes the relevant palette into the relevant basic scale constructor. This is used throughout ggplot2 itself as in e.g. the viridis scale:
+
+```{r}
+print(scale_fill_viridis_c)
+```
+
+Another relatively simple case is where you provide a geom that takes a new type of aesthetic that needs to be scaled. Let's say that you created a new line geom, and instead of the `size` aesthetic you decided on using a `width` aesthetic. In order to get `width` scaled in the same way as you've come to expect scaling of `size` you must provide a default scale for the aesthetic. Default scales are found based on their name and the data type provided to the aesthetic. If you assign continuous values to the `width` aesthetic ggplot2 will look for a `scale_width_continuous()` function and use this if no other width scale has been added to the plot. If such a function is not found (and no width scale was added explicitly), the aesthetic will not be scaled. 
+
+A last possibility worth mentioning, but outside the scope of this book, is the possibility of creating a new primary scale type. ggplot2 has historically had two primary scales: Continuous and discrete. Recently the binned scale type joined which allows for binning of continuous data into discrete bins. It is possible to develop further primary scales, by following the example of `ScaleBinned`. It requires subclassing `Scale` or one of the provided primary scales, and create new `train()` and `map()` methods, among others.
+
+## New positions
+Positions recieves the data just before it is passed along to drawing, and can alter it in any way it likes, though there is an implicit agreement that only position aesthetics are affected by position adjustments. While it is possible to pass arguments to a position adjustment by calling its constructor, they are often called by name and will thus use default parameters. Keep this in mind when designing position adjustments and make the defaults work for most cases if at all possible.
+
+The `Position` class is slightly simpler than the other ggproto classes as it has a very narrow scope. Like `Stat` it has `compute_layer()` and `compute_panel()` methods (but no `compute_group()`) which allows for the same tiered specification of the transformation. It also has `setup_params()` and `setup_data()` but the former deviates a bit from the other `setup_params()` methods in that it only recieves the layer data and not a list of parameters to modify. This is because positions doesn't recieve parameters from the main `geom_*()`/`stat_*()` call.
+
+While positions may appear simple from the look of the base class, they can be very fiddly to get to work correctly in a consistent manner. Positions have very little control over the shape and format of the layer data and should behave predictably in all situations. An example is the case of dodging, where users would like to be able to dodge e.g. both histograms and points and expect the point-cloud to appear in the same area as its respective boxplot. The challenge is that a boxplot has an explicit width that can be used to guide the dodging whereas the same is not true for points but we intuitively know that they should be dodged by the same value. Such considerations often mean that position implementations end up much more complex than their simplest solution to take care of a wide range of edge cases.
+
+## New facets
+Facets are one of the most powerful concepts in ggplot2, and it follows that extending facets is one of the most powerful ways to modify how ggplot2 operates. All that power comes at a cost, though. Facets are responsible for recieving all the different panels, attching axes (and strips) to them, and arranging them in the expected manner. All of this requires a lot of gtable manipulation and grid understanding and can be a daunting undertaking.
+
+Depending on what you want to achieve, you may be able to skip that almost completely. If your new facet will end up with a rectangular arrangement of panels, it is often possible to subclass either `FacetWrap` or `FacetGrid`, and simply provide new `compute_layout()`, and `map_data()` methods. The first takes care of recieving the original data and create a layout specification, while the second recieves the created layout along with the data, and attaches a `PANEL` column to it, mapping the data to one of the panels in the layout. An example of this type of subclassing will be given in a later chapter.
+
+## New guides
+>Should probably not mention anything until they have been ported to `ggproto`
