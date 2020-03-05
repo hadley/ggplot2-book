@@ -26,7 +26,7 @@ ggplot(rbind(circle, spring)) +
   facet_wrap(~ type, scales = "free_x")
 ```
 
-It is clear that simply continuing to trace the circle while moving along x will make the spring longer, as well as the speed of the x-movement will control the tension of the spring. While I'm pretty sure this is not a physically correct parameterisation of a spring, it is good enough for our illustrative purpose.
+It is clear that simply continuing to trace the circle while moving along x will make the spring longer, and that the speed of the x-movement will control the tension of the spring. While I'm pretty sure this is not a physically correct parameterisation of a spring, it is good enough for our illustrative purpose.
 
 ## Choosing an approach
 When developing a new layer, one has a choice between developing a `Stat` or a `Geom` extension. The decision is not guided by whether you want to end out with a `geom_spring()` constructor as plenty of `Stat` extensions are used along with a dedicated `geom_*()` constructor. Instead you should consider what you are actually doing. Are we drawing using some pre-existing primitive but interpreting input data in a new way? Yes! We are drawing with a path but simply circling around instead of going straight. This is a clear case for a `Stat` which is great for transforming input data into something that can be drawn with a pre-existing geom. Further, `Stat`s are much easier to extend than `Geom`s as they are simply data-transformation pipelines. Thus, in the following we will work towards creating a new `Stat` for drawing springs.
