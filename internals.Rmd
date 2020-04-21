@@ -69,15 +69,21 @@ The first part of the processing is to get the data associated with each layer a
 The last part of the data preparation is to convert the layer data into calculated aesthetic values. This involves evaluating all aesthetic expressions from `aes()` on the layer data. Further, if not given explicitly, the `group` aesthetic is calculated from the interaction of all non-continuous aesthetics. The `group` aesthetic is, like `PANEL` a special column that must be kept throughtout the processing. As an example, the plot `p` created earlier contains only the one layer specified by `geom_point()` and at the end of the data preparation process the first 10 rows of the data associated with this layer look like this:
 
 ```{r echo=FALSE}
-data_prepare <- function(plot) {
+# this function mimics ggplot_build, but instead of returning the 
+# ggplot_built object, it returns a list of objects that include
+# intermediate states of interest for the exposition
+ggbuild <- function(plot) {
+  
+  all_steps <- list()
+  
   plot <- ggplot2:::plot_clone(plot)
   if (length(plot$layers) == 0) {
     plot <- plot + geom_blank()
   }
-  
+
   layers <- plot$layers
   layer_data <- lapply(layers, function(y) y$layer_data(plot$data))
-  
+
   scales <- plot$scales
   # Apply function to layer and matching data
   by_layer <- function(f) {
@@ -87,41 +93,177 @@ data_prepare <- function(plot) {
     }
     out
   }
-  
+
   # Allow all layers to make any final adjustments based
   # on raw input data and plot info
   data <- layer_data
   data <- by_layer(function(l, d) l$setup_layer(d, plot))
-  
+
   # Initialise panels, add extra data for margins & missing faceting
   # variables, and add on a PANEL variable to data
   layout <- ggplot2:::create_layout(plot$facet, plot$coordinates)
   data <- layout$setup(data, plot$data, plot$plot_env)
-  
+
   # Compute aesthetics to produce data with generalised variable names
   data <- by_layer(function(l, d) l$compute_aesthetics(d, plot))
+
+  # ----- Record the data at the end of the "preparation" stage
+  all_steps$prepared <- data
   
-  return(data)
+
+  # Transform all scales
+  data <- lapply(data, ggplot2:::scales_transform_df, scales = scales)
+
+  # ----- data after scale transformation applied
+  all_steps$transformed <- data
+  
+  # Map and train positions so that statistics have access to ranges
+  # and all positions are numeric
+  scale_x <- function() scales$get_scales("x")
+  scale_y <- function() scales$get_scales("y")
+
+  layout$train_position(data, scale_x(), scale_y())
+  data <- layout$map_position(data)
+  
+  # ----- data after position adjustment
+  all_steps$positioned <- data
+
+  # Apply and map statistics
+  data <- by_layer(function(l, d) l$compute_statistic(d, layout))
+  data <- by_layer(function(l, d) l$map_statistic(d, plot))
+
+  # ----- data after position adjustment
+  all_steps$poststat <- data
+  
+  # Make sure missing (but required) aesthetics are added
+  ggplot2:::scales_add_missing(plot, c("x", "y"), plot$plot_env)
+
+  # Reparameterise geoms from (e.g.) y and width to ymin and ymax
+  data <- by_layer(function(l, d) l$compute_geom_1(d))
+
+  # Apply position adjustments
+  data <- by_layer(function(l, d) l$compute_position(d, layout))
+
+  # ----- geom and position adjustments
+  all_steps$geompos <- data
+  
+  # Reset position scales, then re-train and map.  This ensures that facets
+  # have control over the range of a plot: is it generated from what is
+  # displayed, or does it include the range of underlying data
+  layout$reset_scales()
+  layout$train_position(data, scale_x(), scale_y())
+  layout$setup_panel_params()
+  data <- layout$map_position(data)
+
+  # Train and map non-position scales
+  npscales <- scales$non_position_scales()
+  if (npscales$n() > 0) {
+    lapply(data, ggplot2:::scales_train_df, scales = npscales)
+    data <- lapply(data, ggplot2:::scales_map_df, scales = npscales)
+  }
+
+  # Fill in defaults etc.
+  data <- by_layer(function(l, d) l$compute_geom_2(d))
+
+  # Let layer stat have a final say before rendering
+  data <- by_layer(function(l, d) l$finish_statistics(d))
+
+  # Let Layout modify data before rendering
+  data <- layout$finish_data(data)
+
+  
+  # ----- Record the data at the end of the "preparation" stage
+  all_steps$built <-  structure(
+    list(data = data, layout = layout, plot = plot),
+    class = "ggplot_built"
+  )
+
+  return(all_steps)  
 }
 
-data_prepped <- data_prepare(p)
+
+data_prepped <- ggbuild(p)$prepared
 head(data_prepped[[1]], n = 10)
 ```
 
 ### Data transformation
-Once the layer data has been extracted and converted to a predictable format it undergoes a range of transformations until it gets to the format that the layer geometry expects. 
+Once the layer data has been extracted and converted to a predictable format it undergoes a series of transformations until it has the format expected by the layer geometry. 
 
-The first step is to apply any scale transformations to the columns in the data. This is where any argument to `trans` in a scale has an effect. The remainder of the rendering will work in this transformed space. This is the underlying reason for the difference in setting a position transform in the scale vs in the coordinate system. Setting it in the scale will force all calculations to happen in transformed space, while setting it in the coordinate system will have all calculations happen in untransformed space and then apply the transformation to the outcome.
+The first step is to apply any scale transformations to the columns in the data. It is at this stage of the process that any argument to `trans` in a scale has an effect, and all subsequent rendering will take place in this transformed space. This is the reason why setting a position transform in the scale has a different effect than setting it in the coordinate system. If the transformation is specified in the scale it is applied *before* any other calculations, but if it is specified in the coordinate system the transformation is applied *after* those calculations. For instance, our original plot `p` involves no scale transformations so the layer data remain untouched at this stage. The first three rows are shown below:  
 
-After this the position aesthetics are mapped based on the position scales. For continuous positions this simply means applying the `oob()` function (defaults to `censor()`) and removing `NA` rows. For discrete positions the change is more radical as the values are matched to the limits (breaks) of the scale and converted to integer positions For binned position scales the continuous data is first cut into bins based on the breaks specification and then set the position to the midpoint of their respective bin. This means that no matter what type of position scale is used, it will look continuous to the stat and geom computations. This is important because otherwise computations such as dodging and jitter would fail for discrete positions.
+```{r, echo=FALSE}
+ggbuild(p)$transformed[[1]] %>% head(n = 3)
+```
 
-Now the data is ready to be handed to the layer stat where any statistical transformation takes place. The setup is that the stat first gets to inspect the data and modify its parameters, then do a one off preparation of the data. After that the data is split by `PANEL`, then `group` and statistics are calculated before the data is reassembled. It is possible for a stat to circumvent this splitting by overwritting specific `compute_*()` methods and thus do some optimisation. After the data has been reassembled in its new form it goes through a new aesthetic mapping. This is where aesthetics that has been delayed using `stat()` (or the old `..var..` notation) gets added to the data. This is why `stat()` expressions cannot target the original data as it simply doesn't exist at this point anymore.
+In contrast, if our plot object is `p + scale_x_log10()` and we inspect the layer data at this point in processing, we see that the `x` variable has been transformed appropriately:  
 
-At this point the geom takes over from the stat (almost). The first action it takes is to inspect the data, update its parameters and possibly make a first pass modification of the data (same setup as for stat). This is possibly where some of the columns gets reparameterised e.g. `x`+`width` gets changed to `xmin`+`xmax`. After this the position adjustment gets applied, so that e.g. overlapping bars are stacked, etc.
+```{r, echo=FALSE}
+ggbuild(p + scale_x_log10())$transformed[[1]] %>% head(n = 3)
+```
 
-Now, perhaps surprisingly, the position scales are reset, retrained, and applied to the data. Thinking about it, this is absolutely necessary as e.g. stacking can change the range of one of the axes dramatically. Even more, sometimes one of the position aesthetics is not available until after the stat computations and if the scales were not retrained it would never get trained.
 
-The last part of the data transformation is to train and map all non-positional aesthetics, i.e. convert whatever discrete or continuous input that is mapped to graphical parameters such as colours, linetypes, sizes etc. Further, any default aesthetics from the geom is added so that the data is now in a predicatable state for the geom. In the end, both the stat and the facet gets a last chance to modify the data in its final mapped form with their `finish_data()` methods before the build step is done.
+The second step in the process is to map the position aesthetics using the position scales, which unfolds differently depending on the kind of scale involved. For continuous scales, the out of bounds function specified in the `oob` argument (Section \@ref(limits)) is applied at this point, and `NA` values in the layer data are removed. For discrete positions the change is more radical, because the values are matched to the `limits` values or the `breaks` specification provided by the user, and then converted to integer-valued positions. Finally, for binned position scales the continuous data is first cut into bins using the `breaks` argument, and the position for each bin is set to the midpoint of its range. The reason for performing the mapping at this stage of the process is consistency: no matter what type of position scale is used, it will look continuous to the stat and geom computations. This is important because otherwise computations such as dodging and jitter would fail for discrete scales. The original plot `p` has no position adjustment and both scales are continuous so the layer data remain unchanged:
+
+
+```{r, echo=FALSE}
+ggbuild(p)$positioned[[1]] %>% head(n = 3)
+```
+
+However, if we were plotting `p + xlim(2, 8)` the `oob` function -- `scales::censor()`  in this case -- would be applied at this point and `x` values below 2 would be replaced with `NA` as illustrated below:
+
+```{r, echo=FALSE}
+ggbuild(p + xlim(2, 8))$positioned[[1]] %>% head(n = 3)
+```
+
+
+
+At the third stage in this transformation the data is handed to the layer stat where any statistical transformation takes place. The procedure is as follows: first, the stat is allowed to inspect the data and modify its parameters, then do a one off preparation of the data. Next, the layer data is split by `PANEL` and `group`, and statistics are calculated before the data is reassembled.[^compute-method] Once the data has been reassembled in its new form it goes through another aesthetic mapping process. This is where any aesthetics whose computation has been delayed using `stat()` (or the old `..var..` notation) get added to the data. Notice that this is why `stat()` expressions cannot refer to the original data as it simply doesn't exist at this point. 
+
+
+[^compute-method]: It is possible for a stat to circumvent this splitting by overwritting specific `compute_*()` methods and thus do some optimisation.
+
+
+As an example consider the histogram of engine displacements specified by `ggplot(mpg) + geom_histogram(aes(displ))`. Before the stat computations have been performed the data for the histogram layer simply contain the `x` co-ordinates and the required `PANEL` and `group` columns.
+
+```{r echo=FALSE, message=FALSE}
+bb <- ggbuild(ggplot(mpg) + geom_histogram(aes(displ)))
+bb$positioned[[1]] %>% head(n = 3)
+```
+
+After the stat computations have taken place, the layer data are changed considerably:
+
+```{r echo=FALSE}
+bb$poststat[[1]] %>% head(n = 3)
+```
+
+
+At this point the geom takes over from the stat (almost). The first action it takes is to inspect the data, update its parameters and possibly make a first pass modification of the data (same setup as for stat). This is possibly where some of the columns gets reparameterised e.g. `x`+`width` gets changed to `xmin`+`xmax`. After this the position adjustment gets applied, so that e.g. overlapping bars are stacked, etc. To illustrate, consider a version of `p` that specified `stat = "jitter"` (or simply used `geom_jitter()`). Before this step in the transformation, the layer data are identical:
+
+```{r, echo=FALSE}
+ggbuild(ggplot(mpg) + geom_jitter(aes(displ, hwy, color = drv)))$poststat[[1]] %>% head(n = 3)
+
+cat("\n")
+
+ggbuild(p)$poststat[[1]] %>% head(n = 3)
+```
+
+But after this step, the two plots diverge. The first output below shows the first three rows from the layer data for `p` at this point in the process, and the second output shows the same rows for the jittered version of the plot:
+
+```{r, echo=FALSE}
+ggbuild(p)$geompos[[1]] %>% head(n = 3)
+
+cat("\n")
+
+ggbuild(ggplot(mpg) + geom_jitter(aes(displ, hwy, colour = drv)))$geompos[[1]] %>% head(n = 3)
+```
+
+Next -- and perhaps surprisingly -- the position scales are all reset, retrained, and applied to the layer data. Thinking about it, this is absolutely necessary because, for example, stacking can change the range of one of the axes dramatically. In some cases (e.g., in the histogram example above) one of the position aesthetics may not even available until after the stat computations and if the scales were not retrained it would never get trained.
+
+The last part of the data transformation is to train and map all non-positional aesthetics, i.e. convert whatever discrete or continuous input that is mapped to graphical parameters such as colours, linetypes, sizes etc. Further, any default aesthetics from the geom are added so that the data is now in a predictable state for the geom. At the very last step, both the stat and the facet gets a last chance to modify the data in its final mapped form with their `finish_data()` methods before the build step is done. For the plot object `p`, the first few rows from final state of the layer data look like this:
+
+```{r echo=FALSE}
+ggbuild(p)$built$data[[1]] %>% head(n = 3)
+```
 
 ### Output
 The return value of `ggplot_build()` is a list structure with the `ggplot_built` class. It contains the computed data, as well as a `Layout` object holding information about the trained coordinate system and faceting. Further it holds a copy of the original plot object, but now with trained scales.
