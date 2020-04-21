@@ -51,20 +51,24 @@ The code in our simplified print method reveals five distinct steps:
 
 - Fifth, the original ggplot object is invisibly returned to the user.
 
-One thing that this process reveals is that ggplot2 itself does none of the low-level drawing: its responsibility ends when the `gtable` object has been created. Nor does the gtable package (which implements the gtable class) do any drawing. All drawing is performed by the grid package together with the active graphics device. This is an important point, as it means ggplot2 -- or any extension to ggplot2 -- does not concern itself with the nitty gritty of creating the visual output. Rather, its job is to convert user data to one or more graphic primitives such as polygons, lines, points, etc and then hand responsibility over to the grid package. Although it is not strictly correct to do so, we will refer to this conversion into graphic primitives as the **rendering process**.
+One thing that this process reveals is that ggplot2 itself does none of the low-level drawing: its responsibility ends when the `gtable` object has been created. Nor does the gtable package (which implements the gtable class) do any drawing. All drawing is performed by the grid package together with the active graphics device. This is an important point, as it means ggplot2 -- or any extension to ggplot2 -- does not concern itself with the nitty gritty of creating the visual output. Rather, its job is to convert user data to one or more graphical primitives such as polygons, lines, points, etc and then hand responsibility over to the grid package. 
 
-## Follow the data
-As may be apparent from the section above, the main actor in the rendering process is the layer data, and the rendering process is really a long progression of steps to convert the data from the format supplied by the user, to a format that fits with the graphic primitives needed to create the desired visual elements. This also means that to gain an understanding of the mechanics of ggplot2 we must understand how data flows through the mechanics and how it transforms along the way.
+Although it is not strictly correct to do so, we will refer to this conversion into graphical primitives as the **rendering process**. The next two sections follow the data down the rendering rabbit hole through the build step (Section \@ref(ggplotbuild)) and the gtable step (Section \@ref(ggplotgtable)) whereupon -- rather like Alice in Lewis Carroll's novel -- it finally arrives in the grid wonderland as a collection of graphical primitives.
 
-### The build step
+## The build step {#ggplotbuild}
+
+
+
+<!-- As may be apparent from the section above, the main actor in the rendering process is the layer data, and the rendering process is really a long progression of steps to convert the data from the format supplied by the user, to a format that fits with the graphic primitives needed to create the desired visual elements. This also means that to gain an understanding of the mechanics of ggplot2 we must understand how data flows through the mechanics and how it transforms along the way. -->
+
 `ggplot_build()`, as discussed above, takes the declarative representation constructed with the public API and augments it by preparing the data for conversion to graphic primitives.
 
-#### Data preparation
+### Data preparation
 The first part of the processing is to get the data associated with each layer and get it into a predictable format. A layer can either provide it's own data, inherit from the global data, or provide a function that is applied to the global data and returns a new data.frame. Once this is done the data is passed to the plot layout which orchestrates coordinate systems and facets. Within the layout the data is passed in turn to the plot coordinate system which may change it (it usually don't) and then to the facet which inspects the data to figure out how many panels the plot should have and how they should be organised. During this process each leayer data will be augmented with a `PANEL` column. This column will (must) be kept throughout the rendering process and will link each data row to a specific facet panel in the final plot.
 
 The last part of the data preparation is to convert the layer data into calculated aesthetic values. This involves evaluating all the aesthetic expression from `aes()` on the layer data. Further, if not given explicitly, the `group` aesthetic is calculated from the interaction of all non-continuous aesthetics. The `group` aesthetic is, like `PANEL` a special column that must be kept throughtout the processing.
 
-#### Data transformation
+### Data transformation
 Once the layer data has been extracted and converted to a predictable format it undergoes a range of transformations until it gets to the format that the layer geometry expects. 
 
 The first step is to apply any scale transformations to the columns in the data. This is where any argument to `trans` in a scale has an effect. The remainder of the rendering will work in this transformed space. This is the underlying reason for the difference in setting a position transform in the scale vs in the coordinate system. Setting it in the scale will force all calculations to happen in transformed space, while setting it in the coordinate system will have all calculations happen in untransformed space and then apply the transformation to the outcome.
@@ -79,25 +83,25 @@ Now, perhaps surprisingly, the position scales are reset, retrained, and applied
 
 The last part of the data transformation is to train and map all non-positional aesthetics, i.e. convert whatever discrete or continuous input that is mapped to graphical parameters such as colours, linetypes, sizes etc. Further, any default aesthetics from the geom is added so that the data is now in a predicatable state for the geom. In the end, both the stat and the facet gets a last chance to modify the data in its final mapped form with their `finish_data()` methods before the build step is done.
 
-#### Output
+### Output
 The return value of `ggplot_build()` is a list structure with the `ggplot_built` class. It contains the computed data, as well as a `Layout` object holding information about the trained coordinate system and faceting. Further it holds a copy of the original plot object, but now with trained scales.
 
-### The gtable step
+## The gtable step {#ggplotgtable}
 The purpose of `ggplot_gtable()` is to take the output of the build step and turn it into a single `gtable` object that can be plotted using grid. At this point the main elements responsible for further computations are the geoms, the coordinate system, the facet, and the theme. The stats and position adjustments have all played their part already.
 
-#### Rendering the panels
+### Rendering the panels
 The first thing that happens is that the data is converted into its graphical representation. This happens in two steps. First, each layer is converted into a list of graphical objects (`grobs`). As with stats the conversion happens by splitting the data, first by `PANEL`, and then by `group`, with the possibility of the geom intercepting this splitting for performance reasons. While a lot of the data preparation has been performed already it is not uncommon that the geom does some additional transformation of the data during this step. A crucial part is to transform and normalise the position data. This is done by the coordinate system and while it often simply means that the data is normalised based on the limits of the coordinate system, it can also include radical transformations such as converting the positions into polar coordinates. The output of this is for each layer a list of `gList` objects corresponding to each panel in the facet layout. After this the facet takes over and assembles the panels. It does this by first collectiong the grobs for each panel from the layers, along with rendering strips, backgrounds, gridlines,and axes based on the theme and combines all of this into a single gList for each panel. It then proceeds to arranging all these panels into a gtable based on the calculated panel layout. For most plots this is simple as there is only a single panel, but for e.g. plots using `facet_wrap()` it can be quite complicated. The output is the basis of the final gtable object.
 
-#### Adding guides
+### Adding guides
 There are two types of guides in ggplot2: axes and legends. at this point the axes has already been rendered and assembled together with the panels, while the legends are still missing. Rendering the legends is a complicated process that first trains a guide for each scale. Then, potentially multiple guides are merged if their mapping allows it before the layers that contribute to the legend is asked for key grobs for each key in the legend. These key grobs are then assembled across layers and combined to the final legend in a process that is quite reminiscent of how layers gets combined into the gtable of panels. In the end the output is a gtable that holds each legend box arranged and styled according to the theme and guide specifications. Once created the guide gtable is then added to the main gtable according to the `legend.position` theme setting.
 
-#### Adding adornment
+### Adding adornment
 The only thing remaining is to add title, subtitle, caption, and tag as well as add background and margins, at which point the final gtable is done.
 
-#### Output
+### Output
 The end result of `ggplot_gtable()` is, as described above, a gtable. What is less obvious is that the dimensions of the object is unpredictable and will depend on both the faceting, legend placement, and which titles are drawn. It is thus not advised to depend on row and column placement in your code, should you want to further modify the gtable. All elements of the gtable are named though, so it is still possible to reliably retrieve, e.g. the grob holding the top-left y-axis with a bit of work.
 
-## ggproto
+## Introducing ggproto
 ggplot2 has undergone a couple of rewrites during its long life. A few of these have introduced new class systems to the underlying code. While there is still a small amount of leftover from older class systems, the code has more or less coalesced around the ggproto class system introduced in ggplot2 v2.0.0. ggproto is a custom build class system made specifically for ggplot2 to facilitate portable extension classes. Like the more well-known R6 system it is a system using reference semantics, allowing inheritance and access to methods from parent classes. On top of the ggproto is a set of design principles that, while not enforced by ggproto, is essential to how the system is used in ggplot2.
 
 ### ggproto syntax
