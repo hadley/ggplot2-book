@@ -12,7 +12,7 @@ When making the jump from user to developer, it is common to encounter frustrati
 
 To understand the machinery underpinning ggplot2, it is important to recognise that almost everything related to the plot drawing happens when you print the ggplot object, not when you construct it. For instance, in the code below, the object `p` is an abstract specification of the plot data, the layers, etc. It does not construct the image itself:
 ```{r}
-p <- ggplot(mpg) + geom_point(aes(displ, hwy))
+p <- ggplot(mpg) + geom_point(aes(displ, hwy, color = drv))
 ```
 
 The reason ggplot2 is designed this way is to allow the user to continue to add new elements to a plot at a later point, without needing to recalculate anything. One implication of this is that if you want to understand the mechanics of ggplot2, you have to follow your plot as it goes down the `plot()`[^plot-note] rabbit hole. You can inspect the print method for ggplot objects by typing `ggplot2:::plot.ggplot` at the console, but for this chapter I will work with a simplified version. Stripped to its bare essentials, the ggplot2 plot method has the same structure as the following `ggprint()` function:
@@ -64,9 +64,49 @@ Although it is not strictly correct to do so, we will refer to this conversion i
 `ggplot_build()`, as discussed above, takes the declarative representation constructed with the public API and augments it by preparing the data for conversion to graphic primitives.
 
 ### Data preparation
-The first part of the processing is to get the data associated with each layer and get it into a predictable format. A layer can either provide it's own data, inherit from the global data, or provide a function that is applied to the global data and returns a new data.frame. Once this is done the data is passed to the plot layout which orchestrates coordinate systems and facets. Within the layout the data is passed in turn to the plot coordinate system which may change it (it usually don't) and then to the facet which inspects the data to figure out how many panels the plot should have and how they should be organised. During this process each leayer data will be augmented with a `PANEL` column. This column will (must) be kept throughout the rendering process and will link each data row to a specific facet panel in the final plot.
+The first part of the processing is to get the data associated with each layer and get it into a predictable format. A layer can either provide data in one of three ways: it can supply its own (e.g., if the `data` argument to a geom is a data frame), it can inherit the global data supplied to `ggplot()`, or else it might provide a function that returns a data frame when applied to the global data. In all three cases the result is a data frame that is passed to the plot layout, which orchestrates coordinate systems and facets. When this happens the data is first passed to the plot coordinate system which may change it (but usually doesn't), and then to the facet which inspects the data to figure out how many panels the plot should have and how they should be organised. During this process the data associated with each layer will be augmented with a `PANEL` column. This column will (must) be kept throughout the rendering process and is used to link each data row to a specific facet panel in the final plot.
 
-The last part of the data preparation is to convert the layer data into calculated aesthetic values. This involves evaluating all the aesthetic expression from `aes()` on the layer data. Further, if not given explicitly, the `group` aesthetic is calculated from the interaction of all non-continuous aesthetics. The `group` aesthetic is, like `PANEL` a special column that must be kept throughtout the processing.
+The last part of the data preparation is to convert the layer data into calculated aesthetic values. This involves evaluating all aesthetic expressions from `aes()` on the layer data. Further, if not given explicitly, the `group` aesthetic is calculated from the interaction of all non-continuous aesthetics. The `group` aesthetic is, like `PANEL` a special column that must be kept throughtout the processing. As an example, the plot `p` created earlier contains only the one layer specified by `geom_point()` and at the end of the data preparation process the first 10 rows of the data associated with this layer look like this:
+
+```{r echo=FALSE}
+data_prepare <- function(plot) {
+  plot <- ggplot2:::plot_clone(plot)
+  if (length(plot$layers) == 0) {
+    plot <- plot + geom_blank()
+  }
+  
+  layers <- plot$layers
+  layer_data <- lapply(layers, function(y) y$layer_data(plot$data))
+  
+  scales <- plot$scales
+  # Apply function to layer and matching data
+  by_layer <- function(f) {
+    out <- vector("list", length(data))
+    for (i in seq_along(data)) {
+      out[[i]] <- f(l = layers[[i]], d = data[[i]])
+    }
+    out
+  }
+  
+  # Allow all layers to make any final adjustments based
+  # on raw input data and plot info
+  data <- layer_data
+  data <- by_layer(function(l, d) l$setup_layer(d, plot))
+  
+  # Initialise panels, add extra data for margins & missing faceting
+  # variables, and add on a PANEL variable to data
+  layout <- ggplot2:::create_layout(plot$facet, plot$coordinates)
+  data <- layout$setup(data, plot$data, plot$plot_env)
+  
+  # Compute aesthetics to produce data with generalised variable names
+  data <- by_layer(function(l, d) l$compute_aesthetics(d, plot))
+  
+  return(data)
+}
+
+data_prepped <- data_prepare(p)
+head(data_prepped[[1]], n = 10)
+```
 
 ### Data transformation
 Once the layer data has been extracted and converted to a predictable format it undergoes a range of transformations until it gets to the format that the layer geometry expects. 
@@ -130,9 +170,9 @@ As can be seen, fields and methods are not differentiated in the construction, a
 
 ```{r}
 Me <- ggproto(NULL, Person,
-  first = "Thomas Lin",
-  last = "Pedersen",
-  birthdate = as.Date("1985/10/12")
+              first = "Thomas Lin",
+              last = "Pedersen",
+              birthdate = as.Date("1985/10/12")
 )
 
 Me$description()
@@ -142,18 +182,18 @@ When subclassing and overwriting methods, the parent class and its methods are a
 
 ```{r}
 Police <- ggproto("Police", Person,
-  description = function(self) {
-    paste(
-      "Detective",
-      ggproto_parent(Person, self)$description()
-    )
-  }
+                  description = function(self) {
+                    paste(
+                      "Detective",
+                      ggproto_parent(Person, self)$description()
+                    )
+                  }
 )
 
 John <- ggproto(NULL, Police,
-  first = "John",
-  last = "McClane",
-  birthdate = as.Date("1955/03/19")
+                first = "John",
+                last = "McClane",
+                birthdate = as.Date("1955/03/19")
 )
 
 John$description()
@@ -182,7 +222,7 @@ GeomErrorbar <- ggproto(
     GeomLinerange$setup_params(data, params)
   }
   # ...
-}
+  }
 ```
 
 While we have seen that parent methods can be called using `ggproto_parent()` this pattern is quite rare to find in the ggplot2 source code, as the pattern shown above is often clearer and just as safe.
