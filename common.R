@@ -1,6 +1,7 @@
 library(ggplot2)
 library(dplyr)
 conflicted::conflict_prefer("filter", "dplyr")
+conflicted::conflict_prefer("pull", "dplyr") # in case git2r is loaded
 library(tidyr)
 conflicted::conflict_prefer("extract", "tidyr")
 
@@ -103,10 +104,10 @@ include_graphics <- function(x, options) {
   }
 
   paste0("  \\includegraphics",
-    opts_str,
-    "{", tools::file_path_sans_ext(x), "}",
-    if (options$fig.cur != options$fig.num) "%",
-    "\n"
+         opts_str,
+         "{", tools::file_path_sans_ext(x), "}",
+         if (options$fig.cur != options$fig.num) "%",
+         "\n"
   )
 }
 
@@ -116,3 +117,29 @@ knitr_first_plot <- function(x) {
 knitr_last_plot <- function(x) {
   x$fig.show != "hold" || x$fig.cur == x$fig.num
 }
+
+
+# control output lines ----------------------------------------------------
+
+hook_output <- knitr::knit_hooks$get("output")
+knitr::knit_hooks$set(output = function(x, options) {
+  lines <- options$output.lines
+  if (is.null(lines)) {
+    return(hook_output(x, options))  # pass to default hook
+  }
+
+  x <- unlist(strsplit(x, "\n"))
+
+  if (length(lines)==1) {        # first n lines
+    if (length(x) > lines) {
+      # truncate the output, but add ....
+      x <- c(head(x, lines), more)
+    }
+  } else {
+    x <- x[lines] # don't add ... when we get vector input
+  }
+  # paste these lines together
+  x <- paste(c(x, ""), collapse = "\n")
+  hook_output(x, options)
+})
+
