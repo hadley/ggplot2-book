@@ -23,9 +23,6 @@ head(mi_counties)
 
 In this data set we have four variables: `lat` and `long` specify the latitude and longitude of a vertex (i.e. a corner of the polygon), `id` specifies the name of a region, and `group` provides a unique identifier for contiguous areas within a region (e.g. if a region consisted of multiple islands). To get a better sense of what the data contains, we can plot `mi_counties` using `geom_point()`, as shown in the left panel below. In this plot, each row in the data frame is plotted as a single point, producing a scatterplot that shows the corners of every county. To turn this scatterplot into a map, we use `geom_polygon()` instead, which draws each county as a distinct polygon. This is illustrated in the right panel below.
 
-<!-- HW: maybe it would be worth displaying with a scatterplot to make it more clear what the data represents? -->
-<!-- DN: makes sense: I think this version is slightly clearer -->
-
 `r columns(2, 2/3)`
 ```{r}
 ggplot(mi_counties, aes(lon, lat)) + 
@@ -44,9 +41,6 @@ In both plots I use `coord_quickmap()` to adjust the axes to ensure that longitu
 There are a few limitations to the approach outlined above, not least of which is the fact that the simple "longitude-latitude" data format is not typically used in real world mapping. Vector data for maps are typically encoded using the "simple features" standard produced by the Open Geospatial Consortium. The sf package [@sf] developed by Edzer Pebesma <https://github.com/r-spatial/sf> provides an excellent toolset for working with such data, and the `geom_sf()` and `coord_sf()` functions in ggplot2 are designed to work together with the sf package. 
 
 To introduce these functions, we rely on the ozmaps package by Michael Sumner <https://github.com/mdsumner/ozmaps/> which provides maps for Australian state boundaries, local government areas, electoral boundaries, and so on [@ozmaps]. To illustrate what an sf data set looks like, we import a data set depicting the borders of Australian states and territories:
-
-<!-- HW: should we be citing these packages? -->
-<!-- DN: done -->
 
 `r columns(1, 1)`
 ```{r}
@@ -103,13 +97,7 @@ ggplot() +
   coord_sf()
 ```
 
-<!-- HW: this takes a very long time to render for me. I also wonder if it's worth trimming to focus on the bulk of Australia? Maybe that would be a useful example of combining sf with dplyr to filter to specified rows? -->
-<!-- DN: done -->
-
 It is worth noting that the first layer to this plot maps the `fill` aesthetic in onto a variable in the data. In this instance the `NAME` variable is a categorical variable and does not convey any additional information, but the same approach can be used to visualise other kinds of area metadata. For example, if `oz_states` had an additional column specifying the unemployment level in each state, we could map the `fill` aesthetic to that variable. 
-
-<!-- HW: I've tried to converted "the x data" to "`x`" everywhere -->
-<!-- DN: ah I was wondering -->
 
 ### Labelled maps {#geom_sf_label}
 
@@ -142,7 +130,6 @@ longitude and latitude in this way will give erroneous answers. For this reason,
 package produces warning messages when it relies on this approximation.
 
 <!-- HW: worth commenting on warning? "st_point_on_surface may not give correct results for longitude/latitude data" -->
-<!-- DN: is that the right answer? -->
 
 ### Adding other geoms
 
@@ -193,8 +180,6 @@ And unfortunately, it's not possible for any projection to be shape-preserving a
 
 Taken together, the geodetic datum (e.g, WGS84), the type of map projection (e.g., Mercator) and the parameters of the projection (e.g., location of the origin) specify a **coordinate reference system**, or CRS, a complete set of assumptions used to translate the latitude and longitude information into a two dimensional map. An sf object often includes a default CRS, as illustrated below:
 
-<!-- HW: I use bold for definitions -->
-
 ```{r}
 st_crs(oz_votes)
 ```
@@ -211,7 +196,7 @@ ggplot(oz_votes) +
   coord_sf(crs = st_crs("+proj=lcc +datum=WGS84"))
 ```
 
-In this example `st_crs()` is given character input in the form of a **proj4string**, though it also accepts numeric **EPSG code** (see <http://www.epsg-registry.org/>). The proj4string in this case indicates that I am using the WGS84 datum and the Lambert conformal conic (LCC) projection. The LCC which is often used in aeronautical applications because straight lines on the map are approximate "great circles" on the globe, and it is generally considered a good projection for regional maps in the middle latitudes. However, the map looks terrible because I haven't set the parameters very wisely. To fix this, I centre the map at longitude 140 and latitude -25, and fix the two standard parallels (lines at which there are no distortions) at latitudes -18 and -36.
+In this example `st_crs()` is given character input in the form of a **proj4string**, though it also accepts numeric **EPSG code** (see <http://www.epsg-registry.org/>). The proj4string in this case indicates that I am using the WGS84 datum -- generally appropriate for global maps -- and the Lambert conformal conic (LCC) projection. The LCC is often used in aeronautical applications because straight lines on the map are approximate "great circles" on the globe, and it is generally considered a good projection for regional maps in the middle latitudes. However, the map looks terrible because I haven't set the parameters very wisely. To fix this, I centre the map at longitude 140 and latitude -25, and fix the two standard parallels (lines at which there are no distortions) at latitudes -18 and -36.
 
 ```{r}
 proj4string <- "+proj=lcc +datum=WGS84 +lat_0=-25 +lon_0=140 +lat_1=-18 +lat_2=-36"
@@ -305,8 +290,8 @@ As an illustration, suppose we wish to plot satellite images made publicly avail
 
 ```{r eval=FALSE}
 # list of all file names with time stamp 2020-01-07 21:00 GMT 
-# (BOM images are retained for 24 hours, so this will now return an
-# empty vector)
+# (BOM images are retained for 24 hours, so this will return an
+# empty vector if you run this code without editing the time stamp)
 files <- bomrang::get_available_imagery() %>%
   stringr::str_subset("202001072100")
 
@@ -322,7 +307,7 @@ purrr::walk2(
 After caching the files locally (which is generally a good idea) we can inspect the list of files we have downloaded:
 
 ```{r}
-list.files("raster")
+dir("raster")
 ```
 
 All 14 files are constructed from images taken by the Himawari-8 geostationary satellite operated by the Japan Meteorological Agency and takes images across 13 distinct bands. The images released by the Australian BOM include data on the visible spectrum (channel 3) and the infrared spectrum (channel 13):
@@ -401,14 +386,13 @@ geometry <- latlon %>%
   st_multipoint() %>% 
   st_sfc() %>%
   st_cast("POINT")
-
 # append the city names and attach the "longlat" geometry
 # in which the coordinates were originally defined
 cities <- st_sf(city = oz_capitals$city, geometry)
 st_crs(cities) <- st_crs("+proj=longlat +datum=WGS84")
 ```
 
-What we have done here is transform the original `oz_capitals` data, which took the form of a standard data frame (or tibble), into a properly specified simple features object that has its own CRS. Having done so we can now transform the co-ordinates from the latitude-longitude geometry to the match the geometry of our `sat_vis` data:
+What we have done here is transform the original `oz_capitals` data, which took the form of a standard data frame (or tibble), into a properly specified simple features object that has its own CRS. The choice of projection is determined by the fact that `oz_capitals` specifying longitude and latitude data, and I've chosen the same WGS84 datum that I used previously as the map is global in scope. Having done so we can now transform the co-ordinates from the latitude-longitude geometry to the match the geometry of our `sat_vis` data:
 
 ```{r}
 cities <- st_transform(cities, st_crs(sat_vis))
