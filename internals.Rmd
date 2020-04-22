@@ -211,6 +211,10 @@ gggtable <- function(data) {
                                   clip = "off", name = "guide-box")
   }
   
+  # ----
+  all_states$legend <- plot_table
+
+  
   # Title
   title <- element_render(theme, "plot.title", plot$labels$title, margin_y = TRUE)
   title_height <- grid::grobHeight(title)
@@ -373,7 +377,8 @@ To understand the machinery underpinning ggplot2, it is important to recognise t
 p <- ggplot(mpg, aes(displ, hwy, color = drv)) + 
   geom_point(position = "jitter") +
   geom_smooth(method = "lm", formula = y ~ x) + 
-  facet_wrap(vars(year)) 
+  facet_wrap(vars(year)) + 
+  ggtitle("A plot for expository purposes")
 ```
 
 The reason ggplot2 is designed this way is to allow the user to continue to add new elements to a plot at a later point, without needing to recalculate anything. One implication of this is that if you want to understand the mechanics of ggplot2, you have to follow your plot as it goes down the `plot()`[^plot-note] rabbit hole. You can inspect the print method for ggplot objects by typing `ggplot2:::plot.ggplot` at the console, but for this chapter I will work with a simplified version. Stripped to its bare essentials, the ggplot2 plot method has the same structure as the following `ggprint()` function:
@@ -396,6 +401,7 @@ ggprint <- function(x) {
 
 This function does not handle every possible use case, but it is sufficient to draw the plot specified above:
 
+`r columns(1, 2/3, max_width = .8)`
 ```{r, cache.vars=p}
 ggprint(p) 
 ```
@@ -500,7 +506,7 @@ The return value of `ggplot_build()` is a list structure with the `ggplot_built`
 The purpose of `ggplot_gtable()` is to take the output of the build step and turn it into a single `gtable` object that can be plotted using grid. At this point the main elements responsible for further computations are the geoms, the coordinate system, the facet, and the theme. The stats and position adjustments have all played their part already.
 
 ### Rendering the panels
-The first thing that happens is that the data is converted into its graphical representation. This happens in two steps. First, each layer is converted into a list of graphical objects (`grobs`). As with stats the conversion happens by splitting the data, first by `PANEL`, and then by `group`, with the possibility of the geom intercepting this splitting for performance reasons. While a lot of the data preparation has been performed already it is not uncommon that the geom does some additional transformation of the data during this step. A crucial part is to transform and normalise the position data. This is done by the coordinate system and while it often simply means that the data is normalised based on the limits of the coordinate system, it can also include radical transformations such as converting the positions into polar coordinates. The output of this is for each layer a list of `gList` objects corresponding to each panel in the facet layout. After this the facet takes over and assembles the panels. It does this by first collectiong the grobs for each panel from the layers, along with rendering strips, backgrounds, gridlines,and axes based on the theme and combines all of this into a single gList for each panel. It then proceeds to arranging all these panels into a gtable based on the calculated panel layout. For most plots this is simple as there is only a single panel, but for e.g. plots using `facet_wrap()` it can be quite complicated. The output is the basis of the final gtable object.
+The first thing that happens is that the data is converted into its graphical representation. This happens in two steps. First, each layer is converted into a list of graphical objects (`grobs`). As with stats the conversion happens by splitting the data, first by `PANEL`, and then by `group`, with the possibility of the geom intercepting this splitting for performance reasons. While a lot of the data preparation has been performed already it is not uncommon that the geom does some additional transformation of the data during this step. A crucial part is to transform and normalise the position data. This is done by the coordinate system and while it often simply means that the data is normalised based on the limits of the coordinate system, it can also include radical transformations such as converting the positions into polar coordinates. The output of this is for each layer a list of `gList` objects corresponding to each panel in the facet layout. After this the facet takes over and assembles the panels. It does this by first collectiong the grobs for each panel from the layers, along with rendering strips, backgrounds, gridlines,and axes based on the theme and combines all of this into a single gList for each panel. It then proceeds to arranging all these panels into a gtable based on the calculated panel layout. For most plots this is simple as there is only a single panel, but for e.g. plots using `facet_wrap()` it can be quite complicated. The output is the basis of the final gtable object. At this stage in the process our example plot `p` looks like this: 
 
 ```{r echo=FALSE}
 d <- ggplot_build(p)
@@ -510,13 +516,42 @@ grid::grid.draw(x$panels)
 ```
 
 ### Adding guides
-There are two types of guides in ggplot2: axes and legends. at this point the axes has already been rendered and assembled together with the panels, while the legends are still missing. Rendering the legends is a complicated process that first trains a guide for each scale. Then, potentially multiple guides are merged if their mapping allows it before the layers that contribute to the legend is asked for key grobs for each key in the legend. These key grobs are then assembled across layers and combined to the final legend in a process that is quite reminiscent of how layers gets combined into the gtable of panels. In the end the output is a gtable that holds each legend box arranged and styled according to the theme and guide specifications. Once created the guide gtable is then added to the main gtable according to the `legend.position` theme setting.
+There are two types of guides in ggplot2: axes and legends. As our plot `p` illustrates at this point the axes has already been rendered and assembled together with the panels, but the legends are still missing. Rendering the legends is a complicated process that first trains a guide for each scale. Then, potentially multiple guides are merged if their mapping allows it before the layers that contribute to the legend is asked for key grobs for each key in the legend. These key grobs are then assembled across layers and combined to the final legend in a process that is quite reminiscent of how layers gets combined into the gtable of panels. In the end the output is a gtable that holds each legend box arranged and styled according to the theme and guide specifications. Once created the guide gtable is then added to the main gtable according to the `legend.position` theme setting. At this stage, our example plot is complete in most respects: the only thing missing is the title.
+
+```{r echo=FALSE}
+d <- ggplot_build(p)
+x <- gggtable(d)
+grid::grid.newpage()
+grid::grid.draw(x$legend)
+```
 
 ### Adding adornment
+
 The only thing remaining is to add title, subtitle, caption, and tag as well as add background and margins, at which point the final gtable is done.
 
 ### Output
-The end result of `ggplot_gtable()` is, as described above, a gtable. What is less obvious is that the dimensions of the object is unpredictable and will depend on both the faceting, legend placement, and which titles are drawn. It is thus not advised to depend on row and column placement in your code, should you want to further modify the gtable. All elements of the gtable are named though, so it is still possible to reliably retrieve, e.g. the grob holding the top-left y-axis with a bit of work.
+
+At this point ggplot2 is ready to hand over to grid. Our rendering process is more or less equivalent to the code below and the end result is, as described above, a gtable:
+
+```{r}
+p_built <- ggplot_build(p)
+p_gtable <- ggplot_gtable(p_built)
+
+class(p_gtable)
+```
+
+What is less obvious is that the dimensions of the object is unpredictable and will depend on both the faceting, legend placement, and which titles are drawn. It is thus not advised to depend on row and column placement in your code, should you want to further modify the gtable. All elements of the gtable are named though, so it is still possible to reliably retrieve, e.g. the grob holding the top-left y-axis with a bit of work. As an illustration, the gtable for our plot `p` is shown in the code below:
+
+```{r}
+p_gtable
+```
+
+The final plot, as one would hope, looks identical to the original:
+
+```{r}
+grid::grid.newpage()
+grid::grid.draw(p_gtable)
+```
 
 ## Introducing ggproto
 ggplot2 has undergone a couple of rewrites during its long life. A few of these have introduced new class systems to the underlying code. While there is still a small amount of leftover from older class systems, the code has more or less coalesced around the ggproto class system introduced in ggplot2 v2.0.0. ggproto is a custom build class system made specifically for ggplot2 to facilitate portable extension classes. Like the more well-known R6 system it is a system using reference semantics, allowing inheritance and access to methods from parent classes. On top of the ggproto is a set of design principles that, while not enforced by ggproto, is essential to how the system is used in ggplot2.
