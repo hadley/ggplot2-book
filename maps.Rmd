@@ -286,7 +286,7 @@ ggplot(dawson[-69]) +
 
 A second way to supply geospatial information for mapping is to rely on **raster data**. Unlike the simple features format, in which geographical entities are specified in terms of a set of lines, points and polygons, rasters take the form of images. In the simplest case raster data might be nothing more than a bitmap file, but there are many different image formats out there. In the geospatial context specifically, there are image formats that include metadata (e.g., geodetic datum, coordinate reference system) that can be used to map the image information to the surface of the Earth. For example, one common format is GeoTIFF, which is a regular TIFF file with additional metadata supplied. Happily, most formats can be easily read into R with the assistance of GDAL (the Geospatial Data Abstraction Library, https://gdal.org/). For example the sf package contains a function `sf::gdal_read()` that provides access to the GDAL raster drivers from R. However, you rarely need to call this function directly, as there are other high level functions that take care of this for you. 
 
-As an illustration, suppose we wish to plot satellite images made publicly available by the Australian Bureau of Meterorology (BOM) on their FTP server. The bomrang package [@bomrang] provides a convenient interface to the server, including a `get_available_imagery()` function that returns a vector of filenames and a `get_satellite_imagery()` function that downloads a file and imports it directly into R. For expository purposes, however, I'll use a more flexible method that could be adapted to any FTP server, and use the `curl_download()` function from the curl package [@curl]
+As an illustration, suppose we wish to plot satellite images made publicly available by the Australian Bureau of Meterorology (BOM) on their FTP server. The bomrang package [@bomrang] provides a convenient interface to the server, including a `get_available_imagery()` function that returns a vector of filenames and a `get_satellite_imagery()` function that downloads a file and imports it directly into R. For expository purposes, however, I'll use a more flexible method that could be adapted to any FTP server, and use the `download.file()` function:
 
 ```{r eval=FALSE}
 # list of all file names with time stamp 2020-01-07 21:00 GMT 
@@ -300,7 +300,7 @@ files <- bomrang::get_available_imagery() %>%
 purrr::walk2(
   .x = paste0("ftp://ftp.bom.gov.au/anon/gen/gms/", files),
   .y = file.path("raster", files),
-  .f = ~ curl::curl_download(url = .x, destfile = .y)
+  .f = ~ download.file(url = .x, destfile = .y)
 )
 ```
 
