@@ -27,14 +27,10 @@ The reason ggplot2 is designed this way is to allow the user to continue to add 
 
 ```{r}
 ggprint <- function(x) {
-  set_last_plot(x)
-  
   data <- ggplot_build(x)
   gtable <- ggplot_gtable(data)
-  
   grid::grid.newpage()
   grid::grid.draw(gtable)
-  
   return(invisible(x))
 }
 ```
@@ -46,17 +42,15 @@ This function does not handle every possible use case, but it is sufficient to d
 ggprint(p) 
 ```
 
-The code in our simplified print method reveals five distinct steps:
+The code in our simplified print method reveals four distinct steps:
 
-- First, it calls `set_last_plot()` to store the plot object internally. This is done to allow the `last_plot()` function to work, but otherwise does not affect the plotting process. 
+- First, it calls `ggplot_build()` where the data for each layer is prepared and organised into a standardised format suitable for plotting.
 
-- Second, it calls `ggplot_build()` where the data for each layer is prepared and organised into a standardised format suitable for plotting.
+- Second, the prepared data is passed to the `ggplot_build()` and turns it into it into graphic elements stored in a gtable (we'll come back to what that is later). 
 
-- Third, the prepared data is passed to the `ggplot_build()` and turns it into it into graphic elements stored in a gtable (we'll come back to what that is later). 
+- Third, the gtable object is converted to an image with the assistance of the grid package.
 
-- Fourth, the gtable object is converted to an image with the assistance of the grid package.
-
-- Fifth, the original ggplot object is invisibly returned to the user.
+- Fourth, the original ggplot object is invisibly returned to the user.
 
 One thing that this process reveals is that ggplot2 itself does none of the low-level drawing: its responsibility ends when the `gtable` object has been created. Nor does the gtable package (which implements the gtable class) do any drawing. All drawing is performed by the grid package together with the active graphics device. This is an important point, as it means ggplot2 -- or any extension to ggplot2 -- does not concern itself with the nitty gritty of creating the visual output. Rather, its job is to convert user data to one or more graphical primitives such as polygons, lines, points, etc and then hand responsibility over to the grid package. 
 
