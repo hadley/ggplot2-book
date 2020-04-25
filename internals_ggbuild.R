@@ -1,11 +1,20 @@
-# Function that mimics ggplot_build(), but instead of returning the
-# ggplot_built object, it returns a list of objects that include
-# intermediate states of interest. Used for expository purposes below
+# The ggbuild() function mimics the behaviour of the ggplot_build()
+# function (from version 3.3.0.9000). It is a direct copy of the source
+# code from the original, with calls to internal ggplot2 functions
+# namespaced via :::
+#
+# The only substantive modification from the original is that it maintains
+# a list "all_steps" that records the state of the data at various points in
+# the build process, in addition to the final ggplot_built object.
+#
+# Lines that marked with # ****** are those that have been modified or inserted
+
+
 ggbuild <- function(plot) {
 
-  all_steps <- list()
+  all_steps <- list() # ******
 
-  plot <- ggplot2:::plot_clone(plot)
+  plot <- ggplot2:::plot_clone(plot) # ******
   if (length(plot$layers) == 0) {
     plot <- plot + geom_blank()
   }
@@ -30,21 +39,21 @@ ggbuild <- function(plot) {
 
   # Initialise panels, add extra data for margins & missing faceting
   # variables, and add on a PANEL variable to data
-  layout <- ggplot2:::create_layout(plot$facet, plot$coordinates)
+  layout <- ggplot2:::create_layout(plot$facet, plot$coordinates) # ******
   data <- layout$setup(data, plot$data, plot$plot_env)
 
   # Compute aesthetics to produce data with generalised variable names
   data <- by_layer(function(l, d) l$compute_aesthetics(d, plot))
 
-  # ----- Record the data at the end of the "preparation" stage
-  all_steps$prepared <- data
+  # Record the data at the end of the "preparation" stage
+  all_steps$prepared <- data # ******
 
 
   # Transform all scales
-  data <- lapply(data, ggplot2:::scales_transform_df, scales = scales)
+  data <- lapply(data, ggplot2:::scales_transform_df, scales = scales) # ******
 
-  # ----- data after scale transformation applied
-  all_steps$transformed <- data
+  # Record the layer data after scale transformation applied
+  all_steps$transformed <- data # ******
 
   # Map and train positions so that statistics have access to ranges
   # and all positions are numeric
@@ -54,18 +63,18 @@ ggbuild <- function(plot) {
   layout$train_position(data, scale_x(), scale_y())
   data <- layout$map_position(data)
 
-  # ----- data after position adjustment
-  all_steps$positioned <- data
+  # Record the layer data after position adjustment
+  all_steps$positioned <- data # ******
 
   # Apply and map statistics
   data <- by_layer(function(l, d) l$compute_statistic(d, layout))
   data <- by_layer(function(l, d) l$map_statistic(d, plot))
 
-  # ----- data after position adjustment
-  all_steps$poststat <- data
+  # Record the state of the layer data after position adjustment
+  all_steps$poststat <- data # ******
 
   # Make sure missing (but required) aesthetics are added
-  ggplot2:::scales_add_missing(plot, c("x", "y"), plot$plot_env)
+  ggplot2:::scales_add_missing(plot, c("x", "y"), plot$plot_env) # ******
 
   # Reparameterise geoms from (e.g.) y and width to ymin and ymax
   data <- by_layer(function(l, d) l$compute_geom_1(d))
@@ -73,8 +82,8 @@ ggbuild <- function(plot) {
   # Apply position adjustments
   data <- by_layer(function(l, d) l$compute_position(d, layout))
 
-  # ----- geom and position adjustments
-  all_steps$geompos <- data
+  # Record the state of the data once geom and position adjustments are made
+  all_steps$geompos <- data # ******
 
   # Reset position scales, then re-train and map.  This ensures that facets
   # have control over the range of a plot: is it generated from what is
@@ -87,8 +96,8 @@ ggbuild <- function(plot) {
   # Train and map non-position scales
   npscales <- scales$non_position_scales()
   if (npscales$n() > 0) {
-    lapply(data, ggplot2:::scales_train_df, scales = npscales)
-    data <- lapply(data, ggplot2:::scales_map_df, scales = npscales)
+    lapply(data, ggplot2:::scales_train_df, scales = npscales) # ******
+    data <- lapply(data, ggplot2:::scales_map_df, scales = npscales) # ******
   }
 
   # Fill in defaults etc.
@@ -101,12 +110,12 @@ ggbuild <- function(plot) {
   data <- layout$finish_data(data)
 
 
-  # ----- Record the data at the end of the "preparation" stage
-  all_steps$built <-  structure(
-    list(data = data, layout = layout, plot = plot),
-    class = "ggplot_built"
-  )
+  # Record the data at the end of the "preparation" stage
+  all_steps$built <-  structure(                        # ******
+    list(data = data, layout = layout, plot = plot),    # ******
+    class = "ggplot_built"                              # ******
+  )                                                     # ******
 
-  return(all_steps)
+  return(all_steps) # ******
 }
 
