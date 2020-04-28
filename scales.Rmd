@@ -46,7 +46,7 @@ ggplot(mpg, aes(displ, hwy)) +
   scale_colour_discrete()
 ```
 
-The original code did not specify any scales, so ggplot2 adds a default scale for each of the aesthetics used in the plot. The choice of default scale depends on both the aesthetic and the variable type. In this example `hwy` is a continuous variable mapped to the y aesthetic so the default scale is `scale_y_continuous()`; similarly `class` is discrete so when mapped to the colour aesthetic the default scale becomes `scale_colour_discrete()`.It would be tedious to manually add a scale every time you used a new aesthetic, so ggplot2 does it for you. But if you want to override the defaults, you'll need to add the scale yourself, like this: \index{Scales!defaults}
+The original code did not specify any scales, so ggplot2 adds a default scale for each of the aesthetics used in the plot. The choice of default scale depends on both the aesthetic and the variable type. In this example `hwy` is a continuous variable mapped to the y aesthetic so the default scale is `scale_y_continuous()`; similarly `class` is discrete so when mapped to the colour aesthetic the default scale becomes `scale_colour_discrete()`. It would be tedious to manually add a scale every time you used a new aesthetic, so ggplot2 does it for you. But if you want to override the defaults, you'll need to add the scale yourself, like this: \index{Scales!defaults}
 
 ```{r, fig.show = "hide"}
 ggplot(mpg, aes(displ, hwy)) + 
@@ -110,41 +110,43 @@ You’ve probably already figured out the naming scheme for scales, but to be co
 
 ## Adjusting scale limits {#limits}
 
-Setting limits is pertinent to every scale family and works similarly across families. The limits, or domain, of a scale are usually derived from the range of the data. \index{Axis!limits} \index{Scales!limits} There are two reasons you might want to specify limits rather than relying on the data:
+Scales in ggplot2 are typically associated with limits that specify the domain over which the scale is defined and are usually derived from the range of the data. \index{Axis!limits} \index{Scales!limits} There are two reasons you might want to specify limits rather than relying on the data:
 
-1. You want to make limits smaller than the range of the data to focus on 
-   an interesting area of the plot.
-   
-1. You want to make the limits larger than the range of the data because 
-   you want multiple plots to match up.
+1. You want to shrink the limits to focus on an interesting area of the plot.
+1. You want to expand the limits to make multiple plots to match up.
 
-It's most natural to think about the limits of position scales: they map directly to the ranges of the axes. But limits also apply to scales that have legends, like colour, size, and shape. This is particularly important to realise if you want your colours to match up across multiple plots in your paper.
+It's most natural to think about the limits of position scales: they map directly to the ranges of the axes. But limits also apply to scales that have legends, like colour, size, and shape, which is particularly important if you want colours to be consistent across multiple plots. To modify the limits of a scale, specify the `limits` parameter of the scale:
 
-You can modify the limits using the `limits` parameter of the scale:
-
-* For continuous scales, this should be a numeric vector of length two. 
+* For continuous scales, `limits` should be a numeric vector of length two. 
   If you only want to set the upper or lower limit, you can set the other value
   to `NA`.
-  
-* For discrete scales, this is a character vector which enumerates all possible
+* For discrete scales, `limits` is a character vector which enumerates all possible
   values.
-  
+
+A minimal example is shown below. In the left panel the limits of the x scale are set to the default values (the range of the data), the middle panel expands the limits, and the right panel shrinks them:
+
 `r columns(3)`
 ```{r, messages = FALSE}
 df <- data.frame(x = 1:3, y = 1:3)
 base <- ggplot(df, aes(x, y)) + geom_point() 
 
 base
-base + scale_x_continuous(limits = c(1.5, 2.5))
 base + scale_x_continuous(limits = c(0, 4))
+base + scale_x_continuous(limits = c(1.5, 2.5))
 ```
 
-Because modifying the limits is such a common task, ggplot2 provides some helper to make this even easier: `xlim()`, `ylim()` and `lims()` These functions inspect their input and then create the appropriate scale, as follows: \indexf{xlim}  \indexf{ylim}
+(The warning produced in the final example is discussed later in this section)
+
+### Convenience functions
+
+Because modifying scale limits is such a common task, ggplot2 provides some convenience functions to make this easier. For position scales the `xlim()` and `ylim()` helper functions inspect their input and then specify the appropriate scale for the x and y axes respectively. More generally, the `lims()` function takes name-value pairs as input, where the name specifies the aesthetic and the value specifies the limits. The results depend on the type of scale: \indexf{xlim}  \indexf{ylim}
 
 * `xlim(10, 20)`: a continuous scale from 10 to 20
 * `ylim(20, 10)`: a reversed continuous scale from 20 to 10
 * `xlim("a", "b", "c")`: a discrete scale
-* `xlim(as.Date(c("2008-05-01", "2008-08-01")))`: a date scale from May 1 to August 1 2008.
+* `xlim(as.Date(c("2008-05-01", "2008-08-01")))`: a date scale from May 1 to August 1 2008 (date scales are discussed in Section \@ref(date-scales))
+
+Three examples using the `base` plot are shown below:
 
 ```{r, messages = FALSE}
 base + xlim(0, 4)
@@ -152,13 +154,16 @@ base + xlim(4, 0)
 base + lims(x = c(0, 4))
 ```
 
-If you have eagle eyes, you'll have noticed that the range of the axes actually extends a little bit past the limits that you've specified. This ensures that the data does not overlap the axes. To eliminate this space, set `expand = c(0, 0)`. This is useful in conjunction with `geom_raster()`: \index{Axis!expansion}
+### Visual range expansion
+
+If you have eagle eyes, you'll have noticed that the visual range of the axes actually extends a little bit past the numerical limits that I have specified in the various examples. This ensures that the data does not overlap the axes, which is usually (but not always) desirable. To eliminate this space, set `expand = c(0, 0)`. One scenario where it is usually preferable to remove this space is when using `geom_raster()`: \index{Axis!expansion}
 
 `r columns(2, 1, 0.66)`
 ```{r}
 ggplot(faithfuld, aes(waiting, eruptions)) + 
   geom_raster(aes(fill = density)) + 
   theme(legend.position = "none")
+
 ggplot(faithfuld, aes(waiting, eruptions)) + 
   geom_raster(aes(fill = density)) + 
   scale_x_continuous(expand = c(0,0)) + 
@@ -166,15 +171,22 @@ ggplot(faithfuld, aes(waiting, eruptions)) +
   theme(legend.position = "none")
 ```
 
-By default, any data outside the limits is converted to `NA`. This means that setting the limits is not the same as visually zooming in to a region of the plot.  To do that, you need to use the `xlim` and `ylim` arguments to `coord_cartesian()`, described in Section \@ref(cartesian). This performs purely visual zooming and does not affect the underlying data. \index{Zooming} You can override this with the `oob` (out of bounds) argument to the scale. The default is `scales::censor()` which replaces any value outside the limits with `NA`. Another option is `scales::squish()` which squishes all values into the range:
-  
+In the plot on the left the extra space is distracting, so the plot on the right would usually be preferable.
+
+### Out of bounds values
+
+Recall that an earlier plot in this section produced a warning about missing values when the scale limits were reduced. By default, ggplot2 converts data outside the limits to `NA`. This means that changing the limits of a scale is not precisely the same as visually zooming in to a region of the plot. If you want to do the latter, you should use the `xlim` and `ylim` arguments to `coord_cartesian()`, described in Section \@ref(cartesian), which performs purely visual zooming and does not affect the underlying data. \index{Zooming} To override the default behaviour you can set the `oob` (out of bounds) argument to the scale, a function that is applied to all observations outside the scale limits. The default `scales::censor()` which replaces any value outside the limits with `NA`. Another option is `scales::squish()` which squishes all values into the range. An example using a fill scale is shown below:
+
 ```{r}
 df <- data.frame(x = 1:5)
 p <- ggplot(df, aes(x, 1)) + geom_tile(aes(fill = x), colour = "white")
+
 p
 p + scale_fill_gradient(limits = c(2, 4))
 p + scale_fill_gradient(limits = c(2, 4), oob = scales::squish)
 ```
+
+On the left the default fill colours are shown. In the middle panel when the scale limits are reduced the values for the two tiles on the end are replace with `NA` and are mapped to a grey shade. In most cases this is not the desired behaviour, so the right panel fixes this by modifying the `oob` function appropriately.  
 
 ### Exercises
 
