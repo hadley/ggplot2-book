@@ -10,9 +10,24 @@ Scales in ggplot2 control the mapping from data to aesthetics. They take your da
 
 Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the scale). The axis or legend is the inverse function: it allows you to convert visual properties back to data. In ggplot2 these two roles are controlled by the same toolkit (the scale functions), but for expository reaons are discussed separately in this book. In this chapter I will focus on the mapping from the data to the aesthetics, and in Chapter \@ref(guides) I will return to axis and legends. 
 
- <!-- The basics of working with scales is described in Section \@ref(scale-usage). Section \@ref(limits) shows how to use limits to both zoom into interesting parts of a plot, and to ensure that multiple plots have matching legends and axes. Section \@ref(scale-details) gives an overview of the different types of scales available in ggplot2, which can be roughly divided into four categories: continuous position scales, colour scales, manual scales and identity scales.  -->
+Scales can be divided roughly into four families:
 
-## Specifying a scale {#scale-usage}
+* Position scales, used to map integer, numeric, and date/time 
+  data to x and y position (Section \@ref(scale-position)).
+
+* Colour scales, used to map continuous and discrete data to colours (Section \@ref(scale-colour)).
+
+* Manual scales, used to map discrete variables to your choice of size, 
+  line type, shape or colour (Section \@ref(scale-manual)).
+
+* The identity scale, paradoxically used to plot variables _without_
+  scaling them. This is useful if your data is already a vector of 
+  colour names (Section \@ref(scale-identity)).
+
+Before diving into the details for each scale type, Section \@ref(scale-usage) provides an overview of how scales are specified in ggplot2 and Section \@ref(limits) shows how to adjust the limits of a scale.
+
+
+## Specifying scales {#scale-usage}
 
 An important property of ggplot2 is the principle that every aesthetic in your plot is associated with exactly one scale. For instance, when you write:
 
@@ -55,8 +70,7 @@ ggplot(mpg, aes(displ, hwy)) +
 
 Note the message: if you see this in your own code, you need to reorganise your code specification to only add a single scale.
 
-A second thing to note is that there are multiple ways to specify a valid scale for an aesthetic. In all of the examples above, I have used the default scales but provided non-default values for the arguments to the relevant scale function. However, you can also use a different scale altogether:
-
+A second thing to note is that there are multiple ways to specify a valid scale for an aesthetic. In the examples above I have tweaked the options of the default scales, but you can also override them completely with new scales: 
 ```{r, fig.show = "hide"}
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point(aes(colour = class)) +
@@ -96,9 +110,7 @@ You’ve probably already figured out the naming scheme for scales, but to be co
 
 ## Adjusting scale limits {#limits}
 
-
-
-The limits, or domain, of a scale are usually derived from the range of the data. \index{Axis!limits} \index{Scales!limits} There are two reasons you might want to specify limits rather than relying on the data:
+Setting limits is pertinent to every scale family and works similarly across families. The limits, or domain, of a scale are usually derived from the range of the data. \index{Axis!limits} \index{Scales!limits} There are two reasons you might want to specify limits rather than relying on the data:
 
 1. You want to make limits smaller than the range of the data to focus on 
    an interesting area of the plot.
@@ -184,27 +196,13 @@ p + scale_fill_gradient(limits = c(2, 4), oob = scales::squish)
 
 1.  What does `scale_x_continuous(limits = c(NA, NA))` do?
 
-### The toolbox {#scale-details}
 
-As well as tweaking the options of the default scales, you can also override them completely with new scales. Scales can be divided roughly into four families:
 
-* Continuous position scales used to map integer, numeric, and date/time 
-  data to x and y position.
 
-* Colour scales, used to map continuous and discrete data to colours.
 
-* Manual scales, used to map discrete variables to your choice of size, 
-  line type, shape or colour.
+## Position scales {#scale-position}
 
-* The identity scale, paradoxically used to plot variables _without_
-  scaling them. This is useful if your data is already a vector of 
-  colour names.
-
-The follow sections describe each family in more detail.
-
-## Position scales
-
-### Continuous position scales {#scale-position}
+### Continuous position scales 
 
 Every plot has two position scales, x and y. \index{Scales!position} \index{Positioning!scales} The most common continuous position scales are `scale_x_continuous()` and `scale_y_continuous()`, which linearly map data to the x and y axis. \index{Scales!position} \index{Transformation!scales} \indexf{scale\_x\_continuous} The most interesting variations are produced using transformations. Every continuous scale takes a `trans` argument, allowing the use of a variety of transformations: 
 
@@ -243,6 +241,8 @@ There are shortcuts for the most common: `scale_x_log10()`, `scale_x_sqrt()` and
 Of course, you can also perform the transformation yourself. For example, instead of using `scale_x_log10()`, you could plot `log10(x)`. The appearance of the geom will be the same, but the tick labels will be different. If you use a transformed scale, the axes will be labelled in the original data space; if you transform the data, the axes will be labelled in the transformed space. 
 
 In either case, the transformation occurs before any statistical summaries. To transform, _after_ statistical computation, use `coord_trans()`. See Section \@ref(cartesian) for more details.
+
+<!-- DN: I am very tempted to move this discussion to the guides chapter as it seems to be mostly about the legend. It seems to me that the better thing to do in this chapter is to briefly mention that scale_x_date() is an example of a continuous position scale and link the reader to the next chapter. -->
 
 Date and date/time data are continuous variables with special labels. ggplot2 works with `Date` (for dates) and `POSIXct` (for date/times) classes: if your dates are in a different format you will need to convert them with `as.Date()` or `as.POSIXct()`. \index{Date/times} \index{Data!date/time} \index{Time} \index{Scales!date/time} \indexf{scale\_x\_datetime} `scale_x_date()` and `scale_x_datetime()` work similarly to `scale_x_continuous()` but have special `date_breaks` and `date_labels` arguments that work in date-friendly units:
 
