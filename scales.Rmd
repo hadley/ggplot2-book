@@ -209,14 +209,21 @@ On the left the default fill colours are shown. In the middle panel when the sca
 1.  What does `scale_x_continuous(limits = c(NA, NA))` do?
 
 
-
-
-
 ## Position scales {#scale-position}
 
-### Continuous position scales 
+Every plot in ggplot2 has two position scales corresponding to the x and y aesthetics. Typically the user specifies the variables mapped to x and y explicitly, but sometimes an aesthetic is mapped to a computed variable, as happens with `geom_histogram()`. The following plot specifications are equivalent:
+\index{Scales!position} \index{Positioning!scales} 
 
-Every plot has two position scales, x and y. \index{Scales!position} \index{Positioning!scales} The most common continuous position scales are `scale_x_continuous()` and `scale_y_continuous()`, which linearly map data to the x and y axis. \index{Scales!position} \index{Transformation!scales} \indexf{scale\_x\_continuous} The most interesting variations are produced using transformations. Every continuous scale takes a `trans` argument, allowing the use of a variety of transformations: 
+```{r, fig.show='hide', message = FALSE}
+ggplot(mpg, aes(x = hwy)) + geom_histogram()
+ggplot(mpg, aes(x = hwy, y = ..count..)) + geom_histogram()
+```
+
+In the first version the y aesthetic is not directly specified by the user but is instead supplied by the geom (or more precisely, the stat). In the second version this is made explicit, and the y aesthetic is mapped to the computed variable `..count..`. Position scales in ggplot2 can be used to represent continuous variables and discrete ones. I discuss continuous position scales first.
+
+### Continuous position scales 
+The most common continuous position scales are `scale_x_continuous()` and `scale_y_continuous()`. By default, these scales map the data to the x and y axis linearly, but you can override this default using transformations. Every continuous scale takes a `trans` argument, allowing the use of a variety of transformations: 
+\index{Scales!position} \index{Transformation!scales} \indexf{scale\_x\_continuous} 
 
 ```{r}
 # Convert from fuel economy to fuel consumption
@@ -231,7 +238,7 @@ ggplot(diamonds, aes(price, carat)) +
   scale_y_continuous(trans = "log10")
 ```
 
-The transformation is carried out by a "transformer", which describes the transformation, its inverse, and how to draw the labels. The following table lists the most common variants: 
+The transformation is carried out by a "transformer", which describes the transformation, its inverse, and how to draw the labels. You can construct your own transformer using `scales::trans_new()`, but ggplot2 understands many common transformations, that are already supplied by the scales package. The following table lists the most common variants: 
 
 | Name      | Function $f(x)$         | Inverse $f^{-1}(y)$
 |-----------|-------------------------|------------------------
@@ -248,20 +255,41 @@ The transformation is carried out by a "transformer", which describes the transf
 | reverse   | $-x$                    | $-y$
 | sqrt      | $x^{1/2}$               | $y ^ 2$
 
-There are shortcuts for the most common: `scale_x_log10()`, `scale_x_sqrt()` and `scale_x_reverse()` (and similarly for `y`.) \index{Log!scale} \indexf{scale\_x\_log10}
+To simplify matters, ggplot2 provides wrapper functions for the most common transformations: `scale_x_log10()`, `scale_x_sqrt()` and `scale_x_reverse()` provide the relevant transformation on the x axis, with similar functions provided for the y axis. \index{Log!scale} \indexf{scale\_x\_log10}
 
-Of course, you can also perform the transformation yourself. For example, instead of using `scale_x_log10()`, you could plot `log10(x)`. The appearance of the geom will be the same, but the tick labels will be different. If you use a transformed scale, the axes will be labelled in the original data space; if you transform the data, the axes will be labelled in the transformed space. 
-
-In either case, the transformation occurs before any statistical summaries. To transform, _after_ statistical computation, use `coord_trans()`. See Section \@ref(cartesian) for more details.
+Note that there is nothing preventing you from performing the transformation manually. For example, instead of using `scale_x_log10()`, you could plot `log10(x)`. The appearance of the geom will be the same, but the tick labels will be different. Specifically, if you use a transformed scale, the axes will be labelled in the original data space; if you transform the data, the axes will be labelled in the transformed space. Regardless of which method you use, the transformation occurs before any statistical summaries. To transform _after_ statistical computation use `coord_trans()`. See Section \@ref(cartesian) for more details.
 
 ### Discrete position scales
 
-Discrete position scales are secretly continuous scales, with categories mapped to integer values. Illustrate by annotating a plot. Continuous data can be converted to discrete scales by binning. Illustrate this too.
+The ggplot2 package also allows you to map discrete variables to position scales, with the default scales being `scale_x_discrete()` and `scale_y_discrete()` in this case. For example, the following two plot specifications are equivalent
+
+```{r default-scales-discrete, fig.show = "hide"}
+ggplot(mpg, aes(x = hwy, y = class)) + 
+  geom_point()
+
+ggplot(mpg, aes(x = hwy, y = class)) + 
+  geom_point() + 
+  scale_x_continuous() +
+  scale_y_discrete()
+```
+
+Internally, ggplot2 treats handles discrete scales by mapping each category to an integer value and then drawing the geom at the corresponding coordinate location. To illustrate this, we can add a custom annotation (see Section \@ref(custom-annotations)) to the plot:
 
 ```{r}
-p <- ggplot(mpg, aes(x = hwy, y = class)) + geom_count()
-p + annotate("text", x = 5, y = 1:7, label = 1:7) 
-p + scale_x_binned(n.breaks = 10)
+ggplot(mpg, aes(x = hwy, y = class)) + 
+  geom_point() +
+  annotate("text", x = 5, y = 1:7, label = 1:7)
+```
+
+Another variation on discrete position scales are binned scales, in which a continuous variable is sliced into multiple bins and the discretised variable is plotted. For example, if we want to modify the plot above to show the number of observations at each location, we could use `geom_count()` instead of `geom_point()` so that the size of the dots scales with the number of observations. As the left plot below illustrates, this is an improvement but is still rather cluttered. To improve this, the plot on the right uses `scale_x_binned()` to cut the `hwy` values into 10 bins before passing them to the geom:
+
+```{r}
+ggplot(mpg, aes(hwy, class)) + 
+  geom_count()
+
+ggplot(mpg, aes(hwy, class)) + 
+  geom_count() + 
+  scale_x_binned(n.breaks = 10)
 ```
 
 
