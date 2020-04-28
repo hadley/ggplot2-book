@@ -254,64 +254,6 @@ Of course, you can also perform the transformation yourself. For example, instea
 
 In either case, the transformation occurs before any statistical summaries. To transform, _after_ statistical computation, use `coord_trans()`. See Section \@ref(cartesian) for more details.
 
-<!-- DN: I am very tempted to move this discussion to the guides chapter as it seems to be mostly about the legend. It seems to me that the better thing to do in this chapter is to briefly mention that scale_x_date() is an example of a continuous position scale and link the reader to the next chapter. -->
-
-Date and date/time data are continuous variables with special labels. ggplot2 works with `Date` (for dates) and `POSIXct` (for date/times) classes: if your dates are in a different format you will need to convert them with `as.Date()` or `as.POSIXct()`. \index{Date/times} \index{Data!date/time} \index{Time} \index{Scales!date/time} \indexf{scale\_x\_datetime} `scale_x_date()` and `scale_x_datetime()` work similarly to `scale_x_continuous()` but have special `date_breaks` and `date_labels` arguments that work in date-friendly units:
-
-*   `date_breaks` and `date_minor_breaks()` allows you to position breaks by
-    date units (years, months, weeks, days, hours, minutes, and seconds). 
-    For example, `date_breaks = "2 weeks"` will place a major 
-    tick mark every two weeks.
-
-*   `date_labels` controls the display of the labels
-    using the same formatting strings as in `strptime()` and `format()`:
-
-    | String        | Meaning
-    |---------------|-----------------------------------------
-    | `%S`          | second (00-59)
-    | `%M`          | minute (00-59)
-    | `%l`          | hour, in 12-hour clock (1-12)
-    | `%I`          | hour, in 12-hour clock (01-12)
-    | `%p`          | am/pm
-    | `%H`          | hour, in 24-hour clock (00-23)
-    | `%a`          | day of week, abbreviated (Mon-Sun)
-    | `%A`          | day of week, full (Monday-Sunday)
-    | `%e`          | day of month (1-31)
-    | `%d`          | day of month (01-31)
-    | `%m`          | month, numeric (01-12)
-    | `%b`          | month, abbreviated (Jan-Dec)
-    | `%B`          | month, full (January-December)
-    | `%y`          | year, without century (00-99)
-    | `%Y`          | year, with century (0000-9999)
-
-    For example, if you wanted to display dates like 14/10/1979, you would use 
-    the string `"%d/%m/%Y"`.
-
-The code below illustrates some of these parameters.
-
-`r columns(2, 1 / 2)`
-```{r date-scale}
-base <- ggplot(economics, aes(date, psavert)) + 
-  geom_line(na.rm = TRUE) +
-  labs(x = NULL, y = NULL)
-
-base # Default breaks and labels
-base + scale_x_date(date_labels = "%y", date_breaks = "5 years")
-```
-
-```{r date-scale-2}
-base + scale_x_date(
-  limits = as.Date(c("2004-01-01", "2005-01-01")),
-  date_labels = "%b %y",
-  date_minor_breaks = "1 month"
-)
-base + scale_x_date(
-  limits = as.Date(c("2004-01-01", "2004-06-01")),
-  date_labels = "%m/%d",
-  date_minor_breaks = "2 weeks"
-)
-```
-
 ### Discrete position scales
 
 ## Colour scales {#scale-colour}
