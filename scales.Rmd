@@ -8,7 +8,7 @@ columns(1, 2 / 3)
 Scales in ggplot2 control the mapping from data to aesthetics. They take your data and turn it into something that you can see, like size, colour, position or shape. They also provide the tools that let you interpret the plot: the axes and legends. You can generate many plots without knowing how scales work, but understanding scales and learning how to manipulate them will give you much more control.
 \index{Scales}
 
-Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the scale). The axis or legend is the inverse function: it allows you to convert visual properties back to data. In ggplot2 these two roles are controlled by the same toolkit (the scale functions), but for expository reaons are discussed separately in this book. In this chapter I will focus on the mapping from the data to the aesthetics, and in Chapter \@ref(guides) I will return to axis and legends. 
+Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the scale). The axis or legend is the inverse function: it allows you to convert visual properties back to data. In ggplot2 these two roles are controlled by the same toolkit (the scale functions), but for expository reasons they are discussed separately in this book. In this chapter I will focus on the mapping from the data to the aesthetics, and in Chapter \@ref(guides) I will return to axes and legends. 
 
 Scales can be divided roughly into four families:
 
@@ -113,9 +113,9 @@ You’ve probably already figured out the naming scheme for scales, but to be co
 Scales in ggplot2 are typically associated with limits that specify the domain over which the scale is defined and are usually derived from the range of the data. \index{Axis!limits} \index{Scales!limits} There are two reasons you might want to specify limits rather than relying on the data:
 
 1. You want to shrink the limits to focus on an interesting area of the plot.
-1. You want to expand the limits to make multiple plots to match up.
+1. You want to expand the limits to make multiple plots match up.
 
-It's most natural to think about the limits of position scales: they map directly to the ranges of the axes. But limits also apply to scales that have legends, like colour, size, and shape, which is particularly important if you want colours to be consistent across multiple plots. To modify the limits of a scale, specify the `limits` parameter of the scale:
+It's most natural to think about the limits of position scales: they map directly to the ranges of the axes. But limits also apply to scales that have legends, like colour, size, and shape, and these limits are particularly important if you want colours to be consistent across multiple plots. To modify the limits of a scale, specify the `limits` parameter of the scale:
 
 * For continuous scales, `limits` should be a numeric vector of length two. 
   If you only want to set the upper or lower limit, you can set the other value
@@ -219,7 +219,9 @@ ggplot(mpg, aes(x = hwy)) + geom_histogram()
 ggplot(mpg, aes(x = hwy, y = stat(count))) + geom_histogram()
 ```
 
-In the first version the y aesthetic is not directly specified by the user but is instead supplied by the geom (or more precisely, the stat). In the second version this is made explicit, and the y aesthetic is mapped to the variable `count` computed by the stat. Position scales in ggplot2 can be used to represent continuous variables and discrete ones. I discuss continuous position scales first.
+In the first version the y aesthetic is not directly specified by the user but is instead supplied by the geom (or more precisely, the stat). In the second version this is made explicit, and the y aesthetic is mapped to the variable `count` computed by the stat. In both cases, the x and y aesthetics both exist and are mapped to some variable: accordingly they are both associated with a scale.
+
+Position scales in ggplot2 can be used to represent continuous variables and discrete ones. I discuss continuous position scales first.
 
 ### Continuous position scales 
 The most common continuous position scales are `scale_x_continuous()` and `scale_y_continuous()`. By default, these scales map the data to the x and y axis linearly, but you can override this default using transformations. Every continuous scale takes a `trans` argument, allowing the use of a variety of transformations: 
@@ -238,7 +240,7 @@ ggplot(diamonds, aes(price, carat)) +
   scale_y_continuous(trans = "log10")
 ```
 
-The transformation is carried out by a "transformer", which describes the transformation, its inverse, and how to draw the labels. You can construct your own transformer using `scales::trans_new()`, but ggplot2 understands many common transformations, that are already supplied by the scales package. The following table lists the most common variants: 
+The transformation is carried out by a "transformer", which describes the transformation, its inverse, and how to draw the labels. You can construct your own transformer using `scales::trans_new()`, but --- as the plots above illustrate --- ggplot2 understands many common transformations supplied by the scales package. The following table lists the most common variants: 
 
 | Name      | Function $f(x)$         | Inverse $f^{-1}(y)$
 |-----------|-------------------------|------------------------
@@ -257,7 +259,7 @@ The transformation is carried out by a "transformer", which describes the transf
 
 To simplify matters, ggplot2 provides wrapper functions for the most common transformations: `scale_x_log10()`, `scale_x_sqrt()` and `scale_x_reverse()` provide the relevant transformation on the x axis, with similar functions provided for the y axis. \index{Log!scale} \indexf{scale\_x\_log10}
 
-Note that there is nothing preventing you from performing the transformation manually. For example, instead of using `scale_x_log10()`, you could plot `log10(x)`. The appearance of the geom will be the same, but the tick labels will be different. Specifically, if you use a transformed scale, the axes will be labelled in the original data space; if you transform the data, the axes will be labelled in the transformed space. Regardless of which method you use, the transformation occurs before any statistical summaries. To transform _after_ statistical computation use `coord_trans()`. See Section \@ref(cartesian) for more details.
+Note that there is nothing preventing you from performing the transformation manually. For example, instead of using `scale_x_log10()` to transform the scale, you could transform the data instead and plot `log10(x)`. The appearance of the geom will be the same, but the tick labels will be different. Specifically, if you use a transformed scale, the axes will be labelled in the original data space; if you transform the data, the axes will be labelled in the transformed space. Regardless of which method you use, the transformation occurs before any statistical summaries. To transform _after_ statistical computation use `coord_trans()`. See Section \@ref(cartesian) for more details.
 
 ### Discrete position scales
 
