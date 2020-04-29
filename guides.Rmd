@@ -3,12 +3,9 @@ source("common.R")
 columns(1, 2 / 3)
 ```
 
-# Legends and axes {#guides}
+# Guides: legends and axes {#guides}
 
-
-## Guides: legends and axes {#guidesss}
-
-The component of a scale that you're most likely to want to modify is the __guide__, the axis or legend associated with the scale. Guides allow you to read observations from the plot and map them back to their original values. In ggplot2, guides are produced automatically based on the layers in your plot. This is very different to base R graphics, where you are responsible for drawing the legends by hand. In ggplot2, you don't directly control the legend; instead you set up the data so that there's a clear mapping between data and aesthetics, and a legend is generated for you automatically. This can be frustrating when you first start using ggplot2, but once you get the hang of it, you'll find that it saves you time, and there is little you cannot do. If you're struggling to get the legend you want, it's likely that your data is in the wrong form. 
+In Chapter \@ref(scales) I discussed the way a scale maps a variable to an aesthetic. This chapter is a natural extension of the last and discusses the role scales play in controlling the __guide__ (the axis or legend associated with the scale). Guides allow you to read observations from the plot and map them back to their original values. In ggplot2, guides are produced automatically based on the layers in your plot. This is very different to base R graphics, where you are responsible for drawing the legends by hand. In ggplot2, you don't directly control the legend; instead you set up the data so that there's a clear mapping between data and aesthetics, and a legend is generated for you automatically. This can be frustrating when you first start using ggplot2, but once you get the hang of it, you'll find that it saves you time, and there is little you cannot do. If you're struggling to get the legend you want, it's likely that your data is in the wrong form. 
 
 You might find it surprising that axes and legends are the same type of thing, but while they look very different there are many natural correspondences between the two, as shown in table below and in Figure \@ref(fig:guides). \index{Guides} \index{Legend} \index{Axis}
 
@@ -24,9 +21,23 @@ knitr::include_graphics("diagrams/scale-guides.png", dpi = 300, auto_pdf = TRUE)
 | Tick label        | Key label     | `labels`        
 
 
-The following sections covers each of the `name`, `breaks` and `labels` arguments in more detail.
+The early sections of this chapter highlight functionality that is shared by axes and legends. Section \@ref(scale-name) discusses the `name` argument, while Section \@ref(breaks-labels) covers the `breaks` and `labels` arguments in more detail. However, legends are more complicated than axes because:
 
-### Scale title
+1.  A legend can display multiple aesthetics (e.g. colour and shape), from
+    multiple layers, and the symbol displayed in a legend varies based on the
+    geom used in the layer.
+   
+1.  Axes always appear in the same place. Legends can appear in different 
+    places, so you need some global way of controlling them.
+  
+1.  Legends have considerably more details that can be tweaked: should they
+    be displayed vertically or horizontally? How many columns? How big should
+    the keys be?
+    
+As a consequence there are some extra options that only apply to legends, and the later sections in the chapter focus on this legend-specific behaviour.
+    
+
+## Scale name {#scale-name}
 
 The first argument to the scale function, `name`, is the axes/legend title. You can supply text strings (using `\n` for line breaks) or mathematical expressions in `quote()` (as described in `?plotmath`):  \index{Axis!title} \index{Legend!title}
     
@@ -59,7 +70,7 @@ p + labs(x = "",  y = "")
 p + labs(x = NULL, y = NULL)
 ```
 
-### Breaks and labels
+## Scale breaks and labels {#breaks-labels}
 
 The `breaks` argument controls which values appear as tick marks on axes and keys on legends. Each break has an associated label, controlled by the `labels` argument. If you set `labels`, you must also set `breaks`; otherwise, if data changes, the breaks will no longer align with the labels. \index{Axis!ticks} \index{Axis!breaks} \index{Axis!labels} \index{Legend!keys}
 
@@ -107,6 +118,67 @@ axs + scale_x_continuous(labels = NULL)
 leg + scale_fill_continuous(breaks = NULL)
 leg + scale_fill_continuous(labels = NULL)
 ```
+
+
+### Labelling with date scales {#date-scales}
+
+Date and date/time data are continuous variables with special labels. ggplot2 works with `Date` (for dates) and `POSIXct` (for date/times) classes: if your dates are in a different format you will need to convert them with `as.Date()` or `as.POSIXct()`. \index{Date/times} \index{Data!date/time} \index{Time} \index{Scales!date/time} \indexf{scale\_x\_datetime} `scale_x_date()` and `scale_x_datetime()` work similarly to `scale_x_continuous()` but have special `date_breaks` and `date_labels` arguments that work in date-friendly units:
+
+*   `date_breaks` and `date_minor_breaks()` allows you to position breaks by
+    date units (years, months, weeks, days, hours, minutes, and seconds). 
+    For example, `date_breaks = "2 weeks"` will place a major 
+    tick mark every two weeks.
+
+*   `date_labels` controls the display of the labels
+    using the same formatting strings as in `strptime()` and `format()`:
+
+    | String        | Meaning
+    |---------------|-----------------------------------------
+    | `%S`          | second (00-59)
+    | `%M`          | minute (00-59)
+    | `%l`          | hour, in 12-hour clock (1-12)
+    | `%I`          | hour, in 12-hour clock (01-12)
+    | `%p`          | am/pm
+    | `%H`          | hour, in 24-hour clock (00-23)
+    | `%a`          | day of week, abbreviated (Mon-Sun)
+    | `%A`          | day of week, full (Monday-Sunday)
+    | `%e`          | day of month (1-31)
+    | `%d`          | day of month (01-31)
+    | `%m`          | month, numeric (01-12)
+    | `%b`          | month, abbreviated (Jan-Dec)
+    | `%B`          | month, full (January-December)
+    | `%y`          | year, without century (00-99)
+    | `%Y`          | year, with century (0000-9999)
+
+    For example, if you wanted to display dates like 14/10/1979, you would use 
+    the string `"%d/%m/%Y"`.
+
+The code below illustrates some of these parameters.
+
+`r columns(2, 1 / 2)`
+```{r date-scale}
+base <- ggplot(economics, aes(date, psavert)) + 
+  geom_line(na.rm = TRUE) +
+  labs(x = NULL, y = NULL)
+
+base # Default breaks and labels
+base + scale_x_date(date_labels = "%y", date_breaks = "5 years")
+```
+
+```{r date-scale-2}
+base + scale_x_date(
+  limits = as.Date(c("2004-01-01", "2005-01-01")),
+  date_labels = "%b %y",
+  date_minor_breaks = "1 month"
+)
+base + scale_x_date(
+  limits = as.Date(c("2004-01-01", "2004-06-01")),
+  date_labels = "%m/%d",
+  date_minor_breaks = "2 weeks"
+)
+```
+
+### Using breaks and label functions
 
 Additionally, you can supply a function to `breaks` or `labels`. The `breaks` function should have one argument, the limits (a numeric vector of length two), and should return a numeric vector of breaks. The `labels` function should accept a numeric vector of breaks and return a character vector of labels (the same length as the input). The scales package provides a number of useful labelling functions:
 
@@ -177,24 +249,11 @@ Note the use of `%o%` to quickly generate the multiplication table, and that the
     axes and legends? What do they do? Compare and contrast their
     operation for axes vs. legends.
 
-## Legends {#legends}
 
-While the most important parameters are shared between axes and legends, there are some extra options that only apply to legends. Legends are more complicated than axes because: \index{Legend}
 
-1.  A legend can display multiple aesthetics (e.g. colour and shape), from
-    multiple layers, and the symbol displayed in a legend varies based on the
-    geom used in the layer.
-   
-1.  Axes always appear in the same place. Legends can appear in different 
-    places, so you need some global way of controlling them.
-  
-1.  Legends have considerably more details that can be tweaked: should they
-    be displayed vertically or horizontally? How many columns? How big should
-    the keys be?
-    
-The following sections describe the options that control these interactions.
 
-### Layers and legends {#sub-layers-legends}
+## Legends and layers {#sub-layers-legends}
+\index{Legend}
 
 A legend may need to draw symbols from multiple layers. For example, if you've mapped colour to both points and lines, the keys will show both points and lines. If you've mapped fill colour, you get a rectangle. Note the way the legend varies in the plots below:
 
@@ -242,7 +301,41 @@ ggplot(df, aes(x, y)) + geom_point(aes(shape = z, colour = z))
 
 In order for legends to be merged, they must have the same `name`. So if you change the name of one of the scales, you'll need to change it for all of them.
 
-### Legend layout {#legend-layout}
+### A different example
+
+The following example shows a creative use of `scale_colour_manual()` to display multiple variables on the same plot and show a useful legend. In most other plotting systems, you'd colour the lines and then add a legend: \index{Data!longitudinal}
+
+`r columns(1, 5/12, 0.8)`
+```{r huron}
+huron <- data.frame(year = 1875:1972, level = as.numeric(LakeHuron))
+ggplot(huron, aes(year)) +
+  geom_line(aes(y = level + 5), colour = "red") +
+  geom_line(aes(y = level - 5), colour = "blue") 
+```
+
+That doesn't work in ggplot because there's no way to add a legend manually. Instead, give the lines informative labels:
+
+```{r huron2}
+ggplot(huron, aes(year)) +
+  geom_line(aes(y = level + 5, colour = "above")) +
+  geom_line(aes(y = level - 5, colour = "below")) 
+```
+
+And then tell the scale how to map labels to colours:
+
+```{r huron3}
+ggplot(huron, aes(year)) +
+  geom_line(aes(y = level + 5, colour = "above")) + 
+  geom_line(aes(y = level - 5, colour = "below")) + 
+  scale_colour_manual("Direction", 
+    values = c("above" = "red", "below" = "blue")
+  )
+```
+
+
+
+
+## Legend layout {#legend-layout}
 
 A number of settings that affect the overall display of the legends are controlled through the theme system. You'll learn more about that in Section \@ref(themes), but for now, all you need to know is that you modify theme settings with the `theme()` function. \index{Themes!legend} 
 
@@ -284,7 +377,7 @@ base + theme(legend.position = c(1, 0), legend.justification = c(1, 0))
 
 There's also a margin around the legends, which you can suppress with `legend.margin = unit(0, "mm")`.
 
-### Guide functions
+## Guide functions
 
 The guide functions, `guide_colourbar()` and `guide_legend()`, offer additional control over the fine details of the legend. Legend guides can be used for any aesthetic (discrete or continuous) while the colour bar guide can only be used with continuous colour scales. 
 
@@ -300,7 +393,7 @@ base + guides(fill = guide_legend())
 
 Both functions have numerous examples in their documentation help pages that illustrate all of their arguments. Most of the arguments to the guide function control the fine level details of the text colour, size, font etc. You'll learn about those in the themes chapter. Here I'll focus on the most important arguments.
 
-#### `guide_legend()`
+### `guide_legend()`
 
 The legend guide displays individual keys in a table. The most useful options are: \index{Legend!guide}
 
@@ -336,7 +429,7 @@ The legend guide displays individual keys in a table. The most useful options ar
 *   `keywidth` and `keyheight` (along with `default.unit`) allow you to specify
     the size of the keys. These are grid units, e.g. `unit(1, "cm")`.
 
-#### `guide_colourbar`
+### `guide_colourbar`
 
 The colour bar guide is designed for continuous ranges of colors---as its name implies, it outputs a rectangle over which the color gradient varies.  The most important arguments are: \index{Legend!colour bar} \index{Colour bar}
 
@@ -382,100 +475,5 @@ p + guides(fill = guide_colorbar(barheight = unit(4, "cm")))
       theme(legend.position = "bottom") + 
       guides(colour = guide_legend(nrow = 1))
     ```
-
-
-
-
-## Date scales {#date-scales}
-
-
-<!-- DN: moved from scales, needs rethinking to integrate -->
-
-Date and date/time data are continuous variables with special labels. ggplot2 works with `Date` (for dates) and `POSIXct` (for date/times) classes: if your dates are in a different format you will need to convert them with `as.Date()` or `as.POSIXct()`. \index{Date/times} \index{Data!date/time} \index{Time} \index{Scales!date/time} \indexf{scale\_x\_datetime} `scale_x_date()` and `scale_x_datetime()` work similarly to `scale_x_continuous()` but have special `date_breaks` and `date_labels` arguments that work in date-friendly units:
-
-*   `date_breaks` and `date_minor_breaks()` allows you to position breaks by
-    date units (years, months, weeks, days, hours, minutes, and seconds). 
-    For example, `date_breaks = "2 weeks"` will place a major 
-    tick mark every two weeks.
-
-*   `date_labels` controls the display of the labels
-    using the same formatting strings as in `strptime()` and `format()`:
-
-    | String        | Meaning
-    |---------------|-----------------------------------------
-    | `%S`          | second (00-59)
-    | `%M`          | minute (00-59)
-    | `%l`          | hour, in 12-hour clock (1-12)
-    | `%I`          | hour, in 12-hour clock (01-12)
-    | `%p`          | am/pm
-    | `%H`          | hour, in 24-hour clock (00-23)
-    | `%a`          | day of week, abbreviated (Mon-Sun)
-    | `%A`          | day of week, full (Monday-Sunday)
-    | `%e`          | day of month (1-31)
-    | `%d`          | day of month (01-31)
-    | `%m`          | month, numeric (01-12)
-    | `%b`          | month, abbreviated (Jan-Dec)
-    | `%B`          | month, full (January-December)
-    | `%y`          | year, without century (00-99)
-    | `%Y`          | year, with century (0000-9999)
-
-    For example, if you wanted to display dates like 14/10/1979, you would use 
-    the string `"%d/%m/%Y"`.
-
-The code below illustrates some of these parameters.
-
-`r columns(2, 1 / 2)`
-```{r date-scale}
-base <- ggplot(economics, aes(date, psavert)) + 
-  geom_line(na.rm = TRUE) +
-  labs(x = NULL, y = NULL)
-
-base # Default breaks and labels
-base + scale_x_date(date_labels = "%y", date_breaks = "5 years")
-```
-
-```{r date-scale-2}
-base + scale_x_date(
-  limits = as.Date(c("2004-01-01", "2005-01-01")),
-  date_labels = "%b %y",
-  date_minor_breaks = "1 month"
-)
-base + scale_x_date(
-  limits = as.Date(c("2004-01-01", "2004-06-01")),
-  date_labels = "%m/%d",
-  date_minor_breaks = "2 weeks"
-)
-```
-
-## Legends from multiple variables
-
-The following example shows a creative use of `scale_colour_manual()` to display multiple variables on the same plot and show a useful legend. In most other plotting systems, you'd colour the lines and then add a legend: \index{Data!longitudinal}
-
-`r columns(1, 5/12, 0.8)`
-```{r huron}
-huron <- data.frame(year = 1875:1972, level = as.numeric(LakeHuron))
-ggplot(huron, aes(year)) +
-  geom_line(aes(y = level + 5), colour = "red") +
-  geom_line(aes(y = level - 5), colour = "blue") 
-```
-
-That doesn't work in ggplot because there's no way to add a legend manually. Instead, give the lines informative labels:
-
-```{r huron2}
-ggplot(huron, aes(year)) +
-  geom_line(aes(y = level + 5, colour = "above")) +
-  geom_line(aes(y = level - 5, colour = "below")) 
-```
-
-And then tell the scale how to map labels to colours:
-
-```{r huron3}
-ggplot(huron, aes(year)) +
-  geom_line(aes(y = level + 5, colour = "above")) + 
-  geom_line(aes(y = level - 5, colour = "below")) + 
-  scale_colour_manual("Direction", 
-    values = c("above" = "red", "below" = "blue")
-  )
-```
 
 
