@@ -123,65 +123,6 @@ leg + scale_fill_continuous(breaks = NULL)
 leg + scale_fill_continuous(labels = NULL)
 ```
 
-
-### Date scales {#date-scales}
-
-An important special case arises when an aesthetic is mapped to date or date/time data, which are treated as continuous variables with special labels. The ggplot2 package works with `Date` (for dates) and `POSIXct` (for date/times) classes: if your dates are in a different format you will need to convert them with `as.Date()` or `as.POSIXct()`. \index{Date/times} \index{Data!date/time} \index{Time} \index{Scales!date/time} \indexf{scale\_x\_datetime} `scale_x_date()` and `scale_x_datetime()` work similarly to `scale_x_continuous()` but have special `date_breaks` and `date_labels` arguments that work in date-friendly units:
-
-*   `date_breaks` and `date_minor_breaks()` allows you to position breaks by
-    date units (years, months, weeks, days, hours, minutes, and seconds). 
-    For example, `date_breaks = "2 weeks"` will place a major 
-    tick mark every two weeks.
-
-*   `date_labels` controls the display of the labels
-    using the same formatting strings as in `strptime()` and `format()`:
-
-    | String        | Meaning
-    |---------------|-----------------------------------------
-    | `%S`          | second (00-59)
-    | `%M`          | minute (00-59)
-    | `%l`          | hour, in 12-hour clock (1-12)
-    | `%I`          | hour, in 12-hour clock (01-12)
-    | `%p`          | am/pm
-    | `%H`          | hour, in 24-hour clock (00-23)
-    | `%a`          | day of week, abbreviated (Mon-Sun)
-    | `%A`          | day of week, full (Monday-Sunday)
-    | `%e`          | day of month (1-31)
-    | `%d`          | day of month (01-31)
-    | `%m`          | month, numeric (01-12)
-    | `%b`          | month, abbreviated (Jan-Dec)
-    | `%B`          | month, full (January-December)
-    | `%y`          | year, without century (00-99)
-    | `%Y`          | year, with century (0000-9999)
-
-    For example, if you wanted to display dates like 14/10/1979, you would use 
-    the string `"%d/%m/%Y"`.
-
-The code below illustrates some of these parameters.
-
-`r columns(2, 1 / 2)`
-```{r date-scale}
-base <- ggplot(economics, aes(date, psavert)) + 
-  geom_line(na.rm = TRUE) +
-  labs(x = NULL, y = NULL)
-
-base # Default breaks and labels
-base + scale_x_date(date_labels = "%y", date_breaks = "5 years")
-```
-
-```{r date-scale-2}
-base + scale_x_date(
-  limits = as.Date(c("2004-01-01", "2005-01-01")),
-  date_labels = "%b %y",
-  date_minor_breaks = "1 month"
-)
-base + scale_x_date(
-  limits = as.Date(c("2004-01-01", "2004-06-01")),
-  date_labels = "%m/%d",
-  date_minor_breaks = "2 weeks"
-)
-```
-
 ### Break and label functions
 
 Additionally, you can supply a function to `breaks` or `labels`. The `breaks` function should have one argument, the limits (a numeric vector of length two), and should return a numeric vector of breaks. The `labels` function should accept a numeric vector of breaks and return a character vector of labels (the same length as the input). The scales package provides a number of useful labelling functions:
@@ -253,6 +194,67 @@ Note the use of `%o%` to quickly generate the multiplication table, and that the
     axes and legends? What do they do? Compare and contrast their
     operation for axes vs. legends.
 
+
+
+
+### Dates: A special case {#date-scales}
+
+An important special case arises when an aesthetic is mapped to date or date/time data, which are treated as continuous variables with special labels. The ggplot2 package supports the `Date` (for dates) and `POSIXct` (for date/times) classes, as well as the `hms` class provided by the hms package [@hms]. If your dates are in a different format you will need to convert them using `as.Date()`, `as.POSIXct()` or `hms::as_hms()`. For appropriately formatted data mapped to the x aesthetic, ggplot2 will default to `scale_x_date()` and `scale_x_datetime()`, and there are similar scales for other aesthetics. In most respects date scales behave the same way as other continuous scales, but they have special behaviour for dates that is worth noting. Specifically, in addition to the usual `breaks` and `labels` arguments, date scales have special `date_breaks` and `date_labels` arguments that allow you to work in date-friendly units:
+\index{Date/times} \index{Data!date/time} \index{Time} \index{Scales!date/time} \indexf{scale\_x\_datetime}
+
+*   `date_breaks` and `date_minor_breaks()` allows you to position breaks by
+    date units (years, months, weeks, days, hours, minutes, and seconds). 
+    For example, `date_breaks = "2 weeks"` will place a major 
+    tick mark every two weeks.
+
+*   `date_labels` controls the display of the labels
+    using the same formatting strings as in `strptime()` and `format()`:
+
+    | String        | Meaning
+    |---------------|-----------------------------------------
+    | `%S`          | second (00-59)
+    | `%M`          | minute (00-59)
+    | `%l`          | hour, in 12-hour clock (1-12)
+    | `%I`          | hour, in 12-hour clock (01-12)
+    | `%p`          | am/pm
+    | `%H`          | hour, in 24-hour clock (00-23)
+    | `%a`          | day of week, abbreviated (Mon-Sun)
+    | `%A`          | day of week, full (Monday-Sunday)
+    | `%e`          | day of month (1-31)
+    | `%d`          | day of month (01-31)
+    | `%m`          | month, numeric (01-12)
+    | `%b`          | month, abbreviated (Jan-Dec)
+    | `%B`          | month, full (January-December)
+    | `%y`          | year, without century (00-99)
+    | `%Y`          | year, with century (0000-9999)
+
+    For example, if you wanted to display dates like 14/10/1979, you would use 
+    the string `"%d/%m/%Y"`.
+
+The code below illustrates some of these parameters.
+
+`r columns(2, 1 / 2)`
+```{r date-scale}
+base <- ggplot(economics, aes(date, psavert)) + 
+  geom_line(na.rm = TRUE) +
+  labs(x = NULL, y = NULL)
+
+base # Default breaks and labels
+base + scale_x_date(date_labels = "%y", date_breaks = "5 years")
+```
+
+```{r date-scale-2}
+base + scale_x_date(
+  limits = as.Date(c("2004-01-01", "2005-01-01")),
+  date_labels = "%b %y",
+  date_minor_breaks = "1 month"
+)
+base + scale_x_date(
+  limits = as.Date(c("2004-01-01", "2004-06-01")),
+  date_labels = "%m/%d",
+  date_minor_breaks = "2 weeks"
+)
+```
 
 
 
