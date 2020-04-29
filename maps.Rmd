@@ -12,7 +12,7 @@ Plotting geospatial data is a common visualisation task, and one that requires s
 \index{Maps!geoms} 
 \index{Data!spatial}
 \index{geom\_polygon}
-
+    
 Perhaps the simplest approach to drawing maps is to use `geom_polygon()` to draw boundaries for different regions. For this example we take data from the maps package using `ggplot2::map_data()`. The maps package isn't particularly accurate or up-to-date, but it's built into R so it's an easy place to start. Here's a data set specifying the county boundaries for Michigan:
 
 ```{r}
@@ -22,9 +22,6 @@ head(mi_counties)
 ```
 
 In this data set we have four variables: `lat` and `long` specify the latitude and longitude of a vertex (i.e. a corner of the polygon), `id` specifies the name of a region, and `group` provides a unique identifier for contiguous areas within a region (e.g. if a region consisted of multiple islands). To get a better sense of what the data contains, we can plot `mi_counties` using `geom_point()`, as shown in the left panel below. In this plot, each row in the data frame is plotted as a single point, producing a scatterplot that shows the corners of every county. To turn this scatterplot into a map, we use `geom_polygon()` instead, which draws each county as a distinct polygon. This is illustrated in the right panel below.
-
-<!-- HW: maybe it would be worth displaying with a scatterplot to make it more clear what the data represents? -->
-<!-- DN: makes sense: I think this version is slightly clearer -->
 
 `r columns(2, 2/3)`
 ```{r}
@@ -44,9 +41,6 @@ In both plots I use `coord_quickmap()` to adjust the axes to ensure that longitu
 There are a few limitations to the approach outlined above, not least of which is the fact that the simple "longitude-latitude" data format is not typically used in real world mapping. Vector data for maps are typically encoded using the "simple features" standard produced by the Open Geospatial Consortium. The sf package [@sf] developed by Edzer Pebesma <https://github.com/r-spatial/sf> provides an excellent toolset for working with such data, and the `geom_sf()` and `coord_sf()` functions in ggplot2 are designed to work together with the sf package. 
 
 To introduce these functions, we rely on the ozmaps package by Michael Sumner <https://github.com/mdsumner/ozmaps/> which provides maps for Australian state boundaries, local government areas, electoral boundaries, and so on [@ozmaps]. To illustrate what an sf data set looks like, we import a data set depicting the borders of Australian states and territories:
-
-<!-- HW: should we be citing these packages? -->
-<!-- DN: done -->
 
 `r columns(1, 1)`
 ```{r}
@@ -70,14 +64,14 @@ ggplot(oz_states) +
 To understand why this works, note that `geom_sf()` relies on a `geometry` aesthetic that is not used elsewhere in ggplot2. This aesthetic can be specified in one of three ways:
 
 * In the simplest case (illustrated above) when the user does nothing, 
-  `geom_sf()` will attempt to map it to a column named `geometry`. 
-  
+`geom_sf()` will attempt to map it to a column named `geometry`. 
+
 * If the `data` argument is an sf object then `geom_sf()` can automatically 
-  detect a geometry column, even if it's not called `geometry`.
-  
+detect a geometry column, even if it's not called `geometry`.
+
 * You can specify the mapping manually in the usual way with 
-  `aes(geometry = my_column)`. This is useful if you have multiple geometry 
-  columns.
+`aes(geometry = my_column)`. This is useful if you have multiple geometry 
+columns.
 
 The `coord_sf()` function governs the map projection, discussed in Section \@ref(mapproj). 
 
@@ -103,13 +97,7 @@ ggplot() +
   coord_sf()
 ```
 
-<!-- HW: this takes a very long time to render for me. I also wonder if it's worth trimming to focus on the bulk of Australia? Maybe that would be a useful example of combining sf with dplyr to filter to specified rows? -->
-<!-- DN: done -->
-
 It is worth noting that the first layer to this plot maps the `fill` aesthetic in onto a variable in the data. In this instance the `NAME` variable is a categorical variable and does not convey any additional information, but the same approach can be used to visualise other kinds of area metadata. For example, if `oz_states` had an additional column specifying the unemployment level in each state, we could map the `fill` aesthetic to that variable. 
-
-<!-- HW: I've tried to converted "the x data" to "`x`" everywhere -->
-<!-- DN: ah I was wondering -->
 
 ### Labelled maps {#geom_sf_label}
 
@@ -142,7 +130,6 @@ longitude and latitude in this way will give erroneous answers. For this reason,
 package produces warning messages when it relies on this approximation.
 
 <!-- HW: worth commenting on warning? "st_point_on_surface may not give correct results for longitude/latitude data" -->
-<!-- DN: is that the right answer? -->
 
 ### Adding other geoms
 
@@ -184,22 +171,20 @@ The second issue is the shape of your map. The Earth is approximately ellipsoida
 Map projections are often classified in terms of the geometric properties that they preserve, e.g.
 
 * Area-preserving projections ensure that regions of equal area on the globe are 
-  drawn with equal area on the map.
-  
+drawn with equal area on the map.
+
 * Shape-preserving (or conformal) projections ensure that the local shape of 
-  regions is preserved.
-  
+regions is preserved.
+
 And unfortunately, it's not possible for any projection to be shape-preserving and area-preserving. This makes it a little beyond the scope of this book to discuss map projections in detail, other than to note that the simple features specification allows you to indicate which map projection you want to use. For more information on map projections, see Geocomputation with R <https://geocompr.robinlovelace.net/> [@lovelace_geocomputation_2019].
 
 Taken together, the geodetic datum (e.g, WGS84), the type of map projection (e.g., Mercator) and the parameters of the projection (e.g., location of the origin) specify a **coordinate reference system**, or CRS, a complete set of assumptions used to translate the latitude and longitude information into a two dimensional map. An sf object often includes a default CRS, as illustrated below:
-
-<!-- HW: I use bold for definitions -->
 
 ```{r}
 st_crs(oz_votes)
 ```
 
-As this output illutrates, the CRS can be described in two different ways. You can either use a numeric "EPSG code" (see <http://www.epsg-registry.org/>) or you can use the "proj4string", a more verbose and (slightly) more human-readable format. 
+This output is a little verbose, and indicates that internally the CRS is defined as a list with two elements, one containing the input used to specify the CRS originally and the other containing the **well-known text** (WKT) that unambiguously describes the CRS. 
 
 In ggplot2, the CRS is controlled by `coord_sf()`, which ensures that every layer in the plot uses the same projection. By default, `coord_sf()` uses the CRS associated with the geometry column of the data[^first-layer]. Because sf data typically supply a sensible choice of CRS, this process usually unfolds invisibly, requiring no intervention from the user. However, should you need to set the CRS yourself, you can specify the `crs` parameter. Some careful thought is required to do so, however, as the plot below illustrates:
 
@@ -211,15 +196,15 @@ ggplot(oz_votes) +
   coord_sf(crs = st_crs("+proj=lcc +datum=WGS84"))
 ```
 
-In this map I have used the WGS84 datum (quite reasonably) and Lambert conformal conic (LCC) projection, which is often used in aeronautical applications because straight lines on the map are approximate "great circles" on the globe, and it is generally considered a good projection for regional maps in the middle latitudes. However, the map looks terrible because I haven't set the parameters very wisely. To fix this, I centre the map at longitude 140 and latitude -25, and fix the two standard parallels (lines at which there are no distortions) at latitudes -18 and -36.
+In this example `st_crs()` is given character input in the form of a **proj4string** (see https://proj.org/), though it also accepts numeric **EPSG code** (see <http://www.epsg-registry.org/>). The proj4string in this case indicates that I am using the WGS84 datum -- generally appropriate for global maps -- and the Lambert conformal conic (LCC) projection. The LCC is often used in aeronautical applications because straight lines on the map are approximate "great circles" on the globe, and it is generally considered a good projection for regional maps in the middle latitudes. However, the map looks terrible because I haven't set the parameters very wisely. To fix this, I centre the map at longitude 140 and latitude -25, and fix the two standard parallels (lines at which there are no distortions) at latitudes -18 and -36.
 
 ```{r}
-crs <- "+proj=lcc +datum=WGS84 +lat_0=-25 +lon_0=140 +lat_1=-18 +lat_2=-36"
+proj4string <- "+proj=lcc +datum=WGS84 +lat_0=-25 +lon_0=140 +lat_1=-18 +lat_2=-36"
 ggplot(oz_votes) +
   geom_sf() + 
-  coord_sf(crs = st_crs(crs))
+  coord_sf(crs = st_crs(proj4string))
 ```
- 
+
 ## Working with sf data {#sfdetail}
 
 As noted earlier, maps created using `geom_sf()` and `coord_sf()` rely heavily on tools
@@ -280,11 +265,11 @@ ggplot(dawson) +
   coord_sf()
 ```
 
-Suppose, however, our interest is only in mapping the islands. If so, we can first use the `st_cast()` function to break the Dawson electorate into the constituent polygons, and then use `st_area()` to calculate the area of each polygon:
+Suppose, however, our interest is only in mapping the islands. If so, we can first use the `st_cast()` function to break the Dawson electorate into the constituent polygons. After doing so, we can use `st_area()` to calculate the area of each polygon and `which.max()` to find the polygon with maximum area:
 
 ```{r}
 dawson <- st_cast(dawson, "POLYGON")
-st_area(dawson)
+which.max(st_area(dawson))
 ```
 
 The large mainland region corresponds to the 69th polygon within Dawson. Armed with this knowledge, we can draw a map showing only the islands:
@@ -299,52 +284,135 @@ ggplot(dawson[-69]) +
 
 <!-- HW: do you have any thoughts on a modern approach to this problem? -->
 
-Instead of displaying context with vector boundaries, you might want to draw a traditional map underneath. This is called a raster image. The easiest way to get a raster map of a given area is to use the ggmap package, which allows you to get data from a variety of online mapping sources including OpenStreetMap and Google Maps. Downloading the raster data is often time consuming so it's a good idea to cache it in a rds file, as illustrated here: \index{ggmap} \index{Raster data}
+A second way to supply geospatial information for mapping is to rely on **raster data**. Unlike the simple features format, in which geographical entities are specified in terms of a set of lines, points and polygons, rasters take the form of images. In the simplest case raster data might be nothing more than a bitmap file, but there are many different image formats out there. In the geospatial context specifically, there are image formats that include metadata (e.g., geodetic datum, coordinate reference system) that can be used to map the image information to the surface of the Earth. For example, one common format is GeoTIFF, which is a regular TIFF file with additional metadata supplied. Happily, most formats can be easily read into R with the assistance of GDAL (the Geospatial Data Abstraction Library, https://gdal.org/). For example the sf package contains a function `sf::gdal_read()` that provides access to the GDAL raster drivers from R. However, you rarely need to call this function directly, as there are other high level functions that take care of this for you. 
 
+As an illustration, suppose we wish to plot satellite images made publicly available by the Australian Bureau of Meterorology (BOM) on their FTP server. The bomrang package [@bomrang] provides a convenient interface to the server, including a `get_available_imagery()` function that returns a vector of filenames and a `get_satellite_imagery()` function that downloads a file and imports it directly into R. For expository purposes, however, I'll use a more flexible method that could be adapted to any FTP server, and use the `download.file()` function:
 
-<!-- TODO: Note that OSM is temporarily(??) not supported -->
-<!-- works because we have the cached mi_raster.rds file -->
-<!-- see: https://github.com/dkahle/ggmap/issues/117 -->
+```{r eval=FALSE}
+# list of all file names with time stamp 2020-01-07 21:00 GMT 
+# (BOM images are retained for 24 hours, so this will return an
+# empty vector if you run this code without editing the time stamp)
+files <- bomrang::get_available_imagery() %>%
+  stringr::str_subset("202001072100")
 
-```{r}
-if (file.exists("mi_raster.rds")) {
-  mi_raster <- readRDS("mi_raster.rds")
-} else {
-  bbox <- c(
-    min(mi_counties$lon), min(mi_counties$lat),
-    max(mi_counties$lon), max(mi_counties$lat)
-  )
-  mi_raster <- ggmap::get_openstreetmap(bbox, scale = 8735660)
-  saveRDS(mi_raster, "mi_raster.rds")
-}
+# use curl_download() to obtain a single file, and purrr to 
+# vectorise this operation
+purrr::walk2(
+  .x = paste0("ftp://ftp.bom.gov.au/anon/gen/gms/", files),
+  .y = file.path("raster", files),
+  .f = ~ download.file(url = .x, destfile = .y)
+)
 ```
 
-Note that finding the appropriate `scale` in this example required a lot of manual tweaking, so it may take some effort to obtain the data you want. Once you have the raster data, the `ggmap()` function from the ggmap package allows you to create a plot drawing the map, as illustrated in the left panel below:
+After caching the files locally (which is generally a good idea) we can inspect the list of files we have downloaded:
 
 ```{r}
-ggmap::ggmap(mi_raster)
-
-mi_cities <- tbl_df(maps::us.cities) %>%
-  filter(country.etc == "MI") %>%
-  select(-country.etc, lon = long) 
-
-ggmap::ggmap(mi_raster) +
-  geom_point(aes(size = pop), mi_cities, colour = "red") +
-  scale_size_area()
+dir("raster")
 ```
 
-The nice thing about the `ggmap()` function is that the output is a ggplot object, so adding metadata to the plot is accomplished in the same way one would add layers to any other plot. This is illustrated in the right side plot above.
+All 14 files are constructed from images taken by the Himawari-8 geostationary satellite operated by the Japan Meteorological Agency and takes images across 13 distinct bands. The images released by the Australian BOM include data on the visible spectrum (channel 3) and the infrared spectrum (channel 13):
 
-<!-- If you have raster data from the raster package, you can convert it to the form needed by ggplot2 with the following code: -->
+```{r}
+img_vis  <- file.path("raster", "IDE00422.202001072100.tif")
+img_inf <- file.path("raster", "IDE00421.202001072100.tif")
+```
 
-<!-- ```{r, eval = FALSE} -->
-<!-- df <- as.data.frame(raster::rasterToPoints(x)) -->
-<!-- names(df) <- c("lon", "lat", "x") -->
+To import the data in the img_visible file into R, I'll use the stars package [@stars] to import the data as stars objects:
 
-<!-- ggplot(df, aes(lon, lat)) + -->
-<!--   geom_raster(aes(fill = x)) -->
-<!-- ``` -->
+```{r}
+library(stars)
+sat_vis <- read_stars(img_vis, RasterIO = list(nBufXSize = 600, nBufYSize = 600))
+sat_inf <- read_stars(img_inf, RasterIO = list(nBufXSize = 600, nBufYSize = 600))
+```
 
+In the code above, the first argument specifies the path to the raster file, and the `RasterIO` argument is used to pass a list of low-level parameters to GDAL. In this case, I have used `nBufXSize` and `nBufYSize` to ensure that R reads the data at low resolution (as a 600x600 pixel image). To see what information R has imported, we can inspect the `sat_vis` object:
+
+```{r}
+sat_vis
+```
+
+This output tells us something about the structure of a stars object. For the `sat_vis` object the underlying data is stored as a three dimensional array, with `x` and `y` dimensions specifying the spatial data. The `band` dimension in this case corresponds to the colour channel (RGB) but is redundant for this image as the data are greyscale. In other data sets there might be bands corresponding to different sensors, and possibly a time dimension as well. Note that the spatial data is also associated with a coordinate reference system (referred to as "refsys" in the output). 
+
+To plot the `sat_vis` data in ggplot2, we can use the `geom_stars()` function provided by the stars package. A minimal plot might look like this:
+
+`r columns(2, 1/2, max_width = 2)`
+```{r}
+ggplot() + 
+  geom_stars(data = sat_vis) + 
+  coord_equal()
+```
+
+The `geom_stars()` function requires the `data` argument to be a stars object, and maps the raster data to the fill aesthetic. Accordingly, the blue shading in the satellite image above is determined by the ggplot2 scale, not the image itself. That is, although `sat_vis` contains three bands, the plot above only displays the first one, and the raw data values (which range from 0 to 255) are mapped onto the default blue palette that ggplot2 uses for continuous data. To see what the image file "really" looks like we can separate the bands using `facet_wrap()`:
+
+```{r}
+ggplot() + 
+  geom_stars(data = sat_vis, show.legend = FALSE) +
+  facet_wrap(vars(band)) + 
+  coord_equal() + 
+  scale_fill_gradient(low = "black", high = "white")
+```
+
+One limitation to displaying only the raw image is that it is not easy to work out where the relevant landmasses are, and we may wish to overlay the satellite data with the `oz_states` vector map to show the outlines of Australian political entities. However, some care is required in doing so because the two data sources are associated with different coordinate reference systems. To project the `oz_states` data correctly, the data should be transformed using the `st_transform()` function from the sf package. In the code below, I extract the CRS from the `sat_vis` raster object, and transform the `oz_states` data to use the same system.
+
+```{r}
+oz_states <- st_transform(oz_states, crs = st_crs(sat_vis))
+```
+
+Having done so, I can now draw the vector map over the top of the raster image to make the image more interpretable to the reader. It is now clear from inspection that the satellite image was taken during the Australian sunrise: 
+
+```{r}
+ggplot() + 
+  geom_stars(data = sat_vis, show.legend = FALSE) +
+  geom_sf(data = oz_states, fill = NA, color = "white") + 
+  coord_sf() + 
+  theme_void() + 
+  scale_fill_gradient(low = "black", high = "white")
+```
+
+What if we wanted to plot more conventional data over the top? A simple example of this would be to plot the locations of the Australian capital cities per the `oz_capitals` data frame that contains latitude and longitude data. However, because these data are not associated with a CRS and are not on the same scale as the raster data in `sat_vis`, these will *also* need to be transformed. This can be slightly finicky because the `oz_capitals` data are not sf objects and not currently associated with any CRS.
+
+```{r}
+# create matrix of longitude and latitude values
+latlon <- oz_capitals %>% 
+  select(lon, lat) %>%
+  as.matrix()
+
+# convert to a simple features column 
+geometry <- latlon %>%
+  st_multipoint() %>% 
+  st_sfc() %>%
+  st_cast("POINT")
+# append the city names and attach the "longlat" geometry
+# in which the coordinates were originally defined
+cities <- st_sf(city = oz_capitals$city, geometry)
+st_crs(cities) <- st_crs("+proj=longlat +datum=WGS84")
+```
+
+What we have done here is transform the original `oz_capitals` data, which took the form of a standard data frame (or tibble), into a properly specified simple features object that has its own CRS. The choice of projection is determined by the fact that `oz_capitals` specifying longitude and latitude data, and I've chosen the same WGS84 datum that I used previously as the map is global in scope. Having done so we can now transform the co-ordinates from the latitude-longitude geometry to the match the geometry of our `sat_vis` data:
+
+```{r}
+cities <- st_transform(cities, st_crs(sat_vis))
+```
+
+The transformed data can now be overlaid using `geom_sf()`:
+
+```{r}
+ggplot() + 
+  geom_stars(data = sat_vis, show.legend = FALSE) +
+  geom_sf(data = oz_states, fill = NA, color = "white") + 
+  geom_sf(data = cities, color = "red") + 
+  coord_sf() + 
+  theme_void() + 
+  scale_fill_gradient(low = "black", high = "white")
+```
+
+This version of the image makes clearer that the satellite image was taken at approximately sunrise in Darwin: the sun had risen for all the eastern cities but not in Perth. This could be made clearer in the data visualisation using the `geom_sf_text()` function to add labels to each city. For instance we could add another layer to the plot using code like this,
+
+```{r eval = FALSE}
+geom_sf_text(data = cities, mapping = aes(label = city)) 
+```
+
+though some care would be required to ensure the text is positioned nicely (see Chapter \@ref(annotations)).
 
 ## Data sources
 
@@ -355,7 +423,7 @@ The nice thing about the `ggmap()` function is that the output is a ggplot objec
 * The rnaturalearth package [@rnaturalearth] bundles up the free, high-quality data from <http://naturalearthdata.com/>. It contains country borders, and borders for the top-level region within each country (e.g. states in the USA, regions in France, counties in the UK).
 
 * The osmar package, <https://cran.r-project.org/package=osmar> wraps up the OpenStreetMap API so you can access a wide range of vector data including individual streets and buildings [@osmar]
-  
+
 * If you have your own shape files (`.shp`) you can load them into R with `sf::read_sf()`
 
 
