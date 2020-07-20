@@ -259,12 +259,14 @@ base + scale_x_date(
     operation for axes vs. legends.
 
 
+## Merging and splitting legends
 
+The previous sections describe features of ggplot2 that are the same for both axes and legend, but because legends are more complex than axes, there are additional topics to discuss that pertain only to legends. First among these is the fact that a legend may need to draw symbols from multiple layers ("merging" legends), and on occasions multiple legends may need to be associated with the same aesthetic ("splitting" a legend).
 
-## Legends for multiple layers {#sub-layers-legends}
+### Merging legends {#sub-layers-legends}
 \index{Legend}
 
-The previous sections describe features of ggplot2 that are the same for both axes and legend, but because legends are more complex than axes, there are additional topics to discuss that pertain only to legends. First among these is the fact that a legend may need to draw symbols from multiple layers. For example, if you've mapped colour to both points and lines, the keys will show both points and lines. If you've mapped fill colour, you get a rectangle. Note the way the legend varies in the plots below:
+Merging legends occurs quite frequently when using ggplot2. For example, if you've mapped colour to both points and lines, the keys will show both points and lines. If you've mapped fill colour, you get a rectangle. Note the way the legend varies in the plots below:
 
 `r columns(3)`
 ```{r legend-geom, echo = FALSE}
@@ -311,9 +313,11 @@ ggplot(df, aes(x, y)) + geom_point(aes(shape = z, colour = z))
 In order for legends to be merged, they must have the same `name`. So if you change the name of one of the scales, you'll need to change it for all of them.
 
 
-## Multiple legends for an aesthetic
+### Splitting legends
 
-In general it is not advisable to map one aesthetic (e.g. colour) to multiple variables, and so ggplot2 does not allow you to create multiple colour legends. There are exceptions to this rule, and it is possible to override this behaviour using the ggnewscale package [@ggnewscale]. For example, the `ggnewscale::new_scale_colour()` command tells ggplot2 to initialise a new colour scale: scale and guide commands that appear above the `new_scale_colour()` command will be applied to the first colour scale, and commands that appear below are applied to the second colour scale. To illustrate this the plot on the left uses `geom_point()` to display a large marker for each vehicle make in the `mpg` data, with a single colour scale that maps to the year. On the right, a second `geom_point()` layer is overlaid on the plot using small markers: this layer is associated with a different colour scale, used to indicate whether the vehicle has a 4-cylinder engine.
+Splitting a legend is a much less common data visualisation task. In general it is not advisable to map one aesthetic (e.g. colour) to multiple variables, and so by default ggplot2 does not allow you to "split" the colour aesthetic into multiple scales with separate legends. Nevertheless, there are exceptions to this general rule, and it is possible to override this behaviour using the ggnewscale package [@ggnewscale]. The `ggnewscale::new_scale_colour()` command acts as an instruction to ggplot2 to initialise a new colour scale: scale and guide commands that appear above the `new_scale_colour()` command will be applied to the first colour scale, and commands that appear below are applied to the second colour scale. 
+
+To illustrate this the plot on the left uses `geom_point()` to display a large marker for each vehicle make in the `mpg` data, with a single colour scale that maps to the year. On the right, a second `geom_point()` layer is overlaid on the plot using small markers: this layer is associated with a different colour scale, used to indicate whether the vehicle has a 4-cylinder engine.
 
 `r columns(2, 2/3)`
 ```{r}
