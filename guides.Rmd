@@ -162,44 +162,13 @@ ggplot(df, aes(x, y)) +
 
 Note the use of `%o%` to quickly generate the multiplication table, and that the minor breaks must be supplied on the transformed scale. \index{Log!ticks}
 
-### Exercises
 
-1.  Recreate the following graphic:
+### Date scales {#date-scales}
 
-    ```{r, echo = FALSE}
-    ggplot(mpg, aes(displ, hwy)) + 
-      geom_point() +  
-      scale_x_continuous("Displacement", labels = scales::unit_format(suffix = "L")) + 
-      scale_y_continuous(quote(paste("Highway ", (frac(miles, gallon))))) 
-    ```
-    
-    Adjust the y axis label so that the parentheses are the right size.
-
-1.  List the three different types of object you can supply to the
-    `breaks` argument. How do `breaks` and `labels` differ?
-    
-1.  Recreate the following plot:
-
-    ```{r, echo = FALSE}
-    drv_labels <- c("4" = "4wd", "f" = "fwd", "r" = "rwd")
-    ggplot(mpg, aes(displ, hwy)) + 
-      geom_point(aes(colour = drv)) +  
-      scale_colour_discrete(labels = drv_labels)
-    ```
-
-1.  What label function allows you to create mathematical expressions?
-    What label function converts 1 to 1st, 2 to 2nd, and so on?
-    
-1.  What are the three most important arguments that apply to both 
-    axes and legends? What do they do? Compare and contrast their
-    operation for axes vs. legends.
+A special case of interest occurs when an aesthetic is mapped to date or date/time data. In ggplot2 these are treated as continuous variables that have special labels, and there are some helper functions designed to make it easier to specify the breaks and labels for these scales. The ggplot2 package supports the `Date` (for dates) and `POSIXct` (for date/times) classes, as well as the `hms` class provided by the hms package [@hms]. If your dates are in a different format you will need to convert them using `as.Date()`, `as.POSIXct()` or `hms::as_hms()`. You may also find the toolkit provided by the lubridate package helpful to manipulate time and date data [@lubridate].
 
 
-
-
-### Dates: A special case {#date-scales}
-
-An important special case arises when an aesthetic is mapped to date or date/time data, which are treated as continuous variables with special labels. The ggplot2 package supports the `Date` (for dates) and `POSIXct` (for date/times) classes, as well as the `hms` class provided by the hms package [@hms]. If your dates are in a different format you will need to convert them using `as.Date()`, `as.POSIXct()` or `hms::as_hms()`. For appropriately formatted data mapped to the x aesthetic, ggplot2 will default to `scale_x_date()` and `scale_x_datetime()`, and there are similar scales for other aesthetics. In most respects date scales behave the same way as other continuous scales, but they have special behaviour for dates that is worth noting. Specifically, in addition to the usual `breaks` and `labels` arguments, date scales have special `date_breaks` and `date_labels` arguments that allow you to work in date-friendly units:
+For appropriately formatted data mapped to the x aesthetic, ggplot2 will default to `scale_x_date()` and `scale_x_datetime()`, and there are similar scales for other aesthetics. In most respects date scales behave the same way as other continuous scales, but have some special behaviour that is worth noting. Specifically, in addition to the usual `breaks` and `labels` arguments, date scales have special `date_breaks` and `date_labels` arguments that allow you to work in date-friendly units:
 \index{Date/times} \index{Data!date/time} \index{Time} \index{Scales!date/time} \indexf{scale\_x\_datetime}
 
 *   `date_breaks` and `date_minor_breaks()` allows you to position breaks by
@@ -255,6 +224,40 @@ base + scale_x_date(
   date_minor_breaks = "2 weeks"
 )
 ```
+
+
+### Exercises
+
+1.  Recreate the following graphic:
+
+    ```{r, echo = FALSE}
+    ggplot(mpg, aes(displ, hwy)) + 
+      geom_point() +  
+      scale_x_continuous("Displacement", labels = scales::unit_format(suffix = "L")) + 
+      scale_y_continuous(quote(paste("Highway ", (frac(miles, gallon))))) 
+    ```
+    
+    Adjust the y axis label so that the parentheses are the right size.
+
+1.  List the three different types of object you can supply to the
+    `breaks` argument. How do `breaks` and `labels` differ?
+    
+1.  Recreate the following plot:
+
+    ```{r, echo = FALSE}
+    drv_labels <- c("4" = "4wd", "f" = "fwd", "r" = "rwd")
+    ggplot(mpg, aes(displ, hwy)) + 
+      geom_point(aes(colour = drv)) +  
+      scale_colour_discrete(labels = drv_labels)
+    ```
+
+1.  What label function allows you to create mathematical expressions?
+    What label function converts 1 to 1st, 2 to 2nd, and so on?
+    
+1.  What are the three most important arguments that apply to both 
+    axes and legends? What do they do? Compare and contrast their
+    operation for axes vs. legends.
+
 
 
 
