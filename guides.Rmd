@@ -304,10 +304,20 @@ The legend guide displays individual keys in a table. The most useful options ar
     base + guides(fill = guide_legend(reverse = TRUE))
     ```
 
-*   `override.aes`: override some of the aesthetic settings derived from each
-    layer. This is useful if you want to make the elements in the legend 
-    more visually prominent. This is discussed further in 
-    Section \@ref(sub-layers-legends).
+*   `override.aes` is useful when you want the elements in the legend 
+    display differently to the geoms in the plot. This is often required
+    when you've used transparency or size to deal with moderate overplotting
+    and also used colour in the plot. \indexf{override.aes}
+
+    `r columns(2, 2/3)`
+    ```{r}
+    base <- ggplot(mpg, aes(displ, hwy, colour = drv)) +
+      geom_point(size = 4, alpha = .2, stroke = 0)
+    
+    base + guides(colour = guide_legend())
+    base + guides(colour = guide_legend(override.aes = list(alpha = 1)))
+    ```
+
 
 *   `keywidth` and `keyheight` (along with `default.unit`) allow you to specify
     the size of the keys. These are grid units, e.g. `unit(1, "cm")`.
@@ -377,32 +387,50 @@ These options are illustrated below:
 
 `r columns(3)`
 ```{r}
-df <- data.frame(x = 1, y = 1:4, z = 4:1)
-base <- ggplot(df, aes(x, y)) + geom_tile(aes(fill = z))
+base <- ggplot(mpg, aes(cyl, displ, colour = hwy)) +
+  geom_point(size = 2)
 
 base
-base + guides(fill = guide_colourbar(reverse = TRUE))
-base + guides(fill = guide_colourbar(barheight = unit(4, "cm")))
+base + guides(colour = guide_colourbar(reverse = TRUE))
+base + guides(colour = guide_colourbar(barheight = unit(1, "cm")))
 ```
 
 ### `guide_coloursteps()`
 
-If you want discrete bins:
+This "colour steps" guide is a version of `guide_colourbar()` appropriate for binned colour and fill scales. It shows the area between breaks as a single constant colour, rather than displaying a colour gradient that varies smoothly along the bar. Arguments mostly mirror those for `guide_colourbar()`. The additional arguments are as follows:
 
-```{r}
-base + guides(fill = guide_coloursteps())
-```
+*   `show.limits` indicates whether values should be shown at the ends of the stepped colour bar (analogous to the corresponding argument in `guide_bins()`)
+
+    `r columns(2)`
+    ```{r}
+    base <- ggplot(mpg, aes(displ, hwy, colour = cyl)) + 
+      geom_point() + 
+      scale_color_binned()
+
+    base + guides(colour = guide_coloursteps(show.limits = TRUE))
+    base + guides(colour = guide_coloursteps(show.limits = FALSE))
+    ```
+
+*   `ticks` is a logical variable indicating whether tick marks should be displayed adjacent to the legend labels (default is `NULL`, in which case the value is inherited from the scale)
+
+*   `even.steps` is a logical variable indicating whether bins should be evenly spaced (default is `TRUE`) or proportional in size to their frequency in the data
+
 
 
 ### `guide_axis()`
 
+Guide functions mostly apply legends, but ggplot2 also supplies a `guide_axis()` function for axes. Its main purpose is to modify thematic properties:
+
+`r columns(2, 2/3)`
 ```{r}
-base + guides(x = guide_axis(angle = 90))
+ggplot(mpg, aes(manufacturer, hwy)) + geom_boxplot() 
+ggplot(mpg, aes(manufacturer, hwy)) + geom_boxplot() + 
+  guides(x = guide_axis(angle = 90))
 ```
 
 ### `guide_none()`
 
-The sixth guide function is `guide_none()`, in which no guide is drawn for the relevant aesthetic.
+The final guide function is `guide_none()`, in which no guide is drawn for the relevant aesthetic.
 
 
 ## Legend merging and splitting
@@ -433,18 +461,6 @@ ggplot(df, aes(y, y)) +
 ggplot(df, aes(y, y)) + 
   geom_point(size = 4, colour = "grey20", show.legend = TRUE) +
   geom_point(aes(colour = z), size = 2) 
-```
-
-Sometimes you want the geoms in the legend to display differently to the geoms in the plot. This is particularly useful when you've used transparency or size to deal with moderate overplotting and also used colour in the plot. You can do this using the `override.aes` parameter of `guide_legend()`, which you'll learn more about shortly. \indexf{override.aes}
-
-```{r}
-norm <- data.frame(x = rnorm(1000), y = rnorm(1000))
-norm$z <- cut(norm$x, 3, labels = c("a", "b", "c"))
-ggplot(norm, aes(x, y)) + 
-  geom_point(aes(colour = z), alpha = 0.1)
-ggplot(norm, aes(x, y)) + 
-  geom_point(aes(colour = z), alpha = 0.1) + 
-  guides(colour = guide_legend(override.aes = list(alpha = 1)))
 ```
 
 ggplot2 tries to use the fewest number of legends to accurately convey the aesthetics used in the plot. It does this by combining legends where the same variable is mapped to different aesthetics. The figure below shows how this works for points: if both colour and shape are mapped to the same variable, then only a single legend is necessary. \index{Legend!merging}
