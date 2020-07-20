@@ -37,7 +37,7 @@ The early sections of this chapter highlight functionality that is shared by axe
 As a consequence there are some extra options that only apply to legends, and the later sections in the chapter focus on this legend-specific behaviour.
     
 
-## Scale name {#scale-name}
+## Scale names {#scale-name}
 
 The first argument to the scale function, `name`, is the axes/legend title. You can supply text strings (using `\n` for line breaks) or mathematical expressions in `quote()` (as described in `?plotmath`):  \index{Axis!title} \index{Legend!title}
     
@@ -259,7 +259,122 @@ base + scale_x_date(
     operation for axes vs. legends.
 
 
-## Merging and splitting legends
+
+## Scale guides
+
+You can override the default guide using the `guide` argument of the corresponding scale function, or more conveniently, the `guides()` helper function. The `guides()` helper works in a similar way to the `labs()` helper function described in Section \@ref(scale-name) both take the name of different aesthetics (e.g., color, x, fill) as arguments and allow you to specify your own value. Where `labs()` provides a shorthand way to specify the `name` argument to one or more scales, the `guides()` function allows you to specify `guide` arguments to one or more scales.
+
+```{r}
+df <- data.frame(x = 1, y = 1:3, z = 1:3)
+base <- ggplot(df, aes(x, y)) + geom_raster(aes(fill = z))
+
+base 
+base + scale_fill_continuous(guide = guide_legend())
+base + guides(fill = guide_legend())
+```
+
+However, scale guides are more complex than scale names: where the `name` argument (and hence the `labs()` helper function) takes text as input, the `guide` argument (and `guides()` helper) expect you to create a guide object using a **guide function** such as `guide_colourbar()` and `guide_legend()`. These functions offer the user additional control over the fine details of the legend. Legend guides can be used for any aesthetic (discrete or continuous) while the colour bar guide can only be used with continuous colour scales. 
+
+
+The example below shows that arguments are passed to `guides()` and `labs()` using the same `aesthetic = value` convention:
+
+```{r}
+base
+base + guides(fill = guide_legend())
+base + labs(fill = "z value")
+```
+
+The `labs()` and `guides()` functions both have numerous examples in their documentation help pages that illustrate all of their arguments. Most of the arguments to the guide function control the fine level details of the text colour, size, font etc. You'll learn about those in the themes chapter. Here I'll focus on the most important arguments.
+
+### `guide_legend()`
+
+The legend guide displays individual keys in a table. The most useful options are: \index{Legend!guide}
+
+*   `nrow` or `ncol` which specify the dimensions of the table. `byrow` 
+    controls how the table is filled: `FALSE` fills it by column (the default),
+    `TRUE` fills it by row.
+
+    `r columns(3)`
+    ```{r legend-rows-cols}
+    df <- data.frame(x = 1, y = 1:4, z = letters[1:4])
+    base <- ggplot(df, aes(x, y)) + geom_raster(aes(fill = z))
+    
+    base
+    base + guides(fill = guide_legend(ncol = 2))
+    base + guides(fill = guide_legend(ncol = 2, byrow = TRUE))
+    ```
+
+*   `reverse` reverses the order of the keys. This is particularly useful when 
+    you have stacked bars because the default stacking and legend orders are
+    different:
+    
+    ```{r}
+    base <- ggplot(df, aes(1, y)) + geom_bar(stat = "identity", aes(fill = z))
+    
+    base
+    base + guides(fill = guide_legend(reverse = TRUE))
+    ```
+
+*   `override.aes`: override some of the aesthetic settings derived from each
+    layer. This is useful if you want to make the elements in the legend 
+    more visually prominent. See discussion in 
+    Section \@ref(sub-layers-legends).
+
+*   `keywidth` and `keyheight` (along with `default.unit`) allow you to specify
+    the size of the keys. These are grid units, e.g. `unit(1, "cm")`.
+
+### `guide_bins()`
+
+`r columns(2, 1)`
+```{r}
+base <- ggplot(mpg, aes(displ, manufacturer, size = hwy)) +
+  geom_point(alpha = .2) +
+  scale_size_binned()
+
+base
+base + guides(size = guide_bins(show.limits = TRUE))
+```
+
+
+### `guide_colourbar`
+
+The colour bar guide is designed for continuous ranges of colors---as its name implies, it outputs a rectangle over which the color gradient varies.  The most important arguments are: \index{Legend!colour bar} \index{Colour bar}
+
+* `barwidth` and `barheight` (along with `default.unit`) allow you to specify
+   the size of the bar. These are grid units, e.g. `unit(1, "cm")`.
+  
+* `nbin` controls the number of slices. You may want to increase this from
+  the default value of 20 if you draw a very long bar.
+
+* `reverse` flips the colour bar to put the lowest values at the top.
+
+These options are illustrated below:
+
+`r columns(3)`
+```{r}
+df <- data.frame(x = 1, y = 1:4, z = 4:1)
+base <- ggplot(df, aes(x, y)) + geom_tile(aes(fill = z))
+
+base
+base + guides(fill = guide_colourbar(reverse = TRUE))
+base + guides(fill = guide_colourbar(barheight = unit(4, "cm")))
+```
+
+If you want discrete bins:
+
+```{r}
+base + guides(fill = guide_coloursteps())
+```
+
+
+### `guide_axis()`
+
+```{r}
+base + guides(x = guide_axis(angle = 90))
+```
+
+
+## Legend merging and splitting
 
 The previous sections describe features of ggplot2 that are the same for both axes and legend, but because legends are more complex than axes, there are additional topics to discuss that pertain only to legends. First among these is the fact that a legend may need to draw symbols from multiple layers ("merging" legends), and on occasions multiple legends may need to be associated with the same aesthetic ("splitting" a legend).
 
@@ -336,7 +451,7 @@ p +
 
 
 
-## Legend layout {#legend-layout}
+## Legend positioning {#legend-layout}
 
 A number of settings that affect the overall display of the legends are controlled through the theme system. You'll learn more about that in Section \@ref(themes), but for now, all you need to know is that you modify theme settings with the `theme()` function. \index{Themes!legend} 
 
@@ -378,89 +493,21 @@ base + theme(legend.position = c(1, 0), legend.justification = c(1, 0))
 
 There's also a margin around the legends, which you can suppress with `legend.margin = unit(0, "mm")`.
 
-## Guide functions
+## Legend glyphs
 
-The guide functions, `guide_colourbar()` and `guide_legend()`, offer additional control over the fine details of the legend. Legend guides can be used for any aesthetic (discrete or continuous) while the colour bar guide can only be used with continuous colour scales. 
+In most cases the default glyphs shown in the legend will be appropriate to the layer and the aesthetic. Line plots of different colours will show up as lines of different colours in the legend, boxplots will appear as small boxplots in the legend, and so on. Should you need to override this behaviour, the `key_glyph` argument can be used to associate a particular layer with a different kind of glyph. For example:
 
-You can override the default guide using the `guide` argument of the corresponding scale function, or more conveniently, the `guides()` helper function. The `guides()` helper works in a similar way to the `labs()` helper function: both take the name of different aesthetics (e.g., color, x, fill) as arguments, and you can then override the default guide or label by assigning a value to those arguments. The three plots below illustrate how the `guides()` function works:
-
+`r columns(2, 1/2)`
 ```{r}
-df <- data.frame(x = 1, y = 1:3, z = 1:3)
-base <- ggplot(df, aes(x, y)) + geom_raster(aes(fill = z))
+p <- ggplot(economics, aes(date, psavert, color = "savings"))
 
-base 
-base + scale_fill_continuous(guide = guide_legend())
-base + guides(fill = guide_legend())
+p + geom_line()
+p + geom_line(key_glyph = "timeseries")
 ```
 
-The example below shows that arguments are passed to `guides()` and `labs()` using the same `aesthetic = value` convention:
+More precisely, each geom is associated with a function such as `draw_key_path()`, `draw_key_boxplot()` or `draw_key_path()` which is responsible for drawing the key when the legend is created. You can pass the desired key drawing function directly: for example, `p + geom_line(key_glyph = draw_key_timeseries)` would also produce the plot shown above right.
 
-```{r}
-base
-base + guides(fill = guide_legend())
-base + labs(fill = "z value")
-```
 
-The `labs()` and `guides()` functions both have numerous examples in their documentation help pages that illustrate all of their arguments. Most of the arguments to the guide function control the fine level details of the text colour, size, font etc. You'll learn about those in the themes chapter. Here I'll focus on the most important arguments.
-
-### `guide_legend()`
-
-The legend guide displays individual keys in a table. The most useful options are: \index{Legend!guide}
-
-*   `nrow` or `ncol` which specify the dimensions of the table. `byrow` 
-    controls how the table is filled: `FALSE` fills it by column (the default),
-    `TRUE` fills it by row.
-
-    `r columns(3)`
-    ```{r legend-rows-cols}
-    df <- data.frame(x = 1, y = 1:4, z = letters[1:4])
-    # Base plot
-    p <- ggplot(df, aes(x, y)) + geom_raster(aes(fill = z))
-    p
-    p + guides(fill = guide_legend(ncol = 2))
-    p + guides(fill = guide_legend(ncol = 2, byrow = TRUE))
-    ```
-
-*   `reverse` reverses the order of the keys. This is particularly useful when 
-    you have stacked bars because the default stacking and legend orders are
-    different:
-    
-    ```{r}
-    p <- ggplot(df, aes(1, y)) + geom_bar(stat = "identity", aes(fill = z))
-    p
-    p + guides(fill = guide_legend(reverse = TRUE))
-    ```
-
-*   `override.aes`: override some of the aesthetic settings derived from each
-    layer. This is useful if you want to make the elements in the legend 
-    more visually prominent. See discussion in 
-    Section \@ref(sub-layers-legends).
-
-*   `keywidth` and `keyheight` (along with `default.unit`) allow you to specify
-    the size of the keys. These are grid units, e.g. `unit(1, "cm")`.
-
-### `guide_colourbar`
-
-The colour bar guide is designed for continuous ranges of colors---as its name implies, it outputs a rectangle over which the color gradient varies.  The most important arguments are: \index{Legend!colour bar} \index{Colour bar}
-
-* `barwidth` and `barheight` (along with `default.unit`) allow you to specify
-   the size of the bar. These are grid units, e.g. `unit(1, "cm")`.
-  
-* `nbin` controls the number of slices. You may want to increase this from
-  the default value of 20 if you draw a very long bar.
-
-* `reverse` flips the colour bar to put the lowest values at the top.
-
-These options are illustrated below:
-
-```{r}
-df <- data.frame(x = 1, y = 1:4, z = 4:1)
-p <- ggplot(df, aes(x, y)) + geom_tile(aes(fill = z))
-
-p
-p + guides(fill = guide_colorbar(reverse = TRUE))
-p + guides(fill = guide_colorbar(barheight = unit(4, "cm")))
-```
 
 ### Exercises
 
@@ -489,16 +536,3 @@ p + guides(fill = guide_colorbar(barheight = unit(4, "cm")))
 
 
 
-## Key glyphs
-
-In most cases the default glyphs shown in the legend will be appropriate to the layer and the aesthetic. Line plots of different colours will show up as lines of different colours in the legend, boxplots will appear as small boxplots in the legend, and so on. Should you need to override this behaviour, the `key_glyph` argument can be used to associate a particular layer with a different kind of glyph. For example:
-
-`r columns(2, 1/2)`
-```{r}
-p <- ggplot(economics, aes(date, psavert, color = "savings"))
-
-p + geom_line()
-p + geom_line(key_glyph = "timeseries")
-```
-
-More precisely, each geom is associated with a function such as `draw_key_path()`, `draw_key_boxplot()` or `draw_key_path()` which is responsible for drawing the key when the legend is created. You can pass the desired key drawing function directly: for example, `p + geom_line(key_glyph = draw_key_timeseries)` would also produce the plot shown above right.
