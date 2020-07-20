@@ -419,7 +419,7 @@ This "colour steps" guide is a version of `guide_colourbar()` appropriate for bi
 
 ### `guide_axis()`
 
-Guide functions mostly apply legends, but ggplot2 also supplies a `guide_axis()` function for axes. Its main purpose is to modify thematic properties:
+Guide functions exist mostly to control plot legends, but---as legends and axes are both kinds of guide---ggplot2 also supplies a `guide_axis()` function for axes. Its main purpose is to modify thematic properties:
 
 `r columns(2, 2/3)`
 ```{r}
@@ -483,12 +483,12 @@ To illustrate this the plot on the left uses `geom_point()` to display a large m
 
 `r columns(2, 2/3)`
 ```{r}
-p <- ggplot(mpg, aes(displ, hwy)) + 
+base <- ggplot(mpg, aes(displ, hwy)) + 
   geom_point(aes(colour = factor(year)), size = 5) + 
   scale_colour_brewer("year", type = "qual", palette = 5) 
 
-p
-p + 
+base
+base + 
   ggnewscale::new_scale_colour() + 
   geom_point(aes(colour = cyl == 4), size = 1, fill = NA) + 
   scale_colour_manual("4 cylinder", values = c("grey60", "black"))
@@ -546,13 +546,13 @@ In most cases the default glyphs shown in the legend key will be appropriate to 
 
 `r columns(2, 1/2)`
 ```{r}
-p <- ggplot(economics, aes(date, psavert, color = "savings"))
+base <- ggplot(economics, aes(date, psavert, color = "savings"))
 
-p + geom_line()
-p + geom_line(key_glyph = "timeseries")
+base + geom_line()
+base + geom_line(key_glyph = "timeseries")
 ```
 
-More precisely, each geom is associated with a function such as `draw_key_path()`, `draw_key_boxplot()` or `draw_key_path()` which is responsible for drawing the key when the legend is created. You can pass the desired key drawing function directly: for example, `p + geom_line(key_glyph = draw_key_timeseries)` would also produce the plot shown above right.
+More precisely, each geom is associated with a function such as `draw_key_path()`, `draw_key_boxplot()` or `draw_key_path()` which is responsible for drawing the key when the legend is created. You can pass the desired key drawing function directly: for example, `base + geom_line(key_glyph = draw_key_timeseries)` would also produce the plot shown above right.
 
 
 
