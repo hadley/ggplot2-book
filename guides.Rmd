@@ -56,7 +56,7 @@ In ggplot2 the axis or legend title is specified by `name`, which is always the 
 \index{Axis!title} \index{Legend!title}
     
 `r columns(2, 1 / 2)`
-```{r guide-names, cache.vars=toy}
+```{r guide-names}
 base <- ggplot(toy, aes(up, up)) + geom_point()
 
 base + scale_x_continuous("X axis")
@@ -66,7 +66,7 @@ base + scale_x_continuous(quote(a + mathematical ^ expression))
 It is also possible to include (some) markdown in axis and legend titles with the help of the ggtext package [@ggtext] and the ggplot2 theme system (see Chapter \@ref(polishing)). To enable markdown you need to set the relevant theme element to `ggtext::element_markdown()`, as demonstrated below:
 
 `r columns(2, 1 / 2)`
-```{r markdown-with-ggtext, cache.vars=toy}
+```{r markdown-with-ggtext}
 base <- ggplot(toy, aes(up, up)) + 
   geom_point() + 
   scale_x_continuous("Axis title with *italics* and **boldface**")
@@ -80,7 +80,7 @@ Because tweaking axis and legend labels is such a common task, there are three
 helper functions in ggplot2 that can save you some typing: `xlab()`, `ylab()` and `labs()`:
 
 `r columns(2, 2/3)`
-```{r guide-names-helper, cache.vars=toy}
+```{r guide-names-helper}
 ggplot(toy, aes(const, up)) + 
   geom_point() + 
   xlab("X axis") + 
@@ -93,7 +93,7 @@ ggplot(toy, aes(const, up)) +
 
 There are two ways to remove the axis label. Setting it to `""` omits the label, but still allocates space; `NULL` removes the label and its space. Look closely at the left and bottom borders of the following two plots. I've drawn a grey rectangle around the plot to make it easier to see the difference.
 
-```{r guide-names-remove, cache.vars=toy}
+```{r guide-names-remove}
 base <- ggplot(toy, aes(const, up)) + 
   geom_point() + 
   theme(plot.background = element_rect(colour = "grey50"))
@@ -106,12 +106,11 @@ base + labs(x = NULL, y = NULL)
 
 ## Scale breaks and labels {#breaks-labels}
 
-The `breaks` argument controls which values appear as tick marks on axes and keys on legends. Each break has an associated label, controlled by the `labels` argument. If you set `labels`, you must also set `breaks`; otherwise, if data changes, the breaks will no longer align with the labels. \index{Axis!ticks} \index{Axis!breaks} \index{Axis!labels} \index{Legend!keys}
-
-The following code shows some basic examples for both axes and legends.
+In the same way that the `name` argument to a scale function governs axis titles and legend titles, the `breaks` argument is used to control which values appear as tick marks on axes and as keys on legends. Every break is associated with a label and this is controlled by the `labels` argument to the scale function. The code below shows some basic examples for axes:
+ \index{Axis!ticks} \index{Axis!breaks} \index{Axis!labels} \index{Legend!keys}
 
 `r columns(3, 2/3)`
-```{r breaks-labels, cache.vars=toy}
+```{r breaks-labels}
 axs <- ggplot(toy, aes(big, const)) + 
   geom_point() + 
   labs(x = NULL, y = NULL)
@@ -121,40 +120,52 @@ axs + scale_x_continuous(breaks = c(2000, 4000))
 axs + scale_x_continuous(breaks = c(2000, 4000), labels = c("2k", "4k"))
 ```
 
-```{r, cache.vars=toy}
-leg <- ggplot(toy, aes(big, const, fill = big)) + 
-  geom_tile() + 
-  labs(x = NULL, y = NULL)
+The code below illustrates the same ideas applied to legends:
 
-leg
+
+```{r}
+leg <- ggplot(toy, aes(up, up, fill = big)) + 
+  geom_tile() + 
+  labs(x = NULL, y = NULL) 
+
+leg 
 leg + scale_fill_continuous(breaks = c(2000, 4000))
 leg + scale_fill_continuous(breaks = c(2000, 4000), labels = c("2k", "4k"))
 ```
 
+Note that if you set the `labels` argument (for axes or legends) you must also set `breaks`. Otherwise, if the data changes, the breaks will no longer align with the labels. 
+
 If you want to relabel the breaks in a categorical scale, you can use a named labels vector:
 
-`r columns(2, 2/3)`
-```{r, cache.vars=toy}
+`r columns(3, 1)`
+```{r}
 base <- ggplot(toy, aes(const, txt)) + geom_point()
 
 base
 base + scale_y_discrete(labels = c(a = "ant", b = "bat", c = "cat", d = "dog"))
 ```
 
-To suppress breaks (and for axes, grid lines) or labels, set them to `NULL`:
+You can also suppress the breaks entirely by setting them to `NULL`. For legends this removes the keys as well as the labels. When applied to axes, this will remove labels, tick marks and grid lines:
 
-```{r axs-breaks-hide, cache.vars=toy}
+`r columns(3, 2/3)`
+```{r}
 axs + scale_x_continuous(breaks = NULL)
-axs + scale_x_continuous(labels = NULL)
-```
-```{r leg-breaks-hide, cache.vars=toy}
 leg + scale_fill_continuous(breaks = NULL)
+```
+
+A variation on this is set `labels = NULL`, which removes the labels but leaves the other properties of the axis/legend unchanged:
+
+```{r}
+axs + scale_x_continuous(labels = NULL)
 leg + scale_fill_continuous(labels = NULL)
 ```
 
 ### Break and label functions
 
-Additionally, you can supply a function to `breaks` or `labels`. The `breaks` function should have one argument, the limits (a numeric vector of length two), and should return a numeric vector of breaks. The `labels` function should accept a numeric vector of breaks and return a character vector of labels (the same length as the input). The scales package provides a number of useful labelling functions:
+In the simple examples above I specified the vector of values for `breaks` and `labels` manually, but ggplot2 also allows you to pass functions either of these arguments. The function passed to `breaks` should have one argument that specifies the limits of the scale (a numeric vector of length two), and it should return a numeric vector of breaks. A function passed to `labels` should accept a numeric vector of breaks as input and return a character vector of labels (the same length as the input). You can write your own break and labelling functions, but in many cases there is no need, thanks to the scales package [@scales].
+
+
+The scales package provides a number of useful labelling functions:
 
 * `scales::comma_format()` adds commas to make it easier to read large numbers.
 
@@ -168,7 +179,7 @@ Additionally, you can supply a function to `breaks` or `labels`. The `breaks` fu
 See the documentation of the scales package for more details.
 
 `r columns(3)`
-```{r breaks-functions, cache.vars=toy}
+```{r breaks-functions}
 axs + scale_y_continuous(labels = scales::percent_format())
 axs + scale_y_continuous(labels = scales::dollar_format(prefix = "$"))
 leg + scale_fill_continuous(labels = scales::unit_format(unit = "k", scale = 1e-3))
@@ -177,7 +188,7 @@ leg + scale_fill_continuous(labels = scales::unit_format(unit = "k", scale = 1e-
 You can adjust the minor breaks (the faint grid lines that appear between the major grid lines) by supplying a numeric vector of positions to the `minor_breaks` argument. This is particularly useful for log scales: \index{Minor breaks}
 
 `r columns(2, 2/3)`
-```{r, cache.vars=toy}
+```{r}
 mb <- as.numeric(1:10 %o% 10 ^ (0:4))
 base <- ggplot(toy, aes(log, const)) + geom_point()
 
@@ -469,7 +480,7 @@ One of the major differences between legends and axes is that a legend may need 
 Merging legends occurs quite frequently when using ggplot2. For example, if you've mapped colour to both points and lines, the keys will show both points and lines. If you've mapped fill colour, you get a rectangle. Note the way the legend varies in the plots below:
 
 `r columns(3)`
-```{r legend-geom, echo = FALSE, cache.vars=toy}
+```{r legend-geom, echo = FALSE}
 base <- ggplot(toy, aes(const, up, colour = txt))
 base + geom_point()
 base + geom_point() + geom_path(aes(group = 1))
@@ -479,7 +490,7 @@ base + geom_raster(aes(fill = txt))
 By default, a layer will only appear if the corresponding aesthetic is mapped to a variable with `aes()`. You can override whether or not a layer appears in the legend with `show.legend`: `FALSE` to prevent a layer from ever appearing in the legend; `TRUE` forces it to appear when it otherwise wouldn't. Using `TRUE` can be useful in conjunction with the following trick to make points stand out:
 
 `r columns(2, 2/3)`
-```{r, cache.vars=toy}
+```{r}
 ggplot(toy, aes(up, up)) + 
   geom_point(size = 4, colour = "grey20") +
   geom_point(aes(colour = txt), size = 2) 
@@ -492,7 +503,7 @@ ggplot(toy, aes(up, up)) +
 ggplot2 tries to use the fewest number of legends to accurately convey the aesthetics used in the plot. It does this by combining legends where the same variable is mapped to different aesthetics. The figure below shows how this works for points: if both colour and shape are mapped to the same variable, then only a single legend is necessary. \index{Legend!merging}
 
 `r columns(3)`
-```{r legend-merge, cache.vars=toy}
+```{r legend-merge}
 ggplot(toy, aes(const, up)) + geom_point(aes(colour = txt))
 ggplot(toy, aes(const, up)) + geom_point(aes(shape = txt))
 ggplot(toy, aes(const, up)) + geom_point(aes(shape = txt, colour = txt))
@@ -531,7 +542,7 @@ A number of settings that affect the overall display of the legends are controll
 The position and justification of legends are controlled by the theme setting `legend.position`, which takes values "right", "left", "top", "bottom", or "none" (no legend). \index{Legend!layout}
 
 `r columns(2, 2/3)`
-```{r legend-position, cache.vars=toy}
+```{r legend-position}
 base <- ggplot(toy, aes(up, up)) + 
   geom_point(aes(colour = txt), size = 3) + 
   xlab(NULL) + 
@@ -555,7 +566,7 @@ Switching between left/right and top/bottom modifies how the keys in each legend
 Alternatively, if there's a lot of blank space in your plot you might want to place the legend inside the plot. You can do this by setting `legend.position` to a numeric vector of length two. The numbers represent a relative location in the panel area: `c(0, 1)` is the top-left corner and `c(1, 0)` is the bottom-right corner. You control which corner of the legend the `legend.position` refers to with `legend.justification`, which is specified in a similar way. Unfortunately positioning the legend exactly where you want it requires a lot of trial and error.
 
 `r columns(3, 1.5)`
-```{r legend-position-man, cache.vars=toy}
+```{r legend-position-man}
 base <- ggplot(toy, aes(up, up)) + 
   geom_point(aes(colour = txt), size = 3)
 
