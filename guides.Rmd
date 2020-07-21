@@ -34,41 +34,51 @@ The early sections of this chapter highlight functionality that is shared by axe
     be displayed vertically or horizontally? How many columns? How big should
     the keys be?
     
-As a consequence there are some extra options that only apply to legends, and the later sections in the chapter focus on this legend-specific behaviour.
+As a consequence there are some extra options that only apply to legends, and the later sections in the chapter focus on this legend-specific behaviour. Note that some plots in this chapter use real data (usually `mpg`) but for simplicity of exposition I will sometimes use this `toy` data frame:
     
+```{r}
+toy <- data.frame(
+  const = 1, 
+  up = 1:4,
+  text = letters[1:4], 
+  big = (1:4)*1000,
+  log = c(2, 5, 10, 2000)
+)
+toy
+```
 
 ## Scale names {#scale-name}
 
 The first argument to the scale function, `name`, is the axes/legend title. You can supply text strings (using `\n` for line breaks) or mathematical expressions in `quote()` (as described in `?plotmath`):  \index{Axis!title} \index{Legend!title}
     
 `r columns(2, 1 / 2)`
-```{r guide-names}
-df <- data.frame(x = 1:2, y = 1, z = "a")
-p <- ggplot(df, aes(x, y)) + geom_point()
+```{r guide-names, cache.vars=toy}
+base <- ggplot(toy, aes(up, up)) + geom_point()
 
-p + scale_x_continuous("X axis")
-p + scale_x_continuous(quote(a + mathematical ^ expression))
+base + scale_x_continuous("X axis")
+base + scale_x_continuous(quote(a + mathematical ^ expression))
 ```
 
 Because tweaking these labels is such a common task, there are three 
 helpers that save you some typing: `xlab()`, `ylab()` and `labs()`:
 
-```{r guide-names-helper}
-p <- ggplot(df, aes(x, y)) + geom_point(aes(colour = z))
-p + 
-  xlab("X axis") + 
-  ylab("Y axis")
-p + labs(x = "X axis", y = "Y axis", colour = "Colour\nlegend")
+`r columns(2, 2/3)`
+```{r guide-names-helper, cache.vars=toy}
+base <- ggplot(toy, aes(const, up)) + geom_point(aes(colour = text))
+
+base + xlab("X axis") + ylab("Y axis")
+base + labs(x = "X axis", y = "Y axis", colour = "Colour\nlegend")
 ```
 
 There are two ways to remove the axis label. Setting it to `""` omits the label, but still allocates space; `NULL` removes the label and its space. Look closely at the left and bottom borders of the following two plots. I've drawn a grey rectangle around the plot to make it easier to see the difference.
 
-```{r guide-names-remove}
-p <- ggplot(df, aes(x, y)) + 
+```{r guide-names-remove, cache.vars=toy}
+base <- ggplot(toy, aes(const, up)) + 
   geom_point() + 
   theme(plot.background = element_rect(colour = "grey50"))
-p + labs(x = "",  y = "")
-p + labs(x = NULL, y = NULL)
+
+base + labs(x = "",  y = "")
+base + labs(x = NULL, y = NULL)
 ```
 
 ## Scale breaks and labels {#breaks-labels}
@@ -78,9 +88,8 @@ The `breaks` argument controls which values appear as tick marks on axes and key
 The following code shows some basic examples for both axes and legends.
 
 `r columns(3, 2/3)`
-```{r breaks-labels}
-df <- data.frame(x = c(1, 3, 5) * 1000, y = 1)
-axs <- ggplot(df, aes(x, y)) + 
+```{r breaks-labels, cache.vars=toy}
+axs <- ggplot(toy, aes(big, const)) + 
   geom_point() + 
   labs(x = NULL, y = NULL)
 
@@ -89,8 +98,8 @@ axs + scale_x_continuous(breaks = c(2000, 4000))
 axs + scale_x_continuous(breaks = c(2000, 4000), labels = c("2k", "4k"))
 ```
 
-```{r}
-leg <- ggplot(df, aes(y, x, fill = x)) + 
+```{r, cache.vars=toy}
+leg <- ggplot(toy, aes(big, const, fill = big)) + 
   geom_tile() + 
   labs(x = NULL, y = NULL)
 
@@ -102,23 +111,20 @@ leg + scale_fill_continuous(breaks = c(2000, 4000), labels = c("2k", "4k"))
 If you want to relabel the breaks in a categorical scale, you can use a named labels vector:
 
 `r columns(2, 2/3)`
-```{r}
-df2 <- data.frame(x = 1:3, y = c("a", "b", "c"))
+```{r, cache.vars=toy}
+base <- ggplot(toy, aes(const, text)) + geom_point()
 
-ggplot(df2, aes(x, y)) + 
-  geom_point()
-ggplot(df2, aes(x, y)) + 
-  geom_point() + 
-  scale_y_discrete(labels = c(a = "apple", b = "banana", c = "carrot"))
+base
+base + scale_y_discrete(labels = c(a = "ant", b = "bat", c = "cat", d = "dog"))
 ```
 
 To suppress breaks (and for axes, grid lines) or labels, set them to `NULL`:
 
-```{r axs-breaks-hide}
+```{r axs-breaks-hide, cache.vars=toy}
 axs + scale_x_continuous(breaks = NULL)
 axs + scale_x_continuous(labels = NULL)
 ```
-```{r leg-breaks-hide}
+```{r leg-breaks-hide, cache.vars=toy}
 leg + scale_fill_continuous(breaks = NULL)
 leg + scale_fill_continuous(labels = NULL)
 ```
@@ -139,7 +145,7 @@ Additionally, you can supply a function to `breaks` or `labels`. The `breaks` fu
 See the documentation of the scales package for more details.
 
 `r columns(3)`
-```{r breaks-functions}
+```{r breaks-functions, cache.vars=toy}
 axs + scale_y_continuous(labels = scales::percent_format())
 axs + scale_y_continuous(labels = scales::dollar_format(prefix = "$"))
 leg + scale_fill_continuous(labels = scales::unit_format(unit = "k", scale = 1e-3))
@@ -148,16 +154,12 @@ leg + scale_fill_continuous(labels = scales::unit_format(unit = "k", scale = 1e-
 You can adjust the minor breaks (the faint grid lines that appear between the major grid lines) by supplying a numeric vector of positions to the `minor_breaks` argument. This is particularly useful for log scales: \index{Minor breaks}
 
 `r columns(2, 2/3)`
-```{r}
-df <- data.frame(x = c(2, 3, 5, 10, 200, 3000), y = 1)
-ggplot(df, aes(x, y)) + 
-  geom_point() + 
-  scale_x_log10()
-
+```{r, cache.vars=toy}
 mb <- as.numeric(1:10 %o% 10 ^ (0:4))
-ggplot(df, aes(x, y)) + 
-  geom_point() + 
-  scale_x_log10(minor_breaks = mb)
+base <- ggplot(toy, aes(log, const)) + geom_point()
+
+base + scale_x_log10()
+base + scale_x_log10(minor_breaks = mb)
 ```
 
 Note the use of `%o%` to quickly generate the multiplication table, and that the minor breaks must be supplied on the transformed scale. \index{Log!ticks}
@@ -443,34 +445,33 @@ One of the major differences between legends and axes is that a legend may need 
 Merging legends occurs quite frequently when using ggplot2. For example, if you've mapped colour to both points and lines, the keys will show both points and lines. If you've mapped fill colour, you get a rectangle. Note the way the legend varies in the plots below:
 
 `r columns(3)`
-```{r legend-geom, echo = FALSE}
-df <- data.frame(x = 1, y = 1:3, z = letters[1:3])
-p <- ggplot(df, aes(x, y, colour = z))
+```{r legend-geom, echo = FALSE, cache.vars=toy}
+p <- ggplot(toy, aes(const, up, colour = text))
 p + geom_point()
 p + geom_point() + geom_path(aes(group = 1))
-p + geom_raster(aes(fill = z))
+p + geom_raster(aes(fill = text))
 ```
 
 By default, a layer will only appear if the corresponding aesthetic is mapped to a variable with `aes()`. You can override whether or not a layer appears in the legend with `show.legend`: `FALSE` to prevent a layer from ever appearing in the legend; `TRUE` forces it to appear when it otherwise wouldn't. Using `TRUE` can be useful in conjunction with the following trick to make points stand out:
 
 `r columns(2, 2/3)`
-```{r}
-df <- data.frame(x = 1, y = 1:3, z = letters[1:3])
-ggplot(df, aes(y, y)) + 
+```{r, cache.vars=toy}
+ggplot(toy, aes(up, up)) + 
   geom_point(size = 4, colour = "grey20") +
-  geom_point(aes(colour = z), size = 2) 
-ggplot(df, aes(y, y)) + 
+  geom_point(aes(colour = text), size = 2) 
+
+ggplot(toy, aes(up, up)) + 
   geom_point(size = 4, colour = "grey20", show.legend = TRUE) +
-  geom_point(aes(colour = z), size = 2) 
+  geom_point(aes(colour = text), size = 2) 
 ```
 
 ggplot2 tries to use the fewest number of legends to accurately convey the aesthetics used in the plot. It does this by combining legends where the same variable is mapped to different aesthetics. The figure below shows how this works for points: if both colour and shape are mapped to the same variable, then only a single legend is necessary. \index{Legend!merging}
 
 `r columns(3)`
-```{r legend-merge}
-ggplot(df, aes(x, y)) + geom_point(aes(colour = z))
-ggplot(df, aes(x, y)) + geom_point(aes(shape = z))
-ggplot(df, aes(x, y)) + geom_point(aes(shape = z, colour = z))
+```{r legend-merge, cache.vars=toy}
+ggplot(toy, aes(const, up)) + geom_point(aes(colour = text))
+ggplot(toy, aes(const, up)) + geom_point(aes(shape = text))
+ggplot(toy, aes(const, up)) + geom_point(aes(shape = text, colour = text))
 ```
 
 In order for legends to be merged, they must have the same `name`. So if you change the name of one of the scales, you'll need to change it for all of them.
@@ -505,15 +506,15 @@ A number of settings that affect the overall display of the legends are controll
 
 The position and justification of legends are controlled by the theme setting `legend.position`, which takes values "right", "left", "top", "bottom", or "none" (no legend). \index{Legend!layout}
 
-`r columns(3, 2/3)`
-```{r legend-position}
-df <- data.frame(x = 1:3, y = 1:3, z = c("a", "b", "c"))
-base <- ggplot(df, aes(x, y)) + 
-  geom_point(aes(colour = z), size = 3) + 
+`r columns(2, 2/3)`
+```{r legend-position, cache.vars=toy}
+base <- ggplot(toy, aes(up, up)) + 
+  geom_point(aes(colour = text), size = 3) + 
   xlab(NULL) + 
   ylab(NULL)
 
 base + theme(legend.position = "right") # the default 
+base + theme(legend.position = "left")
 base + theme(legend.position = "bottom")
 base + theme(legend.position = "none")
 ```
@@ -529,10 +530,10 @@ Switching between left/right and top/bottom modifies how the keys in each legend
 
 Alternatively, if there's a lot of blank space in your plot you might want to place the legend inside the plot. You can do this by setting `legend.position` to a numeric vector of length two. The numbers represent a relative location in the panel area: `c(0, 1)` is the top-left corner and `c(1, 0)` is the bottom-right corner. You control which corner of the legend the `legend.position` refers to with `legend.justification`, which is specified in a similar way. Unfortunately positioning the legend exactly where you want it requires a lot of trial and error.
 
-`r columns(3, 1)`
-```{r legend-position-man}
-base <- ggplot(df, aes(x, y)) + 
-  geom_point(aes(colour = z), size = 3)
+`r columns(3, 1.5)`
+```{r legend-position-man, cache.vars=toy}
+base <- ggplot(toy, aes(up, up)) + 
+  geom_point(aes(colour = text), size = 3)
 
 base + theme(legend.position = c(0, 1), legend.justification = c(0, 1))
 base + theme(legend.position = c(0.5, 0.5), legend.justification = c(0.5, 0.5))
