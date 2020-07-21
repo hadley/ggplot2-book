@@ -106,7 +106,7 @@ base + labs(x = NULL, y = NULL)
 
 ## Scale breaks and labels {#breaks-labels}
 
-In the same way that the `name` argument to a scale function governs axis titles and legend titles, the `breaks` argument is used to control which values appear as tick marks on axes and as keys on legends. Every break is associated with a label and this is controlled by the `labels` argument to the scale function. The code below shows some basic examples for axes:
+In the same way that the `name` argument to a scale function governs axis titles and legend titles, the `breaks` argument is used to control which values appear as tick marks on axes and as keys on legends. Every break is associated with a label and these can be changed by setting the `labels` argument to the scale function. If you do set the `labels` argument, be sure to set `breaks` as well: if you don't and the data changes, the breaks will no longer align with the labels. The code below shows some basic examples for axes:
  \index{Axis!ticks} \index{Axis!breaks} \index{Axis!labels} \index{Legend!keys}
 
 `r columns(3, 2/3)`
@@ -120,7 +120,9 @@ axs + scale_x_continuous(breaks = c(2000, 4000))
 axs + scale_x_continuous(breaks = c(2000, 4000), labels = c("2k", "4k"))
 ```
 
-The code below illustrates the same ideas applied to legends:
+
+
+The examples below illustrate the same ideas applied to legends:
 
 
 ```{r}
@@ -133,16 +135,14 @@ leg + scale_fill_continuous(breaks = c(2000, 4000))
 leg + scale_fill_continuous(breaks = c(2000, 4000), labels = c("2k", "4k"))
 ```
 
-Note that if you set the `labels` argument (for axes or legends) you must also set `breaks`. Otherwise, if the data changes, the breaks will no longer align with the labels. 
-
-If you want to relabel the breaks in a categorical scale, you can use a named labels vector:
+When the data are categorical, you also have the option of using a named labels vector to set the labels associated with particular values. This allows you to change some labels and not others, without altering the ordering or the breaks themselves. An example of this is shown below:
 
 `r columns(3, 1)`
 ```{r}
 base <- ggplot(toy, aes(const, txt)) + geom_point()
 
 base
-base + scale_y_discrete(labels = c(a = "ant", b = "bat", c = "cat", d = "dog"))
+base + scale_y_discrete(labels = c(c = "carrot", b = "banana"))
 ```
 
 You can also suppress the breaks entirely by setting them to `NULL`. For legends this removes the keys as well as the labels. When applied to axes, this will remove labels, tick marks and grid lines:
@@ -153,7 +153,7 @@ axs + scale_x_continuous(breaks = NULL)
 leg + scale_fill_continuous(breaks = NULL)
 ```
 
-A variation on this is set `labels = NULL`, which removes the labels but leaves the other properties of the axis/legend unchanged:
+Alternatively, it is also possible to set `labels = NULL`. This will remove the labels from the axis or legend while leaving its other properties unchanged. To see the difference, compare the two plots shown above to the two plots shown below:
 
 ```{r}
 axs + scale_x_continuous(labels = NULL)
