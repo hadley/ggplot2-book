@@ -262,7 +262,9 @@ base + scale_x_date(
 
 ## Scale guides
 
-You can override the default guide using the `guide` argument of the corresponding scale function, or more conveniently, the `guides()` helper function. The `guides()` helper works in a similar way to the `labs()` helper function described in Section \@ref(scale-name) both take the name of different aesthetics (e.g., color, x, fill) as arguments and allow you to specify your own value. Where `labs()` provides a shorthand way to specify the `name` argument to one or more scales, the `guides()` function allows you to specify `guide` arguments to one or more scales. In the same way that `labs(colour = "a colour scale name")` specifies the name associated with the colour scale, a command such as `guides(colour = guide_coloursteps())` can be used to specify its associated guide:
+The previous sections describe features of ggplot2 that are the same for both axes and legend, but because legends are more complex than axes, there are additional topics to discuss that pertain only (or mostly) to legends. ggplot2 is designed so that in most cases the default legends will be sensible, but even so it is often necessary to override the defaults. You can do this using the `guide` argument of the corresponding scale function, or more conveniently, the `guides()` helper function. 
+
+The `guides()` helper works in a similar way to the `labs()` helper function described in Section \@ref(scale-name) both take the name of different aesthetics (e.g., color, x, fill) as arguments and allow you to specify your own value. Where `labs()` provides a shorthand way to specify the `name` argument to one or more scales, the `guides()` function allows you to specify `guide` arguments to one or more scales. In the same way that `labs(colour = "a colour scale name")` specifies the name associated with the colour scale, a command such as `guides(colour = guide_coloursteps())` can be used to specify its associated guide:
 
 `r columns(3)`
 ```{r}
@@ -288,16 +290,14 @@ The legend guide displays individual keys in a table. The most useful options ar
 
     `r columns(3)`
     ```{r legend-rows-cols}
-    base <- ggplot(mpg, aes(factor(year), fill = factor(cyl))) + geom_bar() 
+    base <- ggplot(mpg, aes(drv, fill = factor(cyl))) + geom_bar() 
 
     base
     base + guides(fill = guide_legend(ncol = 2))
     base + guides(fill = guide_legend(ncol = 2, byrow = TRUE))
     ```
 
-*   `reverse` reverses the order of the keys. This is particularly useful when 
-    you have stacked bars because the default stacking and legend orders are
-    different:
+*   `reverse` reverses the order of the keys:
     
     ```{r}
     base
@@ -435,7 +435,7 @@ The final guide function is `guide_none()`, in which no guide is drawn for the r
 
 ## Legend merging and splitting
 
-The previous sections describe features of ggplot2 that are the same for both axes and legend, but because legends are more complex than axes, there are additional topics to discuss that pertain only to legends. First among these is the fact that a legend may need to draw symbols from multiple layers ("merging" legends), and on occasions multiple legends may need to be associated with the same aesthetic ("splitting" a legend).
+One of the major differences between legends and axes is that a legend may need to draw symbols from multiple layers ("merging" legends). On occasions multiple legends may need to be associated with the same aesthetic ("splitting" a legend). In this section I cover both topics.
 
 ### Merging legends {#sub-layers-legends}
 \index{Legend}
