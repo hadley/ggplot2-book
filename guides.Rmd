@@ -164,39 +164,55 @@ leg + scale_fill_continuous(labels = NULL)
 
 In the simple examples above I specified the vector of values for `breaks` and `labels` manually, but ggplot2 also allows you to pass functions either of these arguments. The function passed to `breaks` should have one argument that specifies the limits of the scale (a numeric vector of length two), and it should return a numeric vector of breaks. A function passed to `labels` should accept a numeric vector of breaks as input and return a character vector of labels (the same length as the input). You can write your own break and labelling functions, but in many cases there is no need, thanks to the scales package [@scales].
 
+The scales package provides a number of tools that will automatically construct label functions for you. Some of the more useful examples for numeric data include:
 
-The scales package provides a number of useful labelling functions:
+* `scales::label_bytes()` formats numbers as kilobytes, megabytes etc
+* `scales::label_comma()` formats numbers as decimals with coomas added
+* `scales::label_dollar()` formats numbers as currency
+* `scales::label_ordinal()` formats numbers in rank order: 1st, 2nd, 3rd etc
+* `scales::label_percent()` formats numbers as percentages
+* `scales::label_pvalue()` formats numbers as p-values: <.05, <.01, .34, etc
 
-* `scales::comma_format()` adds commas to make it easier to read large numbers.
+It also contains tools relevant to other data types:
 
-* `scales::unit_format(unit, scale)` adds a unit suffix, optionally scaling.
+* `scales::label_dates()` allows you to specify a date format
+* `scales::label_wrap()` allows you to wrap long strings across lines
 
-* `scales::dollar_format(prefix, suffix)` displays currency values, rounding 
-   to two decimal places and adding a prefix or suffix.
-
-* `scales::wrap_format()` wraps long labels into multiple lines.
-
-See the documentation of the scales package for more details.
+A few examples are shown below to illustrate how these functions are used:
 
 `r columns(3)`
 ```{r breaks-functions}
-axs + scale_y_continuous(labels = scales::percent_format())
-axs + scale_y_continuous(labels = scales::dollar_format(prefix = "$"))
-leg + scale_fill_continuous(labels = scales::unit_format(unit = "k", scale = 1e-3))
+axs + scale_y_continuous(labels = scales::label_percent())
+axs + scale_y_continuous(labels = scales::label_dollar(prefix = "", suffix = "€"))
+leg + scale_fill_continuous(labels = scales::label_bytes())
 ```
 
-You can adjust the minor breaks (the faint grid lines that appear between the major grid lines) by supplying a numeric vector of positions to the `minor_breaks` argument. This is particularly useful for log scales: \index{Minor breaks}
+There are also a few options for break functions in the scales package:
 
-`r columns(2, 2/3)`
+* `scales::breaks_extended()`	creates automatic breaks for numeric axes
+* `scales::breaks_log()`	creates breaks appropriate for log axes
+* `scales::breaks_pretty()`	creates "pretty" breaks for date/times
+* `scales::breaks_width()`	creates equally spaced breaks
+
+See the documentation of the scales package for more detail.
+
+### Adjusting minor breaks
+
+You can adjust the minor breaks (the faint grid lines that appear between the major grid lines) by supplying a numeric vector of positions to the `minor_breaks` argument. This is particularly useful for log scales. First I'll create a vector of minor break values (on the transformed scale), using `%o%` to quickly generate a multiplication table and `as.numeric()` to flatten the table to a vector.
+\index{Minor breaks}\index{Log!ticks}
 ```{r}
 mb <- as.numeric(1:10 %o% 10 ^ (0:4))
+```
+The following plots illustrate the effect of setting the minor breaks:
+`r columns(2, 2/3)`
+```{r}
 base <- ggplot(toy, aes(log, const)) + geom_point()
 
 base + scale_x_log10()
 base + scale_x_log10(minor_breaks = mb)
 ```
-
-Note the use of `%o%` to quickly generate the multiplication table, and that the minor breaks must be supplied on the transformed scale. \index{Log!ticks}
+ 
+Note also that the scales package contains `minor_breaks_n()` and `minor_breaks_width()` functions that can be helpful in controlling the minor breaks.
 
 
 ### Date scales {#date-scales}
