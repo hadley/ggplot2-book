@@ -173,10 +173,7 @@ The scales package provides a number of tools that will automatically construct 
 * `scales::label_percent()` formats numbers as percentages
 * `scales::label_pvalue()` formats numbers as p-values: <.05, <.01, .34, etc
 
-It also contains tools relevant to other data types:
-
-* `scales::label_dates()` allows you to specify a date format
-* `scales::label_wrap()` allows you to wrap long strings across lines
+The also contains functions relevant for other kinds of data, such as `scales::label_wrap()` which allows you to wrap long strings across lines. 
 
 A few examples are shown below to illustrate how these functions are used:
 
@@ -223,13 +220,47 @@ A special case of interest occurs when an aesthetic is mapped to date or date/ti
 For appropriately formatted data mapped to the x aesthetic, ggplot2 will default to `scale_x_date()` and `scale_x_datetime()`, and there are similar scales for other aesthetics. In most respects date scales behave the same way as other continuous scales, but have some special behaviour that is worth noting. Specifically, in addition to the usual `breaks` and `labels` arguments, date scales have special `date_breaks` and `date_labels` arguments that allow you to work in date-friendly units:
 \index{Date/times} \index{Data!date/time} \index{Time} \index{Scales!date/time} \indexf{scale\_x\_datetime}
 
-*   `date_breaks` and `date_minor_breaks()` allows you to position breaks by
+*   `date_breaks` and `date_minor_breaks()` allow you to position breaks by
     date units (years, months, weeks, days, hours, minutes, and seconds). 
     For example, `date_breaks = "2 weeks"` will place a major 
     tick mark every two weeks.
 
 *   `date_labels` controls the display of the labels
-    using the same formatting strings as in `strptime()` and `format()`:
+    using the same formatting strings as in `strptime()` and `format()`. 
+    To display dates like 14/10/1979, for example, you would use the 
+    string `"%d/%m/%Y"`: in this expression `%d` produces a numeric 
+    day of month, `%m` produces a numeric month, and `%Y` produces a 
+    four digit year (the table at the end of this section provides a 
+    longer list of formatting strings)
+
+One scenario where date formatting can be useful is when there is insufficient room to specify a four digit year. Using `%y` ensures that only the last two digits are displayed, as the example below illustrates:
+
+`r columns(2, 1 / 2)`
+```{r date-scale}
+base <- ggplot(economics, aes(date, psavert)) + 
+  geom_line(na.rm = TRUE) +
+  labs(x = NULL, y = NULL)
+
+base 
+base + scale_x_date(date_labels = "%y", date_breaks = "5 years")
+```
+
+Additional examples are shown below:
+
+```{r date-scale-2}
+base + scale_x_date(
+  limits = as.Date(c("2004-01-01", "2005-01-01")),
+  date_labels = "%b %y",
+  date_minor_breaks = "1 month"
+)
+base + scale_x_date(
+  limits = as.Date(c("2004-01-01", "2004-06-01")),
+  date_labels = "%m/%d",
+  date_minor_breaks = "2 weeks"
+)
+```
+
+For an alternative approach, note that the scales package contains `label_dates()` and `label_dates_short()` that use the same formatting strings to specify the appearance of dates. The full list of strings recognised is:
 
     | String        | Meaning
     |---------------|-----------------------------------------
@@ -249,33 +280,7 @@ For appropriately formatted data mapped to the x aesthetic, ggplot2 will default
     | `%y`          | year, without century (00-99)
     | `%Y`          | year, with century (0000-9999)
 
-    For example, if you wanted to display dates like 14/10/1979, you would use 
-    the string `"%d/%m/%Y"`.
 
-The code below illustrates some of these parameters.
-
-`r columns(2, 1 / 2)`
-```{r date-scale}
-base <- ggplot(economics, aes(date, psavert)) + 
-  geom_line(na.rm = TRUE) +
-  labs(x = NULL, y = NULL)
-
-base 
-base + scale_x_date(date_labels = "%y", date_breaks = "5 years")
-```
-
-```{r date-scale-2}
-base + scale_x_date(
-  limits = as.Date(c("2004-01-01", "2005-01-01")),
-  date_labels = "%b %y",
-  date_minor_breaks = "1 month"
-)
-base + scale_x_date(
-  limits = as.Date(c("2004-01-01", "2004-06-01")),
-  date_labels = "%m/%d",
-  date_minor_breaks = "2 weeks"
-)
-```
 
 
 ### Exercises
