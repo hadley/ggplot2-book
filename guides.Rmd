@@ -7,12 +7,13 @@ columns(1, 2 / 3)
 
 In Chapter \@ref(scales) I discussed the way a scale maps a variable to an aesthetic. This chapter is a natural extension of the last and discusses the role scales play in controlling the __guide__ (the axis or legend associated with the scale). Guides allow you to read observations from the plot and map them back to their original values. In ggplot2, guides are produced automatically based on the layers in your plot. This is very different to base R graphics, where you are responsible for drawing the legends by hand. In ggplot2, you don't directly control the legend; instead you set up the data so that there's a clear mapping between data and aesthetics, and a legend is generated for you automatically. This can be frustrating when you first start using ggplot2, but once you get the hang of it, you'll find that it saves you time, and there is little you cannot do. If you're struggling to get the legend you want, it's likely that your data is in the wrong form. 
 
-You might find it surprising that axes and legends are the same type of thing, but while they look very different there are many natural correspondences between the two, as shown in table below and in Figure \@ref(fig:guides). \index{Guides} \index{Legend} \index{Axis}
+You might find it surprising that axes and legends are the same type of thing, but while they look very different there are many natural correspondences between the two, as shown in the figure below: \index{Guides} \index{Legend} \index{Axis}
 
-```{r guides, echo = FALSE, out.width = "100%", fig.cap="Axis and legend components."}
+```{r guides, echo = FALSE, out.width = "100%"}
 knitr::include_graphics("diagrams/scale-guides.png", dpi = 300, auto_pdf = TRUE)
 ```
 
+As much as possible ggplot2 attempts to preserve these correspondences, and uses the same argument names for some axis and legend properties:
 
 | Axis              | Legend        | Argument name
 |-------------------|---------------|-----------------
@@ -21,7 +22,7 @@ knitr::include_graphics("diagrams/scale-guides.png", dpi = 300, auto_pdf = TRUE)
 | Tick label        | Key label     | `labels`        
 
 
-The early sections of this chapter highlight functionality that is shared by axes and legends. Section \@ref(scale-name) discusses the `name` argument, while Section \@ref(breaks-labels) covers the `breaks` and `labels` arguments in more detail. However, legends are more complicated than axes because:
+In light of these correspondences, the early sections of this chapter highlight functionality that is shared by axes and legends. Section \@ref(scale-name) discusses the `name` argument, while Section \@ref(breaks-labels) covers the `breaks` and `labels` arguments in more detail. However, legends are more complicated than axes because:
 
 1.  A legend can display multiple aesthetics (e.g. colour and shape), from
     multiple layers, and the symbol displayed in a legend varies based on the
@@ -34,7 +35,11 @@ The early sections of this chapter highlight functionality that is shared by axe
     be displayed vertically or horizontally? How many columns? How big should
     the keys be?
     
-As a consequence there are some extra options that only apply to legends, and the later sections in the chapter focus on this legend-specific behaviour. Note that some plots in this chapter use real data (usually `mpg`) but for simplicity of exposition I will sometimes use this `toy` data frame:
+Reflecting this additional complexity, the later parts of the chapter focuses mostly on legends. Section \@ref(scale-guide) discusses guide functions, most of which relate to legends. Section \@ref(legend-merge-split) discusses how legends are split and merged across layers, Section \@ref(legend-layout) focuses on legend layout and positioning, while Section \@ref(legend-glyph) shows you how to modify the glyphs displayed in the legend key.
+
+## Scale names {#scale-name}
+
+A common task when creating plots is to customise the title of the axes and legends. To illustrate how this is done in ggplot2, I'll create a small  `toy` data frame which I will reuse throughout the chapter:
     
 ```{r}
 toy <- data.frame(
@@ -47,9 +52,8 @@ toy <- data.frame(
 toy
 ```
 
-## Scale names {#scale-name}
-
-One of the most common tasks when creating plots is customising the title of the plot axes/legends. This can be achieved by setting the first argument to the scale function, which specifies the scale `name`. You can supply text strings (using `\n` for line breaks) or mathematical expressions in `quote()` (as described in `?plotmath`):  \index{Axis!title} \index{Legend!title}
+In ggplot2 the axis or legend title is specified by `name`, which is always the first argument to the corresponding scale function. Usually this argument takes a text string as input, using `\n` to specify line breaks. However, it is also possibly to supply mathematical expressions in `quote()`, as described in `?plotmath`
+\index{Axis!title} \index{Legend!title}
     
 `r columns(2, 1 / 2)`
 ```{r guide-names, cache.vars=toy}
@@ -59,8 +63,21 @@ base + scale_x_continuous("X axis")
 base + scale_x_continuous(quote(a + mathematical ^ expression))
 ```
 
-Because tweaking these labels is such a common task, there are three 
-helpers that save you some typing: `xlab()`, `ylab()` and `labs()`:
+It is also possible to include (some) markdown in axis and legend titles with the help of the ggtext package [@ggtext] and the ggplot2 theme system (see Chapter \@ref(polishing)). To enable markdown you need to set the relevant theme element to `ggtext::element_markdown()`, as demonstrated below:
+
+`r columns(2, 1 / 2)`
+```{r markdown-with-ggtext, cache.vars=toy}
+base <- ggplot(toy, aes(up, up)) + 
+  geom_point() + 
+  scale_x_continuous("Axis title with *italics* and **boldface**")
+
+base
+base + theme(axis.title.x = ggtext::element_markdown())
+```
+
+
+Because tweaking axis and legend labels is such a common task, there are three 
+helper functions in ggplot2 that can save you some typing: `xlab()`, `ylab()` and `labs()`:
 
 `r columns(2, 2/3)`
 ```{r guide-names-helper, cache.vars=toy}
@@ -85,21 +102,6 @@ base + labs(x = "",  y = "")
 base + labs(x = NULL, y = NULL)
 ```
 
-Note that it is also possible to use (a limited subset of) markdown in axis labels with the help of the ggtext package [@ggtext], by setting the relevant theme element to `ggtext::element_markdown()`. Modifying theme settings is discussed further in Chapter \@ref(polishing).
-
-`r columns(2, 1)`
-```{r markdown-with-ggtext, cache.vars=toy}
-base <- ggplot(toy, aes(const, up)) + 
-  geom_point() + 
-  xlab("Use *italics* in label") +
-  ylab("Use **boldface** in label")
-
-base
-base + theme(
-  axis.title.x = ggtext::element_markdown(),
-  axis.title.y = ggtext::element_markdown()
-)
-```
 
 
 ## Scale breaks and labels {#breaks-labels}
@@ -283,7 +285,7 @@ base + scale_x_date(
 
 
 
-## Scale guides
+## Scale guides {#scale-guide}
 
 The previous sections describe features of ggplot2 that are the same for both axes and legend, but because legends are more complex than axes, there are additional topics to discuss that pertain only (or mostly) to legends. ggplot2 is designed so that in most cases the default legends will be sensible, but even so it is often necessary to override the defaults. You can do this using the `guide` argument of the corresponding scale function, or more conveniently, the `guides()` helper function. 
 
@@ -457,7 +459,7 @@ base + guides(x = guide_axis(angle = 90))
 The final guide function is `guide_none()`, in which no guide is drawn for the relevant aesthetic.
 
 
-## Legend merging and splitting
+## Legend merging and splitting {#legend-merge-split}
 
 One of the major differences between legends and axes is that a legend may need to draw symbols from multiple layers ("merging" legends). On occasions multiple legends may need to be associated with the same aesthetic ("splitting" a legend). In this section I cover both topics.
 
@@ -564,7 +566,7 @@ base + theme(legend.position = c(1, 0), legend.justification = c(1, 0))
 
 There's also a margin around the legends, which you can suppress with `legend.margin = unit(0, "mm")`.
 
-## Legend key glyphs
+## Legend key glyphs {#legend-glyph}
 
 In most cases the default glyphs shown in the legend key will be appropriate to the layer and the aesthetic. Line plots of different colours will show up as lines of different colours in the legend, boxplots will appear as small boxplots in the legend, and so on. Should you need to override this behaviour, the `key_glyph` argument can be used to associate a particular layer with a different kind of glyph. For example:
 
