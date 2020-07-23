@@ -16,6 +16,16 @@ Scales can be divided roughly into four families:
 * Position scales, used to map integer, numeric, and date/time 
   data to x and y position (Section \@ref(scale-position)).
 
+=======
+\index{Scales}
+
+Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the scale). The axis or legend is the inverse function: it allows you to convert visual properties back to data. In ggplot2 these two roles are controlled by the same toolkit (the scale functions), but for expository reasons they are discussed separately in this book. In this chapter I will focus on the mapping from the data to the aesthetics, and in Chapter \@ref(guides) I will return to axes and legends. 
+
+Scales can be divided roughly into four families:
+
+* Position scales, used to map integer, numeric, and date/time 
+  data to x and y position (Section \@ref(scale-position)).
+
 * Colour scales, used to map continuous and discrete data to colours (Section \@ref(scale-colour)).
 
 * Manual scales, used to map discrete variables to your choice of size, 
@@ -215,6 +225,12 @@ On the left the default fill colours are shown. In the middle panel when the sca
 Every plot in ggplot2 has two position scales corresponding to the x and y aesthetics. Typically the user specifies the variables mapped to x and y explicitly, but sometimes an aesthetic is mapped to a computed variable, as happens with `geom_histogram()`. The following plot specifications are equivalent:
 \index{Scales!position} \index{Positioning!scales} 
 
+
+## Position scales {#scale-position}
+
+Every plot in ggplot2 has two position scales corresponding to the x and y aesthetics. Typically the user specifies the variables mapped to x and y explicitly, but sometimes an aesthetic is mapped to a computed variable, as happens with `geom_histogram()`. The following plot specifications are equivalent:
+\index{Scales!position} \index{Positioning!scales} 
+
 ```{r, fig.show='hide', message = FALSE}
 ggplot(mpg, aes(x = hwy)) + geom_histogram()
 ggplot(mpg, aes(x = hwy, y = stat(count))) + geom_histogram()
@@ -264,6 +280,12 @@ Note that there is nothing preventing you from performing the transformation man
 
 ### Discrete position scales
 
+=======
+
+Note that there is nothing preventing you from performing the transformation manually. For example, instead of using `scale_x_log10()` to transform the scale, you could transform the data instead and plot `log10(x)`. The appearance of the geom will be the same, but the tick labels will be different. Specifically, if you use a transformed scale, the axes will be labelled in the original data space; if you transform the data, the axes will be labelled in the transformed space. Regardless of which method you use, the transformation occurs before any statistical summaries. To transform _after_ statistical computation use `coord_trans()`. See Section \@ref(cartesian) for more details.
+
+### Discrete position scales
+
 The ggplot2 package also allows you to map discrete variables to position scales, with the default scales being `scale_x_discrete()` and `scale_y_discrete()` in this case. For example, the following two plot specifications are equivalent
 
 ```{r default-scales-discrete, fig.show = "hide"}
@@ -300,6 +322,23 @@ ggplot(mpg, aes(hwy, class)) +
 
 
 ## Colour (and fill) scales {#scale-colour}
+=======
+```
+
+Another variation on discrete position scales are binned scales, in which a continuous variable is sliced into multiple bins and the discretised variable is plotted. For example, if we want to modify the plot above to show the number of observations at each location, we could use `geom_count()` instead of `geom_point()` so that the size of the dots scales with the number of observations. As the left plot below illustrates, this is an improvement but is still rather cluttered. To improve this, the plot on the right uses `scale_x_binned()` to cut the `hwy` values into 10 bins before passing them to the geom:
+
+```{r}
+ggplot(mpg, aes(hwy, class)) + 
+  geom_count()
+
+ggplot(mpg, aes(hwy, class)) + 
+  geom_count() + 
+  scale_x_binned(n.breaks = 10)
+```
+
+
+
+## Colour scales {#scale-colour}
 
 After position, the most commonly used aesthetic is colour. There are quite a few different ways of mapping values to colours in ggplot2: four different gradient-based methods for continuous values, and two methods for mapping discrete values. But before we look at the details of the different methods, it's useful to learn a little bit of colour theory. Colour theory is complex because the underlying biology of the eye and brain is complex, and this introduction will only touch on some of the more important issues. An excellent and more detailed exposition is available online at <http://tinyurl.com/clrdtls>. \index{Colour} \index{Scales!colour}
 
