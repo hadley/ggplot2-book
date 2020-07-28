@@ -154,6 +154,7 @@ Note also that the scales package contains `minor_breaks_n()` and `minor_breaks_
 ### Date scale breaks {#date-scales}
 
 A special case of interest arises when an aesthetic is mapped to date or date/time data: in ggplot2 these are treated as continuous variables with special labels. The ggplot2 package supports the `Date` (for dates) and `POSIXct` (for date/times) classes, as well as the `hms` class provided by the hms package [@hms]. If your dates are in a different format you will need to convert them using `as.Date()`, `as.POSIXct()` or `hms::as_hms()`. You may also find the toolkit provided by the lubridate package helpful to manipulate time and date data [@lubridate]. Assuming you have appropriately formatted data mapped to the x aesthetic, ggplot2 will use  `scale_x_date()` as the default scale for dates and `scale_x_datetime()` as the default scale for date/time data. The corresponding scales for other aesthetics follow the usual naming rules. 
+\index{Date/times} \index{Data!date/time} \index{Time} \index{Scales!date/time} \indexf{scale\_x\_datetime}
 
 The date scales behave similarly to other continuous scales, but contain additional arguments that are allow you to work in date-friendly units. The `date_breaks` argument allows you to position breaks by date units (years, months, weeks, days, hours, minutes, and seconds). For example, `date_breaks = "2 weeks"` will place a major tick mark every two weeks and `date_breaks = 20 years"` will place them every 20 years:
 
@@ -252,53 +253,8 @@ See the documentation of the scales package for more detail.
 
 ### Date scale labels {#date-labels}
 
-A special case of interest occurs when an aesthetic is mapped to date or date/time data. In ggplot2 these are treated as continuous variables that have special labels, and there are some helper functions designed to make it easier to specify the breaks and labels for these scales. The ggplot2 package supports the `Date` (for dates) and `POSIXct` (for date/times) classes, as well as the `hms` class provided by the hms package [@hms]. If your dates are in a different format you will need to convert them using `as.Date()`, `as.POSIXct()` or `hms::as_hms()`. You may also find the toolkit provided by the lubridate package helpful to manipulate time and date data [@lubridate].
+In addition to the special behaviour for breaks (Section \@ref(#date-scales)), date scales in ggplot2 include a `date_labels` argument. It controls the display of the labels using the same formatting strings as in `strptime()` and `format()`. To display dates like 14/10/1979, for example, you would use the  string `"%d/%m/%Y"`: in this expression `%d` produces a numeric day of month, `%m` produces a numeric month, and `%Y` produces a four digit year. The table below provides a list of formatting strings:
 
-
-For appropriately formatted data mapped to the x aesthetic, ggplot2 will default to `scale_x_date()` and `scale_x_datetime()`, and there are similar scales for other aesthetics. In most respects date scales behave the same way as other continuous scales, but have some special behaviour that is worth noting. Specifically, in addition to the usual `breaks` and `labels` arguments, date scales have special `date_breaks` and `date_labels` arguments that allow you to work in date-friendly units:
-\index{Date/times} \index{Data!date/time} \index{Time} \index{Scales!date/time} \indexf{scale\_x\_datetime}
-
-*   `date_breaks` and `date_minor_breaks()` allow you to position breaks by
-    date units (years, months, weeks, days, hours, minutes, and seconds). 
-    For example, `date_breaks = "2 weeks"` will place a major 
-    tick mark every two weeks.
-
-*   `date_labels` controls the display of the labels
-    using the same formatting strings as in `strptime()` and `format()`. 
-    To display dates like 14/10/1979, for example, you would use the 
-    string `"%d/%m/%Y"`: in this expression `%d` produces a numeric 
-    day of month, `%m` produces a numeric month, and `%Y` produces a 
-    four digit year (the table at the end of this section provides a 
-    longer list of formatting strings)
-
-One scenario where date formatting can be useful is when there is insufficient room to specify a four digit year. Using `%y` ensures that only the last two digits are displayed, as the example below illustrates:
-
-`r columns(2, 1 / 2)`
-```{r date-scale-3}
-base <- ggplot(economics, aes(date, psavert)) + 
-  geom_line(na.rm = TRUE) +
-  labs(x = NULL, y = NULL)
-
-base 
-base + scale_x_date(date_labels = "%y", date_breaks = "5 years")
-```
-
-Additional examples are shown below:
-
-```{r date-scale-4}
-base + scale_x_date(
-  limits = as.Date(c("2004-01-01", "2005-01-01")),
-  date_labels = "%b %y",
-  date_minor_breaks = "1 month"
-)
-base + scale_x_date(
-  limits = as.Date(c("2004-01-01", "2004-06-01")),
-  date_labels = "%m/%d",
-  date_minor_breaks = "2 weeks"
-)
-```
-
-For an alternative approach, note that the scales package contains `label_dates()` and `label_dates_short()` that use the same formatting strings to specify the appearance of dates. The full list of strings recognised is:
 
 | String        | Meaning
 |:--------------|:-----------------------------------------
@@ -319,6 +275,28 @@ For an alternative approach, note that the scales package contains `label_dates(
 | `%Y`          | year, with century (0000-9999)
 
 
+One scenario where date label formatting can be useful is when there is insufficient room to specify a four digit year. Using `%y` ensures that only the last two digits are displayed, as the example below illustrates:
+
+`r columns(2, 1 / 2)`
+```{r date-scale-3}
+base <- ggplot(economics, aes(date, psavert)) + 
+  geom_line(na.rm = TRUE) +
+  labs(x = NULL, y = NULL)
+
+base + scale_x_date(date_breaks = "5 years")
+base + scale_x_date(date_breaks = "5 years", date_labels = "%y")
+```
+
+Additional examples are shown below:
+
+```{r date-scale-4}
+lim <- as.Date(c("2004-01-01", "2005-01-01"))
+
+base + scale_x_date(limits = lim, date_labels = "%b %y")
+base + scale_x_date(limits = lim, date_labels = "%m/%Y")
+```
+
+For an alternative approach, note that the scales package contains `label_dates()` and `label_dates_short()` that use the same formatting strings to specify the appearance of dates. 
 
 
 ### Exercises
