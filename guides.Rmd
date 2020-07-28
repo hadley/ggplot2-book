@@ -16,7 +16,7 @@ knitr::include_graphics("diagrams/scale-guides.png", dpi = 300, auto_pdf = TRUE)
 As much as possible ggplot2 attempts to preserve these correspondences, and uses the same argument names for some axis and legend properties:
 
 | Axis              | Legend        | Argument name
-|-------------------|---------------|-----------------
+|:------------------|:--------------|:----------------
 | Label             | Title         | `name`          
 | Ticks & grid line | Key           | `breaks`        
 | Tick label        | Key label     | `labels`        
@@ -75,41 +75,27 @@ base
 base + theme(axis.title.x = ggtext::element_markdown())
 ```
 
-
-Because tweaking axis and legend labels is such a common task, there are three 
-helper functions in ggplot2 that can save you some typing. The first two are `xlab()` and `ylab()`, each of which takes a single argument that specifies the corresponding axis label. The `labs()` helper function is more flexible and can be used to set the name for one or more scale, using name-value pairs such as `x = "X axis"` or `fill = "fill legend"`. All three are illustrated below:
+Because tweaking axis and legend labels is such a common task, ggplot2 provides the `labs()` helper function that can save you some typing. It allows you to set can be the name for one or more scale, using name-value pairs such as `x = "X axis"` or `fill = "fill legend"`. As a convenience, it also allows you to specify plot titles, subtitles, captions and tags (see Section \@ref(titles)):
 
 `r columns(2, 2/3)`
 ```{r guide-names-helper}
 ggplot(toy, aes(const, up)) + 
-  geom_point() + 
-  xlab("X axis") + 
-  ylab("Y axis")
-
-ggplot(toy, aes(const, up)) + 
   geom_point(aes(colour = txt)) + 
-  labs(x = "X axis", y = "Y axis", colour = "Colour\nlegend")
+  labs(
+    x = "X axis", 
+    y = "Y axis", 
+    colour = "Colour\nlegend",
+    title = "A pithy title",
+    subtitle = "A more precise subtitle"
+  )
 ```
 
-There are two ways to remove the axis label. Setting it to `""` omits the label, but still allocates space; `NULL` removes the label and its space. Look closely at the left and bottom borders of the following two plots. I've drawn a grey rectangle around the plot to make it easier to see the difference.
-
-```{r guide-names-remove}
-base <- ggplot(toy, aes(const, up)) + 
-  geom_point() + 
-  theme(plot.background = element_rect(colour = "grey50"))
-
-base + labs(x = "",  y = "")
-base + labs(x = NULL, y = NULL)
-```
+There are two ways to remove the axis label. Setting `labs(x = "")` omits the label but still allocates space; setting `labs(x = NULL)` removes the label and its space. 
 
 ## Scale breaks {#scale-breaks}
 
-
-
-## Scale labels {#scale-labels}
-
-In the same way that the `name` argument to a scale function governs axis titles and legend titles, the `breaks` argument is used to control which values appear as tick marks on axes and as keys on legends. Every break is associated with a label and these can be changed by setting the `labels` argument to the scale function. If you do set the `labels` argument, be sure to set `breaks` as well: if you don't and the data changes, the breaks will no longer align with the labels. The code below shows some basic examples for axes:
- \index{Axis!ticks} \index{Axis!breaks} \index{Axis!labels} \index{Legend!keys}
+In the same way that the `name` argument to a scale function governs axis titles and legend titles, the `breaks` argument is used to control which values appear as tick marks on axes and as keys on legends. 
+\index{Axis!ticks} \index{Axis!breaks}
 
 `r columns(3, 2/3)`
 ```{r breaks-labels}
@@ -119,7 +105,6 @@ axs <- ggplot(toy, aes(big, const)) +
 
 axs
 axs + scale_x_continuous(breaks = c(2000, 4000))
-axs + scale_x_continuous(breaks = c(2000, 4000), labels = c("2k", "4k"))
 ```
 
 
@@ -134,6 +119,46 @@ leg <- ggplot(toy, aes(up, up, fill = big)) +
 
 leg 
 leg + scale_fill_continuous(breaks = c(2000, 4000))
+```
+
+### Break functions
+
+In the simple examples above I specified the vector of `breaks` manually, but ggplot2 also allows you to pass a function. The function passed to `breaks` should have one argument that specifies the limits of the scale (a numeric vector of length two), and it should return a numeric vector of breaks.
+
+There are also a few options for break functions in the scales package:
+
+* `scales::breaks_extended()`	creates automatic breaks for numeric axes
+* `scales::breaks_log()`	creates breaks appropriate for log axes
+* `scales::breaks_pretty()`	creates "pretty" breaks for date/times
+* `scales::breaks_width()`	creates equally spaced breaks
+
+### Minor breaks
+
+You can adjust the minor breaks (the faint grid lines that appear between the major grid lines) by supplying a numeric vector of positions to the `minor_breaks` argument. This is particularly useful for log scales. First I'll create a vector of minor break values (on the transformed scale), using `%o%` to quickly generate a multiplication table and `as.numeric()` to flatten the table to a vector.
+\index{Minor breaks}\index{Log!ticks}
+```{r}
+mb <- unique(as.numeric(1:10 %o% 10 ^ (0:4)))
+mb[1:28]
+```
+The following plots illustrate the effect of setting the minor breaks:
+`r columns(2, 2/3)`
+```{r}
+base <- ggplot(toy, aes(log, const)) + geom_point()
+
+base + scale_x_log10()
+base + scale_x_log10(minor_breaks = mb)
+```
+ 
+Note also that the scales package contains `minor_breaks_n()` and `minor_breaks_width()` functions that can be helpful in controlling the minor breaks.
+
+
+## Scale labels {#scale-labels}
+
+Every break is associated with a label and these can be changed by setting the `labels` argument to the scale function. If you do set the `labels` argument, be sure to set `breaks` as well: if you don't and the data changes, the breaks will no longer align with the labels. The code below shows some basic examples:
+\index{Axis!labels} \index{Legend!keys}
+
+```{r}
+axs + scale_x_continuous(breaks = c(2000, 4000), labels = c("2k", "4k"))
 leg + scale_fill_continuous(breaks = c(2000, 4000), labels = c("2k", "4k"))
 ```
 
@@ -162,9 +187,9 @@ axs + scale_x_continuous(labels = NULL)
 leg + scale_fill_continuous(labels = NULL)
 ```
 
-### Break and label functions
+### Label functions
 
-In the simple examples above I specified the vector of values for `breaks` and `labels` manually, but ggplot2 also allows you to pass functions either of these arguments. The function passed to `breaks` should have one argument that specifies the limits of the scale (a numeric vector of length two), and it should return a numeric vector of breaks. A function passed to `labels` should accept a numeric vector of breaks as input and return a character vector of labels (the same length as the input). You can write your own break and labelling functions, but in many cases there is no need, thanks to the scales package [@scales].
+In the simple examples above I specified the vector of `labels` manually, but ggplot2 also allows you to pass a labelling function A function passed to `labels` should accept a numeric vector of breaks as input and return a character vector of labels (the same length as the input). You can write your own break and labelling functions, but in many cases there is no need, thanks to the scales package [@scales].
 
 The scales package provides a number of tools that will automatically construct label functions for you. Some of the more useful examples for numeric data include:
 
@@ -186,32 +211,8 @@ axs + scale_y_continuous(labels = scales::label_dollar(prefix = "", suffix = "â‚
 leg + scale_fill_continuous(labels = scales::label_bytes())
 ```
 
-There are also a few options for break functions in the scales package:
-
-* `scales::breaks_extended()`	creates automatic breaks for numeric axes
-* `scales::breaks_log()`	creates breaks appropriate for log axes
-* `scales::breaks_pretty()`	creates "pretty" breaks for date/times
-* `scales::breaks_width()`	creates equally spaced breaks
-
 See the documentation of the scales package for more detail.
 
-### Adjusting minor breaks
-
-You can adjust the minor breaks (the faint grid lines that appear between the major grid lines) by supplying a numeric vector of positions to the `minor_breaks` argument. This is particularly useful for log scales. First I'll create a vector of minor break values (on the transformed scale), using `%o%` to quickly generate a multiplication table and `as.numeric()` to flatten the table to a vector.
-\index{Minor breaks}\index{Log!ticks}
-```{r}
-mb <- as.numeric(1:10 %o% 10 ^ (0:4))
-```
-The following plots illustrate the effect of setting the minor breaks:
-`r columns(2, 2/3)`
-```{r}
-base <- ggplot(toy, aes(log, const)) + geom_point()
-
-base + scale_x_log10()
-base + scale_x_log10(minor_breaks = mb)
-```
- 
-Note also that the scales package contains `minor_breaks_n()` and `minor_breaks_width()` functions that can be helpful in controlling the minor breaks.
 
 
 ### Date scales {#date-scales}
@@ -264,23 +265,23 @@ base + scale_x_date(
 
 For an alternative approach, note that the scales package contains `label_dates()` and `label_dates_short()` that use the same formatting strings to specify the appearance of dates. The full list of strings recognised is:
 
-    | String        | Meaning
-    |---------------|-----------------------------------------
-    | `%S`          | second (00-59)
-    | `%M`          | minute (00-59)
-    | `%l`          | hour, in 12-hour clock (1-12)
-    | `%I`          | hour, in 12-hour clock (01-12)
-    | `%p`          | am/pm
-    | `%H`          | hour, in 24-hour clock (00-23)
-    | `%a`          | day of week, abbreviated (Mon-Sun)
-    | `%A`          | day of week, full (Monday-Sunday)
-    | `%e`          | day of month (1-31)
-    | `%d`          | day of month (01-31)
-    | `%m`          | month, numeric (01-12)
-    | `%b`          | month, abbreviated (Jan-Dec)
-    | `%B`          | month, full (January-December)
-    | `%y`          | year, without century (00-99)
-    | `%Y`          | year, with century (0000-9999)
+| String        | Meaning
+|:--------------|:-----------------------------------------
+| `%S`          | second (00-59)
+| `%M`          | minute (00-59)
+| `%l`          | hour, in 12-hour clock (1-12)
+| `%I`          | hour, in 12-hour clock (01-12)
+| `%p`          | am/pm
+| `%H`          | hour, in 24-hour clock (00-23)
+| `%a`          | day of week, abbreviated (Mon-Sun)
+| `%A`          | day of week, full (Monday-Sunday)
+| `%e`          | day of month (1-31)
+| `%d`          | day of month (01-31)
+| `%m`          | month, numeric (01-12)
+| `%b`          | month, abbreviated (Jan-Dec)
+| `%B`          | month, full (January-December)
+| `%y`          | year, without century (00-99)
+| `%Y`          | year, with century (0000-9999)
 
 
 
@@ -334,10 +335,23 @@ base + scale_colour_continuous(guide = guide_coloursteps())
 base + guides(colour = guide_coloursteps())
 ```
 
-However, scale guides are more complex than scale names: where the `name` argument (and hence the `labs()` helper function) takes text as input, the `guide` argument (and `guides()` helper) expect you to create a guide object using a **guide function** such as `guide_colourbar()` and `guide_legend()`. These functions offer the user additional control over the fine details of the legend. Legend guides can be used for any aesthetic (discrete or continuous) while the colour bar guide can only be used with continuous colour scales. 
+However, scale guides are more complex than scale names: where the `name` argument (and hence the `labs()` helper function) takes text as input, the `guide` argument (and `guides()` helper) expect you to create a guide object using a **guide function** such as `guide_colourbar()` and `guide_legend()`. These functions offer the user additional control over the fine details of the legend. Legend guides can be used for any aesthetic (discrete or continuous) while the colour bar guide can only be used with continuous colour scales. The table below summarises the default guide functions associated with different scale types:
 
 
-The guide functions have numerous examples in their documentation help pages that illustrate all of their arguments. Most of the arguments to the guide function control the fine level details of the text colour, size, font etc. You'll learn about those in the themes chapter. Here I'll focus on the most important arguments.
+| Scale type                                           | Default guide type  |       
+|:-----------------------------------------------------|:--------------------|
+| continuous scales for colour/fill aesthetics         | colourbar           |
+| binned scales for colour/fill aesthetics             | coloursteps         |
+| position scales (continuous, binned and discrete)    | axis                |
+| discrete scales (except position scales)             | legend              |
+| binned scales (except position/colour/fill scales)   | bins                |
+
+
+The various guide functions have numerous examples in their documentation help pages that illustrate all of their arguments. Many of the arguments to the guide function control the fine level details of the text colour, size, font etc. This can be helpful when you want one legend to look different to the others, but when changing appearance globally it is better to modify the theme directly (Chapter \@ref(polishing)). Here I'll focus on arguments specific to legends and axes.
+
+
+
+
 
 ### `guide_legend()`
 
@@ -532,7 +546,17 @@ ggplot(toy, aes(const, up)) + geom_point(aes(shape = txt))
 ggplot(toy, aes(const, up)) + geom_point(aes(shape = txt, colour = txt))
 ```
 
-In order for legends to be merged, they must have the same `name`. So if you change the name of one of the scales, you'll need to change it for all of them.
+In order for legends to be merged, they must have the same `name`. So if you change the name of one of the scales, you'll need to change it for all of them. One way to do this is by using `labs()` helper function:
+
+`r columns(3, 1.5)`
+```{r}
+base <- ggplot(toy, aes(const, up)) + geom_point(aes(shape = txt, colour = txt))
+
+base
+base + labs(shape = "Split legend")
+base + labs(shape = "Merged legend", colour = "Merged legend")
+```
+
 
 
 ### Splitting legends
@@ -554,7 +578,7 @@ base +
   scale_colour_manual("4 cylinder", values = c("grey60", "black"))
 ```
 
-
+Additional details, including functions that apply to other scale types, are available on the package website, https://github.com/eliocamp/ggnewscale.
 
 
 
