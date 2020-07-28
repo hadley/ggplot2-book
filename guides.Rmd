@@ -121,18 +121,7 @@ leg
 leg + scale_fill_continuous(breaks = c(2000, 4000))
 ```
 
-### Break functions {#break-functions}
-
-In the simple examples above I specified the vector of `breaks` manually, but ggplot2 also allows you to pass a function. The function passed to `breaks` should have one argument that specifies the limits of the scale (a numeric vector of length two), and it should return a numeric vector of breaks. You can write your own break function, but in many cases there is no need, thanks to the scales package [@scales]. It provides several tools that are useful for this purpose:
-
-* `scales::breaks_extended()`	creates automatic breaks for numeric axes
-* `scales::breaks_log()`	creates breaks appropriate for log axes
-* `scales::breaks_pretty()`	creates "pretty" breaks for date/times
-* `scales::breaks_width()`	creates equally spaced breaks
-
-Example
-
-### Minor breaks
+### Minor breaks {#minor-breaks}
 
 You can adjust the minor breaks (the faint grid lines that appear between the major grid lines) by supplying a numeric vector of positions to the `minor_breaks` argument. This is particularly useful for log scales. First I'll create a vector of minor break values (on the transformed scale), using `%o%` to quickly generate a multiplication table and `as.numeric()` to flatten the table to a vector.
 \index{Minor breaks}\index{Log!ticks}
@@ -150,6 +139,55 @@ base + scale_x_log10(minor_breaks = mb)
 ```
  
 Note also that the scales package contains `minor_breaks_n()` and `minor_breaks_width()` functions that can be helpful in controlling the minor breaks.
+
+
+
+### Break functions {#break-functions}
+
+In the simple examples above I specified breaks manually, but ggplot2 also allows you to pass a function. The function passed to `breaks` should have one argument that specifies the limits of the scale (a numeric vector of length two), and it should return a numeric vector of breaks. You can write your own break function, but in many cases there is no need, thanks to the scales package [@scales]. It provides several tools that are useful for this purpose:
+
+* `scales::breaks_extended()`	creates automatic breaks for numeric axes
+* `scales::breaks_log()`	creates breaks appropriate for log axes
+* `scales::breaks_pretty()`	creates "pretty" breaks for date/times
+* `scales::breaks_width()`	creates equally spaced breaks
+
+The `breaks_extended()` function is the standard method used in ggplot2, and accordingly the first two plots below are the same. I can alter the desired number of breaks by setting `n = 10`, as illustrated in the third plot. Note that `breaks_extended()` treats `n` as a suggestion rather than a strict constraint. If you need to specify exact breaks it is better to do so manually.  
+
+`r columns(3)`
+```{r}
+axs
+axs + scale_x_continuous(breaks = scales::breaks_extended())
+axs + scale_x_continuous(breaks = scales::breaks_extended(n = 10))
+```
+
+Another approach that is sometimes useful is specifying a fixed `width` that defines the spacing between breaks. The `breaks_width()` function is used for this. The first example below shows how to fix the width at a specific value; the second example illustrates the use of the `offset` argument that shifts all the breaks by a specified amount:
+
+`r columns(3)`
+```{r}
+axs + scale_x_continuous(breaks = scales::breaks_width(800))
+axs + scale_x_continuous(breaks = scales::breaks_width(800, offset = 200))
+axs + scale_x_continuous(breaks = scales::breaks_width(800, offset = -200))
+```
+
+Notice the difference betweeen setting an offset of 200 and -200.
+
+Other break functions are useful in different situations. For example an economical way to produce nicely spaced breaks similar to the log-scale example in Section \@ref(minor-breaks) is shown below:
+
+`r columns(1, 1/3, 1)`
+```{r}
+base + scale_x_log10(breaks = scales::breaks_log(n = 10))
+```
+
+The same approach can be applied to minor breaks:
+
+`r columns(1, 1/3, 1)`
+```{r}
+base + scale_x_log10(
+  breaks = scales::breaks_log(n = 10), 
+  minor_breaks = scales::breaks_log(n = 30)
+)
+```
+
 
 ### Date scale breaks {#date-scales}
 
