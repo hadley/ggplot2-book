@@ -6,13 +6,11 @@ columns(1, 2 / 3)
 # Guides: legends and axes {#guides}
 \index{Guides} \index{Legend} \index{Axis}
 
-<!-- HW: I reorganised this a bit; probably needs proof reading to make sure I didn't mess anything up -->
-
 In Chapter \@ref(scales) I discussed the way a scale maps a variable to an aesthetic. This chapter is a natural continuation, discussing the role scales play in controlling the __guide__, the axis or legend associated with the scale. You might find it surprising that axes and legends are the same type of thing, but while they look very different they have the same purpose: to allow you to read observations from the plot and map them back to their original values. 
 
 In ggplot2, guides are produced automatically based on the layers in your plot. You don't directly control the legends and axes; instead you set up the data so that there's a clear mapping between data and aesthetics, and a guide is generated for you. This is very different to base R graphics, where you have total control over the legend, and can be frustrating when you first start using ggplot2. However, once you get the hang of it, you'll find that it saves you time, and there is little you cannot do.
 
-The early sections of this chapter highlight functionality that is shared by axes and legends. Section \@ref(scale-name) discusses the `name` argument, while Section \@ref(breaks-labels) covers the `breaks` and `labels` arguments in more detail. 
+The early sections of this chapter highlight functionality that is shared by axes and legends. Section \@ref(scale-name) discusses the `name` argument, while Section \@ref(scale-breaks) covers `breaks` and Section \@ref(scale-labels) discusses `labels`. 
 
 | Argument name   | Axis              | Legend        
 |:----------------|:------------------|:--------------
@@ -24,7 +22,7 @@ The early sections of this chapter highlight functionality that is shared by axe
 knitr::include_graphics("diagrams/scale-guides.png", dpi = 300, auto_pdf = TRUE)
 ```
 
-Tater parts of the chapter focuses mostly on legends because they are more complicated than axes:
+Later parts of the chapter focuses mostly on legends because they are more complicated than axes:
 
 1.  A legend can display multiple aesthetics (e.g. colour and shape), from
     multiple layers, and the symbol displayed in a legend varies based on the
@@ -41,7 +39,7 @@ Reflecting this additional complexity, Section \@ref(scale-guide) discusses guid
 
 ## Scale names {#scale-name}
 
-A common task when creating plots is to customise the title of the axes and legends. To illustrate how this is done in ggplot2, I'll create a small  `toy` data frame which I will reuse throughout the chapter:
+A common task when creating plots is to customise the title of the axes and legends. To illustrate how this is done, I'll create a small  `toy` data frame that I will reuse throughout the chapter:
     
 ```{r}
 toy <- data.frame(
@@ -54,7 +52,7 @@ toy <- data.frame(
 toy
 ```
 
-In ggplot2 the axis or legend title is specified by `name`, which is always the first argument to the scale function. Usually this argument takes a text string as input, using `\n` to specify line breaks, but you can supply mathematical expressions wrapped `quote()`, as described in `?plotmath`
+The axis or legend title is specified by `name`, which is always the first argument to the scale function. Usually this argument takes a text string as input, using `\n` to specify line breaks, but you can supply mathematical expressions wrapped `quote()`, as described in `?plotmath`
 \index{Axis!title} \index{Legend!title}
     
 `r columns(2, 1 / 2)`
@@ -129,19 +127,20 @@ In the simple examples above, I specified breaks manually, but ggplot2 also allo
 * `scales::breaks_pretty()`	creates "pretty" breaks for date/times.
 * `scales::breaks_width()`	creates equally spaced breaks.
 
-The `breaks_extended()` function is the standard method used in ggplot2, and accordingly the first two plots below are the same. I can alter the desired number of breaks by setting `n = 10`, as illustrated in the third plot. Note that `breaks_extended()` treats `n` as a suggestion rather than a strict constraint. If you need to specify exact breaks it is better to do so manually.  
+The `breaks_extended()` function is the standard method used in ggplot2, and accordingly the first two plots below are the same. I can alter the desired number of breaks by setting `n = 2`, as illustrated in the third plot. Note that `breaks_extended()` treats `n` as a suggestion rather than a strict constraint. If you need to specify exact breaks it is better to do so manually.  
 
 <!-- HW: in the last example breaks overlap a lot. Not sure what do. Options:
 * reduce n instead of increasing it
 * drop the first plot since it's the same as the second
 * give a sneak preview of angle = 90 or similar guide_axis() option
 -->
+<!-- DN: I think reducing n works best here -->
 
 `r columns(3, 1/2)`
 ```{r}
 axs
 axs + scale_x_continuous(breaks = scales::breaks_extended())
-axs + scale_x_continuous(breaks = scales::breaks_extended(n = 10))
+axs + scale_x_continuous(breaks = scales::breaks_extended(n = 2))
 ```
 
 Another approach that is sometimes useful is specifying a fixed `width` that defines the spacing between breaks. The `breaks_width()` function is used for this. The first example below shows how to fix the width at a specific value; the second example illustrates the use of the `offset` argument that shifts all the breaks by a specified amount:
@@ -157,8 +156,6 @@ Notice the difference between setting an offset of 200 and -200.
 
 ### Date scale breaks {#date-scales}
 \index{Date/times} \index{Data!date/time} \index{Time} \index{Scales!date/time} \indexf{scale\_x\_datetime}
-
-<!--HW: I use date + date-time then date/time to mean date, date-time, or time -->
 
 A special case arises when an aesthetic is mapped to a date/time type: such as the base `Date` (for dates) and `POSIXct` (for date-times) classes, as well as the `hms` class for "time of day" values provided by the hms package [@hms]. If your dates are in a different format you will need to convert them using `as.Date()`, `as.POSIXct()` or `hms::as_hms()`. You may also find the lubridate package helpful to manipulate date/time data [@lubridate]. 
 
@@ -188,6 +185,8 @@ Because the range in `century20` starts on 1 January and the breaks increment in
 
 ### Suppressing breaks
 
+<!-- DN: I like this as a distinct section! -->
+
 You can suppress the breaks entirely by setting them to `NULL`. For axes, this removes the tick marks, grid lines, and labels; and for legends this this removes the keys and labels.
 
 `r columns(2, 2/3)`
@@ -198,8 +197,6 @@ leg + scale_fill_continuous(breaks = NULL)
 
 ### Minor breaks {#minor-breaks}
 \index{Minor breaks}\index{Log!ticks}
-
-<!-- HW: I moved this to the end of the section -->
 
 You can adjust the minor breaks (the unlabelled faint grid lines that appear between the major grid lines) by supplying a numeric vector of positions to the `minor_breaks` argument. 
 
@@ -220,8 +217,6 @@ log_base + scale_x_log10(minor_breaks = mb)
 ```
 
 As with `breaks`, you can also supply a function to `minor_breaks`, such as `scales::minor_breaks_n()` or `scales::minor_breaks_width()` functions that can be helpful in controlling the minor breaks.
-
-<!-- HW: I removed the example here because I don't love these functions. They always feel a bit clunkly to me -->
 
 For date/time scales, you can use the `date_minor_breaks` argument:
 
@@ -245,8 +240,6 @@ Note that in the first plot, the minor breaks are spaced evenly between the mont
 \index{Axis!labels} \index{Legend!keys}
 
 Every break is associated with a label and these can be changed by setting the `labels` argument to the scale function:
-
-<!--HW: removed the caution since ggplot2 now automatically warns if the the lengths don't match -->
 
 ```{r}
 axs + scale_x_continuous(breaks = c(2000, 4000), labels = c("2k", "4k"))
@@ -299,6 +292,7 @@ See the documentation of the scales package for more detail.
 ### Date scale labels {#date-labels}
 
 <!-- HW: random comment I think either you or past-me uses ggplot2 to a bit too often - I think it's usually obvious that we're talking about ggplot2 :) -->
+<!-- DN: lol. probably me: my default style tends to be verbose! -->
 
 Like `date_breaks`, date scales include a `date_labels` argument. It controls the display of the labels using the same formatting strings as in `strptime()` and `format()`. To display dates like 14/10/1979, for example, you would use the  string `"%d/%m/%Y"`: in this expression `%d` produces a numeric day of month, `%m` produces a numeric month, and `%Y` produces a four digit year. The table below provides a list of formatting strings:
 
@@ -322,8 +316,6 @@ Like `date_breaks`, date scales include a `date_labels` argument. It controls th
 
 
 One useful scenario for date label formatting is when there's insufficient room to specify a four digit year. Using `%y` ensures that only the last two digits are displayed:
-
-<!-- HW: Instead of "as the example below illustrates" or similar, I usually just stick with a colon -->
 
 `r columns(2, 1 / 2)`
 ```{r date-scale-3}
@@ -462,8 +454,6 @@ The legend guide displays individual keys in a table. The most useful options ar
     the size of the keys. These are grid units, e.g. `unit(1, "cm")`.
 
 ### `guide_bins()`
-
-<!-- HW: I prefer `foo()` to "the `foo()` function" -->
 
 `guide_bins()` is suited to the situation when a continuous variable is binned and then mapped to an aesthetic that produces a legend, such as size, colour and fill. For instance, in the `mpg` data we could use `scale_size_binned()` to create a binned version of the continuous variable `hwy`. 
 
