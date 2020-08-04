@@ -211,7 +211,7 @@ An additional complication is that many people (~10% of men) do not possess the 
 
 ### Continuous colour scales {#ssub:colour-continuous}
 
-Colour gradients are often used to show the height of a 2d surface. In the following example we'll use the surface of a 2d density estimate of the `faithful` dataset [@azzalini:1990], which records the waiting time between eruptions and during each eruption for the Old Faithful geyser in Yellowstone Park. I hide the legends and set `expand` to 0, to focus on the appearance of the data. Remember: I'm illustrating these scales with filled tiles, but you can also use them with coloured lines and points.
+Colour gradients are often used to show the height of a 2d surface. The plots in this section use the surface of a 2d density estimate of the `faithful` dataset [@azzalini:1990], which records the waiting time between eruptions and during each eruption for the Old Faithful geyser in Yellowstone Park. I hide the legends and set `expand` to 0, to focus on the appearance of the data. Remember: although I use the `erupt` plot to illustrate concepts using with a fill aesthetic, the same ideas apply to colour scales. Any time I refer to `scale_fill_*()` in this section there is a corresponding `scale_colour_*()` for the colour aesthetic (or `scale_color_*()` if you prefer US spelling).
 \index{Colour!gradients} \index{Scales!colour}
 
 `r columns(3, 1)`
@@ -222,6 +222,36 @@ erupt <- ggplot(faithfuld, aes(waiting, eruptions, fill = density)) +
   scale_y_continuous(NULL, expand = c(0, 0)) + 
   theme(legend.position = "none")
 ```
+
+There are multiple ways to specify continuous colour scales. The default scale function is `scale_fill_continuous()` which in turn defaults to `scale_fill_gradient()`. As a consequence, these three commands produce the same plot using a gradient scale:
+
+```{r}
+erupt
+erupt + scale_fill_continuous()
+erupt + scale_fill_gradient()
+```
+
+Gradient scales provide a flexible method for creating any colour scheme you like. All you need to do is specify two or more reference colours, and ggplot2 will interpolate linearly between them. There are three functions that you can use for this purpose:
+
+- `scale_fill_gradient()` produces a two-colour gradient
+- `scale_fill_gradient2()` produces a three-colour gradient with specified midpoint
+- `scale_fill_gradientn()` produces an n-colour gradient
+
+This method is illustrated below:
+
+```{r}
+erupt + scale_fill_gradient(low = "grey", high = "brown")
+erupt + scale_fill_gradient2(low = "grey", mid = "white", high = "brown", midpoint = .02)
+erupt + scale_fill_gradientn(colours = terrain.colors(7))
+```
+
+
+```{r}
+erupt + scale_fill_viridis_c()
+erupt + scale_fill_distiller()
+```
+
+
 
 There are four continuous colour scales:
 
