@@ -28,9 +28,7 @@ Scales can be divided roughly into four families:
 Before diving into the details for each scale type, Section \@ref(scale-usage) provides an overview of how scales are specified in ggplot2 and Section \@ref(limits) shows how to adjust the limits of a scale.
 
 
-## Core concepts
-
-### Scale specification {#scale-usage}
+## Scale specification {#scale-usage}
 
 An important property of ggplot2 is the principle that every aesthetic in your plot is associated with exactly one scale. For instance, when you write:
 
@@ -84,17 +82,6 @@ ggplot(mpg, aes(displ, hwy)) +
 In a specification such as this, `scale_x_sqrt()` changes the settings associated with the x axis scale, and `scale_colour_brewer()` does the same with the colour scale. I'll talk more about these later in the chapter.
 
 
-### Scale names and types
-
-There are a large number of user-facing scale functions in ggplot2, all of which follow a common naming scheme. You’ve probably already figured out the naming scheme for scales, but to be concrete, it’s made up of three pieces separated by "_":
-
-1. `scale`
-1. The name of the aesthetic (e.g., `colour`, `shape` or `x`)
-1. The name of the scale (e.g., `continuous`, `discrete`, `brewer`).
-
-From the user side, these are the only functions you should need to call. It may be useful, however, to recognise that as a practical matter ggplot2 classifies the scale functions into three fundamental scale types: continuous, discrete and binned. Accordingly, every scale in ggplot2 is constructed using one of three functions, `continuous_scale()`, `discrete_scale()` and `binned_scale()`. This is why, in Section \@ref(scale-position) where I discuss scales associated with position aesthetics, the text is subdivided into these sections. A similar structure applies for aesthetics based on colour \@ref(scale-colour), and other sections.
-
-
 ### Exercises
 
 1.  What happens if you pair a discrete variable to a continuous scale?
@@ -119,21 +106,50 @@ From the user side, these are the only functions you should need to call. It may
     ```
 
 
+
+## Scale types
+
+The user-facing scale functions in ggplot2 follow a common naming scheme. You’ve probably already figured out the scheme, but to be concrete, it’s made up of three pieces separated by "_":
+
+1. `scale`
+1. The name of the aesthetic (e.g., `colour`, `shape` or `x`)
+1. The name of the scale (e.g., `continuous`, `discrete`, `brewer`).
+
+From the user side, these are the only functions you should need to call. However, it is useful to note that these scale functions belong to three types: **continuous scales**, **discrete scales** and **binned scales**. Each type is handled by one of three scale constructor functions---`continuous_scale()`, `discrete_scale()` and `binned_scale()`---and for this reason later sections in this chapter are often subdivided into these three categories.
+
 ## Position scales {#scale-position}
 
-Every plot in ggplot2 has two position scales corresponding to the x and y aesthetics. Typically the user specifies the variables mapped to x and y explicitly, but sometimes an aesthetic is mapped to a computed variable, as happens with `geom_histogram()`. The following plot specifications are equivalent:
+Every plot has two position scales corresponding to the x and y aesthetics. Typically the user specifies the variables mapped to x and y explicitly, but sometimes an aesthetic is mapped to a computed variable, as happens with `geom_histogram()`, and does not need to be explicitly specified. For example, the following plot specifications are equivalent:
+
+```{r, fig.show = "hide", message = FALSE}
+ggplot(mpg, aes(x = displ)) + geom_histogram()
+ggplot(mpg, aes(x = displ, y = after_stat(count))) + geom_histogram()
+```
+
+Although the first example does not state the y-aesthetic mapping explicitly, it still exists and is associated with (in this case) a continuous position scale.
+
 \index{Scales!position} \index{Positioning!scales} 
 
 
 ### Continuous position scales 
 
-The most common continuous position scales are `scale_x_continuous()` and `scale_y_continuous()`, discussed earlier.
-\indexf{scale\_x\_continuous} 
+The most common continuous position scales are the default `scale_x_continuous()` and `scale_y_continuous()` functions, discussed earlier. These are the simplest scales and they map linearly from the value to the position. There are several other position scales for continuous variables---`scale_x_log10()`, `scale_x_reverse()`, etc---most of which are convenience functions used to provide easy access to common transformations:
 
+`r columns(3)`
+```{r}
+base <- ggplot(mpg, aes(displ, hwy)) + geom_point()
+
+base
+base + scale_x_reverse()
+base + scale_y_reverse()
+```
+
+Scale transformations are discussed in Section \@ref(scale-transformation).
+\indexf{scale\_x\_continuous} 
 
 ### Discrete position scales
 
-The ggplot2 package also allows you to map discrete variables to position scales, with the default scales being `scale_x_discrete()` and `scale_y_discrete()` in this case. For example, the following two plot specifications are equivalent
+It is also possible to map discrete variables to position scales, with the default scales being `scale_x_discrete()` and `scale_y_discrete()` in this case. For example, the following two plot specifications are equivalent
 
 ```{r default-scales-discrete, fig.show = "hide"}
 ggplot(mpg, aes(x = hwy, y = class)) + 
@@ -147,6 +163,7 @@ ggplot(mpg, aes(x = hwy, y = class)) +
 
 Internally, ggplot2 treats handles discrete scales by mapping each category to an integer value and then drawing the geom at the corresponding coordinate location. To illustrate this, we can add a custom annotation (see Section \@ref(custom-annotations)) to the plot:
 
+`r columns(1)`
 ```{r}
 ggplot(mpg, aes(x = hwy, y = class)) + 
   geom_point() +
@@ -157,31 +174,29 @@ ggplot(mpg, aes(x = hwy, y = class)) +
 
 A variation on discrete position scales are binned scales, in which a continuous variable is sliced into multiple bins and the discretised variable is plotted. For example, if we want to modify the plot above to show the number of observations at each location, we could use `geom_count()` instead of `geom_point()` so that the size of the dots scales with the number of observations. As the left plot below illustrates, this is an improvement but is still rather cluttered. To improve this, the plot on the right uses `scale_x_binned()` to cut the `hwy` values into 10 bins before passing them to the geom:
 
+`r columns(2)`
 ```{r}
-ggplot(mpg, aes(hwy, class)) + 
-  geom_count()
+base <- ggplot(mpg, aes(hwy, class)) + geom_count()
 
-ggplot(mpg, aes(hwy, class)) + 
-  geom_count() + 
-  scale_x_binned(n.breaks = 10)
+base 
+base + scale_x_binned(n.breaks = 10)
 ```
 
 
 
 ## Colour scales {#scale-colour}
 
-After position, the most commonly used aesthetic is colour. There are quite a few different ways of mapping values to colours in ggplot2: four different gradient-based methods for continuous values, and two methods for mapping discrete values. But before we look at the details of the different methods, it's useful to learn a little bit of colour theory. Colour theory is complex because the underlying biology of the eye and brain is complex, and this introduction will only touch on some of the more important issues. An excellent and more detailed exposition is available online at <http://tinyurl.com/clrdtls>. \index{Colour} \index{Scales!colour}
+After position, the most commonly used aesthetic is colour. There are quite a few different ways of mapping values to colours in ggplot2: four different gradient-based methods for continuous values, and two methods for mapping discrete values. 
+
+### A little colour theory, as a treat
+
+Before we look at the details of the different methods, it's useful to learn a little bit of colour theory. Colour theory is complex because the underlying biology of the eye and brain is complex, and this introduction will only touch on some of the more important issues. An excellent and more detailed exposition is available online at <http://tinyurl.com/clrdtls>. \index{Colour} \index{Scales!colour}
 
 At the physical level, colour is produced by a mixture of wavelengths of light. To characterise a colour completely, we need to know the complete mixture of wavelengths. Fortunately for us the human eye only has three different colour receptors, and so we can summarise the perception of any colour with just three numbers. You may be familiar with the RGB encoding of colour space, which defines a colour by the intensities of red, green and blue light needed to produce it. One problem with this space is that it is not perceptually uniform: the two colours that are one unit apart may look similar or very different depending on where they are in the colour space. This makes it difficult to create a mapping from a continuous variable to a set of colours. There have been many attempts to come up with colours spaces that are more perceptually uniform.  We'll use a modern attempt called the HCL colour space, which has three components of **h**ue, **c**hroma and **l**uminance: \index{Colour!spaces}
 
-* Hue is a number between 0 and 360 (an angle) which gives the "colour" of 
-  the colour: like blue, red, orange, etc.
-
-* Chroma is the purity of a colour.  A chroma of 0 is grey, and the maximum 
-  value of chroma varies with luminance.
-
-* Luminance is the lightness of the colour. A luminance of 0 produces black, 
-  and a luminance of 1 produces white.
+* **Hue** ranges from 0 to 360 (an angle) and gives the "colour" of the colour (blue, red, orange, etc).
+* **Chroma** is the "purity" of a colour, ranging from 0 (grey) to a maximum that varies with luminance.
+* **Luminance** is the lightness of the colour, ranging from 0 (black) to 1 (white).
 
 Hues are not perceived as being ordered: e.g. green does not seem "larger" than red. The perception of chroma and luminance are ordered.
 
@@ -648,7 +663,7 @@ On the left the default fill colours are shown. In the middle panel when the sca
 
 
 
-## Scale transformation
+## Scale transformation {#scale-transformation}
 
 ### Continuous scales
 
