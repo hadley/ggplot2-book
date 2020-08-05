@@ -170,7 +170,7 @@ ggplot(mpg, aes(x = hwy, y = class)) +
   annotate("text", x = 5, y = 1:7, label = 1:7)
 ```
 
-### Binned position scales
+### Binned position scales {#binned-position}
 
 A variation on discrete position scales are binned scales, in which a continuous variable is sliced into multiple bins and the discretised variable is plotted. For example, if we want to modify the plot above to show the number of observations at each location, we could use `geom_count()` instead of `geom_point()` so that the size of the dots scales with the number of observations. As the left plot below illustrates, this is an improvement but is still rather cluttered. To improve this, the plot on the right uses `scale_x_binned()` to cut the `hwy` values into 10 bins before passing them to the geom:
 
@@ -449,7 +449,31 @@ area + scale_fill_brewer(palette = "Pastel1")
 
 ### Binned colour scales
 
+Colour scales also come in binned versions. The default scale is `scale_fill_binned()` which in turn defaults to `scale_fill_steps()`. As with the binned position scales discussed in Section \@ref(binned-position) these scales have an `n.breaks` argument that controls the number of discrete colour categories created by the scale. Counterintuitively---because the human visual system is very good at detecting edges---this can sometimes make a continuous colour gradient easier to perceive:
 
+```{r}
+erupt + scale_fill_binned()
+erupt + scale_fill_steps()
+erupt + scale_fill_steps(n.breaks = 8)
+```
+
+In other respects `scale_fill_steps()` is analogous to `scale_fill_gradient()`, and allows you to construct your own two-colour gradients. There is also a three-colour variant `scale_fill_steps2()` and n-colour scale variant `scale_fill_stepsn()` that behave similarly to their continuous counterparts:
+
+```{r}
+erupt + scale_fill_steps(low = "grey", high = "brown")
+erupt + scale_fill_steps2(low = "grey", mid = "white", high = "brown", midpoint = .02)
+erupt + scale_fill_stepsn(n.breaks = 12, colours = terrain.colors(12))
+```
+
+A brewer analog for binned scales also exists, and is called `scale_fill_fermenter()`:
+
+```{r}
+erupt + scale_fill_fermenter(n.breaks = 9)
+erupt + scale_fill_fermenter(n.breaks = 9, palette = "Oranges")
+erupt + scale_fill_fermenter(n.breaks = 9, palette = "PuOr")
+```
+
+Note that like the discrete `scale_fill_brewer()`---and unlike the continuous `scale_fill_distiller()`---the binned function `scale_fill_fermenter()` does not interpolate between the brewer colours, and if you set `n.breaks` larger than the number of colours in the palette a warning message will appear and some colours will not be displayed.
 
 ## Size scales
 
