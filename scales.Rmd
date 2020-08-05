@@ -414,7 +414,7 @@ bars + scale_fill_brewer(palette = "Set2")
 bars + scale_fill_brewer(palette = "Accent")
 ```
     
-Note that no palette is not uniformly good for all purposes. Scatter plots typically use small plot markers, and bright colours tend to work better than subtle ones:
+Note that no palette is uniformly good for all purposes. Scatter plots typically use small plot markers, and bright colours tend to work better than subtle ones:
 
 `r columns(3, 1)`
 ```{r brewer-pal}
@@ -476,7 +476,7 @@ erupt + scale_fill_fermenter(n.breaks = 9, palette = "PuOr")
 Note that like the discrete `scale_fill_brewer()`---and unlike the continuous `scale_fill_distiller()`---the binned function `scale_fill_fermenter()` does not interpolate between the brewer colours, and if you set `n.breaks` larger than the number of colours in the palette a warning message will appear and some colours will not be displayed.
 
 ## Size scales
-
+\index{Size}
 
 ```{r, echo=FALSE}
 planets <- data.frame(
@@ -489,7 +489,7 @@ planets <- data.frame(
 planets$name <- with(planets, factor(name, name))
 ```
 
-The size aesthetic is typically used to scale points and text, and a little care is required when using size scales. The default scale for size aesthetics is `scale_size()` in which a linear increase in the variable is mapped onto a linear increase in the area (not the radius) of the geom. Scaling as a function of area is a sensible default as human perception of size is more closely mimicked by area scaling than by radius scaling. By default the smallest value in the data (more precisely in the scale limits) is mapped to a size of 1 and the largest is mapped to a size of 6. The `range` argument allows you to scale the size of the geoms:
+The size aesthetic is typically used to scale points and text. The default scale for size aesthetics is `scale_size()` in which a linear increase in the variable is mapped onto a linear increase in the area (not the radius) of the geom. Scaling as a function of area is a sensible default as human perception of size is more closely mimicked by area scaling than by radius scaling. By default the smallest value in the data (more precisely in the scale limits) is mapped to a size of 1 and the largest is mapped to a size of 6. The `range` argument allows you to scale the size of the geoms:
 `r columns(2, 2/3)`
 ```{r}
 base <- ggplot(mpg, aes(displ, hwy, size = cyl)) + 
@@ -521,7 +521,7 @@ base +
 
 On the left it is difficult to distinguish Jupiter from Saturn, despite the fact that the difference between the two should be double the size of Earth; compare this to the plot on the right where the radius of Jupiter is visibly larger.
 
-Other size scales:
+Other size scales exist and are worth noting briefly:
 
 - `scale_size_binned()` is a size scale that behaves like `scale_size()` but maps continuous values onto discrete size categories (analogous to the binned position and colour scales discussed earlier)
 
@@ -533,40 +533,25 @@ Other size scales:
 
 ## Other scales
 
-### Scales for other aesthetics
+Some other scale functions are worth discussing briefly:
 
-linetype, shape, alpha
+*   Alpha scales map the transparency of a shade to a value in the data. They are not often useful, but can be a convenient way to visually down-weight less important observations. `scale_alpha()` is an alias for `scale_alpha_continuous()` since that is the most common use of alpha, and it saves a bit of typing.
 
-### Manual scales {#scale-manual}
+*   Scales for discrete aesthetics --- for example `scale_linetype()`, `scale_shape()`, and `scale_colour_discrete()` --- basically have no options. These scales are just a list of valid values that are mapped to the unique discrete values. If you want to customise these scales, you need to create your own new scale with the "manual" version of each: `scale_linetype_manual()`, `scale_shape_manual()`, `scale_colour_manual()`, etc. The manual scale has one important argument, `values`, where you specify the values that the scale should produce: see Section \@ref(colour-discrete) for an example using manual colour scales. If this vector is named, it will match the values of the output to the values of the input; otherwise it will match in order of the levels of the discrete variable. You will need some knowledge of the valid aesthetic values, which are described in `vignette("ggplot2-specs")`. 
+\index{Shape} \index{Line type}  \indexf{scale\_shape\_manual} \indexf{scale\_colour\_manual} \indexf{scale\_linetype\_manual}
 
-The discrete scales --- for example `scale_linetype()`, `scale_shape()`, and `scale_colour_discrete()` --- basically have no options. These scales are just a list of valid values that are mapped to the unique discrete values. \index{Shape} \index{Line type} \index{Size} \indexf{scale\_shape\_manual} \indexf{scale\_colour\_manual} \indexf{scale\_linetype\_manual}
+*   Identity scales --- such as `scale_colour_identity()` and `scale_shape_identity()` --- are used when your data is already scaled such that the data and aesthetic spaces are the same. The code below shows an example where the identity scale is useful. `luv_colours` contains the locations of all R's built-in colours in the LUV colour space (the space that HCL is based on). A legend is unnecessary, because the point colour represents itself: the data and aesthetic spaces are the same. \index{Scales!identity} \indexf{scale\_identity}
 
-If you want to customise these scales, you need to create your own new scale with the "manual" version of each: `scale_linetype_manual()`, `scale_shape_manual()`, `scale_colour_manual()`, etc. The manual scale has one important argument, `values`, where you specify the values that the scale should produce. If this vector is named, it will match the values of the output to the values of the input; otherwise it will match in order of the levels of the discrete variable. You will need some knowledge of the valid aesthetic values, which are described in `vignette("ggplot2-specs")`. 
+    `r columns(1, 1, 0.75)`
+    ```{r scale-identity}
+    head(luv_colours)
 
-The following code demonstrates the use of `scale_colour_manual()`: 
+    ggplot(luv_colours, aes(u, v)) + 
+    geom_point(aes(colour = col), size = 3) + 
+    scale_color_identity() + 
+    coord_equal()
+    ```
 
-`r columns(2, 2/3)`
-```{r scale-manual}
-plot <- ggplot(msleep, aes(brainwt, bodywt)) + 
-  scale_x_log10() + 
-  scale_y_log10()
-plot + 
-  geom_point(aes(colour = vore)) + 
-  scale_colour_manual(
-    values = c("red", "orange", "green", "blue"), 
-    na.value = "grey50"
-  )
-
-colours <- c(
-  carni = "red", 
-  insecti = "orange", 
-  herbi = "green", 
-  omni = "blue"
-)
-plot + 
-  geom_point(aes(colour = vore)) + 
-  scale_colour_manual(values = colours)
-```
 
 
 <!-- DN: Really not sure what to do with this example... -->
@@ -600,29 +585,11 @@ plot +
 <!--   ) -->
 <!-- ``` -->
 
+<!-- ### Exercises -->
 
+<!-- 1.  Compare and contrast the four continuous colour scales with the four discrete scales. -->
 
-
-
-### Identity scales {#scale-identity}
-
-The identity scale is used when your data is already scaled, when the data and aesthetic spaces are the same. The code below shows an example where the identity scale is useful. `luv_colours` contains the locations of all R's built-in colours in the LUV colour space (the space that HCL is based on). A legend is unnecessary, because the point colour represents itself: the data and aesthetic spaces are the same. \index{Scales!identity} \indexf{scale\_identity}
-
-`r columns(1, 1, 0.75)`
-```{r scale-identity}
-head(luv_colours)
-
-ggplot(luv_colours, aes(u, v)) + 
-  geom_point(aes(colour = col), size = 3) + 
-  scale_color_identity() + 
-  coord_equal()
-```
-
-### Exercises
-
-1.  Compare and contrast the four continuous colour scales with the four discrete scales.
-    
-1.  Explore the distribution of the built-in `colors()` using the `luv_colours` dataset.
+<!-- 1.  Explore the distribution of the built-in `colors()` using the `luv_colours` dataset. -->
 
 
 
