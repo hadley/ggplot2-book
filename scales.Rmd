@@ -279,7 +279,8 @@ base + scale_x_binned(n.breaks = 10)
 
 After position, the most commonly used aesthetic is colour. There are quite a few different ways of mapping values to colours in ggplot2: four different gradient-based methods for continuous values, and two methods for mapping discrete values. 
 
-### A little colour theory, as a treat
+### A little colour theory
+<!-- ...as a treat -->
 
 Before we look at the details of the different methods, it's useful to learn a little bit of colour theory. Colour theory is complex because the underlying biology of the eye and brain is complex, and this introduction will only touch on some of the more important issues. An excellent and more detailed exposition is available online at <http://tinyurl.com/clrdtls>. \index{Colour} \index{Scales!colour}
 
@@ -572,10 +573,11 @@ Note that like the discrete `scale_fill_brewer()`---and unlike the continuous `s
 ```{r, echo=FALSE}
 planets <- data.frame(
   name = c("Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune"),
+  type = c(rep("Inner", 4), rep("Outer", 4)),
   position = 1:8,
   radius = c(2440, 6052, 6378, 3390, 71400, 60330, 25559, 24764),
-  orbit = c(57900000, 108200000, 149600000, 227900000, 778300000, 1427000000, 2871000000, 4497100000),
-  mass = c(3.3022e+23, 4.8685e+24, 5.9736e+24, 6.4185e+23, 1.8986e+27, 5.6846e+26, 8.681e+25, 1.0243e+26)
+  orbit = c(57900000, 108200000, 149600000, 227900000, 778300000, 1427000000, 2871000000, 4497100000)
+#  mass = c(3.3022e+23, 4.8685e+24, 5.9736e+24, 6.4185e+23, 1.8986e+27, 5.6846e+26, 8.681e+25, 1.0243e+26)
 )
 planets$name <- with(planets, factor(name, name))
 ```
@@ -591,7 +593,7 @@ base + scale_size(range = c(1, 2))
 ```
 
 There are situations where area scaling is undesirable, and for such situations the `scale_radius()` function is provided. To illustrate when `scale_radius()` is appropriate consider a data set containing astronomical data that includes the radius of different planets:
-```{r}
+```{r} 
 planets
 ```
 
@@ -690,18 +692,19 @@ Some other scale functions are worth discussing briefly:
 
 ## Scale transformation {#scale-transformation}
 
-### Continuous scales
+<!-- DN: This section is something of a promissory note. It ought to be possible to transform binned scales (e.g., reverse binned axis, construct bins on the reciprocal value etc, but I'm having problems getting this to work nicely). For now this is written as if only continuous transformations exist -->
 
-By default, these scales map the data to the x and y axis linearly, but you can override this default using transformations. Every continuous scale takes a `trans` argument, allowing the use of a variety of transformations: 
-\index{Scales!position} \index{Transformation!scales} 
+When working with continuous data, the default is to map linearly from the data space onto the aesthetic space. It is possible to override this default using transformations. Every continuous scale takes a `trans` argument, allowing the use of a variety of transformations:
+\index{Scales!position} \index{Transformation!scales} \index{Log!scale} \indexf{scale\_x\_log10}
 
+`r columns(2, 1)`
 ```{r}
-# Convert from fuel economy to fuel consumption
+# convert from fuel economy to fuel consumption
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
   scale_y_continuous(trans = "reciprocal")
 
-# Log transform x and y axes
+# log transform x and y axes
 ggplot(diamonds, aes(price, carat)) + 
   geom_bin2d() + 
   scale_x_continuous(trans = "log10") +
@@ -725,21 +728,65 @@ The transformation is carried out by a "transformer", which describes the transf
 | reverse   | $-x$                    | $-y$
 | sqrt      | $x^{1/2}$               | $y ^ 2$
 
-To simplify matters, ggplot2 provides wrapper functions for the most common transformations: `scale_x_log10()`, `scale_x_sqrt()` and `scale_x_reverse()` provide the relevant transformation on the x axis, with similar functions provided for the y axis. \index{Log!scale} \indexf{scale\_x\_log10}
+To simplify matters, ggplot2 provides convenience functions for the most common transformations: `scale_x_log10()`, `scale_x_sqrt()` and `scale_x_reverse()` provide the relevant transformation on the x axis, with similar functions provided for the y axis. Thus code below produces the same two plots shown in the previous example:
 
-Note that there is nothing preventing you from performing the transformation manually. For example, instead of using `scale_x_log10()` to transform the scale, you could transform the data instead and plot `log10(x)`. The appearance of the geom will be the same, but the tick labels will be different. Specifically, if you use a transformed scale, the axes will be labelled in the original data space; if you transform the data, the axes will be labelled in the transformed space. Regardless of which method you use, the transformation occurs before any statistical summaries. To transform _after_ statistical computation use `coord_trans()`. See Section \@ref(cartesian) for more details.
+```{r, fig.show="hide"}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() +
+  scale_y_reverse()
 
-You can transform continuous non-position scales (e.g, colour, fill)
+ggplot(diamonds, aes(price, carat)) + 
+  geom_bin2d() + 
+  scale_x_log10() +
+  scale_y_log10()
+```
 
+Note that there is nothing preventing you from performing these transformations manually. For example, instead of using `scale_x_log10()` to transform the scale, you could transform the data instead and plot `log10(x)`. The appearance of the geom will be the same, but the tick labels will be different. Specifically, if you use a transformed scale, the axes will be labelled in the original data space; if you transform the data, the axes will be labelled in the transformed space. Regardless of which method you use, the transformation occurs before any statistical summaries. To transform _after_ statistical computation use `coord_trans()`. See Section \@ref(cartesian) for more details.
+
+Although the most common use for transformations is to adjust position scales, they can sometimes be helpful to when applied to other aesthetics. Often this is purely a matter of visual emphasis. An example of this for the Old Faithful density plot is shown below. The linearly mapped scale on the left makes it easy to see the peaks of the distribution, whereas the transformed representation on the right makes it easier to see the regions of non-negligible density around those peaks:
+
+`r columns(2, 2/3)`
 ```{r}
 base <- ggplot(faithfuld, aes(waiting, eruptions)) + 
-  geom_raster(aes(fill = density))
-
+  geom_raster(aes(fill = density)) + 
+  scale_x_continuous(NULL, NULL, expand = c(0, 0)) +
+  scale_y_continuous(NULL, NULL, expand = c(0, 0))
+  
 base
 base + scale_fill_continuous(trans = "sqrt")
 ```
 
+Transforming size aesthetics is also possible:
+
+`r columns(2, 2/3)`
+```{r}
+df <- data.frame(x = runif(20), y = runif(20), z = sample(20))
+base <- ggplot(df, aes(x, y, size = z)) + geom_point()
+
+base 
+base + scale_size(trans = "reverse")
+```
+
+In the plot on the left, the `z` value is naturally interpreted as a "weight": if each dot corresponds to a group, the `z` value might be the size of the group. In the plot on the right, the size scale is reversed, and `z` is more naturally interpreted as a "distance" measure: distant entities are scaled to appear smaller in the plot.
+
+
+
+
+
+
+<!-- DN: This was the beginning of the binned transformation section:
+
 ### Binned scales
+
+`r columns(2)`
+```{r}
+base <- ggplot(mpg, aes(hwy)) + geom_bar()
+
+p1 <- base + scale_x_binned(breaks = seq(-50,50,10), limits = c(-50, 50))
+p2 <- base + scale_x_binned(breaks = seq(-50,50,10), limits = c(-50, 50), trans = "reverse")
+```
+
+
 
 
 
@@ -766,5 +813,5 @@ ggplot(df, aes(val)) + geom_bar() +
   scale_x_binned(trans="log10", breaks = 3^(0:9))  
 ```
 
-This is described in Section BREAKS
+-->
 
