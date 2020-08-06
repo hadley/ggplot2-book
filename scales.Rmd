@@ -11,22 +11,6 @@ Scales in ggplot2 control the mapping from data to aesthetics. They take your da
 
 Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the scale). The axis or legend is the inverse function: it allows you to convert visual properties back to data. In ggplot2 these two roles are controlled by the same toolkit (the scale functions), but for expository reasons they are discussed separately in this book. In this chapter I will focus on the mapping from the data to the aesthetics, and in Chapter \@ref(guides) I will return to axes and legends. 
 
-Scales can be divided roughly into four families:
-
-* Position scales, used to map integer, numeric, and date/time 
-  data to x and y position (Section \@ref(scale-position)).
-
-* Colour scales, used to map continuous and discrete data to colours (Section \@ref(scale-colour)).
-
-* Manual scales, used to map discrete variables to your choice of size, 
-  line type, shape or colour (Section \@ref(scale-manual)).
-
-* The identity scale, paradoxically used to plot variables _without_
-  scaling them. This is useful if your data is already a vector of 
-  colour names (Section \@ref(scale-identity)).
-
-Before diving into the details for each scale type, Section \@ref(scale-usage) provides an overview of how scales are specified in ggplot2 and Section \@ref(limits) shows how to adjust the limits of a scale.
-
 
 ## Scale specification {#scale-usage}
 
@@ -81,6 +65,17 @@ ggplot(mpg, aes(displ, hwy)) +
 
 In a specification such as this, `scale_x_sqrt()` changes the settings associated with the x axis scale, and `scale_colour_brewer()` does the same with the colour scale. I'll talk more about these later in the chapter.
 
+The scale functions intended for users all follow a common naming scheme. You’ve probably already figured out the scheme, but to be concrete, it’s made up of three pieces separated by "_":
+
+1. `scale`
+1. The name of the aesthetic (e.g., `colour`, `shape` or `x`)
+1. The name of the scale (e.g., `continuous`, `discrete`, `brewer`).
+
+The naming structure is often helpful, but can sometimes be ambiguous. For example, it is immediately clear that `scale_x_*` functions apply to the x aesthetic, but it takes a little more thought to recognise that they also govern the behaviour of other aesthetics that describe a horizontal position (e.g., the xmin, xmax, and xend aesthetics). Similarly, while the name `scale_colour_continuous()` clearly refers to the colour scale associated with a continuous variables, it is less obvious that `scale_colour_distiller()` is simply a different method for creating colour scales for continuous variables. In this chapter I will try to clarify this structure as much as possible: more generally, the help documentation for each scale function may be helpful.
+
+Before diving into the details of how scale functions work, it is useful to note that internally all scale functions in ggplot2 belong to one of three fundamental types; continuous scales, discrete scales, and binned scales. Each fundamental type is handled by one of three scale constructor functions---`continuous_scale()`, `discrete_scale()` and `binned_scale()`---and though as a user you should never need to call these functions yourself it is for this reason later sections in this chapter are sometimes subdivided into these three categories.
+
+
 
 ### Exercises
 
@@ -107,15 +102,111 @@ In a specification such as this, `scale_x_sqrt()` changes the settings associate
 
 
 
-## Scale types
+## Scale limits {#limits}
 
-The user-facing scale functions in ggplot2 follow a common naming scheme. You’ve probably already figured out the scheme, but to be concrete, it’s made up of three pieces separated by "_":
+Scales in ggplot2 are typically associated with limits that specify the domain over which the scale is defined and are usually derived from the range of the data. \index{Axis!limits} \index{Scales!limits} There are two reasons you might want to specify limits rather than relying on the data:
 
-1. `scale`
-1. The name of the aesthetic (e.g., `colour`, `shape` or `x`)
-1. The name of the scale (e.g., `continuous`, `discrete`, `brewer`).
+1. You want to shrink the limits to focus on an interesting area of the plot.
+1. You want to expand the limits to make multiple plots match up.
 
-From the user side, these are the only functions you should need to call. However, it is useful to note that these scale functions belong to three types: **continuous scales**, **discrete scales** and **binned scales**. Each type is handled by one of three scale constructor functions---`continuous_scale()`, `discrete_scale()` and `binned_scale()`---and for this reason later sections in this chapter are often subdivided into these three categories.
+It's most natural to think about the limits of position scales: they map directly to the ranges of the axes. But limits also apply to scales that have legends, like colour, size, and shape, and these limits are particularly important if you want colours to be consistent across multiple plots. To modify the limits of a scale, specify the `limits` parameter of the scale:
+
+* For continuous scales, `limits` should be a numeric vector of length two. 
+  If you only want to set the upper or lower limit, you can set the other value
+  to `NA`.
+* For discrete scales, `limits` is a character vector which enumerates all possible
+  values.
+
+A minimal example is shown below. In the left panel the limits of the x scale are set to the default values (the range of the data), the middle panel expands the limits, and the right panel shrinks them:
+
+`r columns(3)`
+```{r, messages = FALSE}
+df <- data.frame(x = 1:3, y = 1:3)
+base <- ggplot(df, aes(x, y)) + geom_point() 
+
+base
+base + scale_x_continuous(limits = c(0, 4))
+base + scale_x_continuous(limits = c(1.5, 2.5))
+```
+
+(The warning produced in the final example is discussed later in this section)
+
+### Convenience functions
+
+Because modifying scale limits is such a common task, ggplot2 provides some convenience functions to make this easier. For position scales the `xlim()` and `ylim()` helper functions inspect their input and then specify the appropriate scale for the x and y axes respectively. More generally, the `lims()` function takes name-value pairs as input, where the name specifies the aesthetic and the value specifies the limits. The results depend on the type of scale: \indexf{xlim}  \indexf{ylim}
+
+* `xlim(10, 20)`: a continuous scale from 10 to 20
+* `ylim(20, 10)`: a reversed continuous scale from 20 to 10
+* `xlim("a", "b", "c")`: a discrete scale
+* `xlim(as.Date(c("2008-05-01", "2008-08-01")))`: a date scale from May 1 to August 1 2008 (date scales are discussed in Section \@ref(date-scales))
+
+Three examples using the `base` plot are shown below:
+
+```{r, messages = FALSE}
+base + xlim(0, 4)
+base + xlim(4, 0)
+base + lims(x = c(0, 4))
+```
+
+### Visual range expansion
+
+If you have eagle eyes, you'll have noticed that the visual range of the axes actually extends a little bit past the numerical limits that I have specified in the various examples. This ensures that the data does not overlap the axes, which is usually (but not always) desirable. To eliminate this space, set `expand = c(0, 0)`. One scenario where it is usually preferable to remove this space is when using `geom_raster()`: \index{Axis!expansion}
+
+`r columns(2, 1, 1)`
+```{r}
+ggplot(faithfuld, aes(waiting, eruptions)) + 
+  geom_raster(aes(fill = density)) + 
+  theme(legend.position = "none")
+
+ggplot(faithfuld, aes(waiting, eruptions)) + 
+  geom_raster(aes(fill = density)) + 
+  scale_x_continuous(expand = c(0,0)) + 
+  scale_y_continuous(expand = c(0,0)) +
+  theme(legend.position = "none")
+```
+
+In the plot on the left the extra space is distracting, so the plot on the right would usually be preferable.
+
+### Out of bounds values
+
+Recall that an earlier plot in this section produced a warning about missing values when the scale limits were reduced. By default, ggplot2 converts data outside the limits to `NA`. This means that changing the limits of a scale is not precisely the same as visually zooming in to a region of the plot. If you want to do the latter, you should use the `xlim` and `ylim` arguments to `coord_cartesian()`, described in Section \@ref(cartesian), which performs purely visual zooming and does not affect the underlying data. \index{Zooming} To override the default behaviour you can set the `oob` (out of bounds) argument to the scale, a function that is applied to all observations outside the scale limits. The default `scales::censor()` which replaces any value outside the limits with `NA`. Another option is `scales::squish()` which squishes all values into the range. An example using a fill scale is shown below:
+
+`r columns(3,1)`
+```{r}
+df <- data.frame(x = 1:6, y = 8:13)
+base <- ggplot(df, aes(x, y)) + 
+  geom_col(aes(fill = x)) +                    # bar chart
+  geom_vline(xintercept = 3.5, colour = "red") # for visual clarity only
+
+base
+base + scale_fill_gradient(limits = c(1, 3))
+base + scale_fill_gradient(limits = c(1, 3), oob = scales::squish)
+```
+
+On the left the default fill colours are shown, ranging from dark blue to light blue. In the middle panel the scale limits for the fill aesthetic are reduced so that the values for the three rightmost bars are replace with `NA` and are mapped to a grey shade. In some cases this is desired behaviour but often it is not: the right panel addresses this by modifying the `oob` function appropriately.  
+
+### Exercises
+
+1.  The following code creates two plots of the mpg dataset. Modify the code
+    so that the legend and axes match, without using facetting!
+    
+    `r columns(2, 2/3)`
+    ```{r}
+    fwd <- subset(mpg, drv == "f")
+    rwd <- subset(mpg, drv == "r")
+    
+    ggplot(fwd, aes(displ, hwy, colour = class)) + geom_point()
+    ggplot(rwd, aes(displ, hwy, colour = class)) + geom_point()
+    ```
+
+1.  What does `expand_limits()` do and how does it work?  Read the source code.
+
+1.  What happens if you add two `xlim()` calls to the same plot? Why?
+
+1.  What does `scale_x_continuous(limits = c(NA, NA))` do?
+
+
+
 
 ## Position scales {#scale-position}
 
@@ -133,7 +224,7 @@ Although the first example does not state the y-aesthetic mapping explicitly, it
 
 ### Continuous position scales 
 
-The most common continuous position scales are the default `scale_x_continuous()` and `scale_y_continuous()` functions, discussed earlier. These are the simplest scales and they map linearly from the value to the position. There are several other position scales for continuous variables---`scale_x_log10()`, `scale_x_reverse()`, etc---most of which are convenience functions used to provide easy access to common transformations:
+The most common continuous position scales are the default `scale_x_continuous()` and `scale_y_continuous()` functions, discussed earlier. In the simplest case they map linearly from the data value to a location on the plot. There are several other position scales for continuous variables---`scale_x_log10()`, `scale_x_reverse()`, etc---most of which are convenience functions used to provide easy access to common transformations:
 
 `r columns(3)`
 ```{r}
@@ -593,108 +684,6 @@ Some other scale functions are worth discussing briefly:
 
 
 
-
-
-
-## Scale limits {#limits}
-
-Scales in ggplot2 are typically associated with limits that specify the domain over which the scale is defined and are usually derived from the range of the data. \index{Axis!limits} \index{Scales!limits} There are two reasons you might want to specify limits rather than relying on the data:
-
-1. You want to shrink the limits to focus on an interesting area of the plot.
-1. You want to expand the limits to make multiple plots match up.
-
-It's most natural to think about the limits of position scales: they map directly to the ranges of the axes. But limits also apply to scales that have legends, like colour, size, and shape, and these limits are particularly important if you want colours to be consistent across multiple plots. To modify the limits of a scale, specify the `limits` parameter of the scale:
-
-* For continuous scales, `limits` should be a numeric vector of length two. 
-  If you only want to set the upper or lower limit, you can set the other value
-  to `NA`.
-* For discrete scales, `limits` is a character vector which enumerates all possible
-  values.
-
-A minimal example is shown below. In the left panel the limits of the x scale are set to the default values (the range of the data), the middle panel expands the limits, and the right panel shrinks them:
-
-`r columns(3)`
-```{r, messages = FALSE}
-df <- data.frame(x = 1:3, y = 1:3)
-base <- ggplot(df, aes(x, y)) + geom_point() 
-
-base
-base + scale_x_continuous(limits = c(0, 4))
-base + scale_x_continuous(limits = c(1.5, 2.5))
-```
-
-(The warning produced in the final example is discussed later in this section)
-
-### Convenience functions
-
-Because modifying scale limits is such a common task, ggplot2 provides some convenience functions to make this easier. For position scales the `xlim()` and `ylim()` helper functions inspect their input and then specify the appropriate scale for the x and y axes respectively. More generally, the `lims()` function takes name-value pairs as input, where the name specifies the aesthetic and the value specifies the limits. The results depend on the type of scale: \indexf{xlim}  \indexf{ylim}
-
-* `xlim(10, 20)`: a continuous scale from 10 to 20
-* `ylim(20, 10)`: a reversed continuous scale from 20 to 10
-* `xlim("a", "b", "c")`: a discrete scale
-* `xlim(as.Date(c("2008-05-01", "2008-08-01")))`: a date scale from May 1 to August 1 2008 (date scales are discussed in Section \@ref(date-scales))
-
-Three examples using the `base` plot are shown below:
-
-```{r, messages = FALSE}
-base + xlim(0, 4)
-base + xlim(4, 0)
-base + lims(x = c(0, 4))
-```
-
-### Visual range expansion
-
-If you have eagle eyes, you'll have noticed that the visual range of the axes actually extends a little bit past the numerical limits that I have specified in the various examples. This ensures that the data does not overlap the axes, which is usually (but not always) desirable. To eliminate this space, set `expand = c(0, 0)`. One scenario where it is usually preferable to remove this space is when using `geom_raster()`: \index{Axis!expansion}
-
-`r columns(2, 1, 0.66)`
-```{r}
-ggplot(faithfuld, aes(waiting, eruptions)) + 
-  geom_raster(aes(fill = density)) + 
-  theme(legend.position = "none")
-
-ggplot(faithfuld, aes(waiting, eruptions)) + 
-  geom_raster(aes(fill = density)) + 
-  scale_x_continuous(expand = c(0,0)) + 
-  scale_y_continuous(expand = c(0,0)) +
-  theme(legend.position = "none")
-```
-
-In the plot on the left the extra space is distracting, so the plot on the right would usually be preferable.
-
-### Out of bounds values
-
-Recall that an earlier plot in this section produced a warning about missing values when the scale limits were reduced. By default, ggplot2 converts data outside the limits to `NA`. This means that changing the limits of a scale is not precisely the same as visually zooming in to a region of the plot. If you want to do the latter, you should use the `xlim` and `ylim` arguments to `coord_cartesian()`, described in Section \@ref(cartesian), which performs purely visual zooming and does not affect the underlying data. \index{Zooming} To override the default behaviour you can set the `oob` (out of bounds) argument to the scale, a function that is applied to all observations outside the scale limits. The default `scales::censor()` which replaces any value outside the limits with `NA`. Another option is `scales::squish()` which squishes all values into the range. An example using a fill scale is shown below:
-
-```{r}
-df <- data.frame(x = 1:5)
-p <- ggplot(df, aes(x, 1)) + geom_tile(aes(fill = x), colour = "white")
-
-p
-p + scale_fill_gradient(limits = c(2, 4))
-p + scale_fill_gradient(limits = c(2, 4), oob = scales::squish)
-```
-
-On the left the default fill colours are shown. In the middle panel when the scale limits are reduced the values for the two tiles on the end are replace with `NA` and are mapped to a grey shade. In most cases this is not the desired behaviour, so the right panel fixes this by modifying the `oob` function appropriately.  
-
-### Exercises
-
-1.  The following code creates two plots of the mpg dataset. Modify the code
-    so that the legend and axes match, without using facetting!
-    
-    `r columns(2, 2/3)`
-    ```{r}
-    fwd <- subset(mpg, drv == "f")
-    rwd <- subset(mpg, drv == "r")
-    
-    ggplot(fwd, aes(displ, hwy, colour = class)) + geom_point()
-    ggplot(rwd, aes(displ, hwy, colour = class)) + geom_point()
-    ```
-
-1.  What does `expand_limits()` do and how does it work?  Read the source code.
-
-1.  What happens if you add two `xlim()` calls to the same plot? Why?
-
-1.  What does `scale_x_continuous(limits = c(NA, NA))` do?
 
 
 
