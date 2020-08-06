@@ -71,9 +71,9 @@ The scale functions intended for users all follow a common naming scheme. You’
 1. The name of the aesthetic (e.g., `colour`, `shape` or `x`)
 1. The name of the scale (e.g., `continuous`, `discrete`, `brewer`).
 
-The naming structure is often helpful, but can sometimes be ambiguous. For example, it is immediately clear that `scale_x_*` functions apply to the x aesthetic, but it takes a little more thought to recognise that they also govern the behaviour of other aesthetics that describe a horizontal position (e.g., the xmin, xmax, and xend aesthetics). Similarly, while the name `scale_colour_continuous()` clearly refers to the colour scale associated with a continuous variables, it is less obvious that `scale_colour_distiller()` is simply a different method for creating colour scales for continuous variables. In this chapter I will try to clarify this structure as much as possible: more generally, the help documentation for each scale function may be helpful.
+The naming structure is often helpful, but can sometimes be ambiguous. For example, it is immediately clear that `scale_x_*()` functions apply to the x aesthetic, but it takes a little more thought to recognise that they also govern the behaviour of other aesthetics that describe a horizontal position (e.g., the xmin, xmax, and xend aesthetics). Similarly, while the name `scale_colour_continuous()` clearly refers to the colour scale associated with a continuous variables, it is less obvious that `scale_colour_distiller()` is simply a different method for creating colour scales for continuous variables. In this chapter I will try to clarify this structure as much as possible: more generally, the help documentation for each scale function may be helpful.
 
-Before diving into the details of how scale functions work, it is useful to note that internally all scale functions in ggplot2 belong to one of three fundamental types; continuous scales, discrete scales, and binned scales. Each fundamental type is handled by one of three scale constructor functions---`continuous_scale()`, `discrete_scale()` and `binned_scale()`---and though as a user you should never need to call these functions yourself it is for this reason later sections in this chapter are sometimes subdivided into these three categories.
+Before diving into the details of how scale functions work, it is useful to note that internally all scale functions in ggplot2 belong to one of three fundamental types; continuous scales, discrete scales, and binned scales. Each fundamental type is handled by one of three scale constructor functions; `continuous_scale()`, `discrete_scale()` and `binned_scale()`. Although users should never need to call the constructor functions, it is for this reason later sections in this chapter are sometimes subdivided into these three categories.
 
 
 
@@ -224,7 +224,7 @@ Although the first example does not state the y-aesthetic mapping explicitly, it
 
 ### Continuous position scales 
 
-The most common continuous position scales are the default `scale_x_continuous()` and `scale_y_continuous()` functions, discussed earlier. In the simplest case they map linearly from the data value to a location on the plot. There are several other position scales for continuous variables---`scale_x_log10()`, `scale_x_reverse()`, etc---most of which are convenience functions used to provide easy access to common transformations:
+The most common continuous position scales are the default `scale_x_continuous()` and `scale_y_continuous()` functions. In the simplest case they map linearly from the data value to a location on the plot. There are several other position scales for continuous variables---`scale_x_log10()`, `scale_x_reverse()`, etc---most of which are convenience functions used to provide easy access to common transformations:
 
 `r columns(3)`
 ```{r}
@@ -235,7 +235,7 @@ base + scale_x_reverse()
 base + scale_y_reverse()
 ```
 
-Scale transformations are discussed in Section \@ref(scale-transformation).
+For more information on scale transformations see Section \@ref(scale-transformation).
 \indexf{scale\_x\_continuous} 
 
 ### Discrete position scales
@@ -252,7 +252,7 @@ ggplot(mpg, aes(x = hwy, y = class)) +
   scale_y_discrete()
 ```
 
-Internally, ggplot2 treats handles discrete scales by mapping each category to an integer value and then drawing the geom at the corresponding coordinate location. To illustrate this, we can add a custom annotation (see Section \@ref(custom-annotations)) to the plot:
+Internally, ggplot2 handles discrete scales by mapping each category to an integer value and then drawing the geom at the corresponding coordinate location. To illustrate this, we can add a custom annotation (see Section \@ref(custom-annotations)) to the plot:
 
 `r columns(1)`
 ```{r}
@@ -277,12 +277,11 @@ base + scale_x_binned(n.breaks = 10)
 
 ## Colour scales {#scale-colour}
 
-After position, the most commonly used aesthetic is colour. There are quite a few different ways of mapping values to colours in ggplot2: four different gradient-based methods for continuous values, and two methods for mapping discrete values. 
+After position, the most commonly used aesthetics are those based on colour, and there are many ways to map values to colours in ggplot2. Before we look at the details, it's useful to learn a little bit of colour theory. Colour theory is complex because the underlying biology of the eye and brain is complex, and this introduction will only touch on some of the more important issues. An excellent and more detailed exposition is available online at <http://tinyurl.com/clrdtls>. \index{Colour} \index{Scales!colour}
+
 
 ### A little colour theory
 <!-- ...as a treat -->
-
-Before we look at the details of the different methods, it's useful to learn a little bit of colour theory. Colour theory is complex because the underlying biology of the eye and brain is complex, and this introduction will only touch on some of the more important issues. An excellent and more detailed exposition is available online at <http://tinyurl.com/clrdtls>. \index{Colour} \index{Scales!colour}
 
 At the physical level, colour is produced by a mixture of wavelengths of light. To characterise a colour completely, we need to know the complete mixture of wavelengths. Fortunately for us the human eye only has three different colour receptors, and so we can summarise the perception of any colour with just three numbers. You may be familiar with the RGB encoding of colour space, which defines a colour by the intensities of red, green and blue light needed to produce it. One problem with this space is that it is not perceptually uniform: the two colours that are one unit apart may look similar or very different depending on where they are in the colour space. This makes it difficult to create a mapping from a continuous variable to a set of colours. There have been many attempts to come up with colours spaces that are more perceptually uniform.  We'll use a modern attempt called the HCL colour space, which has three components of **h**ue, **c**hroma and **l**uminance: \index{Colour!spaces}
 
@@ -290,11 +289,11 @@ At the physical level, colour is produced by a mixture of wavelengths of light. 
 * **Chroma** is the "purity" of a colour, ranging from 0 (grey) to a maximum that varies with luminance.
 * **Luminance** is the lightness of the colour, ranging from 0 (black) to 1 (white).
 
-Hues are not perceived as being ordered: e.g. green does not seem "larger" than red. The perception of chroma and luminance are ordered.
+The three dimensions have different properties. Hues are arranged around a colour wheel and are not perceived as ordered: e.g. green does not seem "larger" than red, and blue does not seem to be "in between" green or red. In contrast, both chroma and luminance are perceived as ordered: pink is perceived as lying between red and white, and grey is seen to fall between black and white. 
 
 The combination of these three components does not produce a simple geometric shape. Figure \@ref(fig:hcl) attempts to show the 3d shape of the space. Each slice is a constant luminance (brightness) with hue mapped to angle and chroma to radius.  You can see the centre of each slice is grey and the colours get more intense as they get closer to the edge.
 
-
+`r columns(1, 1, 1)`
 ```{r hcl, echo = FALSE, out.width = "100%", fig.cap="The shape of the HCL colour space.  Hue is mapped to angle, chroma to radius and each slice shows a different luminance.  The HCL space is a pretty odd shape, but you can see that colours near the centre of each slice are grey, and as you move towards the edges they become more intense.  Slices for luminance 0 and 100 are omitted because they would, respectively, be a single black point and a single white point."}
 knitr::include_graphics("diagrams/hcl-space.png", dpi = 300)
 ```
@@ -315,11 +314,11 @@ erupt <- ggplot(faithfuld, aes(waiting, eruptions, fill = density)) +
   theme(legend.position = "none")
 ```
 
-There are multiple ways to specify continuous colour scales, and consequently there are many different scale functions. To provide some structure, I'll begin this section with a discussion of general purpose gradient scale functions that you can use to construct any scale you like, then proceed to talk about scales that provide hand-picked colour palettes you can use. 
+There are multiple ways to specify continuous colour scales. I'll talk first about "general purpose" gradient scale functions that you can use to construct any scale you like, then discuss scale functions that provide "hand picked" colour palettes. 
 
 #### Robust recipes
 
-The default scale function is `scale_fill_continuous()` which in turn defaults to `scale_fill_gradient()`. As a consequence, these three commands produce the same plot using a gradient scale:
+The default scale for continuous fill scales is `scale_fill_continuous()` which in turn defaults to `scale_fill_gradient()`. As a consequence, these three commands produce the same plot using a gradient scale:
 
 ```{r}
 erupt
@@ -496,7 +495,7 @@ bars + scale_fill_manual(values = c("grey", "black", "grey", "grey"))
 RColorBrewer::display.brewer.all()
 ```
 
-The first group of palettes are sequential scales that are useful when your discrete scale is ordered (e.g., rank data), and are available for continuous data using `scale_colour_distiller()`. For  unordered categorical data, the palettes most of interest are those in the second group. 'Set1' and 'Dark2' are particularly good for points, and 'Set2', 'Pastel1', 'Pastel2' and 'Accent' work well for areas. 
+The first group of palettes are sequential scales that are useful when your discrete scale is ordered (e.g., rank data), and are available for continuous data using `scale_colour_distiller()`. For  unordered categorical data, the palettes of most interest are those in the second group. 'Set1' and 'Dark2' are particularly good for points, and 'Set2', 'Pastel1', 'Pastel2' and 'Accent' work well for areas. 
 \index{Colour!Brewer} \indexf{scale\_colour\_brewer}
 
 `r columns(3, 1)`
