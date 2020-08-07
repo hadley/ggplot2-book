@@ -1,71 +1,193 @@
 ```{r include = FALSE}
 source("common.R")
+source("internals_ggbuild.R")
+source("internals_gggtable.R")
 ```
 
 # ggplot2 internals {#internals}
 
-Throughout this book the focus has been on how to use ggplot2 as a user. The nature of the API is so that how it's used is very different from how it works, and for the most part this is not a problem. After all, as a user there is no reason to spend time figuring out how ggplot2 translates your declarations into a plot.
+Throughout this book I have described ggplot2 from the perspective of a user rather than a developer. From the user's point of view, the important thing is to understand how the interface to ggplot2 works. To make a data visualisation the user needs to know how functions like `ggplot()` and `geom_point()` can be used to *specify* a plot, but rarely does the user need to understand how ggplot2 translates this plot specification into an image. For a ggplot2 developer who hopes to design extensions, however, this understanding is paramount. 
 
-The decoupling of the API and the machinery underneath can hit hard when you as a user begins to transition into an extension developer, where understanding of the machinery becomes paramount. As extending ggplot2 becomes more and more common, so does the frustration related to understanding how it all fits together.
-
-This chapter is dedicated to providing a description of how ggplot2 works behind the curtains. The focus will not be on the technical aspects of the implementation, but rather on the design, and its implications for how it all fits together. I'll start by describing what happens as you plot your ggplot object from a high-level perspective, and then proceeding to describe how the data you are plotting flows through this whole process and ends up as visual elements in your plot.
+When making the jump from user to developer, it is common to encounter frustrations because the nature of the ggplot2 *interface* is very different to the structure of the underlying *machinery* that makes it work. As extending ggplot2 becomes more common, so too does the frustration related to understanding how it all fits together. This chapter is dedicated to providing a description of how ggplot2 works "behind the curtains". I focus on the design of the system rather than technical details of its implementation, and the goal is to provide a conceptual understanding of how the parts fit together. I begin with an general overview of the process that unfolds when a ggplot object is ploted, and then dive into details, describing how the data flows through this whole process and ends up as visual elements in your plot.
 
 ## The `plot()` method
-Almost everything related to converting your ggplot2 code into a plot happens once you print it, not while you construct the plot. This makes sense as it means nothing has to be re-calculated every time you add new elements to the plot. It also means that to properly understand the mechanics of ggplot2, you have to follow the plot function down the rabbit hole. So, how does it look?
 
->You usually don't call the `plot()` method directly as it is invoked by the print method and thus called whenever a ggplot object is printed.
-
+To understand the machinery underpinning ggplot2, it is important to recognise that almost everything related to the plot drawing happens when you print the ggplot object, not when you construct it. For instance, in the code below, the object `p` is an abstract specification of the plot data, the layers, etc. It does not construct the image itself:
 ```{r}
-ggplot2:::plot.ggplot
+p <- ggplot(mpg, aes(displ, hwy, color = drv)) + 
+  geom_point(position = "jitter") +
+  geom_smooth(method = "lm", formula = y ~ x) + 
+  facet_wrap(vars(year)) + 
+  ggtitle("A plot for expository purposes")
 ```
 
-Many of the function calls above may seem foreign, and most are not really relevant to understanding ggplot2. The calls of interest are `set_last_plot(x)` (to some extent), `data <- ggplot_build(x)`, and `gtable <- ggplot_gtable(data)`. The `set_last_plot(x)` stores the plot internally so that it is retrivable with `last_plot()`. The two remaining calls are what makes up the rendering stack of ggplot2. `ggplot_build` is where the data for each layer is prepared for plotting (with everything that entails) and `ggplot_gtable` takes the prepared data and turns it into graphic elements stored in a gtable (we'll come back to what that is later). What may come as a surprise is that ggplot2 itself does not do any actual drawing. It's responsibility stops after the gtable object has been created. The gtable package which implements the gtable class does not do any drawing either. Drawing is performed by the grid package in unison with the active graphic device. This is an important point, as it means that ggplot2 and, by extension, any extensions to ggplot2, do not need to concern themselves with the nitty gritty of creating the visual output. The responsibility is solemnly on converting the user data to one or more graphic primitives such as polygons, lines, points, etc. While it is thus stricktly not true, we will continue to call this conversion into graphic primitives the *rendering process*.
+The reason ggplot2 is designed this way is to allow the user to continue to add new elements to a plot at a later point, without needing to recalculate anything. One implication of this is that if you want to understand the mechanics of ggplot2, you have to follow your plot as it goes down the `plot()`[^plot-note] rabbit hole. You can inspect the print method for ggplot objects by typing `ggplot2:::plot.ggplot` at the console, but for this chapter I will work with a simplified version. Stripped to its bare essentials, the ggplot2 plot method has the same structure as the following `ggprint()` function:
 
-## Follow the data
-As may be apparent from the section above, the main actor in the rendering process is the layer data, and the rendering process is really a long progression of steps to convert the data from the format supplied by the user, to a format that fits with the graphic primitives needed to create the desired visual elements. This also means that to gain an understanding of the mechanics of ggplot2 we must understand how data flows through the mechanics and how it transforms along the way.
+[^plot-note]: You usually don't call this `plot()` method directly as it is invoked by the print method and thus called whenever a ggplot object is printed. 
 
-### The build step
+```{r}
+ggprint <- function(x) {
+  data <- ggplot_build(x)
+  gtable <- ggplot_gtable(data)
+  grid::grid.newpage()
+  grid::grid.draw(gtable)
+  return(invisible(x))
+}
+```
+
+This function does not handle every possible use case, but it is sufficient to draw the plot specified above:
+
+`r columns(1, 2/3, max_width = .8)`
+```{r, cache.vars=p}
+ggprint(p) 
+```
+
+The code in our simplified print method reveals four distinct steps:
+
+- First, it calls `ggplot_build()` where the data for each layer is prepared and organised into a standardised format suitable for plotting.
+
+- Second, the prepared data is passed to the `ggplot_build()` and turns it into it into graphic elements stored in a gtable (we'll come back to what that is later). 
+
+- Third, the gtable object is converted to an image with the assistance of the grid package.
+
+- Fourth, the original ggplot object is invisibly returned to the user.
+
+One thing that this process reveals is that ggplot2 itself does none of the low-level drawing: its responsibility ends when the `gtable` object has been created. Nor does the gtable package (which implements the gtable class) do any drawing. All drawing is performed by the grid package together with the active graphics device. This is an important point, as it means ggplot2 -- or any extension to ggplot2 -- does not concern itself with the nitty gritty of creating the visual output. Rather, its job is to convert user data to one or more graphical primitives such as polygons, lines, points, etc and then hand responsibility over to the grid package. 
+
+Although it is not strictly correct to do so, we will refer to this conversion into graphical primitives as the **rendering process**. The next two sections follow the data down the rendering rabbit hole through the build step (Section \@ref(ggplotbuild)) and the gtable step (Section \@ref(ggplotgtable)) whereupon -- rather like Alice in Lewis Carroll's novel -- it finally arrives in the grid wonderland as a collection of graphical primitives.
+
+## The build step {#ggplotbuild}
+
+
+
+<!-- As may be apparent from the section above, the main actor in the rendering process is the layer data, and the rendering process is really a long progression of steps to convert the data from the format supplied by the user, to a format that fits with the graphic primitives needed to create the desired visual elements. This also means that to gain an understanding of the mechanics of ggplot2 we must understand how data flows through the mechanics and how it transforms along the way. -->
+
 `ggplot_build()`, as discussed above, takes the declarative representation constructed with the public API and augments it by preparing the data for conversion to graphic primitives.
 
-#### Data preparation
-The first part of the processing is to get the data associated with each layer and get it into a predictable format. A layer can either provide it's own data, inherit from the global data, or provide a function that is applied to the global data and returns a new data.frame. Once this is done the data is passed to the plot layout which orchestrates coordinate systems and facets. Within the layout the data is passed in turn to the plot coordinate system which may change it (it usually don't) and then to the facet which inspects the data to figure out how many panels the plot should have and how they should be organised. During this process each leayer data will be augmented with a `PANEL` column. This column will (must) be kept throughout the rendering process and will link each data row to a specific facet panel in the final plot.
+### Data preparation
+The first part of the processing is to get the data associated with each layer and get it into a predictable format. A layer can either provide data in one of three ways: it can supply its own (e.g., if the `data` argument to a geom is a data frame), it can inherit the global data supplied to `ggplot()`, or else it might provide a function that returns a data frame when applied to the global data. In all three cases the result is a data frame that is passed to the plot layout, which orchestrates coordinate systems and facets. When this happens the data is first passed to the plot coordinate system which may change it (but usually doesn't), and then to the facet which inspects the data to figure out how many panels the plot should have and how they should be organised. During this process the data associated with each layer will be augmented with a `PANEL` column. This column will (must) be kept throughout the rendering process and is used to link each data row to a specific facet panel in the final plot.
 
-The last part of the data preparation is to convert the layer data into calculated aesthetic values. This involves evaluating all the aesthetic expression from `aes()` on the layer data. Further, if not given explicitly, the `group` aesthetic is calculated from the interaction of all non-continuous aesthetics. The `group` aesthetic is, like `PANEL` a special column that must be kept throughtout the processing.
+The last part of the data preparation is to convert the layer data into calculated aesthetic values. This involves evaluating all aesthetic expressions from `aes()` on the layer data. Further, if not given explicitly, the `group` aesthetic is calculated from the interaction of all non-continuous aesthetics. The `group` aesthetic is, like `PANEL` a special column that must be kept throughtout the processing. As an example, the plot `p` created earlier contains only the one layer specified by `geom_point()` and at the end of the data preparation process the first 10 rows of the data associated with this layer look like this:
 
-#### Data transformation
-Once the layer data has been extracted and converted to a predictable format it undergoes a range of transformations until it gets to the format that the layer geometry expects. 
+```{r echo=FALSE}
+data_prepped <- ggbuild(p)$prepared
+head(data_prepped[[1]], n = 10)
+```
 
-The first step is to apply any scale transformations to the columns in the data. This is where any argument to `trans` in a scale has an effect. The remainder of the rendering will work in this transformed space. This is the underlying reason for the difference in setting a position transform in the scale vs in the coordinate system. Setting it in the scale will force all calculations to happen in transformed space, while setting it in the coordinate system will have all calculations happen in untransformed space and then apply the transformation to the outcome.
+### Data transformation
+Once the layer data has been extracted and converted to a predictable format it undergoes a series of transformations until it has the format expected by the layer geometry. 
 
-After this the position aesthetics are mapped based on the position scales. For continuous positions this simply means applying the `oob()` function (defaults to `censor()`) and removing `NA` rows. For discrete positions the change is more radical as the values are matched to the limits (breaks) of the scale and converted to integer positions For binned position scales the continuous data is first cut into bins based on the breaks specification and then set the position to the midpoint of their respective bin. This means that no matter what type of position scale is used, it will look continuous to the stat and geom computations. This is important because otherwise computations such as dodging and jitter would fail for discrete positions.
+The first step is to apply any scale transformations to the columns in the data. It is at this stage of the process that any argument to `trans` in a scale has an effect, and all subsequent rendering will take place in this transformed space. This is the reason why setting a position transform in the scale has a different effect than setting it in the coordinate system. If the transformation is specified in the scale it is applied *before* any other calculations, but if it is specified in the coordinate system the transformation is applied *after* those calculations. For instance, our original plot `p` involves no scale transformations so the layer data remain untouched at this stage. The first three rows are shown below:  
 
-Now the data is ready to be handed to the layer stat where any statistical transformation takes place. The setup is that the stat first gets to inspect the data and modify its parameters, then do a one off preparation of the data. After that the data is split by `PANEL`, then `group` and statistics are calculated before the data is reassembled. It is possible for a stat to circumvent this splitting by overwritting specific `compute_*()` methods and thus do some optimisation. After the data has been reassembled in its new form it goes through a new aesthetic mapping. This is where aesthetics that has been delayed using `stat()` (or the old `..var..` notation) gets added to the data. This is why `stat()` expressions cannot target the original data as it simply doesn't exist at this point anymore.
+```{r, echo=FALSE}
+ggbuild(p)$transformed[[1]] %>% head(n = 3)
+```
 
-At this point the geom takes over from the stat (almost). The first action it takes is to inspect the data, update its parameters and possibly make a first pass modification of the data (same setup as for stat). This is possibly where some of the columns gets reparameterised e.g. `x`+`width` gets changed to `xmin`+`xmax`. After this the position adjustment gets applied, so that e.g. overlapping bars are stacked, etc.
+In contrast, if our plot object is `p + scale_x_log10()` and we inspect the layer data at this point in processing, we see that the `x` variable has been transformed appropriately:  
 
-Now, perhaps surprisingly, the position scales are reset, retrained, and applied to the data. Thinking about it, this is absolutely necessary as e.g. stacking can change the range of one of the axes dramatically. Even more, sometimes one of the position aesthetics is not available until after the stat computations and if the scales were not retrained it would never get trained.
+```{r, echo=FALSE}
+ggbuild(p + scale_x_log10())$transformed[[1]] %>% head(n = 3)
+```
 
-The last part of the data transformation is to train and map all non-positional aesthetics, i.e. convert whatever discrete or continuous input that is mapped to graphical parameters such as colours, linetypes, sizes etc. Further, any default aesthetics from the geom is added so that the data is now in a predicatable state for the geom. In the end, both the stat and the facet gets a last chance to modify the data in its final mapped form with their `finish_data()` methods before the build step is done.
 
-#### Output
+The second step in the process is to map the position aesthetics using the position scales, which unfolds differently depending on the kind of scale involved. For continuous position scales -- such as those used in our example -- the out of bounds function specified in the `oob` argument (Section \@ref(limits)) is applied at this point, and `NA` values in the layer data are removed. This makes little difference for `p`, but if we were plotting `p + xlim(2, 8)` instead the `oob` function -- `scales::censor()`  in this case -- would replace `x` values below 2 with `NA` as illustrated below:
+
+```{r, echo=FALSE}
+ggbuild(p + xlim(2, 8))$positioned[[1]] %>% head(n = 3)
+```
+
+
+For discrete positions the change is more radical, because the values are matched to the `limits` values or the `breaks` specification provided by the user, and then converted to integer-valued positions. Finally, for binned position scales the continuous data is first cut into bins using the `breaks` argument, and the position for each bin is set to the midpoint of its range. The reason for performing the mapping at this stage of the process is consistency: no matter what type of position scale is used, it will look continuous to the stat and geom computations. This is important because otherwise computations such as dodging and jitter would fail for discrete scales. 
+
+At the third stage in this transformation the data is handed to the layer stat where any statistical transformation takes place. The procedure is as follows: first, the stat is allowed to inspect the data and modify its parameters, then do a one off preparation of the data. Next, the layer data is split by `PANEL` and `group`, and statistics are calculated before the data is reassembled.[^compute-method] Once the data has been reassembled in its new form it goes through another aesthetic mapping process. This is where any aesthetics whose computation has been delayed using `stat()` (or the old `..var..` notation) get added to the data. Notice that this is why `stat()` expressions -- including the formula used to specify the regression model in the `geom_smooth()` layer of our example plot `p` -- cannot refer to the original data. It simply doesn't exist at this point. 
+
+
+[^compute-method]: It is possible for a stat to circumvent this splitting by overwritting specific `compute_*()` methods and thus do some optimisation.
+
+
+As an example consider the second layer in our plot, which produces the linear regressions. Before the stat computations have been performed the data for this layer simply contain the coordinates and the required `PANEL` and `group` columns.
+
+```{r echo=FALSE, message=FALSE}
+bb <- ggbuild(p)
+bb$positioned[[2]] %>% head(n = 3)
+```
+
+After the stat computations have taken place, the layer data are changed considerably:
+
+```{r echo=FALSE}
+bb$poststat[[2]] %>% head(n = 3)
+```
+
+
+At this point the geom takes over from the stat (almost). The first action it takes is to inspect the data, update its parameters and possibly make a first pass modification of the data (same setup as for stat). This is possibly where some of the columns gets reparameterised e.g. `x`+`width` gets changed to `xmin`+`xmax`. After this the position adjustment gets applied, so that e.g. overlapping bars are stacked, etc. For our example plot `p`, it is at this step that the jittering is applied in the first layer of the plot and the `x` and `y` coordinates are perturbed:
+
+```{r, echo=FALSE}
+ggbuild(p)$geompos[[1]] %>% head(n = 3)
+```
+
+Next---and perhaps surprisingly---the position scales are all reset, retrained, and applied to the layer data. Thinking about it, this is absolutely necessary because, for example, stacking can change the range of one of the axes dramatically. In some cases (e.g., in the histogram example above) one of the position aesthetics may not even available until after the stat computations and if the scales were not retrained it would never get trained.
+
+The last part of the data transformation is to train and map all non-positional aesthetics, i.e. convert whatever discrete or continuous input that is mapped to graphical parameters such as colours, linetypes, sizes etc. Further, any default aesthetics from the geom are added so that the data is now in a predictable state for the geom. At the very last step, both the stat and the facet gets a last chance to modify the data in its final mapped form with their `finish_data()` methods before the build step is done. For the plot object `p`, the first few rows from final state of the layer data look like this:
+
+```{r echo=FALSE}
+ggbuild(p)$built$data[[1]] %>% head(n = 3)
+```
+
+### Output
 The return value of `ggplot_build()` is a list structure with the `ggplot_built` class. It contains the computed data, as well as a `Layout` object holding information about the trained coordinate system and faceting. Further it holds a copy of the original plot object, but now with trained scales.
 
-### The gtable step
+## The gtable step {#ggplotgtable}
 The purpose of `ggplot_gtable()` is to take the output of the build step and turn it into a single `gtable` object that can be plotted using grid. At this point the main elements responsible for further computations are the geoms, the coordinate system, the facet, and the theme. The stats and position adjustments have all played their part already.
 
-#### Rendering the panels
-The first thing that happens is that the data is converted into its graphical representation. This happens in two steps. First, each layer is converted into a list of graphical objects (`grobs`). As with stats the conversion happens by splitting the data, first by `PANEL`, and then by `group`, with the possibility of the geom intercepting this splitting for performance reasons. While a lot of the data preparation has been performed already it is not uncommon that the geom does some additional transformation of the data during this step. A crucial part is to transform and normalise the position data. This is done by the coordinate system and while it often simply means that the data is normalised based on the limits of the coordinate system, it can also include radical transformations such as converting the positions into polar coordinates. The output of this is for each layer a list of `gList` objects corresponding to each panel in the facet layout. After this the facet takes over and assembles the panels. It does this by first collectiong the grobs for each panel from the layers, along with rendering strips, backgrounds, gridlines,and axes based on the theme and combines all of this into a single gList for each panel. It then proceeds to arranging all these panels into a gtable based on the calculated panel layout. For most plots this is simple as there is only a single panel, but for e.g. plots using `facet_wrap()` it can be quite complicated. The output is the basis of the final gtable object.
+### Rendering the panels
+The first thing that happens is that the data is converted into its graphical representation. This happens in two steps. First, each layer is converted into a list of graphical objects (`grobs`). As with stats the conversion happens by splitting the data, first by `PANEL`, and then by `group`, with the possibility of the geom intercepting this splitting for performance reasons. While a lot of the data preparation has been performed already it is not uncommon that the geom does some additional transformation of the data during this step. A crucial part is to transform and normalise the position data. This is done by the coordinate system and while it often simply means that the data is normalised based on the limits of the coordinate system, it can also include radical transformations such as converting the positions into polar coordinates. The output of this is for each layer a list of `gList` objects corresponding to each panel in the facet layout. After this the facet takes over and assembles the panels. It does this by first collectiong the grobs for each panel from the layers, along with rendering strips, backgrounds, gridlines,and axes based on the theme and combines all of this into a single gList for each panel. It then proceeds to arranging all these panels into a gtable based on the calculated panel layout. For most plots this is simple as there is only a single panel, but for e.g. plots using `facet_wrap()` it can be quite complicated. The output is the basis of the final gtable object. At this stage in the process our example plot `p` looks like this: 
 
-#### Adding guides
-There are two types of guides in ggplot2: axes and legends. at this point the axes has already been rendered and assembled together with the panels, while the legends are still missing. Rendering the legends is a complicated process that first trains a guide for each scale. Then, potentially multiple guides are merged if their mapping allows it before the layers that contribute to the legend is asked for key grobs for each key in the legend. These key grobs are then assembled across layers and combined to the final legend in a process that is quite reminiscent of how layers gets combined into the gtable of panels. In the end the output is a gtable that holds each legend box arranged and styled according to the theme and guide specifications. Once created the guide gtable is then added to the main gtable according to the `legend.position` theme setting.
+```{r echo=FALSE}
+d <- ggplot_build(p)
+x <- gggtable(d)
+grid::grid.newpage()
+grid::grid.draw(x$panels)
+```
 
-#### Adding adornment
+### Adding guides
+There are two types of guides in ggplot2: axes and legends. As our plot `p` illustrates at this point the axes has already been rendered and assembled together with the panels, but the legends are still missing. Rendering the legends is a complicated process that first trains a guide for each scale. Then, potentially multiple guides are merged if their mapping allows it before the layers that contribute to the legend is asked for key grobs for each key in the legend. These key grobs are then assembled across layers and combined to the final legend in a process that is quite reminiscent of how layers gets combined into the gtable of panels. In the end the output is a gtable that holds each legend box arranged and styled according to the theme and guide specifications. Once created the guide gtable is then added to the main gtable according to the `legend.position` theme setting. At this stage, our example plot is complete in most respects: the only thing missing is the title.
+
+```{r echo=FALSE}
+d <- ggplot_build(p)
+x <- gggtable(d)
+grid::grid.newpage()
+grid::grid.draw(x$legend)
+```
+
+### Adding adornment
+
 The only thing remaining is to add title, subtitle, caption, and tag as well as add background and margins, at which point the final gtable is done.
 
-#### Output
-The end result of `ggplot_gtable()` is, as described above, a gtable. What is less obvious is that the dimensions of the object is unpredictable and will depend on both the faceting, legend placement, and which titles are drawn. It is thus not advised to depend on row and column placement in your code, should you want to further modify the gtable. All elements of the gtable are named though, so it is still possible to reliably retrieve, e.g. the grob holding the top-left y-axis with a bit of work.
+### Output
 
-## ggproto
+At this point ggplot2 is ready to hand over to grid. Our rendering process is more or less equivalent to the code below and the end result is, as described above, a gtable:
+
+```{r}
+p_built <- ggplot_build(p)
+p_gtable <- ggplot_gtable(p_built)
+
+class(p_gtable)
+```
+
+What is less obvious is that the dimensions of the object is unpredictable and will depend on both the faceting, legend placement, and which titles are drawn. It is thus not advised to depend on row and column placement in your code, should you want to further modify the gtable. All elements of the gtable are named though, so it is still possible to reliably retrieve, e.g. the grob holding the top-left y-axis with a bit of work. As an illustration, the gtable for our plot `p` is shown in the code below:
+
+```{r}
+p_gtable
+```
+
+The final plot, as one would hope, looks identical to the original:
+
+```{r}
+grid::grid.newpage()
+grid::grid.draw(p_gtable)
+```
+
+## Introducing ggproto
 ggplot2 has undergone a couple of rewrites during its long life. A few of these have introduced new class systems to the underlying code. While there is still a small amount of leftover from older class systems, the code has more or less coalesced around the ggproto class system introduced in ggplot2 v2.0.0. ggproto is a custom build class system made specifically for ggplot2 to facilitate portable extension classes. Like the more well-known R6 system it is a system using reference semantics, allowing inheritance and access to methods from parent classes. On top of the ggproto is a set of design principles that, while not enforced by ggproto, is essential to how the system is used in ggplot2.
 
 ### ggproto syntax
@@ -146,7 +268,7 @@ GeomErrorbar <- ggproto(
     GeomLinerange$setup_params(data, params)
   }
   # ...
-}
+  }
 ```
 
 While we have seen that parent methods can be called using `ggproto_parent()` this pattern is quite rare to find in the ggplot2 source code, as the pattern shown above is often clearer and just as safe.
