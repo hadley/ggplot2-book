@@ -1,0 +1,137 @@
+```{r include = FALSE}
+source("common.R")
+
+create_spring <- function(x, y, xend, yend, diameter, tension, n) {
+  if (tension <= 0) {
+    rlang::abort("`tension` must be larger than 0")
+  }
+  # Calculate direct length of segment
+  length <- sqrt((x - xend)^2 + (y - yend)^2)
+  
+  # Figure out how many revolutions and points we need
+  n_revolutions <- length / (diameter * tension)
+  n_points <- n * n_revolutions
+  
+  # Calculate sequence of radians and x and y offset
+  radians <- seq(0, n_revolutions * 2 * pi, length.out = n_points)
+  x <- seq(x, xend, length.out = n_points)
+  y <- seq(y, yend, length.out = n_points)
+  
+  # Create the new data
+  data.frame(
+    x = cos(radians) * diameter/2 + x,
+    y = sin(radians) * diameter/2 + y
+  )
+}
+
+set.seed(12L)
+```
+
+# Extension Case Study: Springs, Part 2 {#spring2}
+In the last chapter we created a first version of our spring stat, complete with constructors and what-not. We finished the chapter by identifying some shortcomings in the finished implementation, one of which was the global nature of the `diameter` and `tension` arguments. In this chapter we will look into how we can turn these arguments into aesthetics instead, that can be set on a per-spring level.
+
+## Moving to aesthetics
+There is surprisingly little to do in order to make `diameter` and  `tension` behave like aesthetics. One downside (which we will tackle later) is that stats cannot set aesthetics as parameters. This means that with the implementation below, it will no longer be possible to set `diameter` and `tension` outside of `aes()`. 
+
+```{r}
+StatSpring <- ggproto("StatSpring", Stat, 
+  setup_params = function(data, params) {
+    if (is.null(params$n)) {
+      params$n <- 50
+    } else if (params$n <= 0) {
+      rlang::abort("Springs must be defined with `n` greater than 0")
+    }
+    params
+  },
+  setup_data = function(data, params) {
+    if (anyDuplicated(data$group)) {
+      data$group <- paste(data$group, seq_len(nrow(data)), sep = "-")
+    }
+    if (is.null(data$diameter)) {
+      data$diameter <- 1
+    }
+    if (any(data$diameter == 0)) {
+      rlang::abort("Springs cannot be defined with a diameter of 0")
+    }
+    if (is.null(data$tension)) {
+      data$tension <- 0.75
+    }
+    if (any(data$tension <= 0)) {
+      rlang::abort("Springs must be defined with a tension greater than 0")
+    }
+    data
+  },
+  compute_panel = function(data, scales, n = 50) {
+    cols_to_keep <- setdiff(names(data), c("x", "y", "xend", "yend"))
+    springs <- lapply(seq_len(nrow(data)), function(i) {
+      spring_path <- create_spring(data$x[i], data$y[i], data$xend[i], 
+                                   data$yend[i], data$diameter[i],
+                                   data$tension[i], n)
+      cbind(spring_path, unclass(data[i, cols_to_keep]))
+    })
+    do.call(rbind, springs)
+  },
+  required_aes = c("x", "y", "xend", "yend"),
+  optional_aes = c("diameter", "tension")
+)
+```
+
+This looks very much like the Stat we created in the last chapter, except a few things have been moved around. We have removed the check and default settings of `diameter` and `tension` from `setup_params()`, and instead checks the respective columns in `setup_data()`. We have also removed the arguments in `compute_panel()` as the values are now passed in with the data. Within `compute_panel()` we also grabs `diameter` and `tension` from the data instead, just like we do for `x`, `y`, etc.
+
+The constructor also need a slight modification to remove the new aesthetics from the parameter list:
+
+```{r}
+geom_spring <- function(mapping = NULL, data = NULL, stat = "spring", 
+                        position = "identity", ..., n = 50, arrow = NULL, 
+                        lineend = "butt", linejoin = "round", na.rm = FALSE,
+                        show.legend = NA, inherit.aes = TRUE) {
+  layer(
+    data = data, 
+    mapping = mapping, 
+    stat = stat, 
+    geom = GeomPath, 
+    position = position, 
+    show.legend = show.legend, 
+    inherit.aes = inherit.aes, 
+    params = list(
+      n = n, 
+      arrow = arrow, 
+      lineend = lineend, 
+      linejoin = linejoin, 
+      na.rm = na.rm, 
+      ...
+    )
+  )
+}
+```
+
+The `stat_spring()` constructor would require the same kind of change, but we'll let that be for now.
+
+All that is left is to test our new implementation out:
+
+```{r}
+some_data <- tibble(
+  x = runif(5, max = 10),
+  y = runif(5, max = 10),
+  xend = runif(5, max = 10),
+  yend = runif(5, max = 10),
+  class = sample(letters[1:2], 5, replace = TRUE),
+  tension = runif(5),
+  diameter = runif(5, 0.5, 1.5)
+)
+
+ggplot(some_data) + 
+  geom_spring(aes(x = x, y = y, xend = xend, yend = yend, tension = tension, 
+                  diameter = diameter))
+```
+
+It appears to work, but as can be seen we can no longer set `diameter` and `tension` as paramaters (outside of `aes()`)
+
+```{r}
+ggplot(some_data) + 
+  geom_spring(aes(x = x, y = y, xend = xend, yend = yend, tension = tension),
+              diameter = 0.5)
+```
+
+## Post-Mortem
+In this chapter we further developed our spring stat so that the two defining features (`diameter` and `tension`) can be used as aesthetics and thus vary between the different springs in a visualization. Our implementation has the downside that these features no longer can be set globally; this possibility is reserved for geoms for now. We are still missing a way to control the scaling of the two aesthetics so the mapped values are taken as-is. Such scaling is not possible with our current approach since scaling happens after the stats calculation at which point the path of our springs have been fixed. Our next step is thus to move our implementation away from `Stat` and into a proper `Geom`, which we will look at in the next chapter.
