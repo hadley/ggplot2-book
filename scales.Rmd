@@ -1,4 +1,4 @@
-```{r scales-chap, include = FALSE}
+```{r setup scales-chap, include = FALSE}
 source("common.R")
 columns(1, 2 / 3)
 ```
@@ -21,8 +21,7 @@ ggplot(mpg, aes(displ, hwy)) +
   geom_point(aes(colour = class))
 ```
 
-What actually happens is this:
-
+ggplot2 added a default scale for each aesthetic used in the plot: 
 ```{r, fig.show = "hide"}
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point(aes(colour = class)) +
@@ -31,7 +30,11 @@ ggplot(mpg, aes(displ, hwy)) +
   scale_colour_discrete()
 ```
 
-The original code did not specify any scales, so ggplot2 adds a default scale for each of the aesthetics used in the plot. The choice of default scale depends on both the aesthetic and the variable type. In this example `hwy` is a continuous variable mapped to the y aesthetic so the default scale is `scale_y_continuous()`; similarly `class` is discrete so when mapped to the colour aesthetic the default scale becomes `scale_colour_discrete()`. It would be tedious to manually add a scale every time you used a new aesthetic, so ggplot2 does it for you. But if you want to override the defaults, you'll need to add the scale yourself, like this: \index{Scales!defaults}
+The choice of default scale depends on the aesthetic and the variable type. In this example `hwy` is a continuous variable mapped to the y aesthetic so the default scale is `scale_y_continuous()`; similarly `class` is discrete so when mapped to the colour aesthetic the default scale becomes `scale_colour_discrete()`. 
+
+Specifying these defaults would be tedious so ggplot2 does it for you. But if you want to override the defaults, you'll need to add the scale yourself, like this: \index{Scales!defaults}
+
+<!-- HW: probably need a different example since I think we'd now use labs() for this -->
 
 ```{r, fig.show = "hide"}
 ggplot(mpg, aes(displ, hwy)) + 
@@ -40,9 +43,9 @@ ggplot(mpg, aes(displ, hwy)) +
   scale_y_continuous("An amazingly great y axis label")
 ```
 
-The use of `+` to "add" scales to a plot is a little misleading. Following the principle that every aesthetic has exactly one scale, when two scale specifications conflict the latter takes precedence. In other words, when you `+` a scale, you're not actually adding it to the plot, but overriding the existing scale. This means that the following two specifications are equivalent: \indexc{+} 
+The use of `+` to "add" scales to a plot is a little misleading because if you supply two scales for the same aesthetic, the last scale takes precedence. In other words, when you `+` a scale, you're not actually adding it to the plot, but overriding the existing scale. This means that the following two specifications are equivalent: \indexc{+} 
 
-```{r multiple-scales, fig.show = "hide", message = TRUE}
+```{r multiple-scales, fig.show = "hide"}
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
   scale_x_continuous("Label 1") +
@@ -53,9 +56,10 @@ ggplot(mpg, aes(displ, hwy)) +
   scale_x_continuous("Label 2")
 ```
 
-Note the message: if you see this in your own code, you need to reorganise your code specification to only add a single scale.
+Note the message when you add multiple scales for the same aesthetic, which makes it harder to accidentally overwrite an existing scale. If you see this in your own code, you should make sure that you're only adding one scale to each aesthetic.
 
-A second thing to note is that there are multiple ways to specify a valid scale for an aesthetic. In the examples above I have tweaked the options of the default scales, but you can also override them completely with new scales: 
+If you're making small tweaks to the scales, you might continue to use the default scales, supplying a few extra arguments. If you want to make more radical changes you will override the default scales with alternatives: 
+
 ```{r, fig.show = "hide"}
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point(aes(colour = class)) +
@@ -63,24 +67,22 @@ ggplot(mpg, aes(displ, hwy)) +
   scale_colour_brewer()
 ```
 
-In a specification such as this, `scale_x_sqrt()` changes the settings associated with the x axis scale, and `scale_colour_brewer()` does the same with the colour scale. I'll talk more about these later in the chapter.
+Here `scale_x_sqrt()` changes the scale for the x axis scale, and `scale_colour_brewer()` does the same for the colour scale.
 
-The scale functions intended for users all follow a common naming scheme. You’ve probably already figured out the scheme, but to be concrete, it’s made up of three pieces separated by "_":
+The scale functions intended for users all follow a common naming scheme. You've probably already figured out the scheme, but to be concrete, it's made up of three pieces separated by "_":
 
 1. `scale`
-1. The name of the aesthetic (e.g., `colour`, `shape` or `x`)
+1. The name of the primary aesthetic (e.g., `colour`, `shape` or `x`)
 1. The name of the scale (e.g., `continuous`, `discrete`, `brewer`).
 
-The naming structure is often helpful, but can sometimes be ambiguous. For example, it is immediately clear that `scale_x_*()` functions apply to the x aesthetic, but it takes a little more thought to recognise that they also govern the behaviour of other aesthetics that describe a horizontal position (e.g., the xmin, xmax, and xend aesthetics). Similarly, while the name `scale_colour_continuous()` clearly refers to the colour scale associated with a continuous variables, it is less obvious that `scale_colour_distiller()` is simply a different method for creating colour scales for continuous variables. In this chapter I will try to clarify this structure as much as possible: more generally, the help documentation for each scale function may be helpful.
+The naming structure is often helpful, but can sometimes be ambiguous. For example, it is immediately clear that `scale_x_*()` functions apply to the x aesthetic, but it takes a little more thought to recognise that they also govern the behaviour of other aesthetics that describe a horizontal position (e.g., the `xmin`, `xmax`, and `xend` aesthetics). Similarly, while the name `scale_colour_continuous()` clearly refers to the colour scale associated with a continuous variables, it is less obvious that `scale_colour_distiller()` is simply a different method for creating colour scales for continuous variables. In this chapter I will try to clarify this structure as much as possible: more generally, the help documentation for each scale function may be helpful.
 
-Before diving into the details of how scale functions work, it is useful to note that internally all scale functions in ggplot2 belong to one of three fundamental types; continuous scales, discrete scales, and binned scales. Each fundamental type is handled by one of three scale constructor functions; `continuous_scale()`, `discrete_scale()` and `binned_scale()`. Although users should never need to call the constructor functions, it is for this reason later sections in this chapter are sometimes subdivided into these three categories.
-
-
+Before diving into the details of how scale functions work, it is useful to note that internally all scale functions in ggplot2 belong to one of three fundamental types; continuous scales, discrete scales, and binned scales. Each fundamental type is handled by one of three scale constructor functions; `continuous_scale()`, `discrete_scale()` and `binned_scale()`. Although you should never need to call these constructor functions, they form the organising structure for later sections in this chapter.
 
 ### Exercises
 
-1.  What happens if you pair a discrete variable to a continuous scale?
-    What happens if you pair a continuous variable to a discrete scale?
+1.  What happens if you pair a discrete variable with a continuous scale?
+    What happens if you pair a continuous variable with a discrete scale?
 
 1.  Simplify the following plot specifications to make them easier to 
     understand.
@@ -100,22 +102,26 @@ Before diving into the details of how scale functions work, it is useful to note
       scale_colour_discrete("Drive\ntrain")
     ```
 
-
-
 ## Scale limits {#limits}
+\index{Axis!limits} \index{Scales!limits}
 
-Scales in ggplot2 are typically associated with limits that specify the domain over which the scale is defined and are usually derived from the range of the data. \index{Axis!limits} \index{Scales!limits} There are two reasons you might want to specify limits rather than relying on the data:
+<!--HW: I took a stab at this but it needs more work. I don't think domain vs range are natural to most people -->
+
+All scales have limits that define the domain over which the scale is defined and are usually derived from the range of the data. Here we'll discuss why you might want to specify the limits rather than relying on the data:
 
 1. You want to shrink the limits to focus on an interesting area of the plot.
 1. You want to expand the limits to make multiple plots match up.
 
-It's most natural to think about the limits of position scales: they map directly to the ranges of the axes. But limits also apply to scales that have legends, like colour, size, and shape, and these limits are particularly important if you want colours to be consistent across multiple plots. To modify the limits of a scale, specify the `limits` parameter of the scale:
+It's most natural to think about the limits of position scales: they map directly to the ranges of the axes. But limits also apply to scales that have legends, like colour, size, and shape, and these limits are particularly important if you want colours to be consistent across multiple plots. 
+
+Use the `limits` argument to modify limits:
 
 * For continuous scales, `limits` should be a numeric vector of length two. 
   If you only want to set the upper or lower limit, you can set the other value
   to `NA`.
-* For discrete scales, `limits` is a character vector which enumerates all possible
-  values.
+  
+* For discrete scales, `limits` should a character vector that enumerates all 
+  possible values.
 
 A minimal example is shown below. In the left panel the limits of the x scale are set to the default values (the range of the data), the middle panel expands the limits, and the right panel shrinks them:
 
@@ -130,6 +136,10 @@ base + scale_x_continuous(limits = c(1.5, 2.5))
 ```
 
 (The warning produced in the final example is discussed later in this section)
+
+<!--HW: probably need to emphaise here that setting the limits removes data PRIOR to statistics because this is confusing  -->
+
+<!-- HW: should we include a specific example of (eg) matching a colour scale across multiple plots where the range of the data is different? -->
 
 ### Convenience functions
 
@@ -150,7 +160,9 @@ base + lims(x = c(0, 4))
 
 ### Visual range expansion
 
-If you have eagle eyes, you'll have noticed that the visual range of the axes actually extends a little bit past the numerical limits that I have specified in the various examples. This ensures that the data does not overlap the axes, which is usually (but not always) desirable. To eliminate this space, set `expand = c(0, 0)`. One scenario where it is usually preferable to remove this space is when using `geom_raster()`: \index{Axis!expansion}
+If you have eagle eyes, you'll have noticed that the visual range of the axes actually extends a little bit past the numeric limits that I have specified in the various examples. This ensures that the data does not overlap the axes, which is usually (but not always) desirable. 
+
+You can eliminate this this space with `expand = c(0, 0)`. One scenario where it is usually preferable to remove this space is when using `geom_raster()`: \index{Axis!expansion}
 
 `r columns(2, 1, 1)`
 ```{r}
