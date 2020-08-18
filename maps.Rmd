@@ -184,26 +184,23 @@ Taken together, the geodetic datum (e.g, WGS84), the type of map projection (e.g
 st_crs(oz_votes)
 ```
 
-This output is a little verbose, and indicates that internally the CRS is defined as a list with two elements, one containing the input used to specify the CRS originally and the other containing the **well-known text** (WKT) that unambiguously describes the CRS. 
+Most of this output corresponds to a **well-known text** (WKT) string that unambiguously describes the CRS. This verbose WKT representation is used by sf internally, but there are several ways to provide user input that sf understands. One such method is to provide numeric input in the form of an **EPSG code** (see <http://www.epsg.org/>). The default CRS in the `oz_votes` data corresponds to EPSG code 4283:
 
-In ggplot2, the CRS is controlled by `coord_sf()`, which ensures that every layer in the plot uses the same projection. By default, `coord_sf()` uses the CRS associated with the geometry column of the data[^first-layer]. Because sf data typically supply a sensible choice of CRS, this process usually unfolds invisibly, requiring no intervention from the user. However, should you need to set the CRS yourself, you can specify the `crs` parameter. Some careful thought is required to do so, however, as the plot below illustrates:
+```{r}
+st_crs(oz_votes) == st_crs(4283)
+```
+
+In ggplot2, the CRS is controlled by `coord_sf()`, which ensures that every layer in the plot uses the same projection. By default, `coord_sf()` uses the CRS associated with the geometry column of the data[^first-layer]. Because sf data typically supply a sensible choice of CRS, this process usually unfolds invisibly, requiring no intervention from the user. However, should you need to set the CRS yourself, you can specify the `crs` parameter by passing valid user input to `st_crs()`. The example below illustrates how to switch from the default CRS to EPSG code 3112:
 
 [^first-layer]: If there are multiple data sets with a different associated CRS, it uses the CRS from the first layer.
 
-```{r, eval = FALSE}
-ggplot(oz_votes) +
-  geom_sf() + 
-  coord_sf(crs = st_crs("+proj=lcc +datum=WGS84"))
-```
-
-In this example `st_crs()` is given character input in the form of a **proj4string** (see https://proj.org/), though it also accepts numeric **EPSG code** (see <http://www.epsg-registry.org/>). The proj4string in this case indicates that I am using the WGS84 datum -- generally appropriate for global maps -- and the Lambert conformal conic (LCC) projection. The LCC is often used in aeronautical applications because straight lines on the map are approximate "great circles" on the globe, and it is generally considered a good projection for regional maps in the middle latitudes. However, the map looks terrible because I haven't set the parameters very wisely. To fix this, I centre the map at longitude 140 and latitude -25, and fix the two standard parallels (lines at which there are no distortions) at latitudes -18 and -36.
-
+`r columns(2,1)`
 ```{r}
-proj4string <- "+proj=lcc +datum=WGS84 +lat_0=-25 +lon_0=140 +lat_1=-18 +lat_2=-36"
-ggplot(oz_votes) +
-  geom_sf() + 
-  coord_sf(crs = st_crs(proj4string))
+ggplot(oz_votes) + geom_sf()
+ggplot(oz_votes) + geom_sf() + coord_sf(crs = st_crs(3112))
 ```
+
+
 
 ## Working with sf data {#sfdetail}
 
