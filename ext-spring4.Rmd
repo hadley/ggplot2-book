@@ -243,7 +243,7 @@ GeomSpring <- ggproto("GeomSpring", Geom,
     size = 0.5, 
     linetype = 1L, 
     alpha = NA, 
-    diameter = 1, 
+    diameter = 0.35, 
     tension = 0.75
   )
 )
@@ -269,7 +269,7 @@ geom_spring <- function(mapping = NULL, data = NULL, stat = "identity",
 ```
 
 The main differences from our last `GeomSpring` implementation is that we no longer
-care about a `group` column because each spring is defined in one line, and then of course the `draw_panel()` method. Since we are no longer passing on the call to another geoms `draw_panel()` method we have additional obligations in that call. If the coordinate system is no linear (e.g. `coord_polar()`) we emit a warning because our spring will not be adapted to that coordinate system. We then use the coordinate system to rescale our positional aesthetics with the `transform()` method. This will remap all positional aesthetics to lie between 0 and 1, with 0 being the lowest value visible in our viewport (scale expansions included) and 1 being the highest. With this remapping the coordinates are ready to be passed into a grob as `"npc"` units. By definition we understands the provided diameter as been given in centimeters. With all the values properly converted we call the `springGrob()` constructor and return the resulting grob.
+care about a `group` column because each spring is defined in one line, and then of course the `draw_panel()` method. Since we are no longer passing on the call to another geoms `draw_panel()` method we have additional obligations in that call. If the coordinate system is no linear (e.g. `coord_polar()`) we emit a warning because our spring will not be adapted to that coordinate system. We then use the coordinate system to rescale our positional aesthetics with the `transform()` method. This will remap all positional aesthetics to lie between 0 and 1, with 0 being the lowest value visible in our viewport (scale expansions included) and 1 being the highest. With this remapping the coordinates are ready to be passed into a grob as `"npc"` units. By definition we understands the provided diameter as been given in centimeters. With all the values properly converted we call the `springGrob()` constructor and return the resulting grob. One thing we haven't touched upon is the `gpar()` call inside the `springGrob()` construction. grid operates with a short list of very well-defined visual characteristics for grobs that are given by the `gp` argument in the constructor. This takes a `gpar` object that holds information such as colour of the stroke and fill, linetype, font, size, etc. Not all grobs care about all entries in `gpar()` and since we are constructing a line we only care about the gpar entries that the pathGrob understands, namely: `col` (stroke colour), `lwd` (line width), `lty` (line type), `lineend` (the terminator shape of the line).
 
 ```{r}
 ggplot(some_data) + 
