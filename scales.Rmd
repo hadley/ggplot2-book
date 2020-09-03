@@ -135,12 +135,66 @@ base + scale_x_continuous(limits = c(0, 4))
 base + scale_x_continuous(limits = c(1.5, 2.5))
 ```
 
-<!-- HW: should we include a specific example of (eg) matching a colour scale across multiple plots where the range of the data is different? -->
 
-### Out of bounds values
+You might be surprised that the final plot generates a warning, as there's no missing value in the input dataset. I'll talk about this in Section \@ref(oob). 
+
+### Setting multiple limits
+
+Manually setting scale limits is a common task when you need to ensure that scales in different plots are consistent with one another. When you create a faceted plot, ggplot2 automatically does this for you:
+
+`r columns(1, aspect_ratio = 1/2, max_width = 1)`
+```{r}
+ggplot(mpg, aes(displ, hwy, colour = fl)) + 
+  geom_point() +
+  facet_wrap(vars(year))
+```
+
+(Colour represents the fuel type, which can be **r**egular, **e**thanol, **d**iesel, **p**remium or *c*ompressed natural gas)
+
+In this plot the x and y axes have the same limits in both facets and the colours are consistent. However, it is sometimes necessary to maintain consistency across multiple plots, which has the often-undesirable property of causing each plot to set scale limits independently:
+
+`r columns(2, 1)`
+```{r}
+mpg_99 <- mpg %>% filter(year == 1999)
+mpg_08 <- mpg %>% filter(year == 2008)
+
+base_99 <- ggplot(mpg_99, aes(displ, hwy, colour = fl)) + geom_point() 
+base_08 <- ggplot(mpg_08, aes(displ, hwy, colour = fl)) + geom_point() 
+
+base_99
+base_08
+```
+
+Each plot makes sense on its own, but visual comparison between the two is difficult. The axis limits are different, and because only regular, premium and diesel fuels are represented in the 1998 data the colours are mapped inconsistently. 
+
+Because modifying scale limits is such a common task, ggplot2 provides some convenience functions to make this easier. For position scales the `xlim()` and `ylim()` helper functions inspect their input and then specify the appropriate scale for the x and y axes respectively. More generally, the `lims()` function takes name-value pairs as input, where the name specifies the aesthetic and the value specifies the limits. The results depend on the type of scale: \indexf{xlim}  \indexf{ylim}
+
+* `xlim(10, 20)`: a continuous scale from 10 to 20
+* `ylim(20, 10)`: a reversed continuous scale from 20 to 10
+* `xlim("a", "b", "c")`: a discrete scale
+* `xlim(as.Date(c("2008-05-01", "2008-08-01")))`: a date scale from May 1 to August 1 2008 (date scales are discussed in Section \@ref(date-scales))
+
+To ensure consistent axis scaling in the previous example, we can use these helper functions:
+
+```{r}
+base_99 + xlim(1, 7) + ylim(10, 45)
+base_08 + xlim(1, 7) + ylim(10, 45)
+```
+
+In many cases the `xlim()` and `ylim()` functions would be sufficient to solve the problem, but in this example we still need to ensure that the colour scale is consistent across plots. The `lims()` function is particularly useful for this purpose, as it allows the user to set the scale limits for any aesthetic:
+
+```{r}
+base_99 + lims(x = c(1, 7), y = c(10, 45), colour = c("c", "d", "e", "p", "r"))
+base_08 + lims(x = c(1, 7), y = c(10, 45), colour = c("c", "d", "e", "p", "r"))
+```
+
+Note that because the fuel variable `fl` is discrete, the limits for the colour aesthetic are a vector of possible values rather than the two end points.
+
+
+### Out of bounds values {#oob}
 \index{Zooming}
 
-You might be surprised that the previous plot generates a warning, as there's no missing value in the input dataset. By default, ggplot2 converts data outside the limits to `NA`. This means that changing the limits of a scale is not precisely the same as visually zooming in to a region of the plot. If you want to do the latter, you should use the `xlim` and `ylim` arguments to `coord_cartesian()`:
+By default, ggplot2 converts data outside the limits to `NA`. This means that changing the limits of a scale is not precisely the same as visually zooming in to a region of the plot. If you want to do the latter, you should use the `xlim` and `ylim` arguments to `coord_cartesian()`:
 
 <!-- HW: insert example here? Show example with statistic since data is reoved PRIOR to statistics which this is confusing?  -->
 
@@ -162,24 +216,6 @@ base + scale_fill_gradient(limits = c(1, 3), oob = scales::squish)
 
 On the left the default fill colours are shown, ranging from dark blue to light blue. In the middle panel the scale limits for the fill aesthetic are reduced so that the values for the three rightmost bars are replace with `NA` and are mapped to a grey shade. In some cases this is desired behaviour but often it is not: the right panel addresses this by modifying the `oob` function appropriately.  
 
-### Convenience functions
-
-<!-- HW: this now feels a bit out of place to me, but I don't have any suggestisons as to where would be better, unless we create a "scale shortcuts" section that also included labs() -->
-
-Because modifying scale limits is such a common task, ggplot2 provides some convenience functions to make this easier. For position scales the `xlim()` and `ylim()` helper functions inspect their input and then specify the appropriate scale for the x and y axes respectively. More generally, the `lims()` function takes name-value pairs as input, where the name specifies the aesthetic and the value specifies the limits. The results depend on the type of scale: \indexf{xlim}  \indexf{ylim}
-
-* `xlim(10, 20)`: a continuous scale from 10 to 20
-* `ylim(20, 10)`: a reversed continuous scale from 20 to 10
-* `xlim("a", "b", "c")`: a discrete scale
-* `xlim(as.Date(c("2008-05-01", "2008-08-01")))`: a date scale from May 1 to August 1 2008 (date scales are discussed in Section \@ref(date-scales))
-
-Three examples using the `base` plot are shown below:
-
-```{r, messages = FALSE}
-base + xlim(0, 4)
-base + xlim(4, 0)
-base + lims(x = c(0, 4))
-```
 
 ### Visual range expansion
 
