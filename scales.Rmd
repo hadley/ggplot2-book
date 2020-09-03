@@ -194,13 +194,22 @@ Note that because the fuel variable `fl` is discrete, the limits for the colour 
 ### Out of bounds values {#oob}
 \index{Zooming}
 
-By default, ggplot2 converts data outside the limits to `NA`. This means that changing the limits of a scale is not precisely the same as visually zooming in to a region of the plot. If you want to do the latter, you should use the `xlim` and `ylim` arguments to `coord_cartesian()`:
+By default, ggplot2 converts data outside the scale limits to `NA`. This means that changing the limits of a scale is not precisely the same as visually zooming in to a region of the plot. If your goal is to zoom in part of the plot, it is better to use the `xlim` and `ylim` arguments to `coord_cartesian()`:
 
-<!-- HW: insert example here? Show example with statistic since data is reoved PRIOR to statistics which this is confusing?  -->
+`r columns(3, 1.5)`
+```{r}
+base <- ggplot(mpg, aes(drv, hwy)) + 
+  geom_hline(yintercept = 28, colour = "red") + 
+  geom_boxplot() 
 
-You can learn more about this in Section \@ref(cartesian).
+base
+base + coord_cartesian(ylim = c(10, 35)) # zoom only
+base + ylim(10, 35) # alters the boxplot
+```
 
-Alternatively, you can override the default behaviour for **o**ut **o**f **b**ounds values by settiing `oob` argument to the scale, a function that is applied to all observations outside the scale limits. The default `scales::censor()` which replaces any value outside the limits with `NA`. Another option is `scales::squish()` which squishes all values into the range. An example using a fill scale is shown below:
+The only difference between the left and middle plots is that that the latter is zoomed in. Some of the outlier points are not shown due to the restriction of range, but the boxplots themselves remain identical. In contrast, in the plot on the right one of the boxplots has changed. When `ylim()` is used to set the scale limits, all observations with highway mileage greater than 35 are converted to `NA` before the stat (in this case the boxplot) is computed. This has the effect of shifting the sample median downward. You can learn more about coordinate systems in Section \@ref(cartesian).
+
+Although the default behaviour in to convert the **o**ut **o**f **b**ounds values to `NA`, you can override this by setting `oob` argument to the scale, a function that is applied to all observations outside the scale limits. The default `scales::censor()` which replaces any value outside the limits with `NA`. Another option is `scales::squish()` which squishes all values into the range. An example using a fill scale is shown below:
 
 `r columns(3,1)`
 ```{r}
