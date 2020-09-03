@@ -377,7 +377,40 @@ erupt <- ggplot(faithfuld, aes(waiting, eruptions, fill = density)) +
   theme(legend.position = "none")
 ```
 
-There are multiple ways to specify continuous colour scales. I'll talk first about "general purpose" gradient scale functions that you can use to construct any scale you like, then discuss scale functions that provide "hand picked" colour palettes. 
+#### Particular palettes
+
+There are multiple ways to specify continuous colour scales. Later I'll talk about general purpose tools that you can use to construct your own palette, but this is often unnecessary as there are many "hand picked" palettes available. For example, ggplot2 supplies two scale functions that bundle pre-specified palettes, `scale_fill_viridis_c()` and `scale_fill_distiller()`. The viridis scales [@viridis] are designed to be perceptually uniform in both colour and when reduced to black and white, and to be perceptible to people with various forms of colour blindness.
+
+```{r}
+erupt
+erupt + scale_fill_viridis_c()
+erupt + scale_fill_viridis_c(option = "magma")
+```
+
+The second group of continuous colour scales built in to ggplot2 are derived from the ColorBrewer scales: `scale_fill_brewer()` provides these colours as discrete palettes, while `scale_fill_distiller()` and `scale_fill_fermenter()` are the continuous and binned analogs. I discuss these scales in Section \@ref(colour-discrete)), but for illustrative purposes include some examples here:
+
+```{r}
+erupt + scale_fill_distiller()
+erupt + scale_fill_distiller(palette = "RdPu")
+erupt + scale_fill_distiller(palette = "YlOrBr")
+```
+
+There are many other packages that provide useful colour palettes. For example,  scico [@scico] provides more palettes that are perceptually uniform and suitable for scientific visualisation:
+
+```{r}
+erupt + scico::scale_fill_scico(palette = "bilbao") # the default
+erupt + scico::scale_fill_scico(palette = "vik")
+erupt + scico::scale_fill_scico(palette = "lajolla")
+```
+
+However, as there are a great many palette packages in R, a particularly useful package is paletteer [@paletteer], which aims to provide a common interface:
+
+```{r}
+erupt + paletteer::scale_fill_paletteer_c("viridis::plasma")
+erupt + paletteer::scale_fill_paletteer_c("scico::tokyo")
+erupt + paletteer::scale_fill_paletteer_c("gameofthrones::targaryen")
+```
+
 
 #### Robust recipes
 
@@ -449,42 +482,6 @@ erupt + scale_fill_gradientn(colours = colorspace::diverge_hcl(7))
 ```
     
 
-#### Particular palettes
-
-<!-- HW: maybe better to start with these since they're perceptually well founded? -->
-    
-In addition to the general purpose tools that the gradient scales provide, ggplot2 supplies two scale functions that bundle pre-specified palettes, `scale_fill_viridis_c()` and `scale_fill_distiller()`. The viridis scales [@viridis] are designed to be perceptually uniform in both colour and when reduced to black and white, and to be perceptible to people with various forms of colour blindness. Three examples are shown below:
-
-```{r}
-erupt + scale_fill_viridis_c(option = "viridis") # the default
-erupt + scale_fill_viridis_c(option = "magma")
-erupt + scale_fill_viridis_c(option = "plasma")
-```
-
-The second group of continuous colour scales built in to ggplot2 are derived from the ColorBrewer scales: `scale_fill_brewer()` provides these colours as discrete palettes, while `scale_fill_distiller()` and `scale_fill_fermenter()` are the continuous and binned analogs. I discuss these scales in Section \@ref(colour-discrete)), but for illustrative purposes include some examples here:
-
-```{r}
-erupt + scale_fill_distiller()
-erupt + scale_fill_distiller(palette = "RdPu")
-erupt + scale_fill_distiller(palette = "YlOrBr")
-```
-
-There are many other packages that provide useful colour palettes. For example,  scico [@scico] provides more palettes that are perceptually uniform and suitable for scientific visualisation:
-
-```{r}
-erupt + scico::scale_fill_scico(palette = "bilbao") # the default
-erupt + scico::scale_fill_scico(palette = "vik")
-erupt + scico::scale_fill_scico(palette = "lajolla")
-```
-
-However, as there are a great many palette packages in R, a particularly useful package is paletteer [@paletteer], which aims to provide a common interface:
-
-```{r}
-erupt + paletteer::scale_fill_paletteer_c("viridis::plasma")
-erupt + paletteer::scale_fill_paletteer_c("scico::tokyo")
-erupt + paletteer::scale_fill_paletteer_c("gameofthrones::targaryen")
-```
-
 
 #### Missing values
 
@@ -516,8 +513,6 @@ bars <- ggplot(df, aes(x, y, fill = x)) +
   theme(legend.position = "none")
 ```
 
-#### Hue, grey and manual scales
-
 The default scale for discrete colours is `scale_fill_discrete()` which in turn defaults to `scale_fill_hue()` so these are identical plots:
 
 ```{r}
@@ -526,40 +521,10 @@ bars + scale_fill_discrete()
 bars + scale_fill_hue()
 ```
 
-The default colour scheme picks evenly spaced hues around the HCL colour wheel. This works well for up to about eight colours, but after that it becomes hard to tell the different colours apart. You can control the default chroma and luminance, and the range of hues, with the `h`, `c` and `l` arguments:
-\indexf{scale\_colour\_hue}
-    
-```{r}
-bars
-bars + scale_fill_hue(c = 40)
-bars + scale_fill_hue(h = c(180, 300))
-```
-    
-One disadvantage of the default colour scheme is that because the colours all have the same luminance and chroma, when you print them in black and white, they all appear as an identical shade of grey. Noting this, if you are intending a discrete colour scale to be printed in black and white, it is better to use `scale_fill_grey()` which maps discrete data to grays, from light to dark:
-\indexf{scale\_colour\_grey} \index{Colour!greys}
-
-<!-- HW: also need to note challenges for colour blind folks -->
-
-```{r}
-bars + scale_fill_grey()
-bars + scale_fill_grey(start = 0.5, end = 1)
-bars + scale_fill_grey(start = 0, end = 0.5)
-```
-
-Alternatively, if you have your own preferred colours, you can use `scale_fill_manual()` to set the colours by hand. This can be useful if you wish to choose colours that highlight a secondary grouping structure or draw attention to different comparisons:
-\indexf{scale\_colour\_manual} 
-
-```{r}
-bars + scale_fill_manual(values = c("sienna1", "sienna4", "hotpink1", "hotpink4"))
-bars + scale_fill_manual(values = c("tomato1", "tomato2", "tomato3", "tomato4"))
-bars + scale_fill_manual(values = c("grey", "black", "grey", "grey"))
-```
-
+This default scale has some limitations (discussed shortly) so I'll begin by discussing tools for producing nicer discrete palettes.
 
 #### Brewer scales
-    
-<!-- HW: again, might be better to start with these? -->
-    
+
 `scale_colour_brewer()` is a discrete colour scale that---along with the continuous analog `scale_colour_distiller()` and binned analog `scale_colour_fermenter()`---uses handpicked "ColorBrewer" colours taken from <http://colorbrewer2.org/>. These colours have been designed to work well in a wide variety of situations, although the focus is on maps and so the colours tend to work better when displayed in large areas. There are many different options:
 `r columns(1, 2)`
 ```{r}
@@ -608,6 +573,42 @@ area + scale_fill_brewer(palette = "Set1")
 area + scale_fill_brewer(palette = "Set2")
 area + scale_fill_brewer(palette = "Pastel1")
 ```
+
+#### Hue and grey scales
+
+The default colour scheme picks evenly spaced hues around the HCL colour wheel. This works well for up to about eight colours, but after that it becomes hard to tell the different colours apart. You can control the default chroma and luminance, and the range of hues, with the `h`, `c` and `l` arguments:
+\indexf{scale\_colour\_hue}
+    
+```{r}
+bars
+bars + scale_fill_hue(c = 40)
+bars + scale_fill_hue(h = c(180, 300))
+```
+    
+One disadvantage of the default colour scheme is that because the colours all have the same luminance and chroma, when you print them in black and white, they all appear as an identical shade of grey. Noting this, if you are intending a discrete colour scale to be printed in black and white, it is better to use `scale_fill_grey()` which maps discrete data to grays, from light to dark:
+\indexf{scale\_colour\_grey} \index{Colour!greys}
+
+<!-- HW: also need to note challenges for colour blind folks -->
+
+```{r}
+bars + scale_fill_grey()
+bars + scale_fill_grey(start = 0.5, end = 1)
+bars + scale_fill_grey(start = 0, end = 0.5)
+```
+
+
+#### Manual scales
+
+If none of the hand-picked palettes is suitable, or if you have your own preferred colours, you can use `scale_fill_manual()` to set the colours manually. This can be useful if you wish to choose colours that highlight a secondary grouping structure or draw attention to different comparisons:
+\indexf{scale\_colour\_manual} 
+
+```{r}
+bars + scale_fill_manual(values = c("sienna1", "sienna4", "hotpink1", "hotpink4"))
+bars + scale_fill_manual(values = c("tomato1", "tomato2", "tomato3", "tomato4"))
+bars + scale_fill_manual(values = c("grey", "black", "grey", "grey"))
+```
+
+
 
 ### Binned colour scales
 
