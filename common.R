@@ -6,6 +6,7 @@ library(tidyr)
 conflicted::conflict_prefer("extract", "tidyr")
 
 options(digits = 3, dplyr.print_min = 6, dplyr.print_max = 6)
+options(crayon.enabled = FALSE)
 
 # suppress startup message
 library(maps)
