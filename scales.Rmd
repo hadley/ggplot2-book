@@ -815,7 +815,21 @@ ggplot(diamonds, aes(price, carat)) +
   scale_y_log10()
 ```
 
-Note that there is nothing preventing you from performing these transformations manually. For example, instead of using `scale_x_log10()` to transform the scale, you could transform the data instead and plot `log10(x)`. The appearance of the geom will be the same, but the tick labels will be different. Specifically, if you use a transformed scale, the axes will be labelled in the original data space; if you transform the data, the axes will be labelled in the transformed space. Regardless of which method you use, the transformation occurs before any statistical summaries. To transform _after_ statistical computation use `coord_trans()`. See Section \@ref(cartesian) for more details.
+Note that there is nothing preventing you from performing these transformations manually. For example, instead of using `scale_x_log10()` to transform the scale, you could transform the data instead and plot `log10(x)`. The appearance of the geom will be the same, but the tick labels will be different. Specifically, if you use a transformed scale, the axes will be labelled in the original data space; if you transform the data, the axes will be labelled in the transformed space. 
+
+`r columns(2, 1)`
+```{r}
+# manual transformation
+ggplot(mpg, aes(log10(displ), hwy)) + 
+  geom_point()
+
+# transform using scales
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() + 
+  scale_x_log10()
+```
+
+Regardless of which method you use, the transformation occurs before any statistical summaries. To transform _after_ statistical computation use `coord_trans()`. See Section \@ref(cartesian) for more details.
 
 Although the most common use for transformations is to adjust position scales, they can sometimes be helpful to when applied to other aesthetics. Often this is purely a matter of visual emphasis. An example of this for the Old Faithful density plot is shown below. The linearly mapped scale on the left makes it easy to see the peaks of the distribution, whereas the transformed representation on the right makes it easier to see the regions of non-negligible density around those peaks:
 
