@@ -169,7 +169,33 @@ base_08
 
 Each plot makes sense on its own, but visual comparison between the two is difficult. The axis limits are different, and because only regular, premium and diesel fuels are represented in the 1998 data the colours are mapped inconsistently. 
 
-Because modifying scale limits is such a common task, ggplot2 provides some convenience functions to make this easier. For position scales the `xlim()` and `ylim()` helper functions inspect their input and then specify the appropriate scale for the x and y axes respectively. More generally, the `lims()` function takes name-value pairs as input, where the name specifies the aesthetic and the value specifies the limits. The results depend on the type of scale: \indexf{xlim}  \indexf{ylim}
+```{r}
+base_99 + 
+  scale_x_continuous(limits = c(1, 7)) +
+  scale_y_continuous(limits = c(10, 45))
+
+base_08 + 
+  scale_x_continuous(limits = c(1, 7)) +
+  scale_y_continuous(limits = c(10, 45))
+```
+
+In many cases setting the limits for x and y axes would be sufficient to solve the problem, but in this example we still need to ensure that the colour scale is consistent across plots.  
+
+```{r}
+base_99 + 
+  scale_x_continuous(limits = c(1, 7)) +
+  scale_y_continuous(limits = c(10, 45)) +
+  scale_color_discrete(limits = c("c", "d", "e", "p", "r"))
+
+base_08 + 
+  scale_x_continuous(limits = c(1, 7)) +
+  scale_y_continuous(limits = c(10, 45)) +
+  scale_color_discrete(limits = c("c", "d", "e", "p", "r"))
+```
+
+Note that because the fuel variable `fl` is discrete, the limits for the colour aesthetic are a vector of possible values rather than the two end points.
+
+Because modifying scale limits is such a common task, ggplot2 provides some convenience functions to make this easier. For position scales the `xlim()` and `ylim()` helper functions inspect their input and then specify the appropriate scale for the x and y axes respectively. The results depend on the type of scale: \indexf{xlim}  \indexf{ylim}
 
 * `xlim(10, 20)`: a continuous scale from 10 to 20
 * `ylim(20, 10)`: a reversed continuous scale from 20 to 10
@@ -183,14 +209,12 @@ base_99 + xlim(1, 7) + ylim(10, 45)
 base_08 + xlim(1, 7) + ylim(10, 45)
 ```
 
-In many cases the `xlim()` and `ylim()` functions would be sufficient to solve the problem, but in this example we still need to ensure that the colour scale is consistent across plots. The `lims()` function is particularly useful for this purpose, as it allows the user to set the scale limits for any aesthetic:
+Another option for setting limits is the `lims()` function which takes name-value pairs as input, where the name specifies the aesthetic and the value specifies the limits:
 
 ```{r}
 base_99 + lims(x = c(1, 7), y = c(10, 45), colour = c("c", "d", "e", "p", "r"))
 base_08 + lims(x = c(1, 7), y = c(10, 45), colour = c("c", "d", "e", "p", "r"))
 ```
-
-Note that because the fuel variable `fl` is discrete, the limits for the colour aesthetic are a vector of possible values rather than the two end points.
 
 
 ### Out of bounds values {#oob}
