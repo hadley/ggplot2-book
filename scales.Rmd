@@ -5,7 +5,7 @@ columns(1, 2 / 3)
 
 # Scales {#scales}
 
-Scales in ggplot2 control the mapping from data to aesthetics. They take your data and turn it into something that you can see, like size, colour, position or shape. They also provide the tools that let you interpret the plot: the axes and legends. You can generate many plots without knowing how scales work, but understanding scales and learning how to manipulate them will give you much more control.
+Scales in ggplot2 control the mapping from data to aesthetics. They take your data and turn it into something that you can see, like size, colour, position or shape. They also provide the tools that let you interpret the plot: the axes and legends. You can generate plots with ggplot2 without knowing how scales work, but understanding scales and learning how to manipulate them will give you much more control.
 
 \index{Scales}
 
@@ -82,9 +82,6 @@ Before diving into the details of how scale functions work, it is useful to note
 
 ### Exercises
 
-1.  What happens if you pair a discrete variable with a continuous scale?
-    What happens if you pair a continuous variable with a discrete scale?
-
 1.  Simplify the following plot specifications to make them easier to 
     understand.
     
@@ -103,6 +100,9 @@ Before diving into the details of how scale functions work, it is useful to note
       scale_colour_discrete("Drive\ntrain")
     ```
 
+1.  What happens if you pair a discrete variable with a continuous scale?
+    What happens if you pair a continuous variable with a discrete scale?
+
 ## Scale limits {#limits}
 \index{Axis!limits} \index{Scales!limits}
 
@@ -112,7 +112,7 @@ Before diving into the details of how scale functions work, it is useful to note
 All scales have limits that define the domain over which the scale is defined and are usually derived from the range of the data. Here we'll discuss why you might want to specify the limits rather than relying on the data:
 
 1. You want to shrink the limits to focus on an interesting area of the plot.
-1. You want to expand the limits to make multiple plots match up.
+1. You want to expand the limits to make multiple plots match up or to match the natural limits of a variable (e.g. percentages go from 0 to 100).
 
 It's most natural to think about the limits of position scales: they map directly to the ranges of the axes. But limits also apply to scales that have legends, like colour, size, and shape, and these limits are particularly important if you want colours to be consistent across multiple plots. 
 
@@ -122,7 +122,7 @@ Use the `limits` argument to modify limits:
   If you only want to set the upper or lower limit, you can set the other value
   to `NA`.
   
-* For discrete scales, `limits` should a character vector that enumerates all 
+* For discrete scales, `limits` should be a character vector that enumerates all 
   possible values.
 
 A minimal example is shown below. In the left panel the limits of the x scale are set to the default values (the range of the data), the middle panel expands the limits, and the right panel shrinks them:
@@ -151,7 +151,7 @@ ggplot(mpg, aes(displ, hwy, colour = fl)) +
   facet_wrap(vars(year))
 ```
 
-(Colour represents the fuel type, which can be **r**egular, **e**thanol, **d**iesel, **p**remium or *c*ompressed natural gas)
+(Colour represents the fuel type, which can be **r**egular, **e**thanol, **d**iesel, **p**remium or **c**ompressed natural gas.)
 
 In this plot the x and y axes have the same limits in both facets and the colours are consistent. However, it is sometimes necessary to maintain consistency across multiple plots, which has the often-undesirable property of causing each plot to set scale limits independently:
 
@@ -169,7 +169,33 @@ base_08
 
 Each plot makes sense on its own, but visual comparison between the two is difficult. The axis limits are different, and because only regular, premium and diesel fuels are represented in the 1998 data the colours are mapped inconsistently. 
 
-Because modifying scale limits is such a common task, ggplot2 provides some convenience functions to make this easier. For position scales the `xlim()` and `ylim()` helper functions inspect their input and then specify the appropriate scale for the x and y axes respectively. More generally, the `lims()` function takes name-value pairs as input, where the name specifies the aesthetic and the value specifies the limits. The results depend on the type of scale: \indexf{xlim}  \indexf{ylim}
+```{r}
+base_99 + 
+  scale_x_continuous(limits = c(1, 7)) +
+  scale_y_continuous(limits = c(10, 45))
+
+base_08 + 
+  scale_x_continuous(limits = c(1, 7)) +
+  scale_y_continuous(limits = c(10, 45))
+```
+
+In many cases setting the limits for x and y axes would be sufficient to solve the problem, but in this example we still need to ensure that the colour scale is consistent across plots.  
+
+```{r}
+base_99 + 
+  scale_x_continuous(limits = c(1, 7)) +
+  scale_y_continuous(limits = c(10, 45)) +
+  scale_color_discrete(limits = c("c", "d", "e", "p", "r"))
+
+base_08 + 
+  scale_x_continuous(limits = c(1, 7)) +
+  scale_y_continuous(limits = c(10, 45)) +
+  scale_color_discrete(limits = c("c", "d", "e", "p", "r"))
+```
+
+Note that because the fuel variable `fl` is discrete, the limits for the colour aesthetic are a vector of possible values rather than the two end points.
+
+Because modifying scale limits is such a common task, ggplot2 provides some convenience functions to make this easier. For position scales the `xlim()` and `ylim()` helper functions inspect their input and then specify the appropriate scale for the x and y axes respectively. The results depend on the type of scale: \indexf{xlim}  \indexf{ylim}
 
 * `xlim(10, 20)`: a continuous scale from 10 to 20
 * `ylim(20, 10)`: a reversed continuous scale from 20 to 10
@@ -183,20 +209,18 @@ base_99 + xlim(1, 7) + ylim(10, 45)
 base_08 + xlim(1, 7) + ylim(10, 45)
 ```
 
-In many cases the `xlim()` and `ylim()` functions would be sufficient to solve the problem, but in this example we still need to ensure that the colour scale is consistent across plots. The `lims()` function is particularly useful for this purpose, as it allows the user to set the scale limits for any aesthetic:
+Another option for setting limits is the `lims()` function which takes name-value pairs as input, where the name specifies the aesthetic and the value specifies the limits:
 
 ```{r}
 base_99 + lims(x = c(1, 7), y = c(10, 45), colour = c("c", "d", "e", "p", "r"))
 base_08 + lims(x = c(1, 7), y = c(10, 45), colour = c("c", "d", "e", "p", "r"))
 ```
 
-Note that because the fuel variable `fl` is discrete, the limits for the colour aesthetic are a vector of possible values rather than the two end points.
-
 
 ### Out of bounds values {#oob}
 \index{Zooming}
 
-By default, ggplot2 converts data outside the scale limits to `NA`. This means that changing the limits of a scale is not precisely the same as visually zooming in to a region of the plot. If your goal is to zoom in part of the plot, it is better to use the `xlim` and `ylim` arguments to `coord_cartesian()`:
+By default, ggplot2 converts data outside the scale limits to `NA`. This means that changing the limits of a scale is not precisely the same as visually zooming in to a region of the plot. If your goal is to zoom in part of the plot, it is better to use the `xlim` and `ylim` arguments of `coord_cartesian()`:
 
 `r columns(3, 1.5)`
 ```{r}
@@ -209,9 +233,9 @@ base + coord_cartesian(ylim = c(10, 35)) # zoom only
 base + ylim(10, 35) # alters the boxplot
 ```
 
-The only difference between the left and middle plots is that that the latter is zoomed in. Some of the outlier points are not shown due to the restriction of range, but the boxplots themselves remain identical. In contrast, in the plot on the right one of the boxplots has changed. When `ylim()` is used to set the scale limits, all observations with highway mileage greater than 35 are converted to `NA` before the stat (in this case the boxplot) is computed. This has the effect of shifting the sample median downward. You can learn more about coordinate systems in Section \@ref(cartesian).
+The only difference between the left and middle plots is that that the latter is zoomed in. Some of the outlier points are not shown due to the restriction of the range, but the boxplots themselves remain identical. In contrast, in the plot on the right one of the boxplots has changed. When `ylim()` is used to set the scale limits, all observations with highway mileage greater than 35 are converted to `NA` before the stat (in this case the boxplot) is computed. This has the effect of shifting the sample median downward. You can learn more about coordinate systems in Section \@ref(cartesian).
 
-Although the default behaviour in to convert the **o**ut **o**f **b**ounds values to `NA`, you can override this by setting `oob` argument to the scale, a function that is applied to all observations outside the scale limits. The default `scales::censor()` which replaces any value outside the limits with `NA`. Another option is `scales::squish()` which squishes all values into the range. An example using a fill scale is shown below:
+Although the default behaviour is to convert the **o**ut **o**f **b**ounds values to `NA`, you can override this by setting `oob` argument of the scale, a function that is applied to all observations outside the scale limits. The default `scales::censor()` which replaces any value outside the limits with `NA`. Another option is `scales::squish()` which squishes all values into the range. An example using a fill scale is shown below:
 
 `r columns(3,1)`
 ```{r}
@@ -263,12 +287,11 @@ ggplot(faithfuld, aes(waiting, eruptions)) +
     ggplot(rwd, aes(displ, hwy, colour = class)) + geom_point()
     ```
 
-1.  What does `expand_limits()` do and how does it work?  Read the source code.
-
 1.  What happens if you add two `xlim()` calls to the same plot? Why?
 
 1.  What does `scale_x_continuous(limits = c(NA, NA))` do?
 
+1.  What does `expand_limits()` do and how does it work?  Read the source code.
 
 
 
@@ -461,11 +484,11 @@ erupt + scale_fill_gradient(
 )
 ```
 
-The labels on the left plot are a little difficult to read at this scale, so I have used `annotate()` to add arrows highlighting the column used to construct the scale on the right. For more information on the munsell package  see <https://github.com/cwickham/munsell/>.
+The labels on the left plot are a little difficult to read at this scale, so I have used `annotate()` to add arrows highlighting the column used to construct the scale on the right. For more information on the munsell package see <https://github.com/cwickham/munsell/>.
 
 Three-point gradient scales have slightly different design criteria. Typically the goal in such a scale is to convey the perceptual impression that there is a natural midpoint (often a zero value) from which the other values diverge. The left plot below shows how to create a divergent "yellow/blue" scale, though it is a little artificial in this example. 
 
-Finally, if you have colours that are meaningful for your data (e.g., black body colours or standard terrain colours), or you'd like to use a palette produced by another package, you may wish to use an n-point gradient. As an illustration, the middle and right plots below use the **colorspace** package [@zeileis:2008]. <https://colorspace.r-forge.r-project.org/>
+Finally, if you have colours that are meaningful for your data (e.g., black body colours or standard terrain colours), or you'd like to use a palette produced by another package, you may wish to use an n-point gradient. As an illustration, the middle and right plots below use the **colorspace** package [@zeileis:2008]. For more information on the colorspace package see <https://colorspace.r-forge.r-project.org/>.
 \index{Colour!palettes} \indexf{scale\_colour\_gradientn} \indexf{scale\_fill\_gradientn}
 
 
@@ -612,7 +635,16 @@ bars + scale_fill_manual(values = c("tomato1", "tomato2", "tomato3", "tomato4"))
 bars + scale_fill_manual(values = c("grey", "black", "grey", "grey"))
 ```
 
+You can also use a named vector to specify colors to be assigned to each level which allows you to specify the levels in any order you like:
 
+```{r}
+bars + scale_fill_manual(values = c(
+  "d" = "grey",
+  "c" = "grey",
+  "b" = "black",
+  "a" = "grey"
+))
+```
 
 ### Binned colour scales
 
@@ -786,7 +818,7 @@ ggplot(diamonds, aes(price, carat)) +
   scale_y_continuous(trans = "log10")
 ```
 
-The transformation is carried out by a "transformer", which describes the transformation, its inverse, and how to draw the labels. You can construct your own transformer using `scales::trans_new()`, but --- as the plots above illustrate --- ggplot2 understands many common transformations supplied by the scales package. The following table lists the most common variants: 
+The transformation is carried out by a "transformer", which describes the transformation, its inverse, and how to draw the labels. You can construct your own transformer using `scales::trans_new()`, but, as the plots above illustrate, ggplot2 understands many common transformations supplied by the scales package. The following table lists the most common variants: 
 
 | Name      | Function $f(x)$         | Inverse $f^{-1}(y)$
 |-----------|-------------------------|------------------------
@@ -803,7 +835,7 @@ The transformation is carried out by a "transformer", which describes the transf
 | reverse   | $-x$                    | $-y$
 | sqrt      | $x^{1/2}$               | $y ^ 2$
 
-To simplify matters, ggplot2 provides convenience functions for the most common transformations: `scale_x_log10()`, `scale_x_sqrt()` and `scale_x_reverse()` provide the relevant transformation on the x axis, with similar functions provided for the y axis. Thus code below produces the same two plots shown in the previous example:
+To simplify matters, ggplot2 provides convenience functions for the most common transformations: `scale_x_log10()`, `scale_x_sqrt()` and `scale_x_reverse()` provide the relevant transformation on the x axis, with similar functions provided for the y axis. Thus, the code below produces the same two plots shown in the previous example:
 
 ```{r, fig.show="hide"}
 ggplot(mpg, aes(displ, hwy)) + 
@@ -816,7 +848,21 @@ ggplot(diamonds, aes(price, carat)) +
   scale_y_log10()
 ```
 
-Note that there is nothing preventing you from performing these transformations manually. For example, instead of using `scale_x_log10()` to transform the scale, you could transform the data instead and plot `log10(x)`. The appearance of the geom will be the same, but the tick labels will be different. Specifically, if you use a transformed scale, the axes will be labelled in the original data space; if you transform the data, the axes will be labelled in the transformed space. Regardless of which method you use, the transformation occurs before any statistical summaries. To transform _after_ statistical computation use `coord_trans()`. See Section \@ref(cartesian) for more details.
+Note that there is nothing preventing you from performing these transformations manually. For example, instead of using `scale_x_log10()` to transform the scale, you could transform the data instead and plot `log10(x)`. The appearance of the geom will be the same, but the tick labels will be different. Specifically, if you use a transformed scale, the axes will be labelled in the original data space; if you transform the data, the axes will be labelled in the transformed space. 
+
+`r columns(2, 1)`
+```{r}
+# manual transformation
+ggplot(mpg, aes(log10(displ), hwy)) + 
+  geom_point()
+
+# transform using scales
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() + 
+  scale_x_log10()
+```
+
+Regardless of which method you use, the transformation occurs before any statistical summaries. To transform _after_ statistical computation use `coord_trans()`. See Section \@ref(cartesian) for more details.
 
 Although the most common use for transformations is to adjust position scales, they can sometimes be helpful to when applied to other aesthetics. Often this is purely a matter of visual emphasis. An example of this for the Old Faithful density plot is shown below. The linearly mapped scale on the left makes it easy to see the peaks of the distribution, whereas the transformed representation on the right makes it easier to see the regions of non-negligible density around those peaks:
 
