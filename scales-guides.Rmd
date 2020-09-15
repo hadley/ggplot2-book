@@ -1,0 +1,405 @@
+```{r setup, include = FALSE}
+source("common.R")
+columns(1, 2 / 3)
+```
+
+# Scales and guides {#scales-guides}
+
+Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the scale). The axis or legend is the inverse function: it allows you to convert visual properties back to data. 
+
+Needs to emphasise orthogonality of various components, and show how things that we showed just for position or colour scales also apply elsewhere.
+
+## Scale specification {#scale-usage}
+
+An important property of ggplot2 is the principle that every aesthetic in your plot is associated with exactly one scale. For instance, when you write:
+
+```{r default-scales, fig.show = "hide"}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point(aes(colour = class))
+```
+
+ggplot2 added a default scale for each aesthetic used in the plot: 
+```{r, fig.show = "hide"}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point(aes(colour = class)) +
+  scale_x_continuous() + 
+  scale_y_continuous() + 
+  scale_colour_discrete()
+```
+
+The choice of default scale depends on the aesthetic and the variable type. In this example `hwy` is a continuous variable mapped to the y aesthetic so the default scale is `scale_y_continuous()`; similarly `class` is discrete so when mapped to the colour aesthetic the default scale becomes `scale_colour_discrete()`. 
+
+Specifying these defaults would be tedious so ggplot2 does it for you. But if you want to override the defaults, you'll need to add the scale yourself, like this: \index{Scales!defaults}
+
+<!-- HW: probably need a different example since I think we'd now use labs() for this -->
+<!-- DN: note to self: revisit this during the restructure -->
+
+```{r, fig.show = "hide"}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point(aes(colour = class)) + 
+  scale_x_continuous("A really awesome x axis label") +
+  scale_y_continuous("An amazingly great y axis label")
+```
+
+The use of `+` to "add" scales to a plot is a little misleading because if you supply two scales for the same aesthetic, the last scale takes precedence. In other words, when you `+` a scale, you're not actually adding it to the plot, but overriding the existing scale. This means that the following two specifications are equivalent: \indexc{+} 
+
+```{r multiple-scales, fig.show = "hide"}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() + 
+  scale_x_continuous("Label 1") +
+  scale_x_continuous("Label 2")
+
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() + 
+  scale_x_continuous("Label 2")
+```
+
+Note the message when you add multiple scales for the same aesthetic, which makes it harder to accidentally overwrite an existing scale. If you see this in your own code, you should make sure that you're only adding one scale to each aesthetic.
+
+If you're making small tweaks to the scales, you might continue to use the default scales, supplying a few extra arguments. If you want to make more radical changes you will override the default scales with alternatives: 
+
+```{r, fig.show = "hide"}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point(aes(colour = class)) +
+  scale_x_sqrt() + 
+  scale_colour_brewer()
+```
+
+Here `scale_x_sqrt()` changes the scale for the x axis scale, and `scale_colour_brewer()` does the same for the colour scale.
+
+The scale functions intended for users all follow a common naming scheme. You've probably already figured out the scheme, but to be concrete, it's made up of three pieces separated by "_":
+
+1. `scale`
+1. The name of the primary aesthetic (e.g., `colour`, `shape` or `x`)
+1. The name of the scale (e.g., `continuous`, `discrete`, `brewer`).
+
+The naming structure is often helpful, but can sometimes be ambiguous. For example, it is immediately clear that `scale_x_*()` functions apply to the x aesthetic, but it takes a little more thought to recognise that they also govern the behaviour of other aesthetics that describe a horizontal position (e.g., the `xmin`, `xmax`, and `xend` aesthetics). Similarly, while the name `scale_colour_continuous()` clearly refers to the colour scale associated with a continuous variables, it is less obvious that `scale_colour_distiller()` is simply a different method for creating colour scales for continuous variables. In this chapter I will try to clarify this structure as much as possible: more generally, the help documentation for each scale function may be helpful.
+
+Before diving into the details of how scale functions work, it is useful to note that internally all scale functions in ggplot2 belong to one of three fundamental types; continuous scales, discrete scales, and binned scales. Each fundamental type is handled by one of three scale constructor functions; `continuous_scale()`, `discrete_scale()` and `binned_scale()`. Although you should never need to call these constructor functions, they form the organising structure for later sections in this chapter.
+
+### Exercises
+
+1.  Simplify the following plot specifications to make them easier to 
+    understand.
+    
+    ```{r, eval = FALSE}
+    ggplot(mpg, aes(displ)) + 
+      scale_y_continuous("Highway mpg") + 
+      scale_x_continuous() +
+      geom_point(aes(y = hwy))
+
+    ggplot(mpg, aes(y = displ, x = class)) + 
+      scale_y_continuous("Displacement (l)") + 
+      scale_x_discrete("Car type") +
+      scale_x_discrete("Type of car") + 
+      scale_colour_discrete() + 
+      geom_point(aes(colour = drv)) + 
+      scale_colour_discrete("Drive\ntrain")
+    ```
+
+1.  What happens if you pair a discrete variable with a continuous scale?
+    What happens if you pair a continuous variable with a discrete scale?
+
+
+## Scale transformation {#scale-transformation}
+
+<!-- DN: This section is something of a promissory note. It ought to be possible to transform binned scales (e.g., reverse binned axis, construct bins on the reciprocal value etc, but I'm having problems getting this to work nicely). For now this is written as if only continuous transformations exist -->
+
+When working with continuous data, the default is to map linearly from the data space onto the aesthetic space. It is possible to override this default using transformations. Every continuous scale takes a `trans` argument, allowing the use of a variety of transformations:
+\index{Scales!position} \index{Transformation!scales} \index{Log!scale} \indexf{scale\_x\_log10}
+
+`r columns(2, 1)`
+```{r}
+# convert from fuel economy to fuel consumption
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() + 
+  scale_y_continuous(trans = "reciprocal")
+
+# log transform x and y axes
+ggplot(diamonds, aes(price, carat)) + 
+  geom_bin2d() + 
+  scale_x_continuous(trans = "log10") +
+  scale_y_continuous(trans = "log10")
+```
+
+The transformation is carried out by a "transformer", which describes the transformation, its inverse, and how to draw the labels. You can construct your own transformer using `scales::trans_new()`, but, as the plots above illustrate, ggplot2 understands many common transformations supplied by the scales package. The following table lists the most common variants: 
+
+| Name      | Function $f(x)$         | Inverse $f^{-1}(y)$
+|-----------|-------------------------|------------------------
+| asn       | $\tanh^{-1}(x)$         | $\tanh(y)$
+| exp       | $e ^ x$                 | $\log(y)$
+| identity  | $x$                     | $y$
+| log       | $\log(x)$               | $e ^ y$
+| log10     | $\log_{10}(x)$          | $10 ^ y$
+| log2      | $\log_2(x)$             | $2 ^ y$
+| logit     | $\log(\frac{x}{1 - x})$ | $\frac{1}{1 + e(y)}$
+| pow10     | $10^x$                  | $\log_{10}(y)$
+| probit    | $\Phi(x)$               | $\Phi^{-1}(y)$
+| reciprocal| $x^{-1}$                | $y^{-1}$
+| reverse   | $-x$                    | $-y$
+| sqrt      | $x^{1/2}$               | $y ^ 2$
+
+To simplify matters, ggplot2 provides convenience functions for the most common transformations: `scale_x_log10()`, `scale_x_sqrt()` and `scale_x_reverse()` provide the relevant transformation on the x axis, with similar functions provided for the y axis. Thus, the code below produces the same two plots shown in the previous example:
+
+```{r, fig.show="hide"}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() +
+  scale_y_reverse()
+
+ggplot(diamonds, aes(price, carat)) + 
+  geom_bin2d() + 
+  scale_x_log10() +
+  scale_y_log10()
+```
+
+Note that there is nothing preventing you from performing these transformations manually. For example, instead of using `scale_x_log10()` to transform the scale, you could transform the data instead and plot `log10(x)`. The appearance of the geom will be the same, but the tick labels will be different. Specifically, if you use a transformed scale, the axes will be labelled in the original data space; if you transform the data, the axes will be labelled in the transformed space. 
+
+`r columns(2, 1)`
+```{r}
+# manual transformation
+ggplot(mpg, aes(log10(displ), hwy)) + 
+  geom_point()
+
+# transform using scales
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() + 
+  scale_x_log10()
+```
+
+Regardless of which method you use, the transformation occurs before any statistical summaries. To transform _after_ statistical computation use `coord_trans()`. See Section \@ref(cartesian) for more details.
+
+Although the most common use for transformations is to adjust position scales, they can sometimes be helpful to when applied to other aesthetics. Often this is purely a matter of visual emphasis. An example of this for the Old Faithful density plot is shown below. The linearly mapped scale on the left makes it easy to see the peaks of the distribution, whereas the transformed representation on the right makes it easier to see the regions of non-negligible density around those peaks:
+
+`r columns(2, 2/3)`
+```{r}
+base <- ggplot(faithfuld, aes(waiting, eruptions)) + 
+  geom_raster(aes(fill = density)) + 
+  scale_x_continuous(NULL, NULL, expand = c(0, 0)) +
+  scale_y_continuous(NULL, NULL, expand = c(0, 0))
+  
+base
+base + scale_fill_continuous(trans = "sqrt")
+```
+
+Transforming size aesthetics is also possible:
+
+`r columns(2, 2/3)`
+```{r}
+df <- data.frame(x = runif(20), y = runif(20), z = sample(20))
+base <- ggplot(df, aes(x, y, size = z)) + geom_point()
+
+base 
+base + scale_size(trans = "reverse")
+```
+
+In the plot on the left, the `z` value is naturally interpreted as a "weight": if each dot corresponds to a group, the `z` value might be the size of the group. In the plot on the right, the size scale is reversed, and `z` is more naturally interpreted as a "distance" measure: distant entities are scaled to appear smaller in the plot.
+
+<!-- DN: This was the beginning of the binned transformation section:
+
+### Binned scales
+
+`r columns(2)`
+```{r}
+base <- ggplot(mpg, aes(hwy)) + geom_bar()
+
+p1 <- base + scale_x_binned(breaks = seq(-50,50,10), limits = c(-50, 50))
+p2 <- base + scale_x_binned(breaks = seq(-50,50,10), limits = c(-50, 50), trans = "reverse")
+```
+
+Binned scales can be transformed, much like continuous scales, but some care is required because the bins are constructed in the transformed space. In some cases this can produce undesirable outcomes. In the code below, I take a uniformly distributed variable and use `scale_x_binned()` and `geom_bar()` to construct a histogram of the logarithmically transformed data. 
+
+`r columns(1, 1/2, 1)`
+```{r}
+df <- data.frame(val = runif(10000, 1, 20000))
+ggplot(df, aes(log10(val))) + geom_bar() + scale_x_binned()
+```
+
+In this example the transformation takes place in the data: the x aesthetic is mapped to the value of `log10(val)`, and no scale transformation is applied. The bins are evenly spaced on this logarithmic scale. Alternatively, you can specify the transformation by setting `trans = "log10"` in the scale function:
+
+`r columns(1, 1/2, 1)`
+```{r}
+ggplot(df, aes(val)) + geom_bar() + scale_x_binned(trans="log10") 
+```
+
+The unevenly spaced bins occur due to an interaction of two things: (1) binned scales use breaks to construct the bins, and (2) the default breaks for a transformed scale are specified by the transformation and are designed to look nice, but may not be good for binning data. The solution to this is to override the default breaks: 
+
+`r columns(1, 1/2, 1)`
+```{r}
+ggplot(df, aes(val)) + geom_bar() + 
+  scale_x_binned(trans="log10", breaks = 3^(0:9))  
+```
+
+-->
+
+## Scale guides {#scale-guide}
+
+In ggplot2, legend and axes are known collectively as __guides__. You might find it surprising that axes and legends are the same type of thing, but while they look very different they have the same purpose: to allow you to read observations from the plot and map them back to their original values. 
+
+
+| Argument name   | Axis              | Legend        
+|:----------------|:------------------|:--------------
+| `name`          | Label             | Title         
+| `breaks`        | Ticks & grid line | Key           
+| `labels`        | Tick label        | Key label     
+
+```{r guides, echo = FALSE, out.width = "100%", fig.cap = "Common components of axes and legends"}
+knitr::include_graphics("diagrams/scale-guides.png", dpi = 300, auto_pdf = TRUE)
+```
+
+Later parts of the chapter focuses mostly on legends because they are more complicated than axes:
+
+1.  A legend can display multiple aesthetics (e.g. colour and shape), from
+    multiple layers, and the symbol displayed in a legend varies based on the
+    geom used in the layer.
+   
+1.  Axes always appear in the same place. Legends can appear in different 
+    places, so you need some global way of controlling them.
+  
+1.  Legends have considerably more details that can be tweaked: should they
+    be displayed vertically or horizontally? How many columns? How big should
+    the keys be?
+    
+Reflecting this additional complexity, Section \@ref(scale-guide) discusses guide functions, most of which relate to legends. Section \@ref(legend-merge-split) discusses how legends are split and merged across layers, Section \@ref(legend-layout) focuses on legend layout and positioning, while Section \@ref(legend-glyph) shows you how to modify the glyphs displayed in the legend key.
+
+## Scale breaks {#scale-breaks}
+
+In the same way that the `name` argument to a scale function governs axis titles and legend titles, the `breaks` argument controls which values appear as tick marks on axes and as keys on legends. 
+\index{Axis!ticks} \index{Axis!breaks}
+
+`r columns(2, 2 / 3)`
+```{r breaks-labels}
+toy <- data.frame(
+  const = 1, 
+  up = 1:4,
+  txt = letters[1:4], 
+  big = (1:4)*1000,
+  log = c(2, 5, 10, 2000)
+)
+toy
+axs <- ggplot(toy, aes(big, const)) + 
+  geom_point() + 
+  labs(x = NULL, y = NULL)
+
+axs
+axs + scale_x_continuous(breaks = c(2000, 4000))
+```
+
+The examples below illustrate the same ideas applied to legends:
+
+```{r}
+leg <- ggplot(toy, aes(up, up, fill = big)) + 
+  geom_tile() + 
+  labs(x = NULL, y = NULL) 
+
+leg 
+leg + scale_fill_continuous(breaks = c(2000, 4000))
+```
+
+
+Another way to modify the behaviour of axes and legends is with the `guide` argument of the relevant scale function or---perhaps more conveniently---the `guides()` helper function. The `guides()` helper works in a similar way to the `labs()` helper function described in Section \@ref(scale-name). Both take the name of different aesthetics (e.g., color, x, fill) as arguments and allow you to specify your own value. Where `labs()` provides a shorthand way to specify the `name` argument to one or more scales, the `guides()` function allows you to specify `guide` arguments to one or more scales. In the same way that `labs(colour = "a colour scale name")` specifies the name associated with the colour scale, a command such as `guides(colour = guide_coloursteps())` can be used to specify its associated guide:
+
+`r columns(3)`
+```{r}
+base <- ggplot(mpg, aes(displ, hwy, colour = cyl)) + geom_point()
+
+base 
+base + scale_colour_continuous(guide = guide_coloursteps())
+base + guides(colour = guide_coloursteps())
+```
+
+Scale guides are more complex than scale names: where the `name` argument (and `labs()` ) takes text as input, the `guide` argument (and `guides()`) require a guide object created by a **guide function** such as `guide_colourbar()` and `guide_legend()`. These arguments to these functions offer additional fine control over the guide. 
+
+The table below summarises the default guide functions associated with different scale types:
+
+| Scale type                                           | Default guide type  |       
+|:-----------------------------------------------------|:--------------------|
+| continuous scales for colour/fill aesthetics         | colourbar           |
+| binned scales for colour/fill aesthetics             | coloursteps         |
+| position scales (continuous, binned and discrete)    | axis                |
+| discrete scales (except position scales)             | legend              |
+| binned scales (except position/colour/fill scales)   | bins                |
+
+The guide functions have numerous examples in the documentation that illustrate all of their arguments. Many of the arguments to the guide function are equivalent to theme settings (Chapter \@ref(polishing)) like text colour, size, font etc, but only apply to a single guide. Here I'll focus on the non-theming arguments.
+
+
+## Legend merging and splitting {#legend-merge-split}
+
+There is always a one-to-one correspondence between position scales and axes. But the connection between non-position scales and legend is more complex: one legend may need to draw symbols from multiple layers ("merging"), or one aesthetic may need multiple legends ("splitting").
+
+### Merging legends {#sub-layers-legends}
+\index{Legend}
+
+Merging legends occurs quite frequently when using ggplot2. For example, if you've mapped colour to both points and lines, the keys will show both points and lines. If you've mapped fill colour, you get a rectangle. Note the way the legend varies in the plots below:
+
+`r columns(3)`
+```{r legend-geom, echo = FALSE}
+base <- ggplot(toy, aes(const, up, colour = txt))
+base + geom_point()
+base + geom_point() + geom_path(aes(group = 1))
+base + geom_raster(aes(fill = txt))
+```
+
+By default, a layer will only appear if the corresponding aesthetic is mapped to a variable with `aes()`. You can override whether or not a layer appears in the legend with `show.legend`: `FALSE` to prevent a layer from ever appearing in the legend; `TRUE` forces it to appear when it otherwise wouldn't. Using `TRUE` can be useful in conjunction with the following trick to make points stand out:
+
+`r columns(2, 2/3)`
+```{r}
+ggplot(toy, aes(up, up)) + 
+  geom_point(size = 4, colour = "grey20") +
+  geom_point(aes(colour = txt), size = 2) 
+
+ggplot(toy, aes(up, up)) + 
+  geom_point(size = 4, colour = "grey20", show.legend = TRUE) +
+  geom_point(aes(colour = txt), size = 2) 
+```
+
+ggplot2 tries to use the fewest number of legends to accurately convey the aesthetics used in the plot. It does this by combining legends where the same variable is mapped to different aesthetics. The figure below shows how this works for points: if both colour and shape are mapped to the same variable, then only a single legend is necessary. \index{Legend!merging}
+
+`r columns(3)`
+```{r legend-merge}
+base <- ggplot(toy, aes(const, up)) +
+  scale_x_continuous(NULL, breaks = NULL)
+base + geom_point(aes(colour = txt))
+base + geom_point(aes(shape = txt))
+base + geom_point(aes(shape = txt, colour = txt))
+```
+
+In order for legends to be merged, they must have the same `name`. So if you change the name of one of the scales, you'll need to change it for all of them. One way to do this is by using `labs()` helper function:
+
+`r columns(3, 3/2)`
+```{r}
+base <- ggplot(toy, aes(const, up)) + 
+  geom_point(aes(shape = txt, colour = txt)) + 
+  scale_x_continuous(NULL, breaks = NULL)
+
+base
+base + labs(shape = "Split legend")
+base + labs(shape = "Merged legend", colour = "Merged legend")
+```
+
+### Splitting legends
+
+Splitting a legend is a much less common data visualisation task. In general it is not advisable to map one aesthetic (e.g. colour) to multiple variables, and so by default ggplot2 does not allow you to "split" the colour aesthetic into multiple scales with separate legends. Nevertheless, there are exceptions to this general rule, and it is possible to override this behaviour using the ggnewscale package [@ggnewscale]. The `ggnewscale::new_scale_colour()` command acts as an instruction to ggplot2 to initialise a new colour scale: scale and guide commands that appear above the `new_scale_colour()` command will be applied to the first colour scale, and commands that appear below are applied to the second colour scale. 
+
+To illustrate this the plot on the left uses `geom_point()` to display a large marker for each vehicle make in the `mpg` data, with a single colour scale that maps to the year. On the right, a second `geom_point()` layer is overlaid on the plot using small markers: this layer is associated with a different colour scale, used to indicate whether the vehicle has a 4-cylinder engine.
+
+`r columns(2, 2/3)`
+```{r}
+base <- ggplot(mpg, aes(displ, hwy)) + 
+  geom_point(aes(colour = factor(year)), size = 5) + 
+  scale_colour_brewer("year", type = "qual", palette = 5) 
+
+base
+base + 
+  ggnewscale::new_scale_colour() + 
+  geom_point(aes(colour = cyl == 4), size = 1, fill = NA) + 
+  scale_colour_manual("4 cylinder", values = c("grey60", "black"))
+```
+
+Additional details, including functions that apply to other scale types, are available on the package website, <https://github.com/eliocamp/ggnewscale>.
+
+
+## Exercises
+    
+1.  What are the three most important arguments that apply to both 
+    axes and legends? What do they do? Compare and contrast their
+    operation for axes vs. legends.

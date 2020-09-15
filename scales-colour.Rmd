@@ -1,0 +1,602 @@
+```{r setup, include = FALSE}
+source("common.R")
+columns(1, 2 / 3)
+```
+
+# Colour scales and legends {#scale-colour}
+
+After position, the most commonly used aesthetics are those based on colour, and there are many ways to map values to colours in ggplot2. Before we look at the details, it's useful to learn a little bit of colour theory. Colour theory is complex because the underlying biology of the eye and brain is complex, and this introduction will only touch on some of the more important issues. An excellent and more detailed exposition is available online at <http://tinyurl.com/clrdtls>. \index{Colour} \index{Scales!colour}
+
+## A little colour theory
+<!-- ...as a treat -->
+
+At the physical level, colour is produced by a mixture of wavelengths of light. To characterise a colour completely, we need to know the complete mixture of wavelengths. Fortunately for us the human eye only has three different colour receptors, and so we can summarise the perception of any colour with just three numbers. You may be familiar with the RGB encoding of colour space, which defines a colour by the intensities of red, green and blue light needed to produce it. One problem with this space is that it is not perceptually uniform: the two colours that are one unit apart may look similar or very different depending on where they are in the colour space. This makes it difficult to create a mapping from a continuous variable to a set of colours. There have been many attempts to come up with colours spaces that are more perceptually uniform.  We'll use a modern attempt called the HCL colour space, which has three components of **h**ue, **c**hroma and **l**uminance: \index{Colour!spaces}
+
+* **Hue** ranges from 0 to 360 (an angle) and gives the "colour" of the colour (blue, red, orange, etc).
+* **Chroma** is the "purity" of a colour, ranging from 0 (grey) to a maximum that varies with luminance.
+* **Luminance** is the lightness of the colour, ranging from 0 (black) to 1 (white).
+
+The three dimensions have different properties. Hues are arranged around a colour wheel and are not perceived as ordered: e.g. green does not seem "larger" than red, and blue does not seem to be "in between" green or red. In contrast, both chroma and luminance are perceived as ordered: pink is perceived as lying between red and white, and grey is seen to fall between black and white. 
+
+The combination of these three components does not produce a simple geometric shape. Figure \@ref(fig:hcl) attempts to show the 3d shape of the space. Each slice is a constant luminance (brightness) with hue mapped to angle and chroma to radius.  You can see the centre of each slice is grey and the colours get more intense as they get closer to the edge.
+
+`r columns(1, 1, 1)`
+```{r hcl, echo = FALSE, out.width = "100%", fig.cap="The shape of the HCL colour space.  Hue is mapped to angle, chroma to radius and each slice shows a different luminance.  The HCL space is a pretty odd shape, but you can see that colours near the centre of each slice are grey, and as you move towards the edges they become more intense.  Slices for luminance 0 and 100 are omitted because they would, respectively, be a single black point and a single white point."}
+knitr::include_graphics("diagrams/hcl-space.png", dpi = 300)
+```
+
+An additional complication is that many people (~10% of men) do not possess the normal complement of colour receptors and so can distinguish fewer colours than usual. \index{Colour!blindness} In brief, it's best to avoid red-green contrasts, and to check your plots with systems that simulate colour blindness. Visicheck is one online solution. Another alternative is the **dichromat** package [@dichromat] which provides tools for simulating colour blindness, and a set of colour schemes known to work well for colour-blind people. You can also help people with colour blindness in the same way that you can help people with black-and-white printers: by providing redundant mappings to other aesthetics like size, line type or shape.
+
+## Continuous colour scales {#colour-continuous}
+
+Colour gradients are often used to show the height of a 2d surface. The plots in this section use the surface of a 2d density estimate of the `faithful` dataset [@azzalini:1990], which records the waiting time between eruptions and during each eruption for the Old Faithful geyser in Yellowstone Park. I hide the legends and set `expand` to 0, to focus on the appearance of the data. Remember: although I use the `erupt` plot to illustrate concepts using with a fill aesthetic, the same ideas apply to colour scales. Any time I refer to `scale_fill_*()` in this section there is a corresponding `scale_colour_*()` for the colour aesthetic (or `scale_color_*()` if you prefer US spelling).
+\index{Colour!gradients} \index{Scales!colour}
+
+`r columns(3, 1)`
+```{r}
+erupt <- ggplot(faithfuld, aes(waiting, eruptions, fill = density)) +
+  geom_raster() +
+  scale_x_continuous(NULL, expand = c(0, 0)) + 
+  scale_y_continuous(NULL, expand = c(0, 0)) + 
+  theme(legend.position = "none")
+```
+
+### Particular palettes
+
+There are multiple ways to specify continuous colour scales. Later I'll talk about general purpose tools that you can use to construct your own palette, but this is often unnecessary as there are many "hand picked" palettes available. For example, ggplot2 supplies two scale functions that bundle pre-specified palettes, `scale_fill_viridis_c()` and `scale_fill_distiller()`. The viridis scales [@viridis] are designed to be perceptually uniform in both colour and when reduced to black and white, and to be perceptible to people with various forms of colour blindness.
+
+```{r}
+erupt
+erupt + scale_fill_viridis_c()
+erupt + scale_fill_viridis_c(option = "magma")
+```
+
+The second group of continuous colour scales built in to ggplot2 are derived from the ColorBrewer scales: `scale_fill_brewer()` provides these colours as discrete palettes, while `scale_fill_distiller()` and `scale_fill_fermenter()` are the continuous and binned analogs. I discuss these scales in Section \@ref(colour-discrete)), but for illustrative purposes include some examples here:
+
+```{r}
+erupt + scale_fill_distiller()
+erupt + scale_fill_distiller(palette = "RdPu")
+erupt + scale_fill_distiller(palette = "YlOrBr")
+```
+
+There are many other packages that provide useful colour palettes. For example,  scico [@scico] provides more palettes that are perceptually uniform and suitable for scientific visualisation:
+
+```{r}
+erupt + scico::scale_fill_scico(palette = "bilbao") # the default
+erupt + scico::scale_fill_scico(palette = "vik")
+erupt + scico::scale_fill_scico(palette = "lajolla")
+```
+
+However, as there are a great many palette packages in R, a particularly useful package is paletteer [@paletteer], which aims to provide a common interface:
+
+```{r}
+erupt + paletteer::scale_fill_paletteer_c("viridis::plasma")
+erupt + paletteer::scale_fill_paletteer_c("scico::tokyo")
+erupt + paletteer::scale_fill_paletteer_c("gameofthrones::targaryen")
+```
+
+
+### Robust recipes
+
+The default scale for continuous fill scales is `scale_fill_continuous()` which in turn defaults to `scale_fill_gradient()`. As a consequence, these three commands produce the same plot using a gradient scale:
+
+```{r}
+erupt
+erupt + scale_fill_continuous()
+erupt + scale_fill_gradient()
+```
+
+Gradient scales provide a robust method for creating any colour scheme you like. All you need to do is specify two or more reference colours, and ggplot2 will interpolate linearly between them. There are three functions that you can use for this purpose:
+\indexf{scale\_colour\_gradient} \indexf{scale\_fill\_gradient} \indexf{scale\_colour\_gradient2} \indexf{scale\_fill\_gradient2}
+
+- `scale_fill_gradient()` produces a two-colour gradient
+- `scale_fill_gradient2()` produces a three-colour gradient with specified midpoint
+- `scale_fill_gradientn()` produces an n-colour gradient
+
+The use of gradient scales is illustrated below. The first plot uses a scale that linearly interpolates from grey (hex code: `"#bebebe"`) at the `low` end of the scale limits to brown (`"#a52a2a"`) at the `high` end. The second plot has the same endpoints but uses `scale_fill_gradient2()` to interpolate first from grey to white (`#ffffff`) and then from white to brown. Note that the `mid` argument specifies the colour to be shown at the intermediate point, and `midpoint` is the value in the data at which this colour is used (the default is `midpoint = 0`). The third method is to use `scale_fill_gradientn()` which takes a vector of reference `colours` as its argument, and constructs a scale that linearly interpolates between the specified values. By default, the `colours` are presumed to be equally spaced along the scale, but if you prefer you can specify a vector of `values` that correspond to each of the reference colours. 
+
+```{r}
+erupt + scale_fill_gradient(low = "grey", high = "brown")
+erupt + scale_fill_gradient2(low = "grey", mid = "white", high = "brown", midpoint = .02)
+erupt + scale_fill_gradientn(colours = terrain.colors(7))
+```
+
+Creating good colour palettes requires some care. Generally, for a two-point gradient scale you want to convey the perceptual impression that the values are sequentially ordered, so you want to keep hue constant, and vary chroma and luminance. The Munsell colour system is useful for this as it provides an easy way of specifying colours based on their hue, chroma and luminance. The munsell package [@munsell] provides easy access to the Munsell colours, which can then be used to specify a gradient scale: 
+
+`r columns(2, 1)`
+```{r}
+munsell::hue_slice("5P") +  # generate a ggplot with hue_slice()
+  annotate(                 # add arrows for annotation 
+    geom = "segment", 
+    x = c(7, 7), 
+    y = c(1, 10), 
+    xend = c(7, 7), 
+    yend = c(2, 9), 
+    arrow = arrow(length = unit(2, "mm"))
+  ) 
+
+# construct scale
+erupt + scale_fill_gradient(
+  low = munsell::mnsl("5P 2/12"), 
+  high = munsell::mnsl("5P 7/12")
+)
+```
+
+The labels on the left plot are a little difficult to read at this scale, so I have used `annotate()` to add arrows highlighting the column used to construct the scale on the right. For more information on the munsell package see <https://github.com/cwickham/munsell/>.
+
+Three-point gradient scales have slightly different design criteria. Typically the goal in such a scale is to convey the perceptual impression that there is a natural midpoint (often a zero value) from which the other values diverge. The left plot below shows how to create a divergent "yellow/blue" scale, though it is a little artificial in this example. 
+
+Finally, if you have colours that are meaningful for your data (e.g., black body colours or standard terrain colours), or you'd like to use a palette produced by another package, you may wish to use an n-point gradient. As an illustration, the middle and right plots below use the **colorspace** package [@zeileis:2008]. For more information on the colorspace package see <https://colorspace.r-forge.r-project.org/>.
+\index{Colour!palettes} \indexf{scale\_colour\_gradientn} \indexf{scale\_fill\_gradientn}
+
+
+`r columns(3, 1)`
+```{r}
+# munsell example
+erupt + scale_fill_gradient2(
+  low = munsell::mnsl("5B 7/8"),
+  high = munsell::mnsl("5Y 7/8"),
+  mid = munsell::mnsl("N 7/0"),
+  midpoint = .02
+) 
+
+# colorspace examples
+erupt + scale_fill_gradientn(colours = colorspace::heat_hcl(7))
+erupt + scale_fill_gradientn(colours = colorspace::diverge_hcl(7))
+```
+
+### Missing values
+
+All continuous colour scales have an `na.value` parameter that controls what colour is used for missing values (including values outside the range of the scale limits). By default it is set to grey, which will stand out when you use a colourful scale. If you use a black and white scale, you might want to set it to something else to make it more obvious. You can set `na.value = NA` to make missing values invisible, or choose a specific colour if you prefer: \indexc{na.value} \index{Missing values!changing colour}
+
+```{r}
+df <- data.frame(x = 1, y = 1:5, z = c(1, 3, 2, NA, 5))
+base <- ggplot(df, aes(x, y)) + 
+  geom_tile(aes(fill = z), size = 5) + 
+  labs(x = NULL, y = NULL)
+
+base
+base + scale_fill_gradient(na.value = NA)
+base + scale_fill_gradient(na.value = "yellow")
+```
+
+### Limits, breaks, and labels
+
+You can suppress the breaks entirely by setting them to `NULL`. For axes, this removes the tick marks, grid lines, and labels; and for legends this this removes the keys and labels.
+
+`r columns(2, 2/3)`
+```{r}
+toy <- data.frame(
+  const = 1, 
+  up = 1:4,
+  txt = letters[1:4], 
+  big = (1:4)*1000,
+  log = c(2, 5, 10, 2000)
+)
+leg <- ggplot(toy, aes(up, up, fill = big)) + 
+  geom_tile() + 
+  labs(x = NULL, y = NULL) 
+leg + scale_fill_continuous(breaks = NULL)
+```
+
+
+## Discrete colour scales {#colour-discrete}
+
+Discrete colour and fill scales occur in many situations. A typical example is a barchart that encodes both position and fill to the same variable. Many concepts from Section \@ref(colour-continuous) apply to discrete scales, which I will illustrate using this barchart as the running example: \index{Colour!discrete scales}
+
+`r columns(3, 1)`
+```{r}
+df <- data.frame(x = c("a", "b", "c", "d"), y = c(3, 4, 1, 2))
+bars <- ggplot(df, aes(x, y, fill = x)) + 
+  geom_bar(stat = "identity") + 
+  labs(x = NULL, y = NULL) +
+  theme(legend.position = "none")
+```
+
+The default scale for discrete colours is `scale_fill_discrete()` which in turn defaults to `scale_fill_hue()` so these are identical plots:
+
+```{r}
+bars
+bars + scale_fill_discrete()
+bars + scale_fill_hue()
+```
+
+This default scale has some limitations (discussed shortly) so I'll begin by discussing tools for producing nicer discrete palettes.
+
+### Brewer scales
+
+`scale_colour_brewer()` is a discrete colour scale that---along with the continuous analog `scale_colour_distiller()` and binned analog `scale_colour_fermenter()`---uses handpicked "ColorBrewer" colours taken from <http://colorbrewer2.org/>. These colours have been designed to work well in a wide variety of situations, although the focus is on maps and so the colours tend to work better when displayed in large areas. There are many different options:
+`r columns(1, 2)`
+```{r}
+RColorBrewer::display.brewer.all()
+```
+
+The first group of palettes are sequential scales that are useful when your discrete scale is ordered (e.g., rank data), and are available for continuous data using `scale_colour_distiller()`. For  unordered categorical data, the palettes of most interest are those in the second group. 'Set1' and 'Dark2' are particularly good for points, and 'Set2', 'Pastel1', 'Pastel2' and 'Accent' work well for areas. 
+\index{Colour!Brewer} \indexf{scale\_colour\_brewer}
+
+`r columns(3, 1)`
+```{r}
+bars + scale_fill_brewer(palette = "Set1")
+bars + scale_fill_brewer(palette = "Set2")
+bars + scale_fill_brewer(palette = "Accent")
+```
+    
+Note that no palette is uniformly good for all purposes. Scatter plots typically use small plot markers, and bright colours tend to work better than subtle ones:
+
+`r columns(3, 1)`
+```{r brewer-pal}
+# scatter plot
+df <- data.frame(x = 1:3 + runif(30), y = runif(30), z = c("a", "b", "c"))
+point <- ggplot(df, aes(x, y)) +
+  geom_point(aes(colour = z))  + 
+  theme(legend.position = "none") +
+  labs(x = NULL, y = NULL)
+
+# three palettes
+point + scale_colour_brewer(palette = "Set1")
+point + scale_colour_brewer(palette = "Set2")  
+point + scale_colour_brewer(palette = "Pastel1")
+```
+
+Bar plots usually contain large patches of colour, and bright colours can be overwhelming. Subtle colours tend to work better in this situation:
+
+```{r}
+# bar plot
+df <- data.frame(x = 1:3, y = 3:1, z = c("a", "b", "c"))
+area <- ggplot(df, aes(x, y)) + 
+  geom_bar(aes(fill = z), stat = "identity") + 
+  theme(legend.position = "none") +
+  labs(x = NULL, y = NULL)
+
+# three palettes
+area + scale_fill_brewer(palette = "Set1")
+area + scale_fill_brewer(palette = "Set2")
+area + scale_fill_brewer(palette = "Pastel1")
+```
+
+### Hue and grey scales
+
+The default colour scheme picks evenly spaced hues around the HCL colour wheel. This works well for up to about eight colours, but after that it becomes hard to tell the different colours apart. You can control the default chroma and luminance, and the range of hues, with the `h`, `c` and `l` arguments:
+\indexf{scale\_colour\_hue}
+    
+```{r}
+bars
+bars + scale_fill_hue(c = 40)
+bars + scale_fill_hue(h = c(180, 300))
+```
+    
+One disadvantage of the default colour scheme is that because the colours all have the same luminance and chroma, when you print them in black and white, they all appear as an identical shade of grey. Noting this, if you are intending a discrete colour scale to be printed in black and white, it is better to use `scale_fill_grey()` which maps discrete data to grays, from light to dark:
+\indexf{scale\_colour\_grey} \index{Colour!greys}
+
+<!-- HW: also need to note challenges for colour blind folks -->
+<!-- DN: agreed. might try to discuss accessibility issues for colour scales as a distinct section when I restructure -->
+
+```{r}
+bars + scale_fill_grey()
+bars + scale_fill_grey(start = 0.5, end = 1)
+bars + scale_fill_grey(start = 0, end = 0.5)
+```
+
+### Manual scales
+
+If none of the hand-picked palettes is suitable, or if you have your own preferred colours, you can use `scale_fill_manual()` to set the colours manually. This can be useful if you wish to choose colours that highlight a secondary grouping structure or draw attention to different comparisons:
+\indexf{scale\_colour\_manual} 
+
+```{r}
+bars + scale_fill_manual(values = c("sienna1", "sienna4", "hotpink1", "hotpink4"))
+bars + scale_fill_manual(values = c("tomato1", "tomato2", "tomato3", "tomato4"))
+bars + scale_fill_manual(values = c("grey", "black", "grey", "grey"))
+```
+
+You can also use a named vector to specify colors to be assigned to each level which allows you to specify the levels in any order you like:
+
+```{r}
+bars + scale_fill_manual(values = c(
+  "d" = "grey",
+  "c" = "grey",
+  "b" = "black",
+  "a" = "grey"
+))
+```
+
+
+<!-- DN: Really not sure what to do with this example... -->
+
+<!-- The following example shows a creative use of `scale_colour_manual()` to display multiple variables on the same plot and show a useful legend. In most other plotting systems, you'd colour the lines and then add a legend: \index{Data!longitudinal} -->
+
+<!-- `r columns(1, 5/12, 0.8)` -->
+<!-- ```{r huron} -->
+<!-- huron <- data.frame(year = 1875:1972, level = as.numeric(LakeHuron)) -->
+<!-- ggplot(huron, aes(year)) + -->
+<!--   geom_line(aes(y = level + 5), colour = "red") + -->
+<!--   geom_line(aes(y = level - 5), colour = "blue")  -->
+<!-- ``` -->
+
+<!-- That doesn't work in ggplot because there's no way to add a legend manually. Instead, give the lines informative labels: -->
+
+<!-- ```{r huron2} -->
+<!-- ggplot(huron, aes(year)) + -->
+<!--   geom_line(aes(y = level + 5, colour = "above")) + -->
+<!--   geom_line(aes(y = level - 5, colour = "below"))  -->
+<!-- ``` -->
+
+<!-- And then tell the scale how to map labels to colours: -->
+
+<!-- ```{r huron3} -->
+<!-- ggplot(huron, aes(year)) + -->
+<!--   geom_line(aes(y = level + 5, colour = "above")) +  -->
+<!--   geom_line(aes(y = level - 5, colour = "below")) +  -->
+<!--   scale_colour_manual("Direction",  -->
+<!--     values = c("above" = "red", "below" = "blue") -->
+<!--   ) -->
+<!-- ``` -->
+
+<!-- ### Exercises -->
+
+<!-- 1.  Compare and contrast the four continuous colour scales with the four discrete scales. -->
+
+<!-- 1.  Explore the distribution of the built-in `colors()` using the `luv_colours` dataset. -->
+
+### Exercises
+
+1.  Recreate the following plot:
+
+    ```{r, echo = FALSE}
+    drv_labels <- c("4" = "4wd", "f" = "fwd", "r" = "rwd")
+    ggplot(mpg, aes(displ, hwy)) + 
+      geom_point(aes(colour = drv)) +  
+      scale_colour_discrete(labels = drv_labels)
+    ```
+
+
+## Binned colour scales
+
+Colour scales also come in binned versions. The default scale is `scale_fill_binned()` which in turn defaults to `scale_fill_steps()`. As with the binned position scales discussed in Section \@ref(binned-position) these scales have an `n.breaks` argument that controls the number of discrete colour categories created by the scale. Counterintuitively---because the human visual system is very good at detecting edges---this can sometimes make a continuous colour gradient easier to perceive:
+
+```{r}
+erupt + scale_fill_binned()
+erupt + scale_fill_steps()
+erupt + scale_fill_steps(n.breaks = 8)
+```
+
+In other respects `scale_fill_steps()` is analogous to `scale_fill_gradient()`, and allows you to construct your own two-colour gradients. There is also a three-colour variant `scale_fill_steps2()` and n-colour scale variant `scale_fill_stepsn()` that behave similarly to their continuous counterparts:
+
+```{r}
+erupt + scale_fill_steps(low = "grey", high = "brown")
+erupt + scale_fill_steps2(low = "grey", mid = "white", high = "brown", midpoint = .02)
+erupt + scale_fill_stepsn(n.breaks = 12, colours = terrain.colors(12))
+```
+
+A brewer analog for binned scales also exists, and is called `scale_fill_fermenter()`:
+
+```{r}
+erupt + scale_fill_fermenter(n.breaks = 9)
+erupt + scale_fill_fermenter(n.breaks = 9, palette = "Oranges")
+erupt + scale_fill_fermenter(n.breaks = 9, palette = "PuOr")
+```
+
+Note that like the discrete `scale_fill_brewer()`---and unlike the continuous `scale_fill_distiller()`---the binned function `scale_fill_fermenter()` does not interpolate between the brewer colours, and if you set `n.breaks` larger than the number of colours in the palette a warning message will appear and some colours will not be displayed.
+
+## Alpha scales
+
+Alpha scales map the transparency of a shade to a value in the data. They are not often useful, but can be a convenient way to visually down-weight less important observations. `scale_alpha()` is an alias for `scale_alpha_continuous()` since that is the most common use of alpha, and it saves a bit of typing.
+
+## Legends
+
+### Positioning {#legend-layout}
+
+A number of settings that affect the overall display of the legends are controlled through the theme system. You'll learn more about that in Section \@ref(themes), but for now, all you need to know is that you modify theme settings with the `theme()` function. \index{Themes!legend} 
+
+The position and justification of legends are controlled by the theme setting `legend.position`, which takes values "right", "left", "top", "bottom", or "none" (no legend). \index{Legend!layout}
+
+`r columns(2, 2/3)`
+```{r legend-position}
+base <- ggplot(toy, aes(up, up)) + 
+  geom_point(aes(colour = txt), size = 3) + 
+  xlab(NULL) + 
+  ylab(NULL)
+
+base + theme(legend.position = "left")
+base + theme(legend.position = "right") # the default 
+base + theme(legend.position = "bottom")
+base + theme(legend.position = "none")
+```
+
+Switching between left/right and top/bottom modifies how the keys in each legend are laid out (horizontal or vertically), and how multiple legends are stacked (horizontal or vertically). If needed, you can adjust those options independently:
+
+* `legend.direction`: layout of items in legends ("horizontal" or "vertical").
+
+* `legend.box`: arrangement of multiple legends ("horizontal" or "vertical").
+
+* `legend.box.just`: justification of each legend within the overall bounding 
+   box, when there are multiple legends ("top", "bottom", "left", or "right").
+
+Alternatively, if there's a lot of blank space in your plot you might want to place the legend inside the plot. You can do this by setting `legend.position` to a numeric vector of length two. The numbers represent a relative location in the panel area: `c(0, 1)` is the top-left corner and `c(1, 0)` is the bottom-right corner. You control which corner of the legend the `legend.position` refers to with `legend.justification`, which is specified in a similar way. Unfortunately positioning the legend exactly where you want it requires a lot of trial and error.
+
+`r columns(3, 1.5)`
+```{r legend-position-man}
+base <- ggplot(toy, aes(up, up)) + 
+  geom_point(aes(colour = txt), size = 3)
+
+base + theme(legend.position = c(0, 1), legend.justification = c(0, 1))
+base + theme(legend.position = c(0.5, 0.5), legend.justification = c(0.5, 0.5))
+base + theme(legend.position = c(1, 0), legend.justification = c(1, 0))
+```
+
+There's also a margin around the legends, which you can suppress with `legend.margin = unit(0, "mm")`.
+
+## Legend key glyphs {#legend-glyph}
+
+In most cases the default glyphs shown in the legend key will be appropriate to the layer and the aesthetic. Line plots of different colours will show up as lines of different colours in the legend, boxplots will appear as small boxplots in the legend, and so on. Should you need to override this behaviour, the `key_glyph` argument can be used to associate a particular layer with a different kind of glyph. For example:
+
+`r columns(2, 1/2)`
+```{r}
+base <- ggplot(economics, aes(date, psavert, color = "savings"))
+
+base + geom_line()
+base + geom_line(key_glyph = "timeseries")
+```
+
+More precisely, each geom is associated with a function such as `draw_key_path()`, `draw_key_boxplot()` or `draw_key_path()` which is responsible for drawing the key when the legend is created. You can pass the desired key drawing function directly: for example, `base + geom_line(key_glyph = draw_key_timeseries)` would also produce the plot shown above right.
+
+### `guide_legend()`
+
+The legend guide displays individual keys in a table. The most useful options are: \index{Legend!guide}
+
+*   `nrow` or `ncol` which specify the dimensions of the table. `byrow` 
+    controls how the table is filled: `FALSE` fills it by column (the default),
+    `TRUE` fills it by row.
+
+    `r columns(3)`
+    ```{r legend-rows-cols}
+    base <- ggplot(mpg, aes(drv, fill = factor(cyl))) + geom_bar() 
+
+    base
+    base + guides(fill = guide_legend(ncol = 2))
+    base + guides(fill = guide_legend(ncol = 2, byrow = TRUE))
+    ```
+
+*   `reverse` reverses the order of the keys:
+    
+    ```{r}
+    base
+    base + guides(fill = guide_legend(reverse = TRUE))
+    ```
+
+*   `override.aes` is useful when you want the elements in the legend 
+    display differently to the geoms in the plot. This is often required
+    when you've used transparency or size to deal with moderate overplotting
+    and also used colour in the plot. \indexf{override.aes}
+
+    `r columns(2, 2/3)`
+    ```{r}
+    base <- ggplot(mpg, aes(displ, hwy, colour = drv)) +
+      geom_point(size = 4, alpha = .2, stroke = 0)
+    
+    base + guides(colour = guide_legend())
+    base + guides(colour = guide_legend(override.aes = list(alpha = 1)))
+    ```
+
+
+*   `keywidth` and `keyheight` (along with `default.unit`) allow you to specify
+    the size of the keys. These are grid units, e.g. `unit(1, "cm")`.
+
+### `guide_bins()`
+
+`guide_bins()` is suited to the situation when a continuous variable is binned and then mapped to an aesthetic that produces a legend, such as size, colour and fill. For instance, in the `mpg` data we could use `scale_size_binned()` to create a binned version of the continuous variable `hwy`. 
+
+`r columns(2, 1)`
+```{r}
+base <- ggplot(mpg, aes(displ, manufacturer, size = hwy)) +
+  geom_point(alpha = .2) +
+  scale_size_binned()
+```
+
+Unlike `guide_legend()`, the guide created for a binned scale by `guide_bins()` does not organise the individual keys into a table. Instead they are arranged in a column (or row) along a single vertical (or horizontal) axis, which by default is displayed with its own axis. The important arguments to `guide_bins()` are listed below:
+
+*   `axis` indicates whether the axis should be drawn (default is `TRUE`).
+
+    ```{r}
+    base
+    base + guides(size = guide_bins(axis = FALSE))
+    ```
+
+*   `direction` is a character string specifying the direction of the guide:
+
+    ```{r}
+    base + guides(size = guide_bins(direction = "vertical"))
+    base + guides(size = guide_bins(direction = "horizontal"))
+    ```
+
+*   `show.limits` specifies whether tick marks are shown at the ends of the 
+    guide axis
+
+*   `axis.colour`, `axis.linewidth` and `axis.arrow` are used to
+    control the guide axis that is displayed alongside the legend keys 
+
+    ```{r}
+    base + guides(size = guide_bins(show.limits = TRUE))
+    base + guides(
+      size = guide_bins(
+        axis.colour = "red",
+        axis.arrow = arrow(
+          length = unit(.1, "inches"), 
+          ends = "first", 
+          type = "closed"
+        )
+      )
+    )
+    ```
+
+*   `keywidth`, `keyheight`, `reverse` and `override.aes` have the same
+  behaviour as `guide_legend()` 
+
+### `guide_colourbar()` / `guide_colorbar()`
+
+The colour bar guide is designed for continuous ranges of colors---as its name implies, it outputs a rectangle over which the color gradient varies.  The most important arguments are: \index{Legend!colour bar} \index{Colour bar}
+
+* `barwidth` and `barheight` allow you to specify the size of the bar. 
+  These are grid units, e.g. `unit(1, "cm")`.
+  
+* `nbin` controls the number of slices. You may want to increase this from
+  the default value of 20 if you draw a very long bar.
+
+* `reverse` flips the colour bar to put the lowest values at the top.
+
+These options are illustrated below:
+
+`r columns(3)`
+```{r}
+base <- ggplot(mpg, aes(cyl, displ, colour = hwy)) +
+  geom_point(size = 2)
+
+base
+base + guides(colour = guide_colourbar(reverse = TRUE))
+base + guides(colour = guide_colourbar(barheight = unit(2, "cm")))
+```
+
+### `guide_coloursteps()` / `guide_colorsteps()`
+
+This "colour steps" guide is a version of `guide_colourbar()` appropriate for binned colour and fill scales. It shows the area between breaks as a single constant colour, rather than displaying a colour gradient that varies smoothly along the bar. Arguments mostly mirror those for `guide_colourbar()`. The additional arguments are as follows:
+
+*   `show.limits` indicates whether values should be shown at the ends of the stepped colour bar (analogous to the corresponding argument in `guide_bins()`)
+
+    `r columns(2)`
+    ```{r}
+    base <- ggplot(mpg, aes(displ, hwy, colour = cyl)) + 
+      geom_point() + 
+      scale_color_binned()
+
+    base + guides(colour = guide_coloursteps(show.limits = TRUE))
+    base + guides(colour = guide_coloursteps(show.limits = FALSE))
+    ```
+
+*   `ticks` is a logical variable indicating whether tick marks should be displayed adjacent to the legend labels (default is `NULL`, in which case the value is inherited from the scale)
+
+*   `even.steps` is a logical variable indicating whether bins should be evenly spaced (default is `TRUE`) or proportional in size to their frequency in the data
+
+
+
+### Exercises
+
+1.  How do you make legends appear to the left of the plot?
+
+1.  What's gone wrong with this plot? How could you fix it?
+
+    `r columns(1, 2 / 3)`
+    ```{r}
+    ggplot(mpg, aes(displ, hwy)) + 
+      geom_point(aes(colour = drv, shape = drv)) + 
+      scale_colour_discrete("Drive train")
+    ```
+
+1.  Can you recreate the code for this plot?
+
+    `r columns(1, 2 / 3)`
+    ```{r, echo = FALSE}
+    ggplot(mpg, aes(displ, hwy, colour = class)) + 
+      geom_point(show.legend = FALSE) + 
+      geom_smooth(method = "lm", se = FALSE) + 
+      theme(legend.position = "bottom") + 
+      guides(colour = guide_legend(nrow = 1))
+    ```
