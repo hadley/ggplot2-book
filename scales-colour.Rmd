@@ -180,6 +180,23 @@ leg + scale_fill_continuous(breaks = NULL)
 ```
 
 
+### Transformations
+
+Although the most common use for transformations is to adjust position scales, they can sometimes be helpful to when applied to other aesthetics. Often this is purely a matter of visual emphasis. An example of this for the Old Faithful density plot is shown below. The linearly mapped scale on the left makes it easy to see the peaks of the distribution, whereas the transformed representation on the right makes it easier to see the regions of non-negligible density around those peaks:
+
+`r columns(2, 2/3)`
+```{r}
+base <- ggplot(faithfuld, aes(waiting, eruptions)) + 
+  geom_raster(aes(fill = density)) + 
+  scale_x_continuous(NULL, NULL, expand = c(0, 0)) +
+  scale_y_continuous(NULL, NULL, expand = c(0, 0))
+  
+base
+base + scale_fill_continuous(trans = "sqrt")
+```
+
+This technique should be used with care.
+
 ## Discrete colour scales {#colour-discrete}
 
 Discrete colour and fill scales occur in many situations. A typical example is a barchart that encodes both position and fill to the same variable. Many concepts from Section \@ref(colour-continuous) apply to discrete scales, which I will illustrate using this barchart as the running example: \index{Colour!discrete scales}
@@ -380,6 +397,64 @@ Note that like the discrete `scale_fill_brewer()`---and unlike the continuous `s
 ## Alpha scales
 
 Alpha scales map the transparency of a shade to a value in the data. They are not often useful, but can be a convenient way to visually down-weight less important observations. `scale_alpha()` is an alias for `scale_alpha_continuous()` since that is the most common use of alpha, and it saves a bit of typing.
+
+
+
+## Scale names
+
+A common task when creating plots is to customise the title of the axes and legends. To illustrate how this is done, I'll create a small  `toy` data frame that I will reuse throughout the chapter:
+    
+```{r}
+toy <- data.frame(
+  const = 1, 
+  up = 1:4,
+  txt = letters[1:4], 
+  big = (1:4)*1000,
+  log = c(2, 5, 10, 2000)
+)
+toy
+```
+
+The axis or legend title is specified by `name`, which is always the first argument to the scale function. Usually this argument takes a text string as input, using `\n` to specify line breaks, but you can supply mathematical expressions wrapped `quote()`, as described in `?plotmath`
+\index{Axis!title} \index{Legend!title}
+    
+`r columns(2, 1 / 2)`
+```{r guide-names}
+base <- ggplot(toy, aes(up, up)) + geom_point()
+
+base + scale_x_continuous("X axis")
+base + scale_x_continuous(quote(a + mathematical ^ expression))
+```
+
+It is also possible to include (some) markdown in axis and legend titles with the help of the ggtext package [@ggtext] and the ggplot2 theme system (see Chapter \@ref(polishing)). To enable markdown you need to set the relevant theme element to `ggtext::element_markdown()`, as demonstrated below:
+
+`r columns(2, 1 / 2)`
+```{r markdown-with-ggtext}
+base <- ggplot(toy, aes(up, up)) + 
+  geom_point() + 
+  scale_x_continuous("Axis title with *italics* and **boldface**")
+
+base
+base + theme(axis.title.x = ggtext::element_markdown())
+```
+
+Because tweaking axis and legend labels is such a common task, ggplot2 provides the `labs()` helper function that saves you some typing. It allows you to set the name for one or more scales, using name-value pairs like `x = "X axis"` or `fill = "fill legend"`. It also allows you to specify other plot labels, like titles, subtitles, captions and tags (see Section \@ref(titles)):
+
+`r columns(2, 2/3)`
+```{r guide-names-helper}
+ggplot(toy, aes(const, up)) + 
+  geom_point(aes(colour = txt)) + 
+  labs(
+    x = "X axis", 
+    y = quote(Y^axis), 
+    colour = "Colour\nlegend",
+    title = "A pithy title",
+    subtitle = "A more precise subtitle"
+  )
+```
+
+There are two ways to remove the axis label. Setting `labs(x = "")` omits the label but still allocates space; setting `labs(x = NULL)` removes the label and its space. 
+
 
 ## Legends
 
