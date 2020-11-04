@@ -4,13 +4,13 @@ set.seed(12L)
 columns(1, 1 / 1.61, 1)
 ```
 
-# Extension Case Study: Springs {#spring1}
+# Case Study: Springs {#spring1}
 
-## Part 1
+## Part 1: A stat
 
 In this chapter we will create our very first extension: A version of `geom_segment()` that instead of drawing a straight line between two points will draw it as a stretched spring.
 By the end of it you will hopefully have gained a lot of insight into the process of designing a `Stat` extension along with its benefits and problems.
-We will revisit this extension Multiple times over the next chapters.
+We will revisit this extension multiple times throughout this chapter.
 
 ### Thinking a bit before we code
 
@@ -327,13 +327,12 @@ ggplot() +
 ```
 
 This is one of the biggest downsides (or features, depending on your need) of shapes and line geoms defined as stats expansions.
-We will look into fixing this in a later chapter, by creating a new geom from the ground up.
+We'll fix this next, by creating a new geom from the ground up.
 
-## Part 2 {#spring2}
+## Part 2: Adding aesthetics {#spring2}
 
-In the last chapter we created a first version of our spring stat, complete with constructors and what-not.
-We finished the chapter by identifying some shortcomings in the finished implementation, one of which was the global nature of the `diameter` and `tension` arguments.
-In this chapter we will look into how we can turn these arguments into aesthetics instead, that can be set on a per-spring level.
+In the last we created a first version of our spring stat, complete with constructors and what-not.
+Now, we'll turn the `diameter` and `tension` arguments into aesthetics instead, that can be set on a per-spring level.
 
 ### Moving to aesthetics
 
@@ -384,7 +383,7 @@ StatSpring <- ggproto("StatSpring", Stat,
 )
 ```
 
-This looks very much like the Stat we created in the last chapter, except a few things have been moved around.
+This looks very much like the Stat we created previously, with a few things moved around.
 We have removed the check and default settings of `diameter` and `tension` from `setup_params()`, and instead checks the respective columns in `setup_data()`.
 We have also removed the arguments in `compute_panel()` as the values are now passed in with the data.
 Within `compute_panel()` we also grabs `diameter` and `tension` from the data instead, just like we do for `x`, `y`, etc.
@@ -446,20 +445,20 @@ ggplot(some_data) +
 
 ### Post-Mortem
 
-In this chapter we further developed our spring stat so that the two defining features (`diameter` and `tension`) can be used as aesthetics and thus vary between the different springs in a visualization.
+In this section we further developed our spring stat so that the two defining features (`diameter` and `tension`) can be used as aesthetics and thus vary between the different springs in a visualization.
 Our implementation has the downside that these features no longer can be set globally; this possibility is reserved for geoms for now.
 We are still missing a way to control the scaling of the two aesthetics so the mapped values are taken as-is.
 Such scaling is not possible with our current approach since scaling happens after the stats calculation at which point the path of our springs have been fixed.
-Our next step is thus to move our implementation away from `Stat` and into a proper `Geom`, which we will look at in the next chapter.
+Our next step is thus to move our implementation away from `Stat` and into a proper `Geom`.
 
-## Part 3 {#spring3}
+## Part 3: A geom {#spring3}
 
-In the last chapter we came as far as possible with our `Stat`-centered approach to a spring geom.
+In the last section we came as far as possible with our `Stat`-centered approach to a spring geom.
 In some cases this is enough.
 Many of the graphic primitives provided by the ggforce extension package is developed in this manner.
 Aspects of our spring geom means that we need to go further here (also, this is to learn about extensions so it would be bad pedagogy to stop now).
 These aspects, specifically, is that there is visual appearances of the spring that need to be unrelated to the coordinate system (the `tension` and `diameter` aesthetics).
-Consequently, in the chapter we will rewrite our geom to be a proper `Geom` extension.
+Consequently, we'll rewrite our geom to be a proper `Geom` extension.
 
 ### Geom extensions
 
@@ -594,18 +593,18 @@ Using the techniques described in the last three chapters is enough to solve 95%
 
 ### Post-Mortem
 
-In this chapter we finally created a proper `Geom` extension that behaves as we would expect.
-You may think that this is always the natural conclusion to the development of new layer types, but there is value in the `Stat` approach we reached in the last chapter as well, mainly that it makes it possible to use the data transformation with multiple different geoms (e.g. plotting dots at each coordinate instead of connecting them to a path).
+In this section we finally created a proper `Geom` extension that behaves as we would expect.
+You may think that this is always the natural conclusion to the development of new layer types, but there is also value in the `Stat` approach, mainly that it makes it possible to use the data transformation with multiple different geoms (e.g. plotting dots at each coordinate instead of connecting them to a path).
 The final choice is ultimately up to you and should be guided by how you envision the layer to be used.
 
-In this chapter we did not touch too much upon what goes on inside the `draw_*()` methods.
+We have not yet talked about what goes on inside the `draw_*()` methods.
 Often it is enough to use a method from another geom and don't worry about it.
 Even for something quite complex like the boxplot geom you will see that it simply combines output from multiple different geoms such as `GeomSegment` and `GeomCrossbar`.
-We will get much deeper into the `draw_*()` methods in the next chapter when we also create our own grob.
+We will get much deeper into the `draw_*()` methods in the next section when we also create our own grob.
 
-## Part 4 {#spring4}
+## Part 4: A grid grob {#spring4}
 
-In the last chapter we exhausted our options for our spring geom safe for delving into the development of a new grid grob.
+In the last section we exhausted our options for our spring geom safe for delving into the development of a new grid grob.
 grid is the underlying graphic system that ggplot2 builds upon and while much can be achieved by ignoring grid entirely, there are situations where it is impossible to achieve what you want without going down to the grid level.
 There are especially two situations that warrant the need for using grid directly when developing ggplot2 extensions:
 
@@ -898,18 +897,18 @@ We will leave this as an exercise for the reader.
 
 While the geom is now done, we still a have a little work to do.
 We need to create a diameter scale and provide legend keys that can correctly communicate diameter and tension.
-This will be the topic of the last extension chapter.
+This will be the topic of the final section.
 
-## Part 5 {#spring5}
+## Part 5: Scales {#spring5}
 
 Now that we have our final geom, there's still a bit of work to do before we are done.
 This is because we have defined a couple of new aesthetics in the process and we would like users to be able to scale them.
 There's nothing wrong with defining new aesthetics without providing a scale --- that simply means that the mapped values are passed through unchanged --- but if we want users to have some control as well as the possibility of a legend we will need to provide scales for the aesthetics.
-This will be the goal of this final extension case study chapter.
+This will be the goal of this final section.
 
 ### Scaling
 
-Thankfully, compared to last chapters dive into grid, creating new scales is not a huge undertaking.
+Thankfully, compared to grid, creating new scales is not a huge undertaking.
 It basically surmounts to creating a function with the correct name that outputs a `Scale` object.
 In the code below you can see how this is done for the `tension` aesthetic:
 
@@ -1052,4 +1051,3 @@ This concludes our, admittedly a bit far-fetched, case study on how to create a 
 Hopefully it has become clear that there are many different ways to achieve the same geom extension and where you end up is largely guided by your needs and how much energy you want to put into it.
 While extending layers (and scales) are only a single (but important) part of the ggplot2 extension system, we will not discuss how to create other types of extensions such as coord and facet extensions.
 The curious reader is invited to study the source code of both ggplot2's own Facet and Coord classes as well as the extensions available in e.g. the ggforce package.
-
