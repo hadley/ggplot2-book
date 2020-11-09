@@ -1,26 +1,93 @@
-# Preface to the third edition {-}
+# Preface to the third edition {#preface-3e .unnumbered}
 
-Welcome to the third edition of "ggplot2: elegant graphics for data analysis". I'm so excited to have an updated book 
+Welcome to the third edition of "ggplot2: elegant graphics for data analysis".
+I'm so excited to have a new edition of the book updated for all the changes that have happened to ggplot2 in the last five years.
+I'm also excited to finally have an online version of the book, [\<http://ggplot2-book.org/\>](http://ggplot2-book.org/){.uri}, thanks to a renegotiated contract with Springer.
 
-Since the last version of the book, the major change to ggplot2 is that I am no longer the primary driver of change. Discuss governance and list all core developers.
+Since the last version of the book, the major change to ggplot2 itself is the growth in the contributor community.
+While I still lead the project and continue to care deeply about visualisation, I'm no longer involved in the day-to-day development of the package.
+At the time of writing, the core developers of ggplot2 are:
 
-## Major changes {-}
+-   [Winston Chang](https://github.com/wch)
+-   [Lionel Henry](https://github.com/lionel-)
+-   [Thomas Lin Pedersen](https://github.com/thomasp85)
+-   [Kohske Takahashi](https://github.com/kohske)
+-   [Claus Wilke](https://github.com/clauswilke)
+-   [Kara Woo](https://github.com/karawoo)
+-   [Hiroaki Yutani](https://github.com/yutannihilation)
+-   [Dewey Dunnington](https://github.com/paleolimbot)
 
-* Available online <http://ggplot2-book.org/>.
+You can see an up-to-date list and how to become a core developer in the [ggplot2 governance document](https://github.com/tidyverse/ggplot2/blob/master/GOVERNANCE.md).
 
-* The chapters on data analysis and modelling have been removed. You can
-  find updated versions of this material in R for Data Science at
-  <https://r4ds.had.co.nz>.
+## Major changes {.unnumbered}
 
-* The toolbox chapter has been split into multiple chapters.
+-   The *Data Analysis*, *Data Transformation*, and *Modelling for Visualisation* chapters have been removed so that the book can focus on visualisation.
+    If you're looking for general advice on doing data science in R, I recommend [R for Data Science](https://r4ds.had.co.nz).
 
-    New chapter on arranging multiple plots on the page.
+-   The *Toolbox* chapter has been expanded into six chapters that cover practical applications of layers.
+    This includes more material on maps and annotations, and a new chapter that discusses how to arrange multiple plots on one page.
 
-* The positioning chapter has been split into facetting and coordinate systems.
+-   Similarly, the old *Scales, Axes, and Legends* chapter has been split into into four chapters.
+    The first three cover the practical combination of scales and guides for the most common scale types, and the final chapter focusses on the underlying theory.
 
-* New FAQ chapter that covers some of the most commonly seen problems in
-  the wild.
+-   The old *Positioning* chapter has been split into new *Coordinate Systems* and *Facetting* chapters, giving more room for details on these important topics.
 
-* The scales and guides chapters have been radically reconfigured into one
-  chapter each on position, colour, and other scales and guides, and then one
-  chapter that focusses on the underlying theory.
+-   New chapters describe more about the internals of ggplot2, and how you can extend it in your own package.
+
+## Acknowledgements {.unnumbered}
+
+This edition of the book was made possible by two new co-authors: Danielle Navarro and Thomas Lin Pedersen.
+Danielle contributed most of the new material in the layers and scales chapters, and Thomas contributed new chapters on arranging plots (using his patchwork package), and on how to extend ggplot2.
+
+This book was written in the open and chapters were advertised on twitter when complete.
+It is truly a community effort: many people read drafts, fixed typos, suggested improvements, and contributed content.
+Without those contributors, the book wouldn't be nearly as good as it is, and I'm deeply grateful for their help.
+
+```{r, eval = FALSE, echo = FALSE}
+library(tidyverse)
+contribs_all_json <- gh::gh("/repos/:owner/:repo/contributors",
+  owner = "hadley",
+  repo = "ggplot2-book",
+  .limit = Inf
+)
+contribs_all <- tibble(
+  login = contribs_all_json %>% map_chr("login"),
+  n = contribs_all_json %>% map_int("contributions")
+)
+
+contribs_old <- read_csv("contributors.csv", col_types = list())
+contribs_new <- contribs_all %>% anti_join(contribs_old, by = "login")
+
+# Get info for new contributors
+needed_json <- map(
+  contribs_new$login, 
+  ~ gh::gh("/users/:username", username = .x)
+)
+info_new <- tibble(
+  login = contribs_new$login,
+  name = map_chr(needed_json, "name", .default = NA),
+  blog = map_chr(needed_json, "blog", .default = NA)
+)
+info_old <- contribs_old %>% select(login, name, blog)
+info_all <- bind_rows(info_old, info_new)
+
+contribs_all <- contribs_all %>% 
+  left_join(info_all, by = "login") %>% 
+  arrange(login)
+write_csv(contribs_all, "contributors.csv")
+```
+
+```{r, results = "asis", echo = FALSE, message = FALSE}
+library(dplyr)
+contributors <- read.csv("contributors.csv", stringsAsFactors = FALSE)
+contributors <- contributors %>% 
+  filter(login != "hadley") %>% 
+  mutate(
+    login = paste0("\\@", login),
+    desc = ifelse(is.na(name), login, paste0(name, " (", login, ")"))
+  )
+
+cat("A big thank you to all ", nrow(contributors), " people who contributed specific improvements via GitHub pull requests (in alphabetical order by username): ", sep = "")
+cat(paste0(contributors$desc, collapse = ", "))
+cat(".\n")
+```
