@@ -383,6 +383,15 @@ geometry <- latlon %>%
 # in which the coordinates were originally defined
 cities <- st_sf(city = oz_capitals$city, geometry)
 st_crs(cities) <- st_crs("+proj=longlat +datum=WGS84")
+
+
+
+
+# This transformation can also be simplified as:
+cities <- st_as_sf(oz_capitals,
+          coords = c("lon", "lat"), 
+          crs = 4326, 
+          remove = FALSE)
 ```
 
 What we have done here is transform the original `oz_capitals` data, which took the form of a standard data frame (or tibble), into a properly specified simple features object that has its own CRS. The choice of projection is determined by the fact that `oz_capitals` specifying longitude and latitude data, and I've chosen the same WGS84 datum that I used previously as the map is global in scope. Having done so we can now transform the co-ordinates from the latitude-longitude geometry to the match the geometry of our `sat_vis` data:
