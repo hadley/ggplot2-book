@@ -6,7 +6,7 @@ columns(1, 2 / 3)
 set.seed(1)
 ```
 
-Like maps and spatial data, networks and graphs occupy a special part of the visualization landscape, but whereas spatial data mostly differ from regular plotting in their use of projections, networks bring their own data structure as well as their own visualization paradigms to the table. Because of these complications networks are not directly supported in ggplot2. Several efforts over the years have tried to add this missing piece and in this chapter we will see how to use ggraph for network visualization. Other packages that offers some of the same functionality includes geomnet, ggnetwork, and GGally for regular network plots, and ggtree and ggdendro for tree visualization specifically.
+Like maps and spatial data, networks and graphs occupy a special part of the visualization landscape, but whereas spatial data mostly differ from regular plotting in their use of projections, networks bring their own data structure as well as their own visualization paradigms to the table. Because of these complications networks are not directly supported in ggplot2. Several efforts over the years have tried to add this missing piece and in this chapter we will see how to use [ggraph]() for network visualization. Other packages that offers some of the same functionality includes geomnet, ggnetwork, and GGally for regular network plots, and ggtree and ggdendro for tree visualization specifically.
 
 ## What is network data?
 
@@ -71,7 +71,7 @@ This is just a brief glimpse into tidygraph, for the sake of understanding ggrap
 
 ## Visualizing networks
 
-ggraph builds on top of tidygraph and ggplot2 to allow a complete and familiar grammar of graphics for network data. Still, it is a little different from most ggplot2 extension packages since it works with another data type that is fundamentally different from tabular data. More so, most network visualizations don't concern themselves with mapping variables to `x` and `y` aesthetics since they are concerned with shoving the network topology more than relations between two variables. In order to show network topology the concept of layouts are employed. Layouts are algorithms that use the network structure to calculate (often arbitrary) `x` and `y` values for each node that can then be used for visualization purpose.
+ggraph builds on top of tidygraph and ggplot2 to allow a complete and familiar grammar of graphics for network data. Still, it is a little different from most ggplot2 extension packages since it works with another data type that is fundamentally different from tabular data. More so, most network visualizations don't concern themselves with mapping variables to `x` and `y` aesthetics since they are concerned with shoving the network topology more than relations between two variables. In order to show network topology the concept of layouts are employed. Layouts are algorithms that use the network structure to calculate (often arbitrary) `x` and `y` values for each node that can then be used for visualization purpose. To put it in another way, when plotting tabular data the `x` and `y` aesthetics are almost always mapped to existing variables in the data (or statistically transformations of existing data) whereas when plotting network data `x` and `y` are mapped to values derived from the topology of the network and which are by themselves meaningless.
 
 ### Setting up the visualization
 
@@ -79,7 +79,7 @@ Whereas a normal ggplot2 plot is initialized with a `ggplot()` call, a ggraph pl
 
 #### Specifying a layout
 
-The layout argument can either take a string or a function. If a string is provided, the name will be matched to one of the build in layouts (of which there are many). If a function is provided it is assumed that the function takes a tbl\_graph and returns a data frame with at least an x and y column and with the same number of rows as there are nodes in the input graph. Below we can see examples of using the default layout, specifying a specific layout, and providing a layout function directly:
+The layout argument can either take a string or a function. If a string is provided, the name will be matched to one of the build in layouts (of which there are many). If a function is provided it is assumed that the function takes a tbl\_graph and returns a data frame with at least an x and y column and with the same number of rows as there are nodes in the input graph. Below we can see examples of using the default layout, specifying a specific layout, and providing arguments to the layout (using a tidygraph algorithm):
 
 ```{r}
 library(ggraph)
@@ -95,16 +95,9 @@ ggraph(hs_graph, layout = "drl") +
 ```
 
 ```{r}
-random_layout <- function(x) {
-  n_nodes <- with_graph(x, graph_order())
-  data.frame(
-    x = runif(n_nodes),
-    y = runif(n_nodes)
-  )
-}
-ggraph(hs_graph, layout = random_layout) + 
-  geom_edge_link() + 
-  geom_node_point()
+ggraph(hs_graph, layout = 'fabrix', sort.by = node_rank_fabric()) + 
+  geom_edge_span() + 
+  geom_node_range()
 ```
 
 In order to show the graph above we're using the `geom_edge_link()` and `geom_node_point()` functions, and while we have not yet discussed these the do exactly what you may imagine: drawing nodes as points and edges as straight lines.
