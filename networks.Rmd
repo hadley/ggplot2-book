@@ -6,7 +6,7 @@ columns(1, 2 / 3)
 set.seed(1)
 ```
 
-Like maps and spatial data, networks and graphs occupy a special part of the visualization landscape, but whereas spatial data mostly differ from regular plotting in their use of projections, networks bring their own data structure as well as their own visualization paradigms to the table. Because of these complications networks are not directly supported in ggplot2. Several efforts over the years have tried to add this missing piece and in this chapter we will see how to use [ggraph]() for network visualization. Other packages that offers some of the same functionality includes geomnet, ggnetwork, and GGally for regular network plots, and ggtree and ggdendro for tree visualization specifically.
+Like maps and spatial data, networks and graphs occupy a special part of the visualization landscape, but whereas spatial data mostly differ from regular plotting in their use of projections, networks bring their own data structure as well as their own visualization paradigms to the table. Because of these complications networks are not directly supported in ggplot2. Several efforts over the years have tried to add this missing piece and in this chapter we will see how to use [ggraph](https://ggraph.data-imaginist.com) for network visualization. Other packages that offers some of the same functionality includes [geomnet](http://sctyner.github.io/geomnet/), [ggnetwork](https://briatte.github.io/ggnetwork/), and [GGally](https://ggobi.github.io/ggally/) for regular network plots, and [ggtree](https://github.com/YuLab-SMU/ggtree) and [ggdendro](http://andrie.github.io/ggdendro/) for tree visualization specifically.
 
 ## What is network data?
 
@@ -75,7 +75,7 @@ ggraph builds on top of tidygraph and ggplot2 to allow a complete and familiar g
 
 ### Setting up the visualization
 
-Whereas a normal ggplot2 plot is initialized with a `ggplot()` call, a ggraph plot is initialized with a `ggraph()` call. The first argument is the data, which can be a tbl\_graph or any object convertible to one. The second argument is a layout function and any further argument will be passed on to that function. The default layout will choose an appropriate layout based on the type of graph you provide, but while it is often a descent starting point you should always take control and explore the different layouts available --- networks are nefarious for their ability to show non-existing or exaggerated relations in some layouts.
+Whereas a normal ggplot2 plot is initialized with a `ggplot()` call, a ggraph plot is initialized with a `ggraph()` call. The first argument is the data, which can be a tbl\_graph or any object convertible to one. The second argument is a layout function and any further argument will be passed on to that function. The default layout will choose an appropriate layout based on the type of graph you provide, but while it is often a descent starting point you should always take control and explore the different layouts available --- networks are nefarious for their ability to show non-existing or exaggerated relations in some layouts. There are more to layouts than described in this section. The [Getting Started guide to layouts](https://ggraph.data-imaginist.com/articles/Layouts.html) will tell you even more and showcase all the different layouts provided by ggraph.
 
 #### Specifying a layout
 
@@ -121,11 +121,9 @@ ggraph(luv_graph, layout = 'dendrogram') +
 
 As we can see, using `coord_polar()` will bend our edges, hardly a desirable choice.
 
-There are more to layouts than described here. The Getting Started guide to layouts will tell you even more: <https://ggraph.data-imaginist.com/articles/Layouts.html>
-
 ### Drawing nodes
 
-Of the two types of data stored in a graph, nodes are by far the ones that is most alike what we are used to plot. After all, they are often shown as points in very much the same way as observations are displayed in a scatter plot. All the node drawing geoms in ggraph are prefixed with `geom_node_` and the one you are most likely to use the most is `geom_node_point()`. While it may superficially look a lot like `geom_point()` it has some additional features that it shares with all node and edge geoms. First, you don't have to specify the `x` and `y` aesthetics. These are given by the layout and their mapping is implicit. Second, you have access to a `filter` aesthetic that allows you to turn off drawing of specific nodes. Third, you may use any tidygraph algorithms inside the `aes()` and they will get evaluated on the graph being visualized. To see this in action we plot our highschool graph again, but this time only showing nodes with more than 2 connections, and colored by their power centrality:
+Of the two types of data stored in a graph, nodes are by far the ones that is most alike what we are used to plot. After all, they are often shown as points in very much the same way as observations are displayed in a scatter plot. While conceptually simple we still won't cover everything there is to know about nodes, so as with layouts the interested reader is directed towards the [Getting Started guide to nodes](https://ggraph.data-imaginist.com/articles/Nodes.html.) to learn more. All the node drawing geoms in ggraph are prefixed with `geom_node_` and the one you are most likely to use the most is `geom_node_point()`. While it may superficially look a lot like `geom_point()` it has some additional features that it shares with all node and edge geoms. First, you don't have to specify the `x` and `y` aesthetics. These are given by the layout and their mapping is implicit. Second, you have access to a `filter` aesthetic that allows you to turn off drawing of specific nodes. Third, you may use any tidygraph algorithms inside the `aes()` and they will get evaluated on the graph being visualized. To see this in action we plot our highschool graph again, but this time only showing nodes with more than 2 connections, and colored by their power centrality:
 
 ```{r}
 ggraph(hs_graph, layout = "stress") + 
@@ -146,11 +144,11 @@ ggraph(luv_graph, layout = "treemap") +
   geom_node_tile(aes(fill = depth))
 ```
 
-As with layouts we have only discussed the most common features of node geoms. The Getting Started guide to nodes will tell you more: <https://ggraph.data-imaginist.com/articles/Nodes.html>
-
 ### Drawing edges
 
-Edge geoms have a lot more bells and whistles than node geoms, mainly because there are so many different ways one can connect two things. We have already seen `geom_edge_link()` in action, which draws a straight line between the connected nodes, but it can do more than we've seen already. Under the hood it will split up the line in a bunch of small fragments and it is possible to use that to draw a gradient along the edge, e.g. to show direction:
+Edge geoms have a lot more bells and whistles than node geoms, mainly because there are so many different ways one can connect two things. There is no way to cover it all, both in terms of the different types of geoms, as well as the common functionality they have. The [Getting Started guide to edges](https://ggraph.data-imaginist.com/articles/Edges.html) will give a complete overview.
+
+We have already seen `geom_edge_link()` in action, which draws a straight line between the connected nodes, but it can do more than we've seen already. Under the hood it will split up the line in a bunch of small fragments and it is possible to use that to draw a gradient along the edge, e.g. to show direction:
 
 ```{r}
 ggraph(graph, layout = "stress") + 
@@ -211,8 +209,6 @@ ggraph(graph, layout = "stress") +
   ) + 
   geom_node_point(aes(colour = class), size = 8)
 ```
-
-As with the other ggraph parts, there are more to edges than what we describe here. You can explore the Getting Started guide too edges to learn more: <https://ggraph.data-imaginist.com/articles/Edges.html>
 
 #### An edge is not always a line
 
