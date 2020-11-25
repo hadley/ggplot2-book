@@ -79,7 +79,7 @@ Whereas a normal ggplot2 plot is initialized with a `ggplot()` call, a ggraph pl
 
 #### Specifying a layout
 
-The layout argument can either take a string or a function. If a string is provided, the name will be matched to one of the build in layouts (of which there are many). If a function is provided it is assumed that the function takes a tbl\_graph and returns a data frame with at least an x and y column and with the same number of rows as there are nodes in the input graph. Below we can see examples of using the default layout, specifying a specific layout, and providing arguments to the layout (using a tidygraph algorithm):
+The layout argument can either take a string or a function. If a string is provided, the name will be matched to one of the build in layouts (of which there are many). If a function is provided it is assumed that the function takes a tbl\_graph and returns a data frame with at least an x and y column and with the same number of rows as there are nodes in the input graph. Below we can see examples of using the default layout, specifying a specific layout, and providing arguments to the layout (which are evaluated in the context of the input graph):
 
 ```{r}
 library(ggraph)
@@ -95,9 +95,13 @@ ggraph(hs_graph, layout = "drl") +
 ```
 
 ```{r}
-ggraph(hs_graph, layout = 'fabrix', sort.by = node_rank_fabric()) + 
-  geom_edge_span() + 
-  geom_node_range()
+hs_graph <- hs_graph %>% 
+  activate(edges) %>% 
+  mutate(edge_weights = runif(n()))
+ggraph(hs_graph, layout = "stress", weights = edge_weights) + 
+  geom_edge_link(aes(alpha = edge_weights)) + 
+  geom_node_point() + 
+  scale_edge_alpha_identity()
 ```
 
 In order to show the graph above we're using the `geom_edge_link()` and `geom_node_point()` functions, and while we have not yet discussed these the do exactly what you may imagine: drawing nodes as points and edges as straight lines.
