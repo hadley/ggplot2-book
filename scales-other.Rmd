@@ -1,0 +1,97 @@
+```{r setup, include = FALSE}
+source("common.R")
+columns(1, 2 / 3)
+```
+
+# Other aesthetics
+
+## Size
+\index{Size}
+
+```{r, echo=FALSE}
+planets <- data.frame(
+  name = c("Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune"),
+  type = c(rep("Inner", 4), rep("Outer", 4)),
+  position = 1:8,
+  radius = c(2440, 6052, 6378, 3390, 71400, 60330, 25559, 24764),
+  orbit = c(57900000, 108200000, 149600000, 227900000, 778300000, 1427000000, 2871000000, 4497100000)
+#  mass = c(3.3022e+23, 4.8685e+24, 5.9736e+24, 6.4185e+23, 1.8986e+27, 5.6846e+26, 8.681e+25, 1.0243e+26)
+)
+planets$name <- with(planets, factor(name, name))
+```
+
+The size aesthetic is typically used to scale points and text. The default scale for size aesthetics is `scale_size()` in which a linear increase in the variable is mapped onto a linear increase in the area (not the radius) of the geom. Scaling as a function of area is a sensible default as human perception of size is more closely mimicked by area scaling than by radius scaling. By default the smallest value in the data (more precisely in the scale limits) is mapped to a size of 1 and the largest is mapped to a size of 6. The `range` argument allows you to scale the size of the geoms:
+`r columns(2, 2/3)`
+```{r}
+base <- ggplot(mpg, aes(displ, hwy, size = cyl)) + 
+  geom_point()
+
+base
+base + scale_size(range = c(1, 2))
+```
+
+There are situations where area scaling is undesirable, and for such situations the `scale_radius()` function is provided. To illustrate when `scale_radius()` is appropriate consider a data set containing astronomical data that includes the radius of different planets:
+```{r} 
+planets
+```
+
+In this instance a plot that uses the size aesthetic to represent the radius of the planets should use `scale_radius()` rather than the default `scale_size()`. It is also important in this case to set the scale limits so that a planet with radius 0 would be drawn with a disc with radius 0. 
+
+`r columns(2, 1)`
+```{r}
+base <- ggplot(planets, aes(1, name, size = radius)) + 
+  geom_point() + 
+  scale_x_continuous(breaks = NULL) + 
+  labs(x = NULL, y = NULL, size = NULL)
+  
+base + ggtitle("not to scale")
+base + 
+  scale_radius(limits = c(0, NA), range = c(0, 10)) + 
+  ggtitle("to scale")
+```
+
+On the left it is difficult to distinguish Jupiter from Saturn, despite the fact that the difference between the two should be double the size of Earth; compare this to the plot on the right where the radius of Jupiter is visibly larger.
+
+Other size scales exist and are worth noting briefly:
+
+- `scale_size_binned()` is a size scale that behaves like `scale_size()` but maps continuous values onto discrete size categories (analogous to the binned position and colour scales discussed earlier)
+
+- `scale_size_area()` and `scale_size_binned_area()` are versions of `scale_size()` and `scale_size_binned()` that ensure that a value of 0 maps to an area of 0. 
+
+- `scale_size_date()` and `scale_size_datetime()` are designed to handle date data, analogous to the date scales discussed earlier.
+
+
+## Shape
+
+`solid`
+
+Include shape table
+
+## Line type 
+
+Only option is `na.value`
+
+Include line type table
+
+## Manual scales
+
+These scales are just a list of valid values that are mapped to the unique discrete values. If you want to customise these scales, you need to create your own new scale with the "manual" version of each: `scale_linetype_manual()`, `scale_shape_manual()`, `scale_colour_manual()`, etc. 
+
+The manual scale has one important argument, `values`, where you specify the values that the scale should produce: see Section \@ref(colour-discrete) for an example using manual colour scales. If this vector is named, it will match the values of the output to the values of the input; otherwise it will match in order of the levels of the discrete variable. You will need some knowledge of the valid aesthetic values, which are described in `vignette("ggplot2-specs")`. 
+\index{Shape} \index{Line type}  \indexf{scale\_shape\_manual} \indexf{scale\_colour\_manual} \indexf{scale\_linetype\_manual}
+
+## Identity scales
+
+Identity scales --- such as `scale_colour_identity()` and `scale_shape_identity()` --- are used when your data is already scaled such that the data and aesthetic spaces are the same. The code below shows an example where the identity scale is useful. `luv_colours` contains the locations of all R's built-in colours in the LUV colour space (the space that HCL is based on). A legend is unnecessary, because the point colour represents itself: the data and aesthetic spaces are the same. \index{Scales!identity} \indexf{scale\_identity}
+
+`r columns(1, 1, 0.75)`
+```{r scale-identity}
+head(luv_colours)
+
+ggplot(luv_colours, aes(u, v)) + 
+geom_point(aes(colour = col), size = 3) + 
+scale_color_identity() + 
+coord_equal()
+```
+
+
