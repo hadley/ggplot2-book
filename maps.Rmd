@@ -366,26 +366,14 @@ ggplot() +
   scale_fill_gradient(low = "black", high = "white")
 ```
 
-What if we wanted to plot more conventional data over the top? A simple example of this would be to plot the locations of the Australian capital cities per the `oz_capitals` data frame that contains latitude and longitude data. However, because these data are not associated with a CRS and are not on the same scale as the raster data in `sat_vis`, these will *also* need to be transformed. This can be slightly finicky because the `oz_capitals` data are not sf objects and not currently associated with any CRS.
+What if we wanted to plot more conventional data over the top? A simple example of this would be to plot the locations of the Australian capital cities per the `oz_capitals` data frame that contains latitude and longitude data. However, because these data are not associated with a CRS and are not on the same scale as the raster data in `sat_vis`, these will *also* need to be transformed. To do so, we first need to create an sf object from the `oz_capitals` data using `st_as_sf()`:
 
 ```{r}
-# create matrix of longitude and latitude values
-latlon <- oz_capitals %>% 
-  select(lon, lat) %>%
-  as.matrix()
-
-# convert to a simple features column 
-geometry <- latlon %>%
-  st_multipoint() %>% 
-  st_sfc() %>%
-  st_cast("POINT")
-# append the city names and attach the "longlat" geometry
-# in which the coordinates were originally defined
-cities <- st_sf(city = oz_capitals$city, geometry)
-st_crs(cities) <- st_crs("+proj=longlat +datum=WGS84")
+cities <- oz_capitals %>% 
+  st_as_sf(coords = c("lon", "lat"), crs = 4326, remove = FALSE)
 ```
 
-What we have done here is transform the original `oz_capitals` data, which took the form of a standard data frame (or tibble), into a properly specified simple features object that has its own CRS. The choice of projection is determined by the fact that `oz_capitals` specifying longitude and latitude data, and I've chosen the same WGS84 datum that I used previously as the map is global in scope. Having done so we can now transform the co-ordinates from the latitude-longitude geometry to the match the geometry of our `sat_vis` data:
+This projection is set using the EPSG code 4326, an ellipsoidal projection using the latitude and longitude values as co-ordinates and relying on the WGS84 datum. Having done so we can now transform the co-ordinates from the latitude-longitude geometry to the match the geometry of our `sat_vis` data:
 
 ```{r}
 cities <- st_transform(cities, st_crs(sat_vis))
