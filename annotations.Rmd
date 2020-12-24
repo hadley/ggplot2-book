@@ -5,11 +5,6 @@ source("common.R")
 columns(1, 2 / 3)
 ```
 
-## Titles {#titles}
-
-## Labels {#labelling}
-\index{Labels} \index{Text} \indexf{geom\_text}
-
 When constructing a data visualisation, it is often necessary to make annotations to
 the data displayed. Conceptually, an annotation supplies *metadata* for the plot: that is,
 it provides additional information about the data being displayed. From a practical 
@@ -18,6 +13,48 @@ annotation tools in ggplot2 reuse the same geoms that are used to create other p
 However, to meet the specific needs that users often have when annotating plots, there
 are some helper functions in ggplot2 itself, and a number of other packages have 
 extended ggplot2 in ways you may find helpful. 
+
+
+## Plot and Axis Titles {#titles}
+
+
+The axis or legend title is specified by `name`, which is always the first argument to the scale function. Usually this argument takes a text string as input, using `\n` to specify line breaks, but you can supply mathematical expressions wrapped `quote()`, as described in `?plotmath`
+\index{Axis!title} \index{Legend!title}
+    
+`r columns(2, 1 / 2)`
+```{r guide-names}
+base <- ggplot(mpg, aes(displ, hwy)) + geom_point()
+
+base + labs(x = "X axis")
+base + labs(x = quote(a + mathematical ^ expression))
+```
+
+It is also possible to include (some) markdown in axis and legend titles with the help of the ggtext package [@ggtext] and the ggplot2 theme system (see Chapter \@ref(polishing)). To enable markdown you need to set the relevant theme element to `ggtext::element_markdown()`, as demonstrated below:
+
+`r columns(2, 1 / 2)`
+```{r markdown-with-ggtext}
+base + labs(x = "Axis title with *italics* and **boldface**")
+base + 
+  labs(x = "Axis title with *italics* and **boldface**") + 
+  theme(axis.title.x = ggtext::element_markdown())
+```
+
+Because tweaking axis and legend labels is such a common task, ggplot2 provides the `labs()` helper function that saves you some typing. It allows you to set the name for one or more scales, using name-value pairs like `x = "X axis"` or `fill = "fill legend"`. It also allows you to specify other plot labels, like titles, subtitles, captions and tags (see Section \@ref(titles)):
+
+`r columns(2, 2/3)`
+```{r guide-names-helper}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point(aes(colour = cyl)) + 
+  labs(
+    x = "X axis", 
+    y = quote(Y^axis), 
+    colour = "Colour\nlegend",
+    title = "A pithy title",
+    subtitle = "A more precise subtitle"
+  )
+```
+
+There are two ways to remove the axis label. Setting `labs(x = "")` omits the label but still allocates space; setting `labs(x = NULL)` removes the label and its space. 
 
 \index{Metadata}
 
