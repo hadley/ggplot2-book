@@ -13,64 +13,12 @@ Scales in ggplot2 control the mapping from data to aesthetics. They take your da
 
 In ggplot2, guides are produced automatically based on the layers in your plot. You don't directly control the legends and axes; instead you set up the data so that there's a clear mapping between data and aesthetics, and a guide is generated for you. This is very different to base R graphics, where you have total control over the legend, and can be frustrating when you first start using ggplot2. However, once you get the hang of it, you'll find that it saves you time, and there is little you cannot do.
 
-Divide scales into three main groups:
+The scales toolbox divide scales into three main groups, covered in separate chapters:
 
-* Position scales and axes.
-* Colour scales and legends.
-* Other scales for non-position aesthetics.
+* Position scales and axes are described in Chapter \@ref(scale-position).
+* Colour scales and legends are described in Chapter \@ref(scale-colour).
+* Scales for other aesthetics are described in Chapter \@ref(scale-other).
 
-## Scale names {#scale-name}
+The theory of scales is covered in Chapter \@ref(scales-guides), which expands on these chapters as well as other sections in the book that refer to scales (e.g., Section \@ref(titles) is extended by Section \@ref(scale-names)).
 
-A common task when creating plots is to customise the title of the axes and legends. To illustrate how this is done, I'll create a small  `toy` data frame that I will reuse throughout the chapter:
-    
-```{r}
-toy <- data.frame(
-  const = 1, 
-  up = 1:4,
-  txt = letters[1:4], 
-  big = (1:4)*1000,
-  log = c(2, 5, 10, 2000)
-)
-toy
-```
-
-The axis or legend title is specified by `name`, which is always the first argument to the scale function. Usually this argument takes a text string as input, using `\n` to specify line breaks, but you can supply mathematical expressions wrapped `quote()`, as described in `?plotmath`
-\index{Axis!title} \index{Legend!title}
-    
-`r columns(2, 1 / 2)`
-```{r guide-names}
-base <- ggplot(toy, aes(up, up)) + geom_point()
-
-base + scale_x_continuous("X axis")
-base + scale_x_continuous(quote(a + mathematical ^ expression))
-```
-
-It is also possible to include (some) markdown in axis and legend titles with the help of the ggtext package [@ggtext] and the ggplot2 theme system (see Chapter \@ref(polishing)). To enable markdown you need to set the relevant theme element to `ggtext::element_markdown()`, as demonstrated below:
-
-`r columns(2, 1 / 2)`
-```{r markdown-with-ggtext}
-base <- ggplot(toy, aes(up, up)) + 
-  geom_point() + 
-  scale_x_continuous("Axis title with *italics* and **boldface**")
-
-base
-base + theme(axis.title.x = ggtext::element_markdown())
-```
-
-Because tweaking axis and legend labels is such a common task, ggplot2 provides the `labs()` helper function that saves you some typing. It allows you to set the name for one or more scales, using name-value pairs like `x = "X axis"` or `fill = "fill legend"`. It also allows you to specify other plot labels, like titles, subtitles, captions and tags (see Section \@ref(titles)):
-
-`r columns(2, 2/3)`
-```{r guide-names-helper}
-ggplot(toy, aes(const, up)) + 
-  geom_point(aes(colour = txt)) + 
-  labs(
-    x = "X axis", 
-    y = quote(Y^axis), 
-    colour = "Colour\nlegend",
-    title = "A pithy title",
-    subtitle = "A more precise subtitle"
-  )
-```
-
-There are two ways to remove the axis label. Setting `labs(x = "")` omits the label but still allocates space; setting `labs(x = NULL)` removes the label and its space. 
 

@@ -5,11 +5,6 @@ source("common.R")
 columns(1, 2 / 3)
 ```
 
-## Titles {#titles}
-
-## Labels {#labelling}
-\index{Labels} \index{Text} \indexf{geom\_text}
-
 When constructing a data visualisation, it is often necessary to make annotations to
 the data displayed. Conceptually, an annotation supplies *metadata* for the plot: that is,
 it provides additional information about the data being displayed. From a practical 
@@ -18,6 +13,52 @@ annotation tools in ggplot2 reuse the same geoms that are used to create other p
 However, to meet the specific needs that users often have when annotating plots, there
 are some helper functions in ggplot2 itself, and a number of other packages have 
 extended ggplot2 in ways you may find helpful. 
+
+
+## Plot and axis titles {#titles}
+
+When customising a plot, it is often useful to modify the titles associated with the plot, axes, and legends. To assist with this task ggplot2 provides the `labs()` helper function, which lets you set the various titles using name-value pairs like `title = My plot title"`,  `x = "X axis"` or `fill = "fill legend"`: 
+
+`r columns(1, 2/3)`
+```{r guide-names-helper}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point(aes(colour = factor(cyl))) + 
+  labs(
+    x = "Engine displacement (litres)", 
+    y = "Highway miles per gallon", 
+    colour = "Number of cylinders",
+    title = "Mileage by engine size and cylinders",
+    subtitle = "Source: http://fueleconomy.gov"
+  )
+```
+
+The values supplied to `labs()` are typically text strings, with `\n` used to specify line breaks, but you can also supply mathematical expressions wrapped in `quote()`. The rules by which these expressions are interpreted can be found by typing `?plotmath`.
+\index{Axis!title} \index{Legend!title}
+    
+`r columns(2, 1)`
+```{r guide-names}
+values <- seq(from = -2, to = 2, by = .01)
+df <- data.frame(x = values, y = values ^ 3)
+ggplot(df, aes(x, y)) + 
+  geom_path() + 
+  labs(y = quote(f(x) == x^3))
+```
+
+It is also possible to include (some) markdown in axis and legend titles with the help of the ggtext package [@ggtext] and the ggplot2 theme system (see Chapter \@ref(polishing)). To enable markdown you need to set the relevant theme element to `ggtext::element_markdown()`, as demonstrated below:
+
+`r columns(2, 1)`
+```{r markdown-with-ggtext}
+df <- data.frame(x = 1:3, y = 1:3)
+base <- ggplot(df, aes(x, y)) + 
+  geom_point() + 
+  labs(x = "Axis title with *italics* and **boldface**")
+
+base 
+base + theme(axis.title.x = ggtext::element_markdown())
+```
+
+
+There are two ways to remove the axis label. Setting `labs(x = "")` omits the label but still allocates space; setting `labs(x = NULL)` removes the label and its space. 
 
 \index{Metadata}
 
