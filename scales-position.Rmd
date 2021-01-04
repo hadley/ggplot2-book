@@ -235,6 +235,71 @@ axs + scale_x_continuous(labels = NULL)
     What label function converts 1 to 1st, 2 to 2nd, and so on?
 
 
+### Transformations {#scale-transformation}
+
+When working with continuous data, the default is to map linearly from the data space onto the aesthetic space. It is possible to override this default using transformations. Every continuous scale takes a `trans` argument, allowing the use of a variety of transformations:
+\index{Scales!position} \index{Transformation!scales} \index{Log!scale} \indexf{scale\_x\_log10}
+
+`r columns(2, 1)`
+```{r}
+# convert from fuel economy to fuel consumption
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() + 
+  scale_y_continuous(trans = "reciprocal")
+
+# log transform x and y axes
+ggplot(diamonds, aes(price, carat)) + 
+  geom_bin2d() + 
+  scale_x_continuous(trans = "log10") +
+  scale_y_continuous(trans = "log10")
+```
+
+The transformation is carried out by a "transformer", which describes the transformation, its inverse, and how to draw the labels. You can construct your own transformer using `scales::trans_new()`, but, as the plots above illustrate, ggplot2 understands many common transformations supplied by the scales package. The following table lists the most common variants: 
+
+| Name      | Function $f(x)$         | Inverse $f^{-1}(y)$
+|-----------|-------------------------|------------------------
+| asn       | $\tanh^{-1}(x)$         | $\tanh(y)$
+| exp       | $e ^ x$                 | $\log(y)$
+| identity  | $x$                     | $y$
+| log       | $\log(x)$               | $e ^ y$
+| log10     | $\log_{10}(x)$          | $10 ^ y$
+| log2      | $\log_2(x)$             | $2 ^ y$
+| logit     | $\log(\frac{x}{1 - x})$ | $\frac{1}{1 + e(y)}$
+| pow10     | $10^x$                  | $\log_{10}(y)$
+| probit    | $\Phi(x)$               | $\Phi^{-1}(y)$
+| reciprocal| $x^{-1}$                | $y^{-1}$
+| reverse   | $-x$                    | $-y$
+| sqrt      | $x^{1/2}$               | $y ^ 2$
+
+To simplify matters, ggplot2 provides convenience functions for the most common transformations: `scale_x_log10()`, `scale_x_sqrt()` and `scale_x_reverse()` provide the relevant transformation on the x axis, with similar functions provided for the y axis. Thus, the code below produces the same two plots shown in the previous example:
+
+```{r, fig.show="hide"}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() +
+  scale_y_reverse()
+
+ggplot(diamonds, aes(price, carat)) + 
+  geom_bin2d() + 
+  scale_x_log10() +
+  scale_y_log10()
+```
+
+Note that there is nothing preventing you from performing these transformations manually. For example, instead of using `scale_x_log10()` to transform the scale, you could transform the data instead and plot `log10(x)`. The appearance of the geom will be the same, but the tick labels will be different. Specifically, if you use a transformed scale, the axes will be labelled in the original data space; if you transform the data, the axes will be labelled in the transformed space. 
+
+`r columns(2, 1)`
+```{r}
+# manual transformation
+ggplot(mpg, aes(log10(displ), hwy)) + 
+  geom_point()
+
+# transform using scales
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() + 
+  scale_x_log10()
+```
+
+Regardless of which method you use, the transformation occurs before any statistical summaries. To transform _after_ statistical computation use `coord_trans()`. See Section \@ref(cartesian) for more details on coordinate systems, and Section \@ref(scale-transformation-extras) if you need to transform something other than a numeric position scale.
+
 ## Date-time
 
 ### Breaks {#date-scales}
@@ -345,6 +410,7 @@ In these examples I have specified the labels manually via the `date_labels` arg
     base + scale_x_date(labels = scales::label_date("%b %y"))
     base + scale_x_date(limits = lim, labels = scales::label_date_short())
     ```
+
 
 ## Discrete
 
