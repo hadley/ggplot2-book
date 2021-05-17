@@ -300,6 +300,42 @@ bars + scale_fill_manual(values = c(
 ```
 
 
+### Limits {#colour-discrete-limits}
+
+<!-- DN: Parking this example here momentarily -->
+
+Scale limits for discrete colour scales can be set using the `limits` argument to the scale argument, or by using the `lims()` helper function. This can be important when the same variable is represented in different plots, and you want to ensure that the colours are consistent across plots. To demonstrate this I'll extend the example from Section \@ref(position-continuous-limits). Colour represents the fuel type, which can be **r**egular, **e**thanol, **d**iesel, **p**remium or **c**ompressed natural gas.
+
+`r columns(2, 1)`
+```{r}
+mpg_99 <- mpg %>% filter(year == 1999)
+mpg_08 <- mpg %>% filter(year == 2008)
+
+base_99 <- ggplot(mpg_99, aes(displ, hwy, colour = fl)) + geom_point() 
+base_08 <- ggplot(mpg_08, aes(displ, hwy, colour = fl)) + geom_point() 
+
+base_99
+base_08
+```
+
+Each plot makes sense on its own, but visual comparison between the two is difficult. The axis limits are different, and because only regular, premium and diesel fuels are represented in the 1998 data the colours are mapped inconsistently. To ensure a consistent mapping for the colour aesthetic, we can set the `limits` argument:
+
+
+```{r}
+base_99 + scale_color_discrete(limits = c("c", "d", "e", "p", "r"))
+base_08 + scale_color_discrete(limits = c("c", "d", "e", "p", "r"))
+```
+
+Note that because the fuel variable `fl` is discrete, the limits for the colour aesthetic are a vector of possible values rather than the two end points. Additionally, these plots are a little unsatisfying because the colour aesthetic is mapped consistently but the position aesthetics are not. In this situation the `lims()` function is useful. It takes name-value pairs as input, where the name specifies the aesthetic and the value specifies the limits:
+
+```{r}
+base_99 + lims(x = c(1, 7), y = c(10, 45), colour = c("c", "d", "e", "p", "r"))
+base_08 + lims(x = c(1, 7), y = c(10, 45), colour = c("c", "d", "e", "p", "r"))
+```
+
+
+
+
 <!-- DN: Really not sure what to do with this example... -->
 
 <!-- The following example shows a creative use of `scale_colour_manual()` to display multiple variables on the same plot and show a useful legend. In most other plotting systems, you'd colour the lines and then add a legend: \index{Data!longitudinal} -->
