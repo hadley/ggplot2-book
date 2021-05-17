@@ -37,6 +37,39 @@ For more information on scale transformations see Section \@ref(scale-transforma
 
 ### Limits
 
+\index{Axis!limits} \index{Scales!limits}
+
+<!--HW: I took a stab at this but it needs more work. I don't think domain vs range are natural to most people -->
+<!-- DN: note to self: revisit this during the restructure -->
+
+All scales have limits that define the domain over which the scale is defined and are usually derived from the range of the data. Here we'll discuss why you might want to specify the limits rather than relying on the data:
+
+1. You want to shrink the limits to focus on an interesting area of the plot.
+1. You want to expand the limits to make multiple plots match up or to match the natural limits of a variable (e.g. percentages go from 0 to 100).
+
+It's most natural to think about the limits of position scales: they map directly to the ranges of the axes. But limits also apply to scales that have legends, like colour, size, and shape, and these limits are particularly important if you want colours to be consistent across multiple plots. 
+
+Use the `limits` argument to modify limits:
+
+* For continuous scales, `limits` should be a numeric vector of length two. 
+  If you only want to set the upper or lower limit, you can set the other value
+  to `NA`.
+  
+A minimal example is shown below. In the left panel the limits of the x scale are set to the default values (the range of the data), the middle panel expands the limits, and the right panel shrinks them:
+
+`r columns(3)`
+```{r, messages = FALSE}
+df <- data.frame(x = 1:3, y = 1:3)
+base <- ggplot(df, aes(x, y)) + geom_point() 
+
+base
+base + scale_x_continuous(limits = c(0, 4))
+base + scale_x_continuous(limits = c(1.5, 2.5))
+```
+
+You might be surprised that the final plot generates a warning, as there's no missing value in the input dataset. I'll talk about this in Section \@ref(oob). 
+
+
 
 ### Out of bounds values {#oob}
 \index{Zooming}
@@ -482,40 +515,40 @@ base
 base + scale_x_binned(n.breaks = 10)
 ```
 
-## Limits
+<!-- ## Limits -->
 
-\index{Axis!limits} \index{Scales!limits}
+<!-- \index{Axis!limits} \index{Scales!limits} -->
 
-<!--HW: I took a stab at this but it needs more work. I don't think domain vs range are natural to most people -->
-<!-- DN: note to self: revisit this during the restructure -->
+<!-- <!--HW: I took a stab at this but it needs more work. I don't think domain vs range are natural to most people --> -->
+<!-- <!-- DN: note to self: revisit this during the restructure --> -->
 
-All scales have limits that define the domain over which the scale is defined and are usually derived from the range of the data. Here we'll discuss why you might want to specify the limits rather than relying on the data:
+<!-- All scales have limits that define the domain over which the scale is defined and are usually derived from the range of the data. Here we'll discuss why you might want to specify the limits rather than relying on the data: -->
 
-1. You want to shrink the limits to focus on an interesting area of the plot.
-1. You want to expand the limits to make multiple plots match up or to match the natural limits of a variable (e.g. percentages go from 0 to 100).
+<!-- 1. You want to shrink the limits to focus on an interesting area of the plot. -->
+<!-- 1. You want to expand the limits to make multiple plots match up or to match the natural limits of a variable (e.g. percentages go from 0 to 100). -->
 
-It's most natural to think about the limits of position scales: they map directly to the ranges of the axes. But limits also apply to scales that have legends, like colour, size, and shape, and these limits are particularly important if you want colours to be consistent across multiple plots. 
+<!-- It's most natural to think about the limits of position scales: they map directly to the ranges of the axes. But limits also apply to scales that have legends, like colour, size, and shape, and these limits are particularly important if you want colours to be consistent across multiple plots.  -->
 
-Use the `limits` argument to modify limits:
+<!-- Use the `limits` argument to modify limits: -->
 
-* For continuous scales, `limits` should be a numeric vector of length two. 
-  If you only want to set the upper or lower limit, you can set the other value
-  to `NA`.
-  
+<!-- * For continuous scales, `limits` should be a numeric vector of length two.  -->
+<!--   If you only want to set the upper or lower limit, you can set the other value -->
+<!--   to `NA`. -->
 
-A minimal example is shown below. In the left panel the limits of the x scale are set to the default values (the range of the data), the middle panel expands the limits, and the right panel shrinks them:
 
-`r columns(3)`
-```{r, messages = FALSE}
-df <- data.frame(x = 1:3, y = 1:3)
-base <- ggplot(df, aes(x, y)) + geom_point() 
+<!-- A minimal example is shown below. In the left panel the limits of the x scale are set to the default values (the range of the data), the middle panel expands the limits, and the right panel shrinks them: -->
 
-base
-base + scale_x_continuous(limits = c(0, 4))
-base + scale_x_continuous(limits = c(1.5, 2.5))
-```
+<!-- `r columns(3)` -->
+<!-- ```{r, messages = FALSE} -->
+<!-- df <- data.frame(x = 1:3, y = 1:3) -->
+<!-- base <- ggplot(df, aes(x, y)) + geom_point()  -->
 
-You might be surprised that the final plot generates a warning, as there's no missing value in the input dataset. I'll talk about this in Section \@ref(oob). 
+<!-- base -->
+<!-- base + scale_x_continuous(limits = c(0, 4)) -->
+<!-- base + scale_x_continuous(limits = c(1.5, 2.5)) -->
+<!-- ``` -->
+
+<!-- You might be surprised that the final plot generates a warning, as there's no missing value in the input dataset. I'll talk about this in Section \@ref(oob).  -->
 
 ### Setting multiple limits
 
