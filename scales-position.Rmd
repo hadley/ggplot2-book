@@ -132,24 +132,44 @@ On the left the default fill colours are shown, ranging from dark blue to light 
 
 ### Visual range expansion
 
-If you have eagle eyes, you'll have noticed that the visual range of the axes actually extends a little bit past the numeric limits that I have specified in the various examples. This ensures that the data does not overlap the axes, which is usually (but not always) desirable. 
-
-You can eliminate this space with `expand = c(0, 0)`. One scenario where it is usually preferable to remove this space is when using `geom_raster()`: \index{Axis!expansion}
-
-<!-- mention expansion() since it documents the parameters? -->
+If you have eagle eyes, you'll have noticed that the visual range of the axes actually extends a little bit past the numeric limits that I have specified in the various examples. This ensures that the data does not overlap the axes, which is usually (but not always) desirable. You can override the defaults setting the `expand` argument, expects a numeric vector of length two or length four, though it is often convenient to use the `expansion()` function to create these vectors. For example, one scenario where it is usually preferable to remove this space is when using `geom_raster()`, which we can achieve by setting `expand = expansion(0)`: \index{Axis!expansion}
 
 `r columns(2, 1, 1)`
 ```{r}
-ggplot(faithfuld, aes(waiting, eruptions)) + 
+base <- ggplot(faithfuld, aes(waiting, eruptions)) + 
   geom_raster(aes(fill = density)) + 
   theme(legend.position = "none")
 
-ggplot(faithfuld, aes(waiting, eruptions)) + 
-  geom_raster(aes(fill = density)) + 
-  scale_x_continuous(expand = c(0,0)) + 
-  scale_y_continuous(expand = c(0,0)) +
-  theme(legend.position = "none")
+base 
+base + 
+  scale_x_continuous(expand = expansion(0)) + 
+  scale_y_continuous(expand = expansion(0)) 
 ```
+
+Axis expansions are described in terms of an "additive" factor, which specifies a constant space added to outside of the nominal axis limits, and a "multiplicative" one that adds space defined as a proportion of the size of the axis limit. These correspond to the `add` and `mult` arguments to `expansion()`, which can be length one (if the expansion is the same on both sides) or length two (to set different expansions on each side):
+
+`r columns(3, 1, 1)`
+```{r}
+# additive expansion of three units on both axes
+base + 
+  scale_x_continuous(expand = expansion(add = 3)) + 
+  scale_y_continuous(expand = expansion(add = 3))
+
+# multiplicative expansion of 10% on both axes
+base + 
+  scale_x_continuous(expand = expansion(mult = .1)) + 
+  scale_y_continuous(expand = expansion(mult = .1)) 
+
+# multiplicative expansion of 5% at the lower end of each axes,
+# and 10% at the upper end; for the y-axis the expansion is 
+# set directly instead of using expansion()
+base + 
+  scale_x_continuous(expand = expansion(mult = c(.05, .1))) + 
+  scale_y_continuous(expand = c(.05, 0, .1, 0))
+```
+
+Note the different behaviour in the left and middle plots: the `add` argument is specified on the same scale as the data variable, whereas the `mult` argument is specified relative to the axis range. 
+
 
 ### Exercises
 
