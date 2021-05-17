@@ -36,19 +36,7 @@ Scale transformations are discussed later in this chapter, in Section \@ref(scal
 
 \index{Axis!limits} \index{Scales!limits}
 
-All scales have limits that specify the values of the aesthetic over which the scale is defined. It's very natural to think about these limits for numeric position scales, as they map directly to the ranges of the axes. By default, the limits are calculated from the range of the data variable mapped to that aesthetic. Sometimes you might want to specify the limits manually rather than relying on the data, using the `limits` argument to the scale function. Whenever the scale is continuous, as is the case for numeric position scales, this should be a numeric vector of length two. If you only want to set the upper or lower limit, you can set the other value to `NA`. A minimal example is shown below. In the left panel the limits of the x scale are set to the default values (the range of the data), the middle panel expands the limits, and the right panel shrinks them:
-
-`r columns(3)`
-```{r, messages = FALSE}
-df <- data.frame(x = 1:3, y = 1:3)
-base <- ggplot(df, aes(x, y)) + geom_point() 
-
-base
-base + scale_x_continuous(limits = c(0, 4))
-base + scale_x_continuous(limits = c(1.5, 2.5))
-```
-
-You might be surprised that the final plot generates a warning, as there's no missing value in the input dataset. I'll talk about this in Section \@ref(oob). 
+All scales have limits that specify the values of the aesthetic over which the scale is defined. It's very natural to think about these limits for numeric position scales, as they map directly to the ranges of the axes. By default, the limits are calculated from the range of the data variable mapped to that aesthetic. Sometimes you might want to specify the limits manually rather than relying on the data, using the `limits` argument to the scale function. Whenever the scale is continuous, as is the case for numeric position scales, this should be a numeric vector of length two. If you only want to set the upper or lower limit, you can set the other value to `NA`.
 
 Manually setting scale limits is a common task when you need to ensure that scales in different plots are consistent with one another. When you create a faceted plot, ggplot2 automatically does this for you:
 
@@ -95,11 +83,9 @@ base_08 + xlim(1, 7) + ylim(10, 45)
 
 Another option for setting limits is the `lims()` function which takes name-value pairs as input, where the name specifies the aesthetic and the value specifies the limits. This function can be useful when other scale limits need to be set, discussed in Section \@ref(colour-discrete-limits).
 
+### Zooming in
 
-### Out of bounds values {#oob}
-\index{Zooming}
-
-By default, ggplot2 converts data outside the scale limits to `NA`. This means that changing the limits of a scale is not precisely the same as visually zooming in to a region of the plot. If your goal is to zoom in part of the plot, it is better to use the `xlim` and `ylim` arguments of `coord_cartesian()`:
+The examples discussed in the previous section all involve situations where the goal is to expand the scale limits beyond the range spanned by the data. It is also possible to narrow the default scale limits, but some care is required. The default behaviour in ggplot2 is to convert any data values outside the scale limits to `NA`. This means that changing the limits of a scale is not precisely the same as visually zooming in to a region of the plot. If your goal is to zoom in part of the plot, it is usually better to use the `xlim` and `ylim` arguments of `coord_cartesian()`:
 
 `r columns(3, 1.5)`
 ```{r}
@@ -108,27 +94,11 @@ base <- ggplot(mpg, aes(drv, hwy)) +
   geom_boxplot() 
 
 base
-base + coord_cartesian(ylim = c(10, 35)) # zoom only
-base + ylim(10, 35) # alters the boxplot
+base + coord_cartesian(ylim = c(10, 35)) # works as expected
+base + ylim(10, 35) # distorts the boxplot 
 ```
 
-The only difference between the left and middle plots is that the latter is zoomed in. Some of the outlier points are not shown due to the restriction of the range, but the boxplots themselves remain identical. In contrast, in the plot on the right one of the boxplots has changed. When `ylim()` is used to set the scale limits, all observations with highway mileage greater than 35 are converted to `NA` before the stat (in this case the boxplot) is computed. This has the effect of shifting the sample median downward. You can learn more about coordinate systems in Section \@ref(cartesian).
-
-Although the default behaviour is to convert the **o**ut **o**f **b**ounds values to `NA`, you can override this by setting `oob` argument of the scale, a function that is applied to all observations outside the scale limits. The default is `scales::censor()` which replaces any value outside the limits with `NA`. Another option is `scales::squish()` which squishes all values into the range. An example using a fill scale is shown below:
-
-`r columns(3,1)`
-```{r}
-df <- data.frame(x = 1:6, y = 8:13)
-base <- ggplot(df, aes(x, y)) + 
-  geom_col(aes(fill = x)) +                    # bar chart
-  geom_vline(xintercept = 3.5, colour = "red") # for visual clarity only
-
-base
-base + scale_fill_gradient(limits = c(1, 3))
-base + scale_fill_gradient(limits = c(1, 3), oob = scales::squish)
-```
-
-On the left the default fill colours are shown, ranging from dark blue to light blue. In the middle panel the scale limits for the fill aesthetic are reduced so that the values for the three rightmost bars are replace with `NA` and are mapped to a grey shade. In some cases this is desired behaviour but often it is not: the right panel addresses this by modifying the `oob` function appropriately.  
+The only difference between the left and middle plots is that the latter is zoomed in. Some of the outlier points are not shown due to the restriction of the range, but the boxplots themselves remain identical. In contrast, in the plot on the right one of the boxplots has changed. When modifying the scale limits, all observations with highway mileage greater than 35 are converted to `NA` before the stat (in this case the boxplot) is computed. Because these "out of bounds" values are no longer available, the end result is that the sample median is shifted downward, which is almost never desirable behaviour. You can learn more about coordinate systems in Section \@ref(cartesian). To learn more about how "out of bounds" values are handled for continuous and binned scales, see Section \@ref(oob).
 
 ### Visual range expansion
 

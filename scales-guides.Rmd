@@ -199,6 +199,34 @@ Later parts of the chapter focuses mostly on legends because they are more compl
     
 Reflecting this additional complexity, Section \@ref(scale-guide) discusses guide functions, most of which relate to legends. Section \@ref(legend-merge-split) discusses how legends are split and merged across layers, Section \@ref(legend-layout) focuses on legend layout and positioning, while Section \@ref(legend-glyph) shows you how to modify the glyphs displayed in the legend key.
 
+## Scale limits {#oob}
+
+<!-- DJN: this is taken from the positions "oob" section. I think it makes sense to 
+document the scales::oob functions for continuous and binned scales as part of the 
+theory chapter. The only reason we needed to talk about oob functions in position
+chapter is because of the common error with using lims() to zoom, yes? If it weren't 
+for that it would be an esoteric theory thing. -->
+
+<!-- DJN: give examples with different aesthetics, and show for binned as well as 
+continuous. try to cover most of the oob_* functions. might be valuable to highlight 
+oob_keep() for position scales, as a way of making limits behave like zoom --> 
+
+Although the default behaviour is to convert the **o**ut **o**f **b**ounds values to `NA`, you can override this by setting `oob` argument of the scale, a function that is applied to all observations outside the scale limits. The default is `scales::oob_censor()` which replaces any value outside the limits with `NA`. Another option is `scales::oob_squish()` which squishes all values into the range. An example using a fill scale is shown below:
+
+`r columns(3,1)`
+```{r}
+df <- data.frame(x = 1:6, y = 8:13)
+base <- ggplot(df, aes(x, y)) + 
+  geom_col(aes(fill = x)) +                    # bar chart
+  geom_vline(xintercept = 3.5, colour = "red") # for visual clarity only
+
+base
+base + scale_fill_gradient(limits = c(1, 3))
+base + scale_fill_gradient(limits = c(1, 3), oob = scales::squish)
+```
+
+On the left the default fill colours are shown, ranging from dark blue to light blue. In the middle panel the scale limits for the fill aesthetic are reduced so that the values for the three rightmost bars are replace with `NA` and are mapped to a grey shade. In some cases this is desired behaviour but often it is not: the right panel addresses this by modifying the `oob` function appropriately.  
+
 ## Scale breaks {#scale-breaks}
 
 In the same way that the `name` argument to a scale function governs axis titles and legend titles, the `breaks` argument controls which values appear as tick marks on axes and as keys on legends. 
