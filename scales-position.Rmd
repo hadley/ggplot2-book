@@ -36,9 +36,7 @@ Scale transformations are discussed later in this chapter, in Section \@ref(scal
 
 \index{Axis!limits} \index{Scales!limits}
 
-All scales have limits that specify the values of the aesthetic over which the scale is defined. It's very natural to think about these limits for numeric position scales, as they map directly to the ranges of the axes. By default, the limits are calculated from the range of the data variable mapped to that aesthetic. Sometimes you might want to specify the limits manually rather than relying on the data, using the `limits` argument to the scale function. Whenever the scale is continuous, as is the case for numeric position scales, this should be a numeric vector of length two. If you only want to set the upper or lower limit, you can set the other value to `NA`.
-
-Manually setting scale limits is a common task when you need to ensure that scales in different plots are consistent with one another. When you create a faceted plot, ggplot2 automatically does this for you:
+All scales have limits that specify the values of the aesthetic over which the scale is defined. It's very natural to think about these limits for numeric position scales, as they map directly to the ranges of the axes. By default, the limits are calculated from the range of the data variable, but sometimes you will need to set the limits manually using the `limits` argument to the scale function. Whenever the scale is continuous, as is the case for numeric position scales, this should be a numeric vector of length two. If you only want to set the upper or lower limit, you can set the other value to `NA`. Manually setting scale limits is a common task when you need to ensure that scales in different plots are consistent with one another. To illustrate why this is necessary consider this faceted plot:
 
 `r columns(1, aspect_ratio = 1/2, max_width = 1)`
 ```{r}
@@ -47,7 +45,7 @@ ggplot(mpg, aes(displ, hwy)) +
   facet_wrap(vars(year))
 ```
 
-Sometimes it is necessary to create plots individually, and when this happens the scale limits in different plots will often be inconsistent:
+In this plot, ggplot2 has automatically ensured that both facets have the same axis limits, making visual comparison of the two scatter plots easy. However, when creating the plots individually the scale limits in different plots will often be inconsistent:
 
 `r columns(2, 1)`
 ```{r}
@@ -61,7 +59,7 @@ base_99
 base_08
 ```
 
-Each plot makes sense on its own, but visual comparison between the two is difficult due to the inconsistent axes. To ensure consistent axis scaling, we could set the `limits` argument to each scale separately:
+Each plot makes sense on its own, but visual comparison between the two is difficult due to the inconsistent axis scaling. To ensure consistent axis scaling, we can set the `limits` argument to each scale separately:
 
 ```{r}
 base_99 + 
@@ -73,7 +71,7 @@ base_08 +
   scale_y_continuous(limits = c(10, 45))
 ```
 
-However, this code is a little unwieldy. Because modifying scale limits is such a common task, ggplot2 provides some convenience functions. For position scales the `xlim()` and `ylim()` helper functions inspect their input and then specify the appropriate scale for the x and y axes respectively:
+However, this code is a little unwieldy. Because modifying scale limits is such a common task, ggplot2 provides convenience functions to simplify the code. For position scales the `xlim()` and `ylim()` helper functions inspect their input and then specify the appropriate scale for the x and y axes respectively:
 \indexf{xlim}  \indexf{ylim} 
 
 ```{r}
@@ -85,7 +83,7 @@ Another option for setting limits is the `lims()` function which takes name-valu
 
 ### Zooming in
 
-The examples discussed in the previous section all involve situations where the goal is to expand the scale limits beyond the range spanned by the data. It is also possible to narrow the default scale limits, but some care is required. The default behaviour in ggplot2 is to convert any data values outside the scale limits to `NA`. This means that changing the limits of a scale is not precisely the same as visually zooming in to a region of the plot. If your goal is to zoom in part of the plot, it is usually better to use the `xlim` and `ylim` arguments of `coord_cartesian()`:
+The examples in the previous section expand the scale limits beyond the range spanned by the data. It is also possible to narrow the default scale limits, but care is required. When you truncate the scale limits, some data points will fall outside the boundaries you set, and ggplot2 has to make a decision about what to do with these data points. The default behaviour in ggplot2 is to convert any data values outside the scale limits to `NA`. This means that changing the limits of a scale is not always the same as visually zooming in to a region of the plot. If your goal is to zoom in on part of the plot, it is usually better to use the `xlim` and `ylim` arguments of `coord_cartesian()`:
 
 `r columns(3, 1.5)`
 ```{r}
@@ -98,7 +96,9 @@ base + coord_cartesian(ylim = c(10, 35)) # works as expected
 base + ylim(10, 35) # distorts the boxplot 
 ```
 
-The only difference between the left and middle plots is that the latter is zoomed in. Some of the outlier points are not shown due to the restriction of the range, but the boxplots themselves remain identical. In contrast, in the plot on the right one of the boxplots has changed. When modifying the scale limits, all observations with highway mileage greater than 35 are converted to `NA` before the stat (in this case the boxplot) is computed. Because these "out of bounds" values are no longer available, the end result is that the sample median is shifted downward, which is almost never desirable behaviour. You can learn more about coordinate systems in Section \@ref(cartesian). To learn more about how "out of bounds" values are handled for continuous and binned scales, see Section \@ref(oob).
+The only difference between the left and middle plots is that the latter is zoomed in. Some of the outlier points are not shown due to the restriction of the range, but the boxplots themselves remain identical. In contrast, in the plot on the right one of the boxplots has changed. When modifying the scale limits, all observations with highway mileage greater than 35 are converted to `NA` before the stat (in this case the boxplot) is computed. Because these "out of bounds" values are no longer available, the end result is that the sample median is shifted downward, which is almost never desirable behaviour. 
+
+You can learn more about coordinate systems in Section \@ref(cartesian). To learn more about how "out of bounds" values are handled for continuous and binned scales, see Section \@ref(oob).
 
 ### Visual range expansion
 
