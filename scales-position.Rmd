@@ -16,7 +16,7 @@ Although the first example does not state the y-aesthetic mapping explicitly, it
 
 \index{Scales!position} \index{Positioning!scales} 
 
-## Numeric
+## Numeric {#numeric-position-scales}
 
 The most common continuous position scales are the default `scale_x_continuous()` and `scale_y_continuous()` functions. In the simplest case they map linearly from the data value to a location on the plot. There are several other position scales for continuous variables---`scale_x_log10()`, `scale_x_reverse()`, etc---most of which are convenience functions used to provide easy access to common transformations:
 
@@ -490,40 +490,52 @@ ggplot(mpg, aes(x = hwy, y = class)) +
   annotate("text", x = 5, y = 1:7, label = 1:7)
 ```
 
-### Limits
-
-* For discrete scales, `limits` should be a character vector that enumerates all 
-  possible values.
-
-### Scale labels {#scale-labels}
+### Limits, breaks and labels {#scale-labels}
 \index{Axis!labels} \index{Legend!keys}
 
-When the data are categorical, you also have the option of using a named vector to set the labels associated with particular values. This allows you to change some labels and not others, without altering the ordering or the breaks:
+The limits, breaks and labels for a discrete position scale can be set using the `limits`, `breaks` and `labels` arguments. For the most part these behave identically to the corresponding arguments for numeric scales (Section \@ref(numeric-position-scales)), though there are some differences. For example, the limits of a discrete scale are not defined in terms of endpoints, but instead correspond to the set of allowable values for that variable. Accordingly, ggplot2 expects that the `limits` of a discrete scale should be a character vector that enumerates all possible values in the order they should appear:
+
+`r columns(3)`
+```{r}
+base <- ggplot(toy, aes(const, txt)) + 
+  geom_label(aes(label = txt)) +
+  scale_x_continuous(breaks = NULL) +
+  labs(x = NULL, y = NULL)
+
+base 
+base + scale_y_discrete(limits = c("a", "b", "c", "d", "e")) # add category
+base + scale_y_discrete(limits = c("d", "c", "a", "b")) # reorder categories
+```
+
+The `breaks` argument is largely unchanged, enumerating a set of values to be displayed on the axis labels. The `labels` argument for discrete scales has some additional functionality:you also have the option of using a named vector to set the labels associated with particular values. This allows you to change some labels and not others, without altering the ordering or the breaks:
 
 `r columns(2, 2/3)`
 ```{r}
-base <- ggplot(toy, aes(const, txt)) + 
-  geom_point() +
-  labs(x = NULL, y = NULL)
-
-base
-base + scale_y_discrete(labels = c(c = "carrot", b = "banana"))
+base + scale_y_discrete(breaks = c("b", "c"))
+base + scale_y_discrete(labels = c(c = "carrot", b = "banana")) 
 ```
 
-The also contains functions relevant for other kinds of data, such as `scales::label_wrap()` which allows you to wrap long strings across lines. 
+As with other scales, discrete position scales allow you to pass a function to the `labels` argument. The `scales::label_wrap()` function can be particularly valuable for categorical data, as it allows you to wrap long strings across multiple lines. 
 
-### `guide_axis()`
+### Label positions
 
-Guide functions exist mostly to control plot legends, but---as legends and axes are both kinds of guide---ggplot2 also supplies a `guide_axis()` function for axes. Its main purpose is to provide additional controls that prevent labels from overlapping:
+When plotting categorical data it is often necessary to move the axis labels in some way to prevent them from overlapping. You can do this easily with the help of the `guide` argument and the `guide_axis()` function. For example, to "dodge" the position of the labels, you can set `guide_axis(n.dodge = 3)`:
 
 `r columns(2, 2/3)`
 ```{r}
 base <- ggplot(mpg, aes(manufacturer, hwy)) + geom_boxplot() 
 
-base + guides(x = guide_axis(n.dodge = 3))
-base + guides(x = guide_axis(angle = 90))
+base
+base + scale_x_discrete(guide = guide_axis(n.dodge = 3))
 ```
 
+An alternative way to accomplish the same task is with the `guides()` function which takes name/value pairs as input, where the name specifies the name of the aesthetic and the value is a call to a guide function such as `guide_axis()`. For example, if you want to rotate the axis labels, either of the following will work:
+
+`r columns(2, 2/3)`
+```{r}
+base + scale_x_discrete(guide = guide_axis(angle = 90))
+base + guides(x = guide_axis(angle = 90))
+```
 
 ## Binned {#binned-position}
 
