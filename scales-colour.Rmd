@@ -162,7 +162,8 @@ base + scale_fill_gradient(na.value = "yellow")
 
 ### Limits, breaks, and labels
 
-You can suppress the breaks entirely by setting them to `NULL`. For axes, this removes the tick marks, grid lines, and labels; and for legends this this removes the keys and labels.
+In the previous chapter I discussed how the appearance of axes can be controlled by setting the `limits` (Section \@ref(position-continuous-limits)), `breaks` (Section \@ref(position-continuous-breaks)) and `labels` (Section \@ref(position-continuous-labels)) argument to the scale function. The behaviour of colour scales can be controlled in an analogous fashion.
+
 
 `r columns(2, 2/3)`
 ```{r}
@@ -173,11 +174,22 @@ toy <- data.frame(
   big = (1:4)*1000,
   log = c(2, 5, 10, 2000)
 )
-leg <- ggplot(toy, aes(up, up, fill = big)) + 
+
+base <- ggplot(toy, aes(up, up, fill = big)) + 
   geom_tile() + 
   labs(x = NULL, y = NULL) 
-leg + scale_fill_continuous(breaks = NULL)
+
+base 
+base + scale_fill_continuous(limits = c(0, 10000))
 ```
+
+`r columns(2, 2/3)`
+```{r}
+base + scale_fill_continuous(breaks = c(1000, 2000, 4000))
+base + scale_fill_continuous(labels = scales::label_dollar())
+```
+
+You can suppress the breaks entirely by setting them to `NULL`, which removes the keys and labels.
 
 
 ## Discrete colour scales {#colour-discrete}
@@ -300,7 +312,7 @@ bars + scale_fill_manual(values = c(
 ```
 
 
-### Limits {#colour-discrete-limits}
+### Limits, breaks, and labels {#colour-discrete-limits}
 
 <!-- DN: Parking this example here momentarily -->
 
@@ -333,7 +345,31 @@ base_99 + lims(x = c(1, 7), y = c(10, 45), colour = c("c", "d", "e", "p", "r"))
 base_08 + lims(x = c(1, 7), y = c(10, 45), colour = c("c", "d", "e", "p", "r"))
 ```
 
-### Labels and breaks
+One potential limitation is that while setting the scale limits does ensure that colours are mapped identically in both plots, it also means that the plot for the 1999 data displays labels for all five fuel types, despite the fact that ethanol and compressed natural gas fuels were not in use at that time. To fix this, we can use the `breaks` argument to ensure that only those fuel types that appear in the data are shown in the legend:
+
+`r columns(2, 1)`
+```{r}
+base_99
+base_99 + 
+  scale_color_discrete(
+    limits = c("c", "d", "e", "p", "r"), 
+    breaks = c("d", "p", "r")
+  )
+```
+
+These two versions of the 1999 plot display the same labels in the legend, but only the one on the right uses a colour mapping that is consistent with the 2008 plot. 
+
+Finally, we can use the `labels` argument to assign useful labels to the legend:
+
+`r columns(1, 2/3)`
+```{r}
+base_99 + 
+  scale_color_discrete(
+    limits = c("c", "d", "e", "p", "r"), 
+    breaks = c("d", "p", "r"),
+    labels = c(d = "diesel", p = "premium", r = "regular")
+  )
+```
 
 
 <!-- DN: Really not sure what to do with this example... -->
@@ -389,6 +425,7 @@ base_08 + lims(x = c(1, 7), y = c(10, 45), colour = c("c", "d", "e", "p", "r"))
 
 Colour scales also come in binned versions. The default scale is `scale_fill_binned()` which in turn defaults to `scale_fill_steps()`. As with the binned position scales discussed in Section \@ref(binned-position) these scales have an `n.breaks` argument that controls the number of discrete colour categories created by the scale. Counterintuitively---because the human visual system is very good at detecting edges---this can sometimes make a continuous colour gradient easier to perceive:
 
+`r columns(3, 1)`
 ```{r}
 erupt + scale_fill_binned()
 erupt + scale_fill_steps()
