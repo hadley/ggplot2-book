@@ -80,6 +80,37 @@ These scales are just a list of valid values that are mapped to the unique discr
 The manual scale has one important argument, `values`, where you specify the values that the scale should produce: see Section \@ref(colour-discrete) for an example using manual colour scales. If this vector is named, it will match the values of the output to the values of the input; otherwise it will match in order of the levels of the discrete variable. You will need some knowledge of the valid aesthetic values, which are described in `vignette("ggplot2-specs")`. 
 \index{Shape} \index{Line type}  \indexf{scale\_shape\_manual} \indexf{scale\_colour\_manual} \indexf{scale\_linetype\_manual}
 
+The following example shows a creative use of `scale_colour_manual()` to display multiple variables on the same plot and show a useful legend. In most other plotting systems, you'd colour the lines and then add a legend: \index{Data!longitudinal}
+
+`r columns(1, 5/12, 0.8)`
+```{r huron}
+huron <- data.frame(year = 1875:1972, level = as.numeric(LakeHuron))
+ggplot(huron, aes(year)) +
+  geom_line(aes(y = level + 5), colour = "red") +
+  geom_line(aes(y = level - 5), colour = "blue")
+```
+
+That doesn't work in ggplot because there's no way to add a legend manually. Instead, give the lines informative labels:
+
+```{r huron2}
+ggplot(huron, aes(year)) +
+  geom_line(aes(y = level + 5, colour = "above")) +
+  geom_line(aes(y = level - 5, colour = "below"))
+```
+
+And then tell the scale how to map labels to colours:
+
+```{r huron3}
+ggplot(huron, aes(year)) +
+  geom_line(aes(y = level + 5, colour = "above")) +
+  geom_line(aes(y = level - 5, colour = "below")) +
+  scale_colour_manual("Direction",
+    values = c("above" = "red", "below" = "blue")
+  )
+```
+
+
+
 ## Identity scales {#scale-identity}
 
 Identity scales --- such as `scale_colour_identity()` and `scale_shape_identity()` --- are used when your data is already scaled such that the data and aesthetic spaces are the same. The code below shows an example where the identity scale is useful. `luv_colours` contains the locations of all R's built-in colours in the LUV colour space (the space that HCL is based on). A legend is unnecessary, because the point colour represents itself: the data and aesthetic spaces are the same. \index{Scales!identity} \indexf{scale\_identity}
