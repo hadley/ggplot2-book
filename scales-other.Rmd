@@ -61,6 +61,57 @@ Other size scales exist and are worth noting briefly:
 - `scale_size_date()` and `scale_size_datetime()` are designed to handle date data, analogous to the date scales discussed in Section \@ref(date-scales).
 
 
+### Legends `guide_bins()` {#guide-bins}
+
+`guide_bins()` is suited to the situation when a continuous variable is binned and then mapped to an aesthetic that produces a legend, such as size, colour and fill. For instance, in the `mpg` data we could use `scale_size_binned()` to create a binned version of the continuous variable `hwy`. 
+
+`r columns(2, 1)`
+```{r}
+base <- ggplot(mpg, aes(displ, manufacturer, size = hwy)) +
+  geom_point(alpha = .2) +
+  scale_size_binned()
+```
+
+Unlike `guide_legend()`, the guide created for a binned scale by `guide_bins()` does not organise the individual keys into a table. Instead they are arranged in a column (or row) along a single vertical (or horizontal) axis, which by default is displayed with its own axis. The important arguments to `guide_bins()` are listed below:
+
+*   `axis` indicates whether the axis should be drawn (default is `TRUE`).
+
+    ```{r}
+    base
+    base + guides(size = guide_bins(axis = FALSE))
+    ```
+
+*   `direction` is a character string specifying the direction of the guide:
+
+    ```{r}
+    base + guides(size = guide_bins(direction = "vertical"))
+    base + guides(size = guide_bins(direction = "horizontal"))
+    ```
+
+*   `show.limits` specifies whether tick marks are shown at the ends of the 
+    guide axis
+
+*   `axis.colour`, `axis.linewidth` and `axis.arrow` are used to
+    control the guide axis that is displayed alongside the legend keys 
+
+    ```{r}
+    base + guides(size = guide_bins(show.limits = TRUE))
+    base + guides(
+      size = guide_bins(
+        axis.colour = "red",
+        axis.arrow = arrow(
+          length = unit(.1, "inches"), 
+          ends = "first", 
+          type = "closed"
+        )
+      )
+    )
+    ```
+
+*   `keywidth`, `keyheight`, `reverse` and `override.aes` have the same
+  behaviour as `guide_legend()` 
+
+
 ## Shape
 
 `solid`

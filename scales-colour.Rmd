@@ -192,6 +192,31 @@ base + scale_fill_continuous(labels = scales::label_dollar())
 You can suppress the breaks entirely by setting them to `NULL`, which removes the keys and labels.
 
 
+### Legends {#guide-colourbar}
+
+The colour bar guide ``guide_colourbar()` is designed for continuous ranges of colors---as its name implies, it outputs a rectangle over which the color gradient varies.  The most important arguments are: \index{Legend!colour bar} \index{Colour bar}
+
+* `barwidth` and `barheight` allow you to specify the size of the bar. 
+  These are grid units, e.g. `unit(1, "cm")`.
+  
+* `nbin` controls the number of slices. You may want to increase this from
+  the default value of 20 if you draw a very long bar.
+
+* `reverse` flips the colour bar to put the lowest values at the top.
+
+These options are illustrated below:
+
+`r columns(3)`
+```{r}
+base <- ggplot(mpg, aes(cyl, displ, colour = hwy)) +
+  geom_point(size = 2)
+
+base
+base + guides(colour = guide_colourbar(reverse = TRUE))
+base + guides(colour = guide_colourbar(barheight = unit(2, "cm")))
+```
+
+
 ## Discrete colour scales {#colour-discrete}
 
 Discrete colour and fill scales occur in many situations. A typical example is a barchart that encodes both position and fill to the same variable. Many concepts from Section \@ref(colour-continuous) apply to discrete scales, which I will illustrate using this barchart as the running example: \index{Colour!discrete scales}
@@ -370,6 +395,52 @@ base_99 +
 ```
 
 
+### Legend {#guide-legend}
+
+The legend guide `guide_legend()` displays individual keys in a table. The most useful options are: \index{Legend!guide}
+
+*   `nrow` or `ncol` which specify the dimensions of the table. `byrow` 
+    controls how the table is filled: `FALSE` fills it by column (the default),
+    `TRUE` fills it by row.
+
+    `r columns(3)`
+    ```{r legend-rows-cols}
+    base <- ggplot(mpg, aes(drv, fill = factor(cyl))) + geom_bar() 
+
+    base
+    base + guides(fill = guide_legend(ncol = 2))
+    base + guides(fill = guide_legend(ncol = 2, byrow = TRUE))
+    ```
+
+*   `reverse` reverses the order of the keys:
+    
+    ```{r}
+    base
+    base + guides(fill = guide_legend(reverse = TRUE))
+    ```
+
+*   `override.aes` is useful when you want the elements in the legend 
+    display differently to the geoms in the plot. This is often required
+    when you've used transparency or size to deal with moderate overplotting
+    and also used colour in the plot. \indexf{override.aes}
+
+    `r columns(2, 2/3)`
+    ```{r}
+    base <- ggplot(mpg, aes(displ, hwy, colour = drv)) +
+      geom_point(size = 4, alpha = .2, stroke = 0)
+    
+    base + guides(colour = guide_legend())
+    base + guides(colour = guide_legend(override.aes = list(alpha = 1)))
+    ```
+
+
+*   `keywidth` and `keyheight` (along with `default.unit`) allow you to specify
+    the size of the keys. These are grid units, e.g. `unit(1, "cm")`.
+
+
+
+
+
 <!-- ### Exercises -->
 
 <!-- 1.  Compare and contrast the four continuous colour scales with the four discrete scales. -->
@@ -416,6 +487,29 @@ erupt + scale_fill_fermenter(n.breaks = 9, palette = "PuOr")
 ```
 
 Note that like the discrete `scale_fill_brewer()`---and unlike the continuous `scale_fill_distiller()`---the binned function `scale_fill_fermenter()` does not interpolate between the brewer colours, and if you set `n.breaks` larger than the number of colours in the palette a warning message will appear and some colours will not be displayed.
+
+### Legends {#guide-coloursteps} 
+
+This "colour steps" guide is a version of `guide_colourbar()` appropriate for binned colour and fill scales. It shows the area between breaks as a single constant colour, rather than displaying a colour gradient that varies smoothly along the bar. Arguments mostly mirror those for `guide_colourbar()`. The additional arguments are as follows:
+
+*   `show.limits` indicates whether values should be shown at the ends of the stepped colour bar (analogous to the corresponding argument in `guide_bins()`)
+
+    `r columns(2)`
+    ```{r}
+    base <- ggplot(mpg, aes(displ, hwy, colour = cyl)) + 
+      geom_point() + 
+      scale_color_binned()
+
+    base + guides(colour = guide_coloursteps(show.limits = TRUE))
+    base + guides(colour = guide_coloursteps(show.limits = FALSE))
+    ```
+
+*   `ticks` is a logical variable indicating whether tick marks should be displayed adjacent to the legend labels (default is `NULL`, in which case the value is inherited from the scale)
+
+*   `even.steps` is a logical variable indicating whether bins should be evenly spaced (default is `TRUE`) or proportional in size to their frequency in the data
+
+
+
 
 ## Date-time colour scales {#date-colour-scales}
 
@@ -497,142 +591,6 @@ base + geom_line(key_glyph = "timeseries")
 ```
 
 More precisely, each geom is associated with a function such as `draw_key_path()`, `draw_key_boxplot()` or `draw_key_path()` which is responsible for drawing the key when the legend is created. You can pass the desired key drawing function directly: for example, `base + geom_line(key_glyph = draw_key_timeseries)` would also produce the plot shown above right.
-
-### `guide_legend()`
-
-The legend guide displays individual keys in a table. The most useful options are: \index{Legend!guide}
-
-*   `nrow` or `ncol` which specify the dimensions of the table. `byrow` 
-    controls how the table is filled: `FALSE` fills it by column (the default),
-    `TRUE` fills it by row.
-
-    `r columns(3)`
-    ```{r legend-rows-cols}
-    base <- ggplot(mpg, aes(drv, fill = factor(cyl))) + geom_bar() 
-
-    base
-    base + guides(fill = guide_legend(ncol = 2))
-    base + guides(fill = guide_legend(ncol = 2, byrow = TRUE))
-    ```
-
-*   `reverse` reverses the order of the keys:
-    
-    ```{r}
-    base
-    base + guides(fill = guide_legend(reverse = TRUE))
-    ```
-
-*   `override.aes` is useful when you want the elements in the legend 
-    display differently to the geoms in the plot. This is often required
-    when you've used transparency or size to deal with moderate overplotting
-    and also used colour in the plot. \indexf{override.aes}
-
-    `r columns(2, 2/3)`
-    ```{r}
-    base <- ggplot(mpg, aes(displ, hwy, colour = drv)) +
-      geom_point(size = 4, alpha = .2, stroke = 0)
-    
-    base + guides(colour = guide_legend())
-    base + guides(colour = guide_legend(override.aes = list(alpha = 1)))
-    ```
-
-
-*   `keywidth` and `keyheight` (along with `default.unit`) allow you to specify
-    the size of the keys. These are grid units, e.g. `unit(1, "cm")`.
-
-### `guide_bins()`
-
-`guide_bins()` is suited to the situation when a continuous variable is binned and then mapped to an aesthetic that produces a legend, such as size, colour and fill. For instance, in the `mpg` data we could use `scale_size_binned()` to create a binned version of the continuous variable `hwy`. 
-
-`r columns(2, 1)`
-```{r}
-base <- ggplot(mpg, aes(displ, manufacturer, size = hwy)) +
-  geom_point(alpha = .2) +
-  scale_size_binned()
-```
-
-Unlike `guide_legend()`, the guide created for a binned scale by `guide_bins()` does not organise the individual keys into a table. Instead they are arranged in a column (or row) along a single vertical (or horizontal) axis, which by default is displayed with its own axis. The important arguments to `guide_bins()` are listed below:
-
-*   `axis` indicates whether the axis should be drawn (default is `TRUE`).
-
-    ```{r}
-    base
-    base + guides(size = guide_bins(axis = FALSE))
-    ```
-
-*   `direction` is a character string specifying the direction of the guide:
-
-    ```{r}
-    base + guides(size = guide_bins(direction = "vertical"))
-    base + guides(size = guide_bins(direction = "horizontal"))
-    ```
-
-*   `show.limits` specifies whether tick marks are shown at the ends of the 
-    guide axis
-
-*   `axis.colour`, `axis.linewidth` and `axis.arrow` are used to
-    control the guide axis that is displayed alongside the legend keys 
-
-    ```{r}
-    base + guides(size = guide_bins(show.limits = TRUE))
-    base + guides(
-      size = guide_bins(
-        axis.colour = "red",
-        axis.arrow = arrow(
-          length = unit(.1, "inches"), 
-          ends = "first", 
-          type = "closed"
-        )
-      )
-    )
-    ```
-
-*   `keywidth`, `keyheight`, `reverse` and `override.aes` have the same
-  behaviour as `guide_legend()` 
-
-### `guide_colourbar()` / `guide_colorbar()`
-
-The colour bar guide is designed for continuous ranges of colors---as its name implies, it outputs a rectangle over which the color gradient varies.  The most important arguments are: \index{Legend!colour bar} \index{Colour bar}
-
-* `barwidth` and `barheight` allow you to specify the size of the bar. 
-  These are grid units, e.g. `unit(1, "cm")`.
-  
-* `nbin` controls the number of slices. You may want to increase this from
-  the default value of 20 if you draw a very long bar.
-
-* `reverse` flips the colour bar to put the lowest values at the top.
-
-These options are illustrated below:
-
-`r columns(3)`
-```{r}
-base <- ggplot(mpg, aes(cyl, displ, colour = hwy)) +
-  geom_point(size = 2)
-
-base
-base + guides(colour = guide_colourbar(reverse = TRUE))
-base + guides(colour = guide_colourbar(barheight = unit(2, "cm")))
-```
-
-### `guide_coloursteps()` / `guide_colorsteps()`
-
-This "colour steps" guide is a version of `guide_colourbar()` appropriate for binned colour and fill scales. It shows the area between breaks as a single constant colour, rather than displaying a colour gradient that varies smoothly along the bar. Arguments mostly mirror those for `guide_colourbar()`. The additional arguments are as follows:
-
-*   `show.limits` indicates whether values should be shown at the ends of the stepped colour bar (analogous to the corresponding argument in `guide_bins()`)
-
-    `r columns(2)`
-    ```{r}
-    base <- ggplot(mpg, aes(displ, hwy, colour = cyl)) + 
-      geom_point() + 
-      scale_color_binned()
-
-    base + guides(colour = guide_coloursteps(show.limits = TRUE))
-    base + guides(colour = guide_coloursteps(show.limits = FALSE))
-    ```
-
-*   `ticks` is a logical variable indicating whether tick marks should be displayed adjacent to the legend labels (default is `NULL`, in which case the value is inherited from the scale)
-
-*   `even.steps` is a logical variable indicating whether bins should be evenly spaced (default is `TRUE`) or proportional in size to their frequency in the data
 
 
 

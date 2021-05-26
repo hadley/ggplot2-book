@@ -201,6 +201,40 @@ Later parts of the chapter focuses mostly on legends because they are more compl
     
 Reflecting this additional complexity, Section \@ref(scale-guide) discusses guide functions, most of which relate to legends. Section \@ref(legend-merge-split) discusses how legends are split and merged across layers, Section \@ref(legend-layout) focuses on legend layout and positioning, while Section \@ref(legend-glyph) shows you how to modify the glyphs displayed in the legend key.
 
+
+Another way to modify the behaviour of axes and legends is with the `guide` argument of the relevant scale function or---perhaps more conveniently---the `guides()` helper function. The `guides()` helper works in a similar way to the `labs()` helper function described in Section \@ref(titles). Both take the name of different aesthetics (e.g., color, x, fill) as arguments and allow you to specify your own value. Where `labs()` provides a shorthand way to specify the `name` argument to one or more scales, the `guides()` function allows you to specify `guide` arguments to one or more scales. In the same way that `labs(colour = "a colour scale name")` specifies the name associated with the colour scale, a command such as `guides(colour = guide_coloursteps())` can be used to specify its associated guide:
+
+`r columns(3)`
+```{r}
+base <- ggplot(mpg, aes(displ, hwy, colour = cyl)) + geom_point()
+
+base 
+base + scale_colour_continuous(guide = guide_coloursteps())
+base + guides(colour = guide_coloursteps())
+```
+
+Scale guides are more complex than scale names: where the `name` argument (and `labs()` ) takes text as input, the `guide` argument (and `guides()`) require a guide object created by a **guide function** such as `guide_colourbar()` and `guide_legend()`. These arguments to these functions offer additional fine control over the guide. 
+
+The table below summarises the default guide functions associated with different scale types:
+
+| Scale type                                           | Default guide type  |       
+|:-----------------------------------------------------|:--------------------|
+| continuous scales for colour/fill aesthetics         | colourbar           |
+| binned scales for colour/fill aesthetics             | coloursteps         |
+| position scales (continuous, binned and discrete)    | axis                |
+| discrete scales (except position scales)             | legend              |
+| binned scales (except position/colour/fill scales)   | bins                |
+
+The guide functions have numerous examples in the documentation that illustrate all of their arguments. Many of the arguments to the guide function are equivalent to theme settings (Chapter \@ref(polishing)) like text colour, size, font etc, but only apply to a single guide. Here I'll focus on the non-theming arguments.
+
+- colour bar in Section \@ref(guide-colourbar)
+- colour steps in Section \@ref(guide-coloursteps)
+- legend in Section \@ref(guide-legend)
+- axis in Section \@ref(guide-axis)
+- bins in Section \@ref(guide-bins)
+
+
+
 ## Scale limits {#oob}
 
 <!-- DJN: this is taken from the positions "oob" section. I think it makes sense to 
@@ -263,31 +297,6 @@ leg
 leg + scale_fill_continuous(breaks = c(2000, 4000))
 ```
 
-
-Another way to modify the behaviour of axes and legends is with the `guide` argument of the relevant scale function or---perhaps more conveniently---the `guides()` helper function. The `guides()` helper works in a similar way to the `labs()` helper function described in Section \@ref(titles). Both take the name of different aesthetics (e.g., color, x, fill) as arguments and allow you to specify your own value. Where `labs()` provides a shorthand way to specify the `name` argument to one or more scales, the `guides()` function allows you to specify `guide` arguments to one or more scales. In the same way that `labs(colour = "a colour scale name")` specifies the name associated with the colour scale, a command such as `guides(colour = guide_coloursteps())` can be used to specify its associated guide:
-
-`r columns(3)`
-```{r}
-base <- ggplot(mpg, aes(displ, hwy, colour = cyl)) + geom_point()
-
-base 
-base + scale_colour_continuous(guide = guide_coloursteps())
-base + guides(colour = guide_coloursteps())
-```
-
-Scale guides are more complex than scale names: where the `name` argument (and `labs()` ) takes text as input, the `guide` argument (and `guides()`) require a guide object created by a **guide function** such as `guide_colourbar()` and `guide_legend()`. These arguments to these functions offer additional fine control over the guide. 
-
-The table below summarises the default guide functions associated with different scale types:
-
-| Scale type                                           | Default guide type  |       
-|:-----------------------------------------------------|:--------------------|
-| continuous scales for colour/fill aesthetics         | colourbar           |
-| binned scales for colour/fill aesthetics             | coloursteps         |
-| position scales (continuous, binned and discrete)    | axis                |
-| discrete scales (except position scales)             | legend              |
-| binned scales (except position/colour/fill scales)   | bins                |
-
-The guide functions have numerous examples in the documentation that illustrate all of their arguments. Many of the arguments to the guide function are equivalent to theme settings (Chapter \@ref(polishing)) like text colour, size, font etc, but only apply to a single guide. Here I'll focus on the non-theming arguments.
 
 
 ## Legend merging and splitting {#legend-merge-split}
