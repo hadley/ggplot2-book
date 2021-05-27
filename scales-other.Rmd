@@ -21,6 +21,7 @@ planets$name <- with(planets, factor(name, name))
 ```
 
 The size aesthetic is typically used to scale points and text. The default scale for size aesthetics is `scale_size()` in which a linear increase in the variable is mapped onto a linear increase in the area (not the radius) of the geom. Scaling as a function of area is a sensible default as human perception of size is more closely mimicked by area scaling than by radius scaling. By default the smallest value in the data (more precisely in the scale limits) is mapped to a size of 1 and the largest is mapped to a size of 6. The `range` argument allows you to scale the size of the geoms:
+
 `r columns(2, 2/3)`
 ```{r}
 base <- ggplot(mpg, aes(displ, hwy, size = cyl)) + 
@@ -29,6 +30,20 @@ base <- ggplot(mpg, aes(displ, hwy, size = cyl)) +
 base
 base + scale_size(range = c(1, 2))
 ```
+
+
+There are several size scales worth noting briefly:
+
+- `scale_size_area()` and `scale_size_binned_area()` are versions of `scale_size()` and `scale_size_binned()` that ensure that a value of 0 maps to an area of 0. 
+
+- `scale_radius()` maps the data value to the radius rather than to the area (Section \@ref(radius-scaling)).
+
+- `scale_size_binned()` is a size scale that behaves like `scale_size()` but maps continuous values onto discrete size categories, analogous to the binned position and colour scales discussed in Sections \@ref(binned-position) and \@ref(binned-colour) respectively. Legends associated with this scale are discussed in Section \@ref(guide-bins).
+
+- `scale_size_date()` and `scale_size_datetime()` are designed to handle date data, analogous to the date scales discussed in Section \@ref(date-scales).
+
+
+### Radius size scales {#radius-scaling}
 
 There are situations where area scaling is undesirable, and for such situations the `scale_radius()` function is provided. To illustrate when `scale_radius()` is appropriate consider a data set containing astronomical data that includes the radius of different planets:
 ```{r} 
@@ -52,50 +67,48 @@ base +
 
 On the left it is difficult to distinguish Jupiter from Saturn, despite the fact that the difference between the two should be double the size of Earth; compare this to the plot on the right where the radius of Jupiter is visibly larger.
 
-Other size scales exist and are worth noting briefly:
 
-- `scale_size_binned()` is a size scale that behaves like `scale_size()` but maps continuous values onto discrete size categories, analogous to the binned position and colour scales discussed in Sections \@ref(binned-position) and \@ref(binned-colour) respectively.
+### Binned size scales {#guide-bins}
 
-- `scale_size_area()` and `scale_size_binned_area()` are versions of `scale_size()` and `scale_size_binned()` that ensure that a value of 0 maps to an area of 0. 
-
-- `scale_size_date()` and `scale_size_datetime()` are designed to handle date data, analogous to the date scales discussed in Section \@ref(date-scales).
-
-
-### Legends `guide_bins()` {#guide-bins}
-
-`guide_bins()` is suited to the situation when a continuous variable is binned and then mapped to an aesthetic that produces a legend, such as size, colour and fill. For instance, in the `mpg` data we could use `scale_size_binned()` to create a binned version of the continuous variable `hwy`. 
+Binned size scales work similarly to binned scales for colour and position aesthetics (Sections \@ref(binned-colour) and \@ref(binned-position)). One difference is how legends are displayed. The default legend for a binned size scale, and all binned scales except position and colour aesthetics, is governed by `guide_bins()`. For instance, in the `mpg` data we could use `scale_size_binned()` to create a binned version of the continuous variable `hwy`:
 
 `r columns(2, 1)`
 ```{r}
 base <- ggplot(mpg, aes(displ, manufacturer, size = hwy)) +
   geom_point(alpha = .2) +
   scale_size_binned()
+
+base
 ```
 
 Unlike `guide_legend()`, the guide created for a binned scale by `guide_bins()` does not organise the individual keys into a table. Instead they are arranged in a column (or row) along a single vertical (or horizontal) axis, which by default is displayed with its own axis. The important arguments to `guide_bins()` are listed below:
 
-*   `axis` indicates whether the axis should be drawn (default is `TRUE`).
+*   `axis` indicates whether the axis should be drawn (default is `TRUE`)
 
     ```{r}
-    base
     base + guides(size = guide_bins(axis = FALSE))
     ```
 
-*   `direction` is a character string specifying the direction of the guide:
+*   `direction` is a character string specifying the direction of the guide, either `"vertical"` (the default) or `"horizontal"`
 
+    `r columns(1, 2/3)`
     ```{r}
-    base + guides(size = guide_bins(direction = "vertical"))
     base + guides(size = guide_bins(direction = "horizontal"))
     ```
 
 *   `show.limits` specifies whether tick marks are shown at the ends of the 
-    guide axis
+    guide axis (default is FALSE)
+
+    `r columns(2, 1)`
+    ```{r}
+    base + guides(size = guide_bins(show.limits = TRUE))
+    ```
 
 *   `axis.colour`, `axis.linewidth` and `axis.arrow` are used to
     control the guide axis that is displayed alongside the legend keys 
 
+    `r columns(2, 1)`
     ```{r}
-    base + guides(size = guide_bins(show.limits = TRUE))
     base + guides(
       size = guide_bins(
         axis.colour = "red",
@@ -109,7 +122,7 @@ Unlike `guide_legend()`, the guide created for a binned scale by `guide_bins()` 
     ```
 
 *   `keywidth`, `keyheight`, `reverse` and `override.aes` have the same
-  behaviour as `guide_legend()` 
+  behaviour for `guide_bins()` as they do for `guide_legend()` (see Section \@ref(guide-legend))
 
 
 ## Shape
