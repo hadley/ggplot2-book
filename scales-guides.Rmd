@@ -5,9 +5,38 @@ columns(1, 2 / 3)
 
 # Scales and guides {#scales-guides}
 
-Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the scale). The axis or legend is the inverse function: it allows you to convert visual properties back to data. 
+<!-- Needs to emphasise orthogonality of various components, and show how things that we showed just for position or colour scales also apply elsewhere. -->
 
-Needs to emphasise orthogonality of various components, and show how things that we showed just for position or colour scales also apply elsewhere.
+
+Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the scale). The axis or legend is the inverse function, known as the guide: it allows you to convert visual properties back to data. You might find it surprising that axes and legends are the same type of thing, but while they look very different they have the same purpose: to allow you to read observations from the plot and map them back to their original values. The commonalities between the two are illustrated below:
+
+| Argument name   | Axis              | Legend        
+|:----------------|:------------------|:--------------
+| `name`          | Label             | Title         
+| `breaks`        | Ticks & grid line | Key           
+| `labels`        | Tick label        | Key label     
+
+`r columns(1, 2/3, max_width = 1)`
+```{r guides, echo = FALSE, out.width = "100%", fig.cap = "Common components of axes and legends"}
+knitr::include_graphics("diagrams/scale-guides.png", dpi = 300, auto_pdf = TRUE)
+```
+
+However, legends are more complicated than axes, and consequently there are a number of topics that are specific to legends:
+
+1.  A legend can display multiple aesthetics (e.g. colour and shape), from
+    multiple layers (Section \@ref(sub-layers-legends)), and the symbol 
+    displayed in a legend varies based on the geom used in the layer
+    (Section \@ref(legend-glyph))
+   
+1.  Axes always appear in the same place. Legends can appear in different 
+    places, so you need some global way of positioning them. 
+    (Section \@ref(legend-layout))
+  
+1.  Legends have more details that can be tweaked: should they
+    be displayed vertically or horizontally? How many columns? How big should
+    the keys be? This is discussed in (Section \@ref(scale-guide))
+
+
 
 ## Scale specification {#scale-usage}
 
@@ -107,132 +136,6 @@ Before diving into the details of how scale functions work, it is useful to note
 
 extends discussion of `labs()` in Section \@ref(titles).
 
-## Scale transformation {#scale-transformation-extras}
-
-The most common use for scale transformations is to adjust a continuous position scale, as discussed in Section \@ref(scale-transformation). However, they can sometimes be helpful to when applied to other aesthetics. Often this is purely a matter of visual emphasis. An example of this for the Old Faithful density plot is shown below. The linearly mapped scale on the left makes it easy to see the peaks of the distribution, whereas the transformed representation on the right makes it easier to see the regions of non-negligible density around those peaks: \index{Transformation!scales}
-
-`r columns(2, 2/3)`
-```{r}
-base <- ggplot(faithfuld, aes(waiting, eruptions)) + 
-  geom_raster(aes(fill = density)) + 
-  scale_x_continuous(NULL, NULL, expand = c(0, 0)) +
-  scale_y_continuous(NULL, NULL, expand = c(0, 0))
-  
-base
-base + scale_fill_continuous(trans = "sqrt")
-```
-
-Transforming size aesthetics is also possible:
-
-`r columns(2, 2/3)`
-```{r}
-df <- data.frame(x = runif(20), y = runif(20), z = sample(20))
-base <- ggplot(df, aes(x, y, size = z)) + geom_point()
-
-base 
-base + scale_size(trans = "reverse")
-```
-
-In the plot on the left, the `z` value is naturally interpreted as a "weight": if each dot corresponds to a group, the `z` value might be the size of the group. In the plot on the right, the size scale is reversed, and `z` is more naturally interpreted as a "distance" measure: distant entities are scaled to appear smaller in the plot.
-
-<!-- DN: This was the beginning of the binned transformation section:
-
-### Binned scales
-
-`r columns(2)`
-```{r}
-base <- ggplot(mpg, aes(hwy)) + geom_bar()
-
-p1 <- base + scale_x_binned(breaks = seq(-50,50,10), limits = c(-50, 50))
-p2 <- base + scale_x_binned(breaks = seq(-50,50,10), limits = c(-50, 50), trans = "reverse")
-```
-
-Binned scales can be transformed, much like continuous scales, but some care is required because the bins are constructed in the transformed space. In some cases this can produce undesirable outcomes. In the code below, I take a uniformly distributed variable and use `scale_x_binned()` and `geom_bar()` to construct a histogram of the logarithmically transformed data. 
-
-`r columns(1, 1/2, 1)`
-```{r}
-df <- data.frame(val = runif(10000, 1, 20000))
-ggplot(df, aes(log10(val))) + geom_bar() + scale_x_binned()
-```
-
-In this example the transformation takes place in the data: the x aesthetic is mapped to the value of `log10(val)`, and no scale transformation is applied. The bins are evenly spaced on this logarithmic scale. Alternatively, you can specify the transformation by setting `trans = "log10"` in the scale function:
-
-`r columns(1, 1/2, 1)`
-```{r}
-ggplot(df, aes(val)) + geom_bar() + scale_x_binned(trans="log10") 
-```
-
-The unevenly spaced bins occur due to an interaction of two things: (1) binned scales use breaks to construct the bins, and (2) the default breaks for a transformed scale are specified by the transformation and are designed to look nice, but may not be good for binning data. The solution to this is to override the default breaks: 
-
-`r columns(1, 1/2, 1)`
-```{r}
-ggplot(df, aes(val)) + geom_bar() + 
-  scale_x_binned(trans="log10", breaks = 3^(0:9))  
-```
-
--->
-
-## Scale guides {#scale-guide}
-
-In ggplot2, legend and axes are known collectively as __guides__. You might find it surprising that axes and legends are the same type of thing, but while they look very different they have the same purpose: to allow you to read observations from the plot and map them back to their original values. 
-
-
-| Argument name   | Axis              | Legend        
-|:----------------|:------------------|:--------------
-| `name`          | Label             | Title         
-| `breaks`        | Ticks & grid line | Key           
-| `labels`        | Tick label        | Key label     
-
-```{r guides, echo = FALSE, out.width = "100%", fig.cap = "Common components of axes and legends"}
-knitr::include_graphics("diagrams/scale-guides.png", dpi = 300, auto_pdf = TRUE)
-```
-
-Later parts of the chapter focuses mostly on legends because they are more complicated than axes:
-
-1.  A legend can display multiple aesthetics (e.g. colour and shape), from
-    multiple layers, and the symbol displayed in a legend varies based on the
-    geom used in the layer.
-   
-1.  Axes always appear in the same place. Legends can appear in different 
-    places, so you need some global way of controlling them.
-  
-1.  Legends have considerably more details that can be tweaked: should they
-    be displayed vertically or horizontally? How many columns? How big should
-    the keys be?
-    
-Reflecting this additional complexity, Section \@ref(scale-guide) discusses guide functions, most of which relate to legends. Section \@ref(legend-merge-split) discusses how legends are split and merged across layers, Section \@ref(legend-layout) focuses on legend layout and positioning, while Section \@ref(legend-glyph) shows you how to modify the glyphs displayed in the legend key.
-
-
-Another way to modify the behaviour of axes and legends is with the `guide` argument of the relevant scale function or---perhaps more conveniently---the `guides()` helper function. The `guides()` helper works in a similar way to the `labs()` helper function described in Section \@ref(titles). Both take the name of different aesthetics (e.g., color, x, fill) as arguments and allow you to specify your own value. Where `labs()` provides a shorthand way to specify the `name` argument to one or more scales, the `guides()` function allows you to specify `guide` arguments to one or more scales. In the same way that `labs(colour = "a colour scale name")` specifies the name associated with the colour scale, a command such as `guides(colour = guide_coloursteps())` can be used to specify its associated guide:
-
-`r columns(3)`
-```{r}
-base <- ggplot(mpg, aes(displ, hwy, colour = cyl)) + geom_point()
-
-base 
-base + scale_colour_continuous(guide = guide_coloursteps())
-base + guides(colour = guide_coloursteps())
-```
-
-Scale guides are more complex than scale names: where the `name` argument (and `labs()` ) takes text as input, the `guide` argument (and `guides()`) require a guide object created by a **guide function** such as `guide_colourbar()` and `guide_legend()`. These arguments to these functions offer additional fine control over the guide. 
-
-The table below summarises the default guide functions associated with different scale types:
-
-| Scale type                                           | Default guide type  |       
-|:-----------------------------------------------------|:--------------------|
-| continuous scales for colour/fill aesthetics         | colourbar           |
-| binned scales for colour/fill aesthetics             | coloursteps         |
-| position scales (continuous, binned and discrete)    | axis                |
-| discrete scales (except position scales)             | legend              |
-| binned scales (except position/colour/fill scales)   | bins                |
-
-The guide functions have numerous examples in the documentation that illustrate all of their arguments. Many of the arguments to the guide function are equivalent to theme settings (Chapter \@ref(polishing)) like text colour, size, font etc, but only apply to a single guide. Here I'll focus on the non-theming arguments.
-
-- colour bar in Section \@ref(guide-colourbar)
-- colour steps in Section \@ref(guide-coloursteps)
-- legend in Section \@ref(guide-legend)
-- axis in Section \@ref(guide-axis)
-- bins in Section \@ref(guide-bins)
 
 
 
@@ -297,6 +200,97 @@ leg <- ggplot(toy, aes(up, up, fill = big)) +
 leg 
 leg + scale_fill_continuous(breaks = c(2000, 4000))
 ```
+
+
+
+## Scale guides {#scale-guide}
+
+Scale guides are more complex than scale names: where the `name` argument (and `labs()` ) takes text as input, the `guide` argument (and `guides()`) require a guide object created by a **guide function** such as `guide_colourbar()` and `guide_legend()`. These arguments to these functions offer additional fine control over the guide. 
+
+The table below summarises the default guide functions associated with different scale types:
+
+| Scale type                                           | Default guide type  |       
+|:-----------------------------------------------------|:--------------------|
+| continuous scales for colour/fill aesthetics         | colourbar           |
+| binned scales for colour/fill aesthetics             | coloursteps         |
+| position scales (continuous, binned and discrete)    | axis                |
+| discrete scales (except position scales)             | legend              |
+| binned scales (except position/colour/fill scales)   | bins                |
+
+The guide functions have numerous examples in the documentation that illustrate all of their arguments. Many of the arguments to the guide function are equivalent to theme settings (Chapter \@ref(polishing)) like text colour, size, font etc, but only apply to a single guide. Here I'll focus on the non-theming arguments.
+
+- colour bar in Section \@ref(guide-colourbar)
+- colour steps in Section \@ref(guide-coloursteps)
+- legend in Section \@ref(guide-legend)
+- axis in Section \@ref(guide-axis)
+- bins in Section \@ref(guide-bins)
+
+<!-- DJN: show examples where something other than the default guide is used -->
+
+## Scale transformation {#scale-transformation-extras}
+
+The most common use for scale transformations is to adjust a continuous position scale, as discussed in Section \@ref(scale-transformation). However, they can sometimes be helpful to when applied to other aesthetics. Often this is purely a matter of visual emphasis. An example of this for the Old Faithful density plot is shown below. The linearly mapped scale on the left makes it easy to see the peaks of the distribution, whereas the transformed representation on the right makes it easier to see the regions of non-negligible density around those peaks: \index{Transformation!scales}
+
+`r columns(2, 2/3)`
+```{r}
+base <- ggplot(faithfuld, aes(waiting, eruptions)) + 
+  geom_raster(aes(fill = density)) + 
+  scale_x_continuous(NULL, NULL, expand = c(0, 0)) +
+  scale_y_continuous(NULL, NULL, expand = c(0, 0))
+  
+base
+base + scale_fill_continuous(trans = "sqrt")
+```
+
+Transforming size aesthetics is also possible:
+
+`r columns(2, 2/3)`
+```{r}
+df <- data.frame(x = runif(20), y = runif(20), z = sample(20))
+base <- ggplot(df, aes(x, y, size = z)) + geom_point()
+
+base 
+base + scale_size(trans = "reverse")
+```
+
+In the plot on the left, the `z` value is naturally interpreted as a "weight": if each dot corresponds to a group, the `z` value might be the size of the group. In the plot on the right, the size scale is reversed, and `z` is more naturally interpreted as a "distance" measure: distant entities are scaled to appear smaller in the plot.
+
+<!-- DN: This was the beginning of the binned transformation section. Tempted to omit this entirely?
+
+### Binned scales
+
+`r columns(2)`
+```{r}
+base <- ggplot(mpg, aes(hwy)) + geom_bar()
+
+p1 <- base + scale_x_binned(breaks = seq(-50,50,10), limits = c(-50, 50))
+p2 <- base + scale_x_binned(breaks = seq(-50,50,10), limits = c(-50, 50), trans = "reverse")
+```
+
+Binned scales can be transformed, much like continuous scales, but some care is required because the bins are constructed in the transformed space. In some cases this can produce undesirable outcomes. In the code below, I take a uniformly distributed variable and use `scale_x_binned()` and `geom_bar()` to construct a histogram of the logarithmically transformed data. 
+
+`r columns(1, 1/2, 1)`
+```{r}
+df <- data.frame(val = runif(10000, 1, 20000))
+ggplot(df, aes(log10(val))) + geom_bar() + scale_x_binned()
+```
+
+In this example the transformation takes place in the data: the x aesthetic is mapped to the value of `log10(val)`, and no scale transformation is applied. The bins are evenly spaced on this logarithmic scale. Alternatively, you can specify the transformation by setting `trans = "log10"` in the scale function:
+
+`r columns(1, 1/2, 1)`
+```{r}
+ggplot(df, aes(val)) + geom_bar() + scale_x_binned(trans="log10") 
+```
+
+The unevenly spaced bins occur due to an interaction of two things: (1) binned scales use breaks to construct the bins, and (2) the default breaks for a transformed scale are specified by the transformation and are designed to look nice, but may not be good for binning data. The solution to this is to override the default breaks: 
+
+`r columns(1, 1/2, 1)`
+```{r}
+ggplot(df, aes(val)) + geom_bar() + 
+  scale_x_binned(trans="log10", breaks = 3^(0:9))  
+```
+
+-->
 
 
 
