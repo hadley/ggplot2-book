@@ -304,6 +304,8 @@ area + scale_fill_brewer(palette = "Set2")
 area + scale_fill_brewer(palette = "Pastel1")
 ```
 
+
+
 ### Hue and grey scales
 
 The default colour scheme picks evenly spaced hues around the HCL colour wheel. This works well for up to about eight colours, but after that it becomes hard to tell the different colours apart. You can control the default chroma and luminance, and the range of hues, with the `h`, `c` and `l` arguments:
@@ -502,27 +504,30 @@ erupt + scale_fill_fermenter(n.breaks = 9, palette = "PuOr")
 
 Note that like the discrete `scale_fill_brewer()`---and unlike the continuous `scale_fill_distiller()`---the binned function `scale_fill_fermenter()` does not interpolate between the brewer colours, and if you set `n.breaks` larger than the number of colours in the palette a warning message will appear and some colours will not be displayed.
 
+### Limits, breaks, and labels
+
+In most respects setting limits, breaks, and labels for a binned scale follows the same logic that applies to continuous scales (Sections \@ref(position-continuous-breaks) and \@ref(colour-continuous-limits)). Like a continuous scale, the `limits` argument is typically a numeric vector of length two specifying the end points, `breaks` is a numeric vector specifying the break points, and `labels` is a character vector specifying the labels. All three arguments will accept functions as input (discussed in Section \@ref(numeric-position-scales)). The main difference between binned and continuous scales is that the `breaks` argument defines the edges of the bins rather than simply specifying locations of tick marks. 
+
+
 ### Legends {#guide-coloursteps} 
 
-This "colour steps" guide is a version of `guide_colourbar()` appropriate for binned colour and fill scales. It shows the area between breaks as a single constant colour, rather than displaying a colour gradient that varies smoothly along the bar. Arguments mostly mirror those for `guide_colourbar()`. The additional arguments are as follows:
+The default legend for binned scales uses colour steps rather than a colourbar, and can be customised using the `guide_coloursteps()` function. A colour step legend shows the area between breaks as a single constant colour, rather than displaying a colour gradient that varies smoothly along the bar. The arguments to `guide_coloursteps()` mostly mirror those for `guide_colourbar()` (Section \@ref(guide-colourbar), with additional arguments that are relevant to binned scales:
 
 *   `show.limits` indicates whether values should be shown at the ends of the stepped colour bar (analogous to the corresponding argument in `guide_bins()`)
 
     `r columns(2)`
     ```{r}
-    base <- ggplot(mpg, aes(displ, hwy, colour = cyl)) + 
-      geom_point() + 
+    base <- ggplot(mpg, aes(cyl, displ, colour = hwy)) +
+      geom_point(size = 2) +
       scale_color_binned()
 
+    base 
     base + guides(colour = guide_coloursteps(show.limits = TRUE))
-    base + guides(colour = guide_coloursteps(show.limits = FALSE))
     ```
 
 *   `ticks` is a logical variable indicating whether tick marks should be displayed adjacent to the legend labels (default is `NULL`, in which case the value is inherited from the scale)
 
 *   `even.steps` is a logical variable indicating whether bins should be evenly spaced (default is `TRUE`) or proportional in size to their frequency in the data
-
-
 
 
 ## Date-time colour scales {#date-colour-scales}
