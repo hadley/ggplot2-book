@@ -137,43 +137,44 @@ It is possible to map a variable onto the linetype aesthetic in ggplot2. This wo
 
 `r columns(1, 5/12, 0.8)`
 ```{r}
-ggplot(economics_long, aes(date, value01, linetype = variable)) + geom_line()
+ggplot(economics_long, aes(date, value01, linetype = variable)) + 
+  geom_line()
 ```
 
-With five categories the plot is quite difficult to read, and it is unlikely you will want to use the linetype aesthetic for more than that. The default "palette" for linetype is supplied by the `scales::linetype_pal()` function, and includes the 13 separate linetypes shown below:
-
-`r columns(1, 1.2)`
-```{r}
-linetypes <- scales::linetype_pal()
-df <- data.frame(
-  value = letters[1:13],
-  type = linetypes(13)
-)
-ggplot(df, aes(linetype = value)) +
-  geom_segment(aes(x = 0, xend = 1, y = value, yend = value), show.legend = FALSE) +
-  geom_text(aes(x = 1.1, y = value, label = type), hjust = 0) + 
-  theme(panel.grid = element_blank()) +
-  scale_x_continuous(NULL, NULL, limits = c(0, 1.4)) 
-```
-
-The data used to specify a line type in ggplot2 follow the same rules as in base graphics. Valid line types can be set using a human readable character string: `"blank"`, `"solid"`, `"dashed"`, `"dotted"`, `"dotdash"`, `"longdash"`, and `"twodash"` are all understood. Alternatively, you can specify a line type as an integer between 0 and 6, where 0 produces a blank line, 1 is solid, and so on. However, as with base graphics you can also exercise finer grained control over the line type by specifying a string with up to 8 hexadecimal values (i.e., from 0 to F). In this specification, the first value is the length of the first line segment, the second value is the length of the first space between segments, and so on. This allows you to specify your own palette function for the linetype:
+With five categories the plot is quite difficult to read, and it is unlikely you will want to use the linetype aesthetic for more than that. The default "palette" for linetype is supplied by the `scales::linetype_pal()` function, and includes the 13 linetypes shown below:
 
 `r columns(1, 2/3)`
 ```{r}
+df <- data.frame(value = letters[1:13])
+base <- ggplot(df, aes(linetype = value)) +
+  geom_segment(
+    mapping = aes(x = 0, xend = 1, y = value, yend = value),
+    show.legend = FALSE
+  ) +
+  theme(panel.grid = element_blank()) +
+  scale_x_continuous(NULL, NULL) 
+
+base
+```
+
+The data used to specify a line type in ggplot2 follow the same rules as in base graphics. Valid line types can be set using a human readable character string: `"blank"`, `"solid"`, `"dashed"`, `"dotted"`, `"dotdash"`, `"longdash"`, and `"twodash"` are all understood. Alternatively, you can specify a line type as an integer between 0 and 6, where 0 produces a blank line, 1 is solid, and so on. 
+
+As with base graphics you can also exercise finer grained control over the line type by specifying a string with up to 8 hexadecimal values (i.e., from 0 to F). In this specification, the first value is the length of the first line segment, the second value is the length of the first space between segments, and so on. This allows you to specify your own `palette` function for the linetype:
+
+```{r}
 linetypes <- function(n) {
-  types <- c("53",  "75", "97", "111115", "11111117")
+  types <- c("55",  "75", "95", "1115", "111115", "11111115",
+             "5158", "9198", "c1c8")
   return(types[seq_len(n)])
 }
-df <- data.frame(
-  value = letters[1:5],
-  type = linetypes(5)
-)
-ggplot(df, aes(linetype = value)) +
-  geom_segment(aes(x = 0, xend = 1, y = value, yend = value), show.legend = FALSE) +
-  geom_text(aes(x = 1.1, y = value, label = type), hjust = 0) + 
-  theme(panel.grid = element_blank()) +
-  scale_x_continuous(NULL, NULL, limits = c(0, 1.4)) +
-  scale_linetype(palette = linetypes)
+
+base + scale_linetype(palette = linetypes)
+```
+
+Note that the last four lines are blank, because the `linetypes()` function defined above returns `NA` when the number of categories exceeds 9. The `scale_linetype()` function contains a `na.value` argument used to specify what kind of line is plotted for these values. By default this produces a blank line, but you can override this by setting `na.value = "dotted"`:
+
+```{r}
+base + scale_linetype(palette = linetypes, na.value = "dotted")
 ```
 
 
