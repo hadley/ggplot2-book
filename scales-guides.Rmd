@@ -5,8 +5,10 @@ columns(1, 2 / 3)
 
 # Scales and guides {#scales-guides}
 
-<!-- Needs to emphasise orthogonality of various components, and show how things that we showed just for position or colour scales also apply elsewhere. -->
+The scales toolbox in Chapters \@ref(scale-position) to \@ref(scale-other) provides extensive guidance for how to work with scales, focusing on solving common data visualisation problems. The practical goals of the toolbox mean that topics are introduced when they are most relevant: for example, scale transformations are discussed in relation to continuous position scales (Section \@ref(scale-transformation)) because that is the most common situation in which you might want to transform a scale. However, because ggplot2 aims to provide a grammar of graphics, there is nothing preventing you from transforming other kinds of scales (see Section \@ref(scale-transformation-extras)). This chapter aims to illustrate these concepts: I'll discuss the theory underpinning scales and guides, and give examples showing how concepts that I've discussed specifically for position or colour scales also apply elsewhere.  
 
+
+## Theory of scales and guides
 
 Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the scale). The axis or legend is the inverse function, known as the guide: it allows you to convert visual properties back to data. You might find it surprising that axes and legends are the same type of thing, but while they look very different they have the same purpose: to allow you to read observations from the plot and map them back to their original values. The commonalities between the two are illustrated below:
 
@@ -37,8 +39,7 @@ However, legends are more complicated than axes, and consequently there are a nu
     the keys be? This is discussed in (Section \@ref(scale-guide))
 
 
-
-## Scale specification {#scale-usage}
+### Scale specification {#scale-usage}
 
 An important property of ggplot2 is the principle that every aesthetic in your plot is associated with exactly one scale. For instance, when you write:
 
@@ -96,6 +97,8 @@ ggplot(mpg, aes(displ, hwy)) +
 
 Here `scale_x_sqrt()` changes the scale for the x axis scale, and `scale_colour_brewer()` does the same for the colour scale.
 
+### Naming scheme
+
 The scale functions intended for users all follow a common naming scheme. You've probably already figured out the scheme, but to be concrete, it's made up of three pieces separated by "_":
 
 1. `scale`
@@ -103,6 +106,8 @@ The scale functions intended for users all follow a common naming scheme. You've
 1. The name of the scale (e.g., `continuous`, `discrete`, `brewer`).
 
 The naming structure is often helpful, but can sometimes be ambiguous. For example, it is immediately clear that `scale_x_*()` functions apply to the x aesthetic, but it takes a little more thought to recognise that they also govern the behaviour of other aesthetics that describe a horizontal position (e.g., the `xmin`, `xmax`, and `xend` aesthetics). Similarly, while the name `scale_colour_continuous()` clearly refers to the colour scale associated with a continuous variables, it is less obvious that `scale_colour_distiller()` is simply a different method for creating colour scales for continuous variables. In this chapter I will try to clarify this structure as much as possible: more generally, the help documentation for each scale function may be helpful.
+
+### Fundamental scale types
 
 Before diving into the details of how scale functions work, it is useful to note that internally all scale functions in ggplot2 belong to one of three fundamental types; continuous scales, discrete scales, and binned scales. Each fundamental type is handled by one of three scale constructor functions; `continuous_scale()`, `discrete_scale()` and `binned_scale()`. Although you should never need to call these constructor functions, they form the organising structure for later sections in this chapter.
 
