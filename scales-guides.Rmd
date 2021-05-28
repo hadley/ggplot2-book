@@ -41,14 +41,14 @@ However, legends are more complicated than axes, and consequently there are a nu
 
 ### Scale specification {#scale-usage}
 
-An important property of ggplot2 is the principle that every aesthetic in your plot is associated with exactly one scale. For instance, when you write:
+An important property of ggplot2 is the principle that every aesthetic in your plot is associated with exactly one scale. For instance, when you write this
 
 ```{r default-scales, fig.show = "hide"}
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point(aes(colour = class))
 ```
 
-ggplot2 added a default scale for each aesthetic used in the plot: 
+ggplot2 adds a default scale for each aesthetic used in the plot: 
 ```{r, fig.show = "hide"}
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point(aes(colour = class)) +
@@ -57,31 +57,28 @@ ggplot(mpg, aes(displ, hwy)) +
   scale_colour_discrete()
 ```
 
-The choice of default scale depends on the aesthetic and the variable type. In this example `hwy` is a continuous variable mapped to the y aesthetic so the default scale is `scale_y_continuous()`; similarly `class` is discrete so when mapped to the colour aesthetic the default scale becomes `scale_colour_discrete()`. 
-
-Specifying these defaults would be tedious so ggplot2 does it for you. But if you want to override the defaults, you'll need to add the scale yourself, like this: \index{Scales!defaults}
-
-<!-- HW: probably need a different example since I think we'd now use labs() for this -->
-<!-- DN: note to self: revisit this during the restructure -->
+The choice of default scale depends on the aesthetic and the variable type. In this example `hwy` is a continuous variable mapped to the y aesthetic so the default scale is `scale_y_continuous()`; similarly `class` is discrete so when mapped to the colour aesthetic the default scale becomes `scale_colour_discrete()`. Specifying these defaults would be tedious so ggplot2 does it for you. But if you want to override the defaults, you'll need to add the scale yourself, like this: \index{Scales!defaults}
 
 ```{r, fig.show = "hide"}
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point(aes(colour = class)) + 
-  scale_x_continuous("A really awesome x axis label") +
-  scale_y_continuous("An amazingly great y axis label")
+  scale_x_continuous(name = "A really awesome x axis label") +
+  scale_y_continuous(name = "An amazingly great y axis label")
 ```
+
+In practice you would typically use `labs()` for this, discussed in Section \@ref(titles), but it is conceptually helpful to understand that axis labels and legend titles are both examples of scale names: see Section \@ref(scale-name).
 
 The use of `+` to "add" scales to a plot is a little misleading because if you supply two scales for the same aesthetic, the last scale takes precedence. In other words, when you `+` a scale, you're not actually adding it to the plot, but overriding the existing scale. This means that the following two specifications are equivalent: \indexc{+} 
 
 ```{r multiple-scales, fig.show = "hide"}
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
-  scale_x_continuous("Label 1") +
-  scale_x_continuous("Label 2")
+  scale_x_continuous(name = "Label 1") +
+  scale_x_continuous(name = "Label 2")
 
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
-  scale_x_continuous("Label 2")
+  scale_x_continuous(name = "Label 2")
 ```
 
 Note the message when you add multiple scales for the same aesthetic, which makes it harder to accidentally overwrite an existing scale. If you see this in your own code, you should make sure that you're only adding one scale to each aesthetic.
@@ -105,11 +102,11 @@ The scale functions intended for users all follow a common naming scheme. You've
 1. The name of the primary aesthetic (e.g., `colour`, `shape` or `x`)
 1. The name of the scale (e.g., `continuous`, `discrete`, `brewer`).
 
-The naming structure is often helpful, but can sometimes be ambiguous. For example, it is immediately clear that `scale_x_*()` functions apply to the x aesthetic, but it takes a little more thought to recognise that they also govern the behaviour of other aesthetics that describe a horizontal position (e.g., the `xmin`, `xmax`, and `xend` aesthetics). Similarly, while the name `scale_colour_continuous()` clearly refers to the colour scale associated with a continuous variables, it is less obvious that `scale_colour_distiller()` is simply a different method for creating colour scales for continuous variables. In this chapter I will try to clarify this structure as much as possible: more generally, the help documentation for each scale function may be helpful.
+The naming structure is often helpful, but can sometimes be ambiguous. For example, it is immediately clear that `scale_x_*()` functions apply to the x aesthetic, but it takes a little more thought to recognise that they also govern the behaviour of other aesthetics that describe a horizontal position (e.g., the `xmin`, `xmax`, and `xend` aesthetics). Similarly, while the name `scale_colour_continuous()` clearly refers to the colour scale associated with a continuous variables, it is less obvious that `scale_colour_distiller()` is simply a different method for creating colour scales for continuous variables.
 
 ### Fundamental scale types
 
-Before diving into the details of how scale functions work, it is useful to note that internally all scale functions in ggplot2 belong to one of three fundamental types; continuous scales, discrete scales, and binned scales. Each fundamental type is handled by one of three scale constructor functions; `continuous_scale()`, `discrete_scale()` and `binned_scale()`. Although you should never need to call these constructor functions, they form the organising structure for later sections in this chapter.
+It is useful to note that internally all scale functions in ggplot2 belong to one of three fundamental types; continuous scales, discrete scales, and binned scales. Each fundamental type is handled by one of three scale constructor functions; `continuous_scale()`, `discrete_scale()` and `binned_scale()`. Although you should never need to call these constructor functions, they provide the organising structure for scales and it is useful to know about them.
 
 
 <!-- ### Exercises -->
@@ -139,7 +136,7 @@ Before diving into the details of how scale functions work, it is useful to note
 
 <!-- DN: Use this section to highlight connection between labs() in annotations chapter and the names argument -->
 
-extends discussion of `labs()` in Section \@ref(titles).
+Extend discussion of `labs()` in Section \@ref(titles).
 
 
 
