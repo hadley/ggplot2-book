@@ -5,10 +5,21 @@ columns(1, 2 / 3)
 
 # Scales and guides {#scales-guides}
 
+
+```{r, echo=FALSE}
+toy <- data.frame(
+  const = 1, 
+  up = 1:4,
+  txt = letters[1:4], 
+  big = (1:4)*1000,
+  log = c(2, 5, 10, 2000)
+)
+```
+
 The scales toolbox in Chapters \@ref(scale-position) to \@ref(scale-other) provides extensive guidance for how to work with scales, focusing on solving common data visualisation problems. The practical goals of the toolbox mean that topics are introduced when they are most relevant: for example, scale transformations are discussed in relation to continuous position scales (Section \@ref(scale-transformation)) because that is the most common situation in which you might want to transform a scale. However, because ggplot2 aims to provide a grammar of graphics, there is nothing preventing you from transforming other kinds of scales (see Section \@ref(scale-transformation-extras)). This chapter aims to illustrate these concepts: I'll discuss the theory underpinning scales and guides, and give examples showing how concepts that I've discussed specifically for position or colour scales also apply elsewhere.  
 
 
-## Theory of scales and guides
+## Theory of scales and guides {#scales-guides-theory}
 
 Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the scale). The axis or legend is the inverse function, known as the guide: it allows you to convert visual properties back to data. You might find it surprising that axes and legends are the same type of thing, but while they look very different they have the same purpose: to allow you to read observations from the plot and map them back to their original values. The commonalities between the two are illustrated below:
 
@@ -66,7 +77,7 @@ ggplot(mpg, aes(displ, hwy)) +
   scale_y_continuous(name = "An amazingly great y axis label")
 ```
 
-In practice you would typically use `labs()` for this, discussed in Section \@ref(titles), but it is conceptually helpful to understand that axis labels and legend titles are both examples of scale names: see Section \@ref(scale-name).
+In practice you would typically use `labs()` for this, discussed in Section \@ref(titles), but it is conceptually helpful to understand that axis labels and legend titles are both examples of scale names: see Section \@ref(scale-names).
 
 The use of `+` to "add" scales to a plot is a little misleading because if you supply two scales for the same aesthetic, the last scale takes precedence. In other words, when you `+` a scale, you're not actually adding it to the plot, but overriding the existing scale. This means that the following two specifications are equivalent: \indexc{+} 
 
@@ -134,14 +145,18 @@ It is useful to note that internally all scale functions in ggplot2 belong to on
 
 ## Scale names {#scale-names}
 
-<!-- DN: Use this section to highlight connection between labs() in annotations chapter and the names argument -->
-
 Extend discussion of `labs()` in Section \@ref(titles).
 
 
+## Scale breaks {#scale-breaks}
 
+Discussion of what unifies the concept of `breaks` across continuous, discrete and binned scales: they are specific data values at which the guide needs to display something. Include additional detail about break functions.
 
 ## Scale limits {#oob}
+
+Section \@ref(scales-guides-theory) introduced the concept that a scale defines a mapping from the data space to the aesthetic space. Scale limits are an extension of this idea: they dictate the __region__ of the data space over which the mapping is defined. At a theoretical level this region is defined differently depending on the fundamental scale type. For continuous and binned scales, the data space is inherently continuous and one-dimensional, so the limits can be specified by two end points. For discrete scales, however, the data space is unstructured and consists only of a set of categories: as such the limits for a discrete scale can only be specified by enumerating the set of categories over which the mapping is defined. 
+
+The toolbox chapters outline the common practical goals for specifying the limits: for position scales the limits are used to set the end points of the axis, for example. This leads naturally to the question of what ggplot2 should do if the data set contains "out of bounds" values that fall outside the limits.
 
 <!-- DJN: this is taken from the positions "oob" section. I think it makes sense to 
 document the scales::oob functions for continuous and binned scales as part of the 
@@ -153,7 +168,7 @@ for that it would be an esoteric theory thing. -->
 continuous. try to cover most of the oob_* functions. might be valuable to highlight 
 oob_keep() for position scales, as a way of making limits behave like zoom --> 
 
-Although the default behaviour is to convert the **o**ut **o**f **b**ounds values to `NA`, you can override this by setting `oob` argument of the scale, a function that is applied to all observations outside the scale limits. The default is `scales::oob_censor()` which replaces any value outside the limits with `NA`. Another option is `scales::oob_squish()` which squishes all values into the range. An example using a fill scale is shown below:
+The default behaviour in ggplot2 is to convert out of bounds values to `NA`, the logic for this begin that if a data value is not part of the mapped region, it should be treated as missing. This can occasionally lead to unexpected behaviour, as illustrated in Section \@ref(zooming-in). You can override this default by setting `oob` argument of the scale, a function that is applied to all observations outside the scale limits. The default is `scales::oob_censor()` which replaces any value outside the limits with `NA`. Another option is `scales::oob_squish()` which squishes all values into the range. An example using a fill scale is shown below:
 
 `r columns(3,1)`
 ```{r}
@@ -168,40 +183,6 @@ base + scale_fill_gradient(limits = c(1, 3), oob = scales::squish)
 ```
 
 On the left the default fill colours are shown, ranging from dark blue to light blue. In the middle panel the scale limits for the fill aesthetic are reduced so that the values for the three rightmost bars are replace with `NA` and are mapped to a grey shade. In some cases this is desired behaviour but often it is not: the right panel addresses this by modifying the `oob` function appropriately.  
-
-## Scale breaks {#scale-breaks}
-
-In the same way that the `name` argument to a scale function governs axis titles and legend titles, the `breaks` argument controls which values appear as tick marks on axes and as keys on legends. 
-\index{Axis!ticks} \index{Axis!breaks}
-
-`r columns(2, 2 / 3)`
-```{r breaks-labels}
-toy <- data.frame(
-  const = 1, 
-  up = 1:4,
-  txt = letters[1:4], 
-  big = (1:4)*1000,
-  log = c(2, 5, 10, 2000)
-)
-toy
-axs <- ggplot(toy, aes(big, const)) + 
-  geom_point() + 
-  labs(x = NULL, y = NULL)
-
-axs
-axs + scale_x_continuous(breaks = c(2000, 4000))
-```
-
-The examples below illustrate the same ideas applied to legends:
-
-```{r}
-leg <- ggplot(toy, aes(up, up, fill = big)) + 
-  geom_tile() + 
-  labs(x = NULL, y = NULL) 
-
-leg 
-leg + scale_fill_continuous(breaks = c(2000, 4000))
-```
 
 
 
@@ -219,15 +200,17 @@ The table below summarises the default guide functions associated with different
 | discrete scales (except position scales)             | legend              |
 | binned scales (except position/colour/fill scales)   | bins                |
 
-The guide functions have numerous examples in the documentation that illustrate all of their arguments. Many of the arguments to the guide function are equivalent to theme settings (Chapter \@ref(polishing)) like text colour, size, font etc, but only apply to a single guide. Here I'll focus on the non-theming arguments.
+Each of these guide types has appeared earlier in the toolbox:
 
-- colour bar in Section \@ref(guide-colourbar)
-- colour steps in Section \@ref(guide-coloursteps)
-- legend in Section \@ref(guide-legend)
-- axis in Section \@ref(guide-axis)
-- bins in Section \@ref(guide-bins)
+- `guide_colourbar()` is discussed in Section \@ref(guide-colourbar)
+- `guide_coloursteps()` is discussed in Section \@ref(guide-coloursteps)
+- `guide_axis()` is discussed in Section \@ref(guide-axis)
+- `guide_legend()` is discussed in Section \@ref(guide-legend)
+- `guide_bins()` is discussed in Section \@ref(guide-bins)
 
-<!-- DJN: show examples where something other than the default guide is used -->
+In addition to the functionality discussed in those sections, the guide functions have many arguments that are equivalent to theme settings like text colour, size, font etc, but only apply to a single guide. For information about those settings, see Chapter \@ref(polishing).
+
+New stuff: show examples where something other than the default guide is used...
 
 ## Scale transformation {#scale-transformation-extras}
 
