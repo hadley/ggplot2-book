@@ -10,7 +10,7 @@ Throughout this book I have described ggplot2 from the perspective of a user rat
 
 When making the jump from user to developer, it is common to encounter frustrations because the nature of the ggplot2 *interface* is very different to the structure of the underlying *machinery* that makes it work. As extending ggplot2 becomes more common, so too does the frustration related to understanding how it all fits together. This chapter is dedicated to providing a description of how ggplot2 works "behind the curtains". I focus on the design of the system rather than technical details of its implementation, and the goal is to provide a conceptual understanding of how the parts fit together. I begin with an general overview of the process that unfolds when a ggplot object is ploted, and then dive into details, describing how the data flows through this whole process and ends up as visual elements in your plot.
 
-## The `plot()` method
+## The `plot()` method {#plot-method}
 
 To understand the machinery underpinning ggplot2, it is important to recognise that almost everything related to the plot drawing happens when you print the ggplot object, not when you construct it. For instance, in the code below, the object `p` is an abstract specification of the plot data, the layers, etc. It does not construct the image itself:
 ```{r}
@@ -188,7 +188,11 @@ grid::grid.draw(p_gtable)
 ```
 
 ## Introducing ggproto
-ggplot2 has undergone a couple of rewrites during its long life. A few of these have introduced new class systems to the underlying code. While there is still a small amount of leftover from older class systems, the code has more or less coalesced around the ggproto class system introduced in ggplot2 v2.0.0. ggproto is a custom build class system made specifically for ggplot2 to facilitate portable extension classes. Like the more well-known R6 system it is a system using reference semantics, allowing inheritance and access to methods from parent classes. On top of the ggproto is a set of design principles that, while not enforced by ggproto, is essential to how the system is used in ggplot2.
+
+Sections \@ref(plot-method) to \@ref(ggplotgtable) focus on the sequence of events involved in building a ggplot, but are intentionally vague as to what kind of programming objects perform this work. 
+All ggplot2 objects are built using the **ggproto** system for object oriented programming, and is unusual in that it is used only by ggplot2. This something of a historical accident: ggplot2 originally used proto [@proto] for object oriented programming, which became a problem once the need for an official extension mechanism arose due to the limitations of the proto system. Attempts to switch ggplot2 to other systems such as R6 [@R6] proved difficult, and creating an object oriented system specific to the needs of ggplot2 turned out to be the least bad solution. 
+
+Understanding the ggproto object oriented programming system is important if you wish to write ggplot2 extensions. We will encounter ggproto objects as they are used by ggplot2 in Chapters \@ref(extensions) and \@ref(spring1). Like the better-known R6 system, ggproto uses reference semantics, allowing inheritance and access to methods from parent classes, and is accompanied by a set of design principles that, while not enforced by ggproto, is essential to understanding how the system is used in ggplot2. To illustrate these concepts, this section introduces the core mechanics of ggproto in a simplified form.
 
 ### ggproto syntax
 A ggproto object is created using the `ggproto()` function, which takes a class name, a parent class and a range of fields and methods:
