@@ -194,75 +194,209 @@ All ggplot2 objects are built using the **ggproto** system for object oriented p
 
 Understanding the ggproto object oriented programming system is important if you wish to write ggplot2 extensions. We will encounter ggproto objects as they are used by ggplot2 in Chapters \@ref(extensions) and \@ref(spring1). Like the better-known R6 system, ggproto uses reference semantics, allowing inheritance and access to methods from parent classes, and is accompanied by a set of design principles that, while not enforced by ggproto, is essential to understanding how the system is used in ggplot2. To illustrate these concepts, this section introduces the core mechanics of ggproto in a simplified form.
 
-### ggproto syntax
-A ggproto object is created using the `ggproto()` function, which takes a class name, a parent class and a range of fields and methods:
+### Introducing ggproto objects
+
+Creating a new ggproto object is done with the `ggproto()` function, which takes the name of the new class as its first argument, and another ggproto object from which the new one will inherit from as the second argument. For example, we could create a ggproto object---albeit one that has no useful functionality---with the following command:
+
+```{r}
+NewObject <- ggproto(
+  `_class` = NULL, 
+  `_inherits` = NULL
+)
+```
+
+By convention, ggproto objects are named using "UpperCamelCase", in which each word begins with a capital letter. It is also conventional to omit the names of the `` `_class` `` and `` `_inherits` `` arguments, so the conventional form of this command would be as follows:
+
+```{r}
+NewObject <- ggproto(NULL, NULL)
+```
+
+If we print this object we see that it is indeed a ggproto object, but no other information appears.
+
+```{r}
+NewObject 
+```
+
+### Creating new classes
+
+To create a new ggproto class, the only thing that is strictly necessary is to supply a class name as the first argument to `ggproto()`. A minimal command that defines a new class might look like this:
+
+```{r}
+NewClass <- ggproto("NewClass", NULL)
+```
+
+The `NewClass` variable still refers to a ggproto object, but I can verify that it has the desired class name by printing it:
+
+```{r}
+NewClass
+```
+
+However, so far the only thing I have done is create an object that specifies a class. The `NewClass` object doesn't do anything. To create a ggproto class that does something useful, we need to supply a list of fields and methods when we define the class. In this context, "fields" are used to store data relevant to the object, and "methods" are functions that can use the data stored in the object. Fields and methods are constructed in the same way, and they are not treated differently from a user perspective.
+
+To illustrate this, I'll create a new class called `Person` that will be used to store and manipulate information about a person. I can do this by supplying the `ggproto()` function with name/value pairs:
+
 
 ```{r}
 Person <- ggproto("Person", NULL,
-  first = "",
-  last = "",
-  birthdate = NA,
   
+  # fields                  
+  given_name = NA,
+  family_name = NA,
+  birth_date = NA,
+  
+  # methods
   full_name = function(self) {
-    paste(self$first, self$last)
+    paste(self$given_name, self$family_name)
   },
   age = function(self) {
-    days_old <- Sys.Date() - self$birthdate
+    days_old <- Sys.Date() - self$birth_date
     floor(as.integer(days_old) / 365.25)
   },
   description = function(self) {
-    paste(self$full_name(), "is", self$age(), "old")
+    paste(self$full_name(), "is", self$age(), "years old")
   }
 )
 ```
 
-As can be seen, fields and methods are not differentiated in the construction, and they are not treated differently from a user perspective. Methods can take a first argment `self` which gives the method access to its own fields and methods, but it won't be part of the final method signature. One surprising quirk if you come from other reference based object systems in R is that `ggproto()` does not return a class contructor; it returns an object. New instances of the class is constructed by subclassing the object without giving a new class name:
+The `Person` class is now associated with three fields, corresponding to `given_name` and `family_name` of a person as well as their `birth_date`. It also possesses three methods: the `full_name()` method is a function that constructs the full name of the person, using the convention of placing the given name first and the family name second, the `age()` method calculates the age of the person in years, and the `description()` method prints out a short description of the person. Note that methods can take `self` as their first argument. This is used to give the method access to the fields (and other methods) associated with the ggproto object. 
+
+Printing the object shows the fields and methods with which it is associated:
 
 ```{r}
-Me <- ggproto(NULL, Person,
-  first = "Thomas Lin",
-  last = "Pedersen",
-  birthdate = as.Date("1985/10/12")
-)
-
-Me$description()
+Person
 ```
 
-When subclassing and overwriting methods, the parent class and its methods are available through the `ggproto_parent()` function:
+Note that the `Person` object is essentially a template for the class, which we can use to create specific records of individual people. If you are familiar with other object oriented programming systems you might have been expecting something a little different: often new classes are defined with a dedicated constructor function. One quirk of ggproto is that `ggproto()` doesn't do this: rather, the class constructor is itself an object.
+
+### Creating new instances
+
+Now that we have defined the `Person` class, we can create instances of the class. This is done by passing a ggproto object as the second argument to `ggproto()`, and not specifying a new class name in the first argument. For instance, I can create new objects `Thomas` and `Danielle` that are both instances of the `Person` class as follows:
+
+```{r}
+Thomas <- ggproto(NULL, Person,
+  given_name = "Thomas Lin",
+  family_name = "Pedersen",
+  birth_date = as.Date("1985/10/12")
+)
+
+Danielle <- ggproto(NULL, Person,
+  given_name = "Danielle Jasmine",
+  family_name = "Navarro",
+  birth_date = as.Date("1977/09/12")
+)
+```
+
+Specifying `NULL` as the first argument instructs `ggproto()` not to define a new class, but instead create a new instance of the class specified in the second argument. Because `Thomas` and `Danielle` are both instances of the `Person` class, they automatically inherit its `age()`, `full_name()` and `description()` methods:
+
+```{r}
+Thomas$description()
+
+Danielle$description()
+```
+
+
+### Creating subclasses
+
+In the previous example I created `Person` as an entirely new class. In practice you will almost never need to do this: instead, you will likely be creating a subclass using an existing ggproto object. You can do this by specifying the name of the subclass and the object from which it should inherit in the call to `ggproto()`:
+
+```{r}
+# define the subclass
+NewSubClass <- ggproto("NewSubClass", Person)
+
+# verify that this works
+NewSubClass
+```
+
+The output shown above illustrates that `NewSubClass` now provides its own class, and that it inherits all the fields and methods from the `Person` object I created earlier. However, this new subclass does not add any new functionality.
+
+When creating a subclass, we often want to add new fields or methods and overwrite some of the existing ones. For example, suppose I want to define `Royalty` as a subclass of `Person`, and add fields corresponding to the `rank` of the royal in question, and the `territory` over which they ruled. Because royalty are often referred to by title and territory rather than in terms of a first and last name, I will also need to change the way that the `full_name()` method is defined:
+
+```{r}
+Royalty <- ggproto("Royalty", Person,
+  rank = NA,
+  territory = NA,
+  full_name = function(self) {
+    paste(self$rank, self$given_name, "of", self$territory)
+  }
+)
+```
+
+The `Royalty` object now defines a subclass of person that inherits some fields (`given_name`, `family_name`, `birth_date`) from the `Person` class, and supplies other fields (`rank`, `territory`). It inherits the `age()` and `description()` methods from `Person`, but it overwrites the `full_name()` method. 
+
+I can now create a new instance of the `Royalty` subclass:
+
+```{r}
+Victoria <- ggproto(NULL, Royalty,
+  given_name = "Victoria",
+  family_name = "Hanover",
+  rank = "Queen",
+  territory = "the United Kingdom",
+  birth_date = as.Date("1819/05/24")
+)
+```
+
+So when I call the `full_name()` method for `Victoria`, the output uses the method specified in the `Royalty` class instead of the one defined in the `Person` class:
+
+```{r}
+Victoria$full_name()
+```
+
+It is worth noting what happens when I call the `description()` method. This method is inherited from `Person`, but the definition of this method invokes `self$full_name()`. Even though `description()` is defined in `Person`, in this context `self` still refers to `Victoria`, who is still `Royalty`. What this means is that the output of the inherited `description()` method uses the `full_name()` method defined for the subclass:
+
+```{r}
+Victoria$description()
+```
+
+
+
+### Accessing parent classes
+
+Creating subclasses sometimes requires us to access the parent class and its methods, which we can do with the help of the `ggproto_parent()` function. For example we can define a `Police` subclass that includes a `rank` field in the same way that the `Royalty` subclass does, but only uses this rank as part of the `description()` method:
 
 ```{r}
 Police <- ggproto("Police", Person,
+  rank = NA, 
   description = function(self) {
     paste(
-      "Detective",
+      self$rank,
       ggproto_parent(Person, self)$description()
     )
   }
 )
+```
 
+In this example, the `description()` method for the `Police` subclass is defined in a way that explicitly refers to the `description()` method for the `Person` parent class. By using `ggproto_parent(Person, self)` in this fashion, we are able to refer to the method inside the parent class, while still retaining the appropriate local definition of `self`. As before, I'll create a specific instance and verify that this works as expected:
+
+```{r}
 John <- ggproto(NULL, Police,
-  first = "John",
-  last = "McClane",
-  birthdate = as.Date("1955/03/19")
+  given_name = "John",
+  family_name = "McClane",
+  rank = "Detective",
+  birth_date = as.Date("1955/03/19")
 )
+
+John$full_name() 
 
 John$description()
 ```
 
-For reasons that we'll discuss below, the use of `ggproto_parent()` is not that prevalent in the ggplot2 source code. 
+For reasons that I'll discuss below, the use of `ggproto_parent()` is not that prevalent in the ggplot2 source code. 
 
-All in all ggproto is a minimal class system that is designed to accomodate ggplot2 and nothing else. It's structure is heavily guided by the proto class system used in early versions of ggplot2 in order to reduce the required changes to the ggplot2 source code during the switch, and its features are those required by ggplot2 and nothing more.
 
-### ggproto style guide
-While ggproto is flexible enough to be used in many ways, it is used in ggplot2 in a very delibarete way. As you are most likely to use ggproto in the context of extending ggplot2 you will need to understand these ways.
+### Style guide for ggproto
+
+Because ggproto is a minimal class system designed to accommodate ggplot2 and nothing else, it important to recognise that ggproto is used in ggplot2 in a very specific way. It exists to support the ggplot2 extension system, and you are unlikely to encounter ggproto in any context other than writing ggplot2 extension. With that in mind it is useful to understand how ggplot2 uses ggproto.
 
 #### ggproto classes are used selectively
+
 The use of ggproto in ggplot2 is not all-encompassing. Only select functionality is based on ggproto and it is not expected, nor advised to create new ggproto classes to encapsulate logic in your extensions. This means that you, as an extension developer, will never create ggproto objects from scratch but rather subclass one of the main ggproto classes provided by ggplot2. Later chapters will go into detail on how exactly to do that.
 
 #### ggproto classes are stateless
+
 Except for a few selected internal classes used to orchestrate the rendering, ggproto classes in ggplot2 are stateless. This means that after they are constructed they will not change. This breaks a common expectation for reference based classes where methods will alter the state of the object, but it is paramount that you adhere to this principle. If e.g. some of your Stat or Geom extensions changed state during rendering, plotting a saved ggplot object would affect all instances of that object as all copies would point to the same ggproto objects. State is imposed in two ways in ggplot2. At creation, which is ok because this state should be shared between all instances anyway, and through a params object managed elsewhere. As you'll see later, most ggproto classes have a `setup_params()` method where data can be inspected and specific properties calculated and stored.
 
 #### ggproto classes have simple inheritance
+
 Because ggproto class instances are stateless it is relatively safe to call methods from other classes inside a method, instead of inheriting directly from the class. Because of this it is relatively common to borrow functionality from other classes without creating an explicit inheritance. As an example, the `setup_params()` method in `GeomErrorbar` is defined as:
 
 ```{r, eval=FALSE}
