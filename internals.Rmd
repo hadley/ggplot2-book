@@ -194,7 +194,7 @@ All ggplot2 objects are built using the **ggproto** system for object oriented p
 
 Understanding the ggproto object oriented programming system is important if you wish to write ggplot2 extensions. We will encounter ggproto objects as they are used by ggplot2 in Chapters \@ref(extensions) and \@ref(spring1). Like the better-known R6 system, ggproto uses reference semantics, allowing inheritance and access to methods from parent classes, and is accompanied by a set of design principles that, while not enforced by ggproto, is essential to understanding how the system is used in ggplot2. To illustrate these concepts, this section introduces the core mechanics of ggproto in a simplified form.
 
-### Introducing ggproto objects
+### ggproto objects
 
 Creating a new ggproto object is done with the `ggproto()` function, which takes the name of the new class as its first argument, and another ggproto object from which the new one will inherit from as the second argument. For example, we could create a ggproto object---albeit one that has no useful functionality---with the following command:
 
@@ -295,7 +295,7 @@ Danielle$description()
 ```
 
 
-### Creating subclasses
+### Creating subclasses {#ggproto-subclass}
 
 In the previous example I created `Person` as an entirely new class. In practice you will almost never need to do this: instead, you will likely be creating a subclass using an existing ggproto object. You can do this by specifying the name of the subclass and the object from which it should inherit in the call to `ggproto()`:
 
@@ -347,10 +347,6 @@ It is worth noting what happens when I call the `description()` method. This met
 Victoria$description()
 ```
 
-
-
-### Accessing parent classes
-
 Creating subclasses sometimes requires us to access the parent class and its methods, which we can do with the help of the `ggproto_parent()` function. For example we can define a `Police` subclass that includes a `rank` field in the same way that the `Royalty` subclass does, but only uses this rank as part of the `description()` method:
 
 ```{r}
@@ -385,28 +381,22 @@ For reasons that I'll discuss below, the use of `ggproto_parent()` is not that p
 
 ### Style guide for ggproto
 
-Because ggproto is a minimal class system designed to accommodate ggplot2 and nothing else, it important to recognise that ggproto is used in ggplot2 in a very specific way. It exists to support the ggplot2 extension system, and you are unlikely to encounter ggproto in any context other than writing ggplot2 extension. With that in mind it is useful to understand how ggplot2 uses ggproto.
+Because ggproto is a minimal class system designed to accommodate ggplot2 and nothing else, it important to recognise that ggproto is used in ggplot2 in a very specific way. It exists to support the ggplot2 extension system, and you are unlikely to encounter ggproto in any context other than writing ggplot2 extension. With that in mind it is useful to understand how ggplot2 uses ggproto:
 
-#### ggproto classes are used selectively
+- __ggproto classes are used selectively__. The use of ggproto in ggplot2 is not all-encompassing. Only select functionality is based on ggproto and it is neither expected nor advised to create entirely new ggproto classes in your extensions. As an extension developer, you will never create entirely ggproto objects but rather subclass one of the main ggproto classes provided by ggplot2. Later chapters will go into detail on how exactly to do that.
 
-The use of ggproto in ggplot2 is not all-encompassing. Only select functionality is based on ggproto and it is not expected, nor advised to create new ggproto classes to encapsulate logic in your extensions. This means that you, as an extension developer, will never create ggproto objects from scratch but rather subclass one of the main ggproto classes provided by ggplot2. Later chapters will go into detail on how exactly to do that.
+- __ggproto classes are stateless__. Except for a few internal classes that are used to orchestrate the rendering, ggproto classes in ggplot2 are assumed to be "stateless". What this means is ggplot2 expects that after they are constructed they will not change. This breaks a common expectation for reference based classes (where methods often can safely change the state of the object), but it is not safe to do so with ggplot2. If your code violates this principle and changes the state of a Stat or Geom during the rendering, plotting a saved ggplot object will affect *all* instances of that object (even in other plots) because they all point to the same ggproto objects. There are only two occasions when you should specify the state of a ggproto object in ggplot2. First, you can specify the state when creating the object: this is okay because this state should be shared between all instances anyway. Second, you can specify state via a params object managed elsewhere. As you'll see later (see Sections \@ref(new-stats) and \@ref(new-geoms)), most ggproto classes have a `setup_params()` method where data can be inspected and specific properties calculated and stored.
 
-#### ggproto classes are stateless
+- __ggproto classes have simple inheritance__. Because ggproto class instances are stateless, it is relatively safe to call methods that are defined inside other classes, instead of inheriting explicitly from the class. This is the reason why the `ggproto_parent()` function is rarely called within the ggplot2 source code. As an example, the `setup_params()` method in `GeomErrorbar` is defined as:
 
-Except for a few selected internal classes used to orchestrate the rendering, ggproto classes in ggplot2 are stateless. This means that after they are constructed they will not change. This breaks a common expectation for reference based classes where methods will alter the state of the object, but it is paramount that you adhere to this principle. If e.g. some of your Stat or Geom extensions changed state during rendering, plotting a saved ggplot object would affect all instances of that object as all copies would point to the same ggproto objects. State is imposed in two ways in ggplot2. At creation, which is ok because this state should be shared between all instances anyway, and through a params object managed elsewhere. As you'll see later, most ggproto classes have a `setup_params()` method where data can be inspected and specific properties calculated and stored.
+    ```{r, eval=FALSE}
+    GeomErrorbar <- ggproto(
+      # ...
+      setup_params = function(data, params) {
+        GeomLinerange$setup_params(data, params)
+      }
+      # ...
+    )
+    ```
 
-#### ggproto classes have simple inheritance
-
-Because ggproto class instances are stateless it is relatively safe to call methods from other classes inside a method, instead of inheriting directly from the class. Because of this it is relatively common to borrow functionality from other classes without creating an explicit inheritance. As an example, the `setup_params()` method in `GeomErrorbar` is defined as:
-
-```{r, eval=FALSE}
-GeomErrorbar <- ggproto(
-  # ...
-  setup_params = function(data, params) {
-    GeomLinerange$setup_params(data, params)
-  }
-  # ...
-)
-```
-
-While we have seen that parent methods can be called using `ggproto_parent()` this pattern is quite rare to find in the ggplot2 source code, as the pattern shown above is often clearer and just as safe.
+    This pattern is often easier to read than using `ggproto_parent()` and because ggproto objects are stateless it is just as safe.
