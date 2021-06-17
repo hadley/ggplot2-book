@@ -37,8 +37,9 @@ theme_minimal <- function(base_size = 11,
 }
 ```
 
-As you can see, the code doesn't look much different to the code you normally write when styling a plot (Chapter \@ref(polishing)). The `theme_minimal()` function uses `theme_bw()` as the base theme, and then replaces certain parts of it with its own style using the `%+replace%` operator. When writing new themes it is a good idea to provide a few parameters to the user for defining overarching aspects of the theme. One important such aspect is sizing of text and lines but other aspects could be e.g. key and accent colours of the theme. A minimal example would be a variation on `theme_void()` that sets a background colour:
+As you can see, the code doesn't look much different to the code you normally write when styling a plot (Chapter \@ref(polishing)). The `theme_minimal()` function uses `theme_bw()` as the base theme, and then replaces certain parts of it with its own style using the `%+replace%` operator. When writing new themes it is a good idea to provide a few parameters to the user for defining overarching aspects of the theme. One important such aspect is sizing of text and lines but other aspects could be e.g. key and accent colours of the theme. A minimal example would be a variation on `theme_void()` that sets a `background` colour:
 
+<!-- DJN: not sure about using ... in the example. It does make the example easier to read, but if you were doing this in a package it would probably be better to include all argument names explicitly, right? -->
 `r columns(3, 1)`
 ```{r}
 theme_background <- function(background = "grey80", ...) {
@@ -47,7 +48,8 @@ theme_background <- function(background = "grey80", ...) {
       plot.background = element_rect(
         fill = background,
         colour = background
-      )
+      ),
+      complete = TRUE
     )
 }
 
@@ -59,6 +61,10 @@ base + theme_background("hotpink4")
 
 Note that the ggthemes [@ggthemes] package already contains a `theme_solid()` function that provides essentially the same functionality.
 
+
+
+<!-- DJN: Might not be a good idea to provide a how-to guide for bad practice! -->
+<!--
 ### Novel themes
 
 While not generally advisable, it is possible to create a theme without modifying an existing one. The general approach is to use only the `theme()` function while setting `complete = TRUE`. You can find an example of this in the ggplot2 source by looking at the `theme_gray()` function. However, if you do take this approach it is important to ensure that you define every theme elements that do not inherit values from other elements. To determine if a theme element inherits from another one, you can use the `get_element_tree()` function, which returns a list of all theme elements and information about them. Any time the value of `inherits` is `NULL`, it means this element does not inherit from any other:
@@ -84,6 +90,8 @@ inherits <- sapply(element_tree, function(etree) {
 # print the names of elements that do not inherit
 names(element_tree[!inherits])
 ```
+
+-->
 
 <!-- ### Adding to the element tree -->
 
