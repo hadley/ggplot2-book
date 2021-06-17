@@ -4,22 +4,95 @@ source("common.R")
 
 # Extending ggplot2 {#extensions}
 
-ggplot2 has been designed in a way that makes it relatively easy to extend the functionality with new types of the common grammar components. The extension system allows you to distribute these extensions as packages should you choose to, but the ease with which extensions can be made means that writing one-off extensions to solve a particular plotting challenge is also viable (and often preferable to manipulating the gtable output).
-
-In this chapter we will go through the different ways ggplot2 can be extended, and discuss any specific issues you may need to be aware of. Later chapters will showcase the development of specific extensions.
+ggplot2 has been designed in a way that makes it relatively easy to extend the functionality with new types of the common grammar components. The extension system allows you to distribute these extensions as packages should you choose to, but the ease with which extensions can be made means that writing one-off extensions to solve a particular plotting challenge is also viable. This chapter discusses different ways ggplot2 can be extended and highlights specific issues to keep in mind. I'll present small examples throughout the chapter, but to see a worked example from beginning to end, see Chapters \@ref(spring1).
 
 ## New themes
-Themes are probably the easiest form of extensions as they only require you to write code you would normally write when creating plots with ggplot2. While it is possible to build up a new theme from the ground it is usually easier and less error-prone to modify an existing theme. This is done in ggplot2 as well as can be seen by looking at e.g. `theme_minimal()`:
+Themes are probably the easiest form of extensions as they only require you to write code you would normally write when creating plots with ggplot2. 
+
+### Modifying themes
+
+While it is possible to build up a new theme from the ground it is usually easier and less error-prone to modify an existing theme. This approach is often taken in the ggplot2 source. For example, here is the source code for `theme_minimal()`:
 
 ```{r}
-print(theme_minimal)
+theme_minimal <- function(base_size = 11, 
+                          base_family = "", 
+                          base_line_size = base_size/22, 
+                          base_rect_size = base_size/22) {
+    theme_bw(
+      base_size = base_size, 
+      base_family = base_family, 
+      base_line_size = base_line_size, 
+      base_rect_size = base_rect_size
+    ) %+replace% 
+    theme(
+      axis.ticks = element_blank(), 
+      legend.background = element_blank(), 
+      legend.key = element_blank(), 
+      panel.background = element_blank(), 
+      panel.border = element_blank(), 
+      strip.background = element_blank(), 
+      plot.background = element_blank(), 
+      complete = TRUE
+    )
+}
 ```
 
-here the base is `theme_bw()` and the theme then replaces certain parts of it with its own style using the exported `%+replace%` operator. As can be seen, the code doesn't look much different to the code you normally write when styling a plot. While not adviced, it is also possible to create a theme without modifying an existing one. The general approach is to simply use the `theme()` function while setting `complete = TRUE`. It is important to make sure that at least all theme elements that do not inherit from other elements have been defined when using this approach. See e.g. `theme_gray()` for an example of this.
+As you can see, the code doesn't look much different to the code you normally write when styling a plot (Chapter \@ref(polishing)). The `theme_minimal()` function uses `theme_bw()` as the base theme, and then replaces certain parts of it with its own style using the `%+replace%` operator. When writing new themes it is a good idea to provide a few parameters to the user for defining overarching aspects of the theme. One important such aspect is sizing of text and lines but other aspects could be e.g. key and accent colours of the theme. A minimal example would be a variation on `theme_void()` that sets a background colour:
 
-When writing new themes it is a good idea to provide a few parameters to the user for defining overarching aspects of the theme. One important such aspect is sizing of text and lines but other aspects could be e.g. key and accent colours of the theme.
+`r columns(3, 1)`
+```{r}
+theme_background <- function(background = "grey80", ...) {
+  theme_void(...) %+replace%
+    theme(
+      plot.background = element_rect(
+        fill = background,
+        colour = background
+      )
+    )
+}
 
->Maybe something about creating new theme elements?
+base <- ggplot(mpg, aes(displ, hwy)) + geom_point()
+base + theme_void()
+base + theme_background()
+base + theme_background("hotpink4")
+```
+
+Note that the ggthemes [@ggthemes] package already contains a `theme_solid()` function that provides essentially the same functionality.
+
+### Novel themes
+
+While not generally advisable, it is possible to create a theme without modifying an existing one. The general approach is to use only the `theme()` function while setting `complete = TRUE`. You can find an example of this in the ggplot2 source by looking at the `theme_gray()` function. However, if you do take this approach it is important to ensure that you define every theme elements that do not inherit values from other elements. To determine if a theme element inherits from another one, you can use the `get_element_tree()` function, which returns a list of all theme elements and information about them. Any time the value of `inherits` is `NULL`, it means this element does not inherit from any other:
+
+```{r}
+element_tree <- get_element_tree()
+
+# the title element does not inherit
+element_tree[["title"]]       
+
+# the plot.title element inherits from title
+element_tree[["plot.title"]]
+```
+
+Here is a list of theme elements that do not inherit:
+
+```{r}
+# for each element in the tree, check if it inherits
+inherits <- sapply(element_tree, function(etree) {
+  ifelse(test = is.null(etree$inherit), yes = FALSE, no = TRUE)
+})
+
+# print the names of elements that do not inherit
+names(element_tree[!inherits])
+```
+
+<!-- ### Adding to the element tree -->
+
+<!-- In the previous section I introduced the concept of the "element tree", which describes the relationship between different elements, and specifies what class each element is (e.g., `"element_text"`, `"element_line"`, etc). -->
+
+### New elements
+
+It is also possible to create new theme elements. In Section \@ref(titles), for example, we encountered the `element_markdown()` function supplied by the ggtext package [@ggtext] ...
+
 
 ## New stats {#new-stats}
 While most people tend to think of geoms as the main graphic layer to add to plots, the variety of geoms is mostly powered by different stats. It follows that extending stats is one of the most useful ways to extend the capabilities of ggplot2. One of the benefits of stats is that they are purely about data transformations, which most R users are used to be doing. As long as the needed behaviour can be encapsulated in a stat, there is no need to fiddle with any calls to grid.
