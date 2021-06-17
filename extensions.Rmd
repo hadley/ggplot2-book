@@ -37,13 +37,12 @@ theme_minimal <- function(base_size = 11,
 }
 ```
 
-As you can see, the code doesn't look much different to the code you normally write when styling a plot (Chapter \@ref(polishing)). The `theme_minimal()` function uses `theme_bw()` as the base theme, and then replaces certain parts of it with its own style using the `%+replace%` operator. When writing new themes it is a good idea to provide a few parameters to the user for defining overarching aspects of the theme. One important such aspect is sizing of text and lines but other aspects could be e.g. key and accent colours of the theme. A minimal example would be a variation on `theme_void()` that sets a `background` colour:
+As you can see, the code doesn't look much different to the code you normally write when styling a plot (Chapter \@ref(polishing)). The `theme_minimal()` function uses `theme_bw()` as the base theme, and then replaces certain parts of it with its own style using the `%+replace%` operator. When writing new themes it is a good idea to provide a few parameters to the user for defining overarching aspects of the theme. One important such aspect is sizing of text and lines but other aspects could be e.g. key and accent colours of the theme. For example, we could create a variant of `theme_minimal()` that allows the user to specify the plot background colour:
 
-<!-- DJN: not sure about using ... in the example. It does make the example easier to read, but if you were doing this in a package it would probably be better to include all argument names explicitly, right? -->
 `r columns(3, 1)`
 ```{r}
-theme_background <- function(background = "grey80", ...) {
-  theme_void(...) %+replace%
+theme_background <- function(background = "white", ...) {
+  theme_minimal(...) %+replace%
     theme(
       plot.background = element_rect(
         fill = background,
@@ -54,14 +53,64 @@ theme_background <- function(background = "grey80", ...) {
 }
 
 base <- ggplot(mpg, aes(displ, hwy)) + geom_point()
-base + theme_void()
-base + theme_background()
-base + theme_background("hotpink4")
+base + theme_minimal(base_size = 14)
+base + theme_background(base_size = 14)
+base + theme_background(base_size = 14, background = "grey70")
 ```
 
-Note that the ggthemes [@ggthemes] package already contains a `theme_solid()` function that provides essentially the same functionality.
+### Complete themes
 
+An important point to note is the use of `complete = TRUE` in the code for `theme_minimal()` and `theme_background()`. It is always good practice to do this when defining your own themes in a ggplot2 extension package: this will ensure that your theme behaves in the same way as the default theme and as a consequence will be less likely to suprise users. To see why this is necessary, compare these two themes:
 
+```{r}
+# good 
+theme_predictable <- function(...) {
+  theme_classic(...) %+replace% 
+    theme(
+      axis.line.x = element_line(color = "blue"),
+      axis.line.y = element_line(color = "orange"),
+      complete = TRUE
+    )
+}
+
+# bad
+theme_surprising <- function(...) {
+  theme_classic(...) %+replace% 
+    theme(
+      axis.line.x = element_line(color = "blue"),
+      axis.line.y = element_line(color = "orange")
+    )
+}
+```
+
+Both themes are intended to do the same thing: change the defaults to `theme_classic()` so that the x-axis is drawn with a blue line, and the y-axis is drawn with an orange line. At first glance, it appears that both versions behave in line with the user expectations:
+
+```{r}
+base + theme_classic()
+base + theme_predictable()
+base + theme_surprising()
+```
+
+However, suppose the user of your theme wants to remove the axis lines:
+```{r}
+base + theme_classic() + theme(axis.line = element_blank())
+base + theme_predictable() + theme(axis.line = element_blank())
+base + theme_surprising() + theme(axis.line = element_blank())
+```
+
+The behaviour of `theme_predictable()` is the same as `theme_classic()` and the axis lines are removed, but for `theme_surprising()` this does not happen. The reason for this is that ggplot2 treats complete themes as a collection of "fallback" values: when the user adds `theme(axis.line = element_blank())` to a complete theme, there is no need to rely on the fallback value for `axis.line.x` or `axis.line.y`, because these are inherited from `axis.line` in the user command. This is a kindness to your users, as it allows them to overwrite everything that inherits from `axis.line` using a command like `theme_predictable() + theme(axis.line = ...)`. In contrast, `theme_surprising()` does not specify a complete theme. When the user calls `theme_surprising()` the fallback values are taken from `theme_classic()`, but more importantly, ggplot2 treats the `theme()` command that sets `axis.line.x` and `axis.line.y` exactly as if the user had typed it. As a consequence, the plot specification is equivalent to this:
+
+```{r}
+base + 
+  theme_classic() +
+  theme(
+      axis.line.x = element_line(color = "blue"),
+      axis.line.y = element_line(color = "orange"),
+      axis.line = element_blank()
+  )
+```
+
+In this code, the specific-first inheritance rule applies, and as such setting `axis.line` does not override the more specific `axis.line.x`.
 
 <!-- DJN: Might not be a good idea to provide a how-to guide for bad practice! -->
 <!--
