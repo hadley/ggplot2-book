@@ -156,11 +156,31 @@ coord_annotate <- function(label = "panel annotation") {
 So now this works:
 
 `r columns(2, 1)`
-```{r}
+```{r, eval=FALSE}
 base + coord_annotate("annotation in blue")
 base + coord_annotate("annotation in blue") + theme_dark()
 ```
-... Except it doesn't work in R markdown????
+```{r, echo=FALSE}
+# DJN: I'm not sure why, because I can't reproduce the bug elsewhere, but the
+# call to register_theme_element() updates ggplot2:::ggplot_global$element_tree
+# only within *that* chunk, so subsequent chunks don't have ggxyz.panel.annotation
+# in the element tree. For now, this is a hacky fix:
+register_theme_elements(
+  ggxyz.panel.annotation = element_text(
+    color = "blue", 
+    hjust = 0.95, 
+    vjust = 0.05
+  ),
+  element_tree = list(
+    ggxyz.panel.annotation = el_def(
+      class = "element_text", 
+      inherit = "text"
+    )
+  )
+)
+base + coord_annotate("annotation in blue")
+base + coord_annotate("annotation in blue") + theme_dark()
+```
 
 Having modified the element tree, it is worth mentioning the `reset_theme_settings()` function restores the default element tree, discards all new element definitions, and (unless turned off) resets the currently active theme to the default.
 
