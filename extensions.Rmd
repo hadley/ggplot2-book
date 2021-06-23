@@ -185,13 +185,90 @@ base + coord_annotate("annotation in blue") + theme_dark()
 Having modified the element tree, it is worth mentioning the `reset_theme_settings()` function restores the default element tree, discards all new element definitions, and (unless turned off) resets the currently active theme to the default.
 
 ## New stats {#new-stats}
-While most people tend to think of geoms as the main graphic layer to add to plots, the variety of geoms is mostly powered by different stats. It follows that extending stats is one of the most useful ways to extend the capabilities of ggplot2. One of the benefits of stats is that they are purely about data transformations, which most R users are used to be doing. As long as the needed behaviour can be encapsulated in a stat, there is no need to fiddle with any calls to grid.
 
-As discussed in Chapter \@ref(internals), the main logic of a stat is encapsulated in a tiered succession of calls: `compute_layer()`, `compute_panel()`, and `compute_group()`. The default behaviour of `compute_layer()` is to split the data by the `PANEL` column, call `compute_panel()`, and reassemble the results. Likewise, the default behaviour of `compute_panel()` is to split the panel data by the `group` column, call `compute_group()`, and reassemble the results. Thus, it is only necessary to define `compute_group()`, i.e. how a single group should be transformed, in order to have a working stat. There are numerous examples of overwriting `compute_panel()` to gain better performance as it allows you to vectorise the computations and avoid an expensive split-combine step, but in general it is often beneficial to start at the `compute_group()` level and see if the performance is adequate.
+It may seem surprising, but creating new stats is one of the most useful ways to extend the capabilities of ggplot2. When users add new layers to a plot they most often use a geom function, and so it is tempting as a developer to think that your ggplot2 extension should be encapsulated as a new geom. To an extent this is true, as your users will likely want to use a geom function, but in truth the variety among different geoms is mostly due to the variety in different stats. One of the benefits of working with stats is that they are purely about data transformations. Most R users and developers are very comfortable with data transformation, which makes the task of defining a new stat easier. As long as the desired behaviour can be encapsulated in a stat, there is no need to fiddle with any calls to grid.
+
+### Creating stats
+
+As discussed in Chapter \@ref(internals), the core behaviour of a stat is captured by a tiered succession of calls to `compute_layer()`, `compute_panel()`, and `compute_group()`, all of which are methods associated with the ggproto object defining the stat. By default the top two functions don't do very much, they simply split the data and then pass it down to the function below:
+
+- `compute_layer()` splits the data set by the `PANEL` column, calls `compute_panel()`, and reassembles the results.
+- `compute_panel()` splits the panel data by the `group` column, calls `compute_group()`, and reassembles the results. 
+
+Because of this, the only method you usually need to specify as a developer is the `compute_group()` function, whose job is to take the data for a single group and transform it appropriately. This will be sufficient to create a working stat, though it may not yield the best performance. As a consequence developers sometimes find it valuable to offload some of the work to `compute_panel()` where possible: doing so allows you to vectorise computations and avoid an expensive split-combine step. However, as a general rule it is better to begin by modifying `compute_group()` only and see if the performance is adequate.
+
+To illustrate this, we'll start by creating a stat that calculates the convex hull of a set of points, using the `chull()` function included in `grDevices`. As you might expect, most of the work is done by a new ggproto object that we will create:
+
+```{r}
+StatChull <- ggproto("StatChull", Stat,
+  compute_group = function(data, scales) {
+    data[chull(data$x, data$y), , drop = FALSE]
+  },
+  required_aes = c("x", "y")
+)
+```
+
+As described in Section \@ref(ggproto) the first two arguments to `ggproto()` are used to indicate that this object defines a new class (conveniently named `"StatChull"`) which inherits fields and methods from the `Stat` object. We then specify only those fields and methods that need to be altered from the defaults provided by `Stat`, in this case `compute_group()` and `required_aes`. Our `compute_group()` function takes two inputs, `data` and `scales`---because this is what ggplot2 expects---but the actual computation is dependent only on the `data`. Note that because the computation necessarily requires both position aesthetics to be present, I have also specified the `required_aes` field to make sure that ggplot2 knows that these aesthetics are required. 
+
+By creating this ggproto object we have a working stat, but have not yet given the user a way to access it. To address this we write a layer function, `stat_chull()`. All layer functions have the same form: you specify defaults in the function arguments and then call `layer()`, sending `...` into the `params` argument. The arguments in `...` will either be arguments for the geom (if you're making a stat wrapper), arguments for the stat (if you're making a geom wrapper), or aesthetics to be set. `layer()` takes care of teasing the different parameters apart and making sure they're stored in the right place. So our `stat_chull()` function looks like this
+
+```{r}
+stat_chull <- function(mapping = NULL, data = NULL, geom = "polygon",
+                       position = "identity", na.rm = FALSE, show.legend = NA, 
+                       inherit.aes = TRUE, ...) {
+  layer(
+    stat = StatChull, data = data, mapping = mapping, geom = geom, 
+    position = position, show.legend = show.legend, inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+}
+```
+
+and our stat can now be used in plots:
+
+`r columns(2, 1)`
+```{r}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() + 
+  stat_chull(fill = NA, colour = "black")
+
+ggplot(mpg, aes(displ, hwy, colour = drv)) + 
+  geom_point() + 
+  stat_chull(fill = NA)
+```
+
+When creating new stats it is usually a good idea to provide an accompanying `geom_*()` constructor as well as the `stat_*()` constructor, because most users are accustomed to adding plot layers with geoms rather than stats. For our convex hull example, this constructor might look like this:
+
+```{r}
+geom_chull <- function(mapping = NULL, data = NULL, stat = "chull",
+                       position = "identity", na.rm = FALSE, show.legend = NA, 
+                       inherit.aes = TRUE, ...) {
+  layer(
+    geom = GeomPolygon, data = data, mapping = mapping, stat = stat, 
+    position = position, show.legend = show.legend, inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+}
+```
+
+Now we can create plots using code like this:
+
+```{r}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() + 
+  geom_chull(fill = NA, colour = "black")
+```
+
+Note that it is not always possible to define `geom_*()` constructor in a sensible way, as can happen when there is no obvious default geom for the new stat (e.g., if it is unclear if `geom_chull()` should rely on `GeomPolygon` or `GeomPoint`), or if the stat is intended to offer a slight modification to an existing geom/stat pair. In such cases it may be wise to provide only a `stat_*()` function. 
+
+### Setting defaults
+
+```{r}
+StatChull
+```
 
 Outside of the `compute_*()` functions, the remaining logic is found in the `setup_params()` and `setup_data()` functions. These are called before the `compute_*()` functions and allows the Stat to react and modify itself in response to the given parameters and data (especially the data, as this is not available when the stat is constructed). The `setup_params()` function receives the parameters given during construction along with the layer data, and returns a modified list of parameters. The parameters should correspond to argument names in the `compute_*()` functions in order to be made available. The `setup_data()` function receives the modified parameters along with the layer data, and returns the modified layer data. It is important that no matter what modifications happen in `setup_data()` the `PANEL` and `group` columns remain intact. Sometimes, with related stats, all that is necessary is to make a subclass and provide new `setup_params()`/`setup_data()` methods.
 
-When creating new stats it is often a good idea to provide an accompagnying `geom_*()` constructer as most users are used to using these rather that `stat_*()` constructors. Deviations from this rule can be made if there is no obvious default geom for the new stat, or if the stat is intended to offer a slight modification to an existing geom+stat pair.
 
 ## New geoms {#new-geoms}
 While many things can be achieved by creating new stats, there are situations where creating a new geom is necessary. Some of these are
