@@ -237,37 +237,70 @@ ggplot(mpg, aes(displ, hwy, colour = drv)) +
   stat_chull(fill = NA)
 ```
 
-When creating new stats it is usually a good idea to provide an accompanying `geom_*()` constructor as well as the `stat_*()` constructor, because most users are accustomed to adding plot layers with geoms rather than stats. For our convex hull example, this constructor might look like this:
+When creating new stats it is usually a good idea to provide an accompanying `geom_*()` constructor as well as the `stat_*()` constructor, because most users are accustomed to adding plot layers with geoms rather than stats. I'll show what a `geom_chull()` function might look like in Section \@ref(new-geoms). 
 
-```{r}
-geom_chull <- function(mapping = NULL, data = NULL, stat = "chull",
-                       position = "identity", na.rm = FALSE, show.legend = NA, 
-                       inherit.aes = TRUE, ...) {
+Note that it is not always possible to define `geom_*()` constructor in a sensible way. This can happen when there is no obvious default geom for the new stat, or if the stat is intended to offer a slight modification to an existing geom/stat pair. In such cases it may be wise to provide only a `stat_*()` function. 
+
+### Modifying parameters and data
+
+When defining new stats, it is often necessary to specify the `setup_params()` and/or `setup_data()` functions. These are called before the `compute_*()` functions and they allow the Stat to react and modify itself in response to the parameters and data (especially the data, as this is not available when the stat is constructed):
+
+- The `setup_params()` function is called first. It takes two arguments corresponding to the layer `data` and a list of parameters (`params`) specified during construction, and returns a modified list of parameters that will be used in later computations. Because the parameters are used by the `compute_*()` functions, the elements of the list should correspond to argument names in the `compute_*()` functions in order to be made available. 
+- The `setup_data()` function is called next. It also takes `data` and `params` as input---though the parameters it receives are the modified parameters returned from `setup_params()`---and returns the modified layer data. It is important that no matter what modifications happen in `setup_data()` the `PANEL` and `group` columns remain intact.
+
+Suppose we want to create `StatDensityCommon`, a stat that computes a density estimate of a variable after estimating a default bandwidth to apply to all groups in the data. This could be done in many different ways but for simplicity let's imagine we have a function `common_bandwidth()` that estimates the bandwidth separately for each group using the `bw.nrd0()` function and then returns the average:
+
+```{r common-bandwidth}
+common_bandwidth <- function(data) {
+  split_data <- split(data$x, data$group)
+  bandwidth <- mean(vapply(split_data, bw.nrd0, numeric(1)))
+  return(bandwidth)
+}
+```
+
+What we want from `StatDensityCommon` is to use the `common_bandwith()` function to set a common bandwidth before the data are separated by group and passed to the `compute_group()` function. This is where the `setup_params()` method is useful:
+
+```{r stat-density-common}
+StatDensityCommon <- ggproto("StatDensityCommon", Stat,
+  required_aes = "x",
+  
+  setup_params = function(data, params) {
+    if(is.null(params$bandwith)) {
+      params$bandwidth <- common_bandwidth(data)
+      message("Picking bandwidth of ", signif(params$bandwidth, 3))
+    }
+    return(params)
+  },
+    
+  compute_group = function(data, scales, bandwidth = 1) {
+    d <- density(data$x, bw = bandwidth)
+    return(data.frame(x = d$x, y = d$y))
+  }  
+)
+```
+
+We then define a `stat_*()` function in the usual way:
+
+```{r stat-density-common-2}
+stat_density_common <- function(mapping = NULL, data = NULL, geom = "line",
+                                position = "identity", na.rm = FALSE, show.legend = NA, 
+                                inherit.aes = TRUE, bandwidth = NULL,
+                                ...) {
   layer(
-    geom = GeomPolygon, data = data, mapping = mapping, stat = stat, 
+    stat = StatDensityCommon, data = data, mapping = mapping, geom = geom, 
     position = position, show.legend = show.legend, inherit.aes = inherit.aes,
-    params = list(na.rm = na.rm, ...)
+    params = list(bandwidth = bandwidth, na.rm = na.rm, ...)
   )
 }
 ```
 
-Now we can create plots using code like this:
+We can now apply our new stat
 
+`r columns(1, 1)`
 ```{r}
-ggplot(mpg, aes(displ, hwy)) + 
-  geom_point() + 
-  geom_chull(fill = NA, colour = "black")
+ggplot(mpg, aes(displ, colour = drv)) + 
+  stat_density_common()
 ```
-
-Note that it is not always possible to define `geom_*()` constructor in a sensible way, as can happen when there is no obvious default geom for the new stat (e.g., if it is unclear if `geom_chull()` should rely on `GeomPolygon` or `GeomPoint`), or if the stat is intended to offer a slight modification to an existing geom/stat pair. In such cases it may be wise to provide only a `stat_*()` function. 
-
-### Setting defaults
-
-```{r}
-StatChull
-```
-
-Outside of the `compute_*()` functions, the remaining logic is found in the `setup_params()` and `setup_data()` functions. These are called before the `compute_*()` functions and allows the Stat to react and modify itself in response to the given parameters and data (especially the data, as this is not available when the stat is constructed). The `setup_params()` function receives the parameters given during construction along with the layer data, and returns a modified list of parameters. The parameters should correspond to argument names in the `compute_*()` functions in order to be made available. The `setup_data()` function receives the modified parameters along with the layer data, and returns the modified layer data. It is important that no matter what modifications happen in `setup_data()` the `PANEL` and `group` columns remain intact. Sometimes, with related stats, all that is necessary is to make a subclass and provide new `setup_params()`/`setup_data()` methods.
 
 
 ## New geoms {#new-geoms}
@@ -278,6 +311,47 @@ While many things can be achieved by creating new stats, there are situations wh
 - The geom needs to return grobs not currently available from existing geoms.
 
 Creating new geoms can feel slightly more daunting than creating new stats as the end result is a collection of grobs rather than a modified data.frame and this is something outside of the comfort zone of many developers. Still, Apart from the last point above, it is possible to get by without having to think too much about grid and grobs. 
+
+### Modifying existing geoms
+
+In many situations your new geom may simply be an existing geom that expects slightly different input or has different default parameter values. The `stat_chull()` example from the previous section is a good example of this. Notice that in when creating plots using `stat_chull()` I had to manually specify the `fill` and `colour` parameters if those were not mapped to aesthetics. The reason for this is that `GeomPolygon` creates a borderless filled polygon by default, and this is not well suited to the needs of our convex hull geom. To make our lives a little easier then, we can create a subclass of `GeomPolygon` that modifies the defaults so that it produces a hollow polygon by default. We can do this in a straightforward way by overriding the `default_aes` value:
+
+```{r}
+GeomPolygonHollow <- ggproto("GeomPolygonHollow", GeomPolygon,
+  default_aes = aes(
+    colour = "black", 
+    fill = NA, 
+    size = 0.5, 
+    linetype = 1,
+    alpha = NA
+  )
+)
+```
+
+We can now define our `geom_chull()` constructor function using `GeomPolygonHollow` as the default geom: 
+
+```{r}
+geom_chull <- function(mapping = NULL, data = NULL, stat = "chull",
+                       position = "identity", na.rm = FALSE, show.legend = NA, 
+                       inherit.aes = TRUE, ...) {
+  layer(
+    geom = GeomPolygonHollow, data = data, mapping = mapping, stat = stat, 
+    position = position, show.legend = show.legend, inherit.aes = inherit.aes,
+    params = list(na.rm = na.rm, ...)
+  )
+}
+```
+
+For the sake of consistency we would also define `stat_chull()` to use this as the default. In any case, we now have a new `geom_chull()` function that works fairly well without the user needing to set parameters:
+
+`r columns(1, 1)`
+```{r}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() + 
+  geom_chull()
+```
+
+### Blah
 
 The main functionality of geoms is, like for stats, a tiered succession of calls: `draw_layer()`, `draw_panel()`, and `draw_group()`, and it follows much the same logic as for stats. It is usually easier to implement a `draw_group()` method, but if the layer is expected to handle a large amount of distinct groups you should consider if it is possible to use `draw_panel()` instead as grid performance will take a hit when dealing with many separate grobs (e.g. 10,000 pointGrobs with a single point each vs. a single pointGrob with 10,000 points). In line with stats, geoms also have a `setup_params()`+`setup_data()` pair that function in much the same way. One note, though, is that `setup_data()` is called before any position adjustment is done as part of the build step.
 
