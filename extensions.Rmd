@@ -479,18 +479,38 @@ The most common situation in which developers may need to know the internals of 
 In addition to transforming position data, the coord has responsibility for rendering the axes, axis labels, panel foreground and panel background. Additionally, the coord can intercept and modify the layer data and the facet layout. Much of this functionality is available to developers to leverage if it is absolutely necessary (an example is shown in Section \@ref(defining-theme-elements)), but in the majority of cases it is better to leave this functionality alone. 
 
 ## New scales
-There are three ways one might want to extend ggplot2 with new scales. The simplest is the case where you would like to provide a convenient wrapper for a new palette to an existing scale (this would often mean a new color/fill palette). For this case it will be sufficient to provide a new scale constructor that passes the relevant palette into the relevant basic scale constructor. This is used throughout ggplot2 itself as in e.g. the viridis scale:
+
+There are three ways one might want to extend ggplot2 with new scales. The simplest case is when you want to provide a convenient wrapper for a new palette, typically for a colour or fill aesthetic. As an impractical example, suppose you wanted to sample random colours to fill a violin or box plot, using a palette function like this:
 
 ```{r}
-print(scale_fill_viridis_c)
+random_colours <- function(n) {
+  sample(colours(distinct = TRUE), n, replace = TRUE)
+} 
+```
+
+We can then write a `scale_fill_random()` constructor function that passes the palette to `discrete_scale()` and then use it in plots:
+
+`r columns(1, 1)`
+```{r}
+scale_fill_random <- function(..., aesthetics = "fill") {
+  discrete_scale(
+    aesthetics = aesthetics, 
+    scale_name = "random", 
+    palette = random_colours
+  )
+}
+
+ggplot(mpg, aes(hwy, class, fill = class)) + 
+  geom_violin(show.legend = FALSE) +
+  scale_fill_random()
 ```
 
 Another relatively simple case is where you provide a geom that takes a new type of aesthetic that needs to be scaled. Let's say that you created a new line geom, and instead of the `size` aesthetic you decided on using a `width` aesthetic. In order to get `width` scaled in the same way as you've come to expect scaling of `size` you must provide a default scale for the aesthetic. Default scales are found based on their name and the data type provided to the aesthetic. If you assign continuous values to the `width` aesthetic ggplot2 will look for a `scale_width_continuous()` function and use this if no other width scale has been added to the plot. If such a function is not found (and no width scale was added explicitly), the aesthetic will not be scaled. 
 
-A last possibility worth mentioning, but outside the scope of this book, is the possibility of creating a new primary scale type. ggplot2 has historically had two primary scales: Continuous and discrete. Recently the binned scale type joined which allows for binning of continuous data into discrete bins. It is possible to develop further primary scales, by following the example of `ScaleBinned`. It requires subclassing `Scale` or one of the provided primary scales, and create new `train()` and `map()` methods, among others.
+A last possibility worth mentioning, but outside the scope of this book, is the possibility of creating a new primary scale type. Historically, ggplot2 has had two primary scale types,  continuous and discrete. Recently the binned scale type joined which allows for binning of continuous data into discrete bins. It is possible to develop further primary scales, by following the example of `ScaleBinned`. It requires subclassing `Scale` or one of the provided primary scales, and create new `train()` and `map()` methods, among others.
 
 ## New positions
-Positions recieves the data just before it is passed along to drawing, and can alter it in any way it likes, though there is an implicit agreement that only position aesthetics are affected by position adjustments. While it is possible to pass arguments to a position adjustment by calling its constructor, they are often called by name and will thus use default parameters. Keep this in mind when designing position adjustments and make the defaults work for most cases if at all possible.
+Positions receives the data just before it is passed along to drawing, and can alter it in any way it likes, though there is an implicit agreement that only position aesthetics are affected by position adjustments. While it is possible to pass arguments to a position adjustment by calling its constructor, they are often called by name and will thus use default parameters. Keep this in mind when designing position adjustments and make the defaults work for most cases if at all possible.
 
 The `Position` class is slightly simpler than the other ggproto classes as it has a very narrow scope. Like `Stat` it has `compute_layer()` and `compute_panel()` methods (but no `compute_group()`) which allows for the same tiered specification of the transformation. It also has `setup_params()` and `setup_data()` but the former deviates a bit from the other `setup_params()` methods in that it only recieves the layer data and not a list of parameters to modify. This is because positions doesn't recieve parameters from the main `geom_*()`/`stat_*()` call.
 
@@ -502,4 +522,5 @@ Facets are one of the most powerful concepts in ggplot2, and it follows that ext
 Depending on what you want to achieve, you may be able to skip that almost completely. If your new facet will end up with a rectangular arrangement of panels, it is often possible to subclass either `FacetWrap` or `FacetGrid`, and simply provide new `compute_layout()`, and `map_data()` methods. The first takes care of recieving the original data and create a layout specification, while the second recieves the created layout along with the data, and attaches a `PANEL` column to it, mapping the data to one of the panels in the layout. An example of this type of subclassing will be given in a later chapter.
 
 ## New guides
->Should probably not mention anything until they have been ported to `ggproto`
+
+<!-- >Should probably not mention anything until they have been ported to `ggproto` -->
