@@ -241,7 +241,7 @@ When creating new stats it is usually a good idea to provide an accompanying `ge
 
 Note that it is not always possible to define `geom_*()` constructor in a sensible way. This can happen when there is no obvious default geom for the new stat, or if the stat is intended to offer a slight modification to an existing geom/stat pair. In such cases it may be wise to provide only a `stat_*()` function. 
 
-### Modifying parameters and data
+### Modifying parameters and data {#modifying-stat-params}
 
 When defining new stats, it is often necessary to specify the `setup_params()` and/or `setup_data()` functions. These are called before the `compute_*()` functions and they allow the Stat to react and modify itself in response to the parameters and data (especially the data, as this is not available when the stat is constructed):
 
@@ -397,30 +397,74 @@ ggplot(df, aes(x, y)) +
   coord_equal()
 ```
 
+As with stats, geoms have a `setup_params()` method in addition to the `setup_data()` method, which can be used to modify parameters before any drawing takes place (see Section \@ref(modifying-stat-params) for an example). One thing to note in the geom context, however, is that `setup_data()` is called before any position adjustment is done.
+
 ### Combining multiple geoms
 
-
-
-### Blah
-
-The main functionality of geoms is, like for stats, a tiered succession of calls: `draw_layer()`, `draw_panel()`, and `draw_group()`, and it follows much the same logic as for stats. It is usually easier to implement a `draw_group()` method, but if the layer is expected to handle a large amount of distinct groups you should consider if it is possible to use `draw_panel()` instead as grid performance will take a hit when dealing with many separate grobs (e.g. 10,000 pointGrobs with a single point each vs. a single pointGrob with 10,000 points). In line with stats, geoms also have a `setup_params()`+`setup_data()` pair that function in much the same way. One note, though, is that `setup_data()` is called before any position adjustment is done as part of the build step.
-
-If you want a new geom that is a version of an existing geom, but with different input expectations, it can usually be handled by overwriting the `setup_data()` method of the existing geom. This approach can be seen with `geom_spoke()` which is a simple reparameterisation of `geom_segment()`:
-
-```{r}
-print(GeomSpoke$setup_data)
-```
+A useful technique for defining new geoms is to combine functionality from different geoms. For example, the `geom_smooth()` function for drawing nonparametric regression lines uses functionality from `geom_line()` to draw the regression line and `geom_ribbon()` to draw the shaded error bands. To do this within your new geom, it is helpful to consider the drawing process. In much the same way that a stat works by a tiered succession of calls to `compute_layer()` then `compute_panel()` and finally `compute_group()`, a geom is constructed by calls to  `draw_layer()`, `draw_panel()`, and `draw_group()`. From a conceptual standpoint it is usually easiest to write code that modifies the `draw_group()` method, but if the layer is expected to handle a large number of groups it is sometimes better to use `draw_panel()`. The reason for this is that the grid package that powers ggplot2 performs better when fewer grobs (graphical objects) are created: a single grob with 10,000 points can be drawn faster than 10,000 grobs with one point each. 
 
 If you want to combine the functionality of multiple geoms it can usually be achieved by preparing the data for each of the geoms inside the `draw_*()` call
-and send it off to the different geoms, collecting the output in a `gList` (a list of grobs) if the call is `draw_group()` or a `gTree` (a grob containing multiple children grobs) if the call is `draw_panel()`. An example of this can be seen in `geom_smooth()` which combines `geom_line()` and `geom_ribbon()`:
+and send it off to the different geoms, collecting the output using `grid::gList()` when a list of grobs is needed or `grid::gTree()` if a single grob with multiple children is required. 
+
+Example:
 
 ```{r}
-print(GeomSmooth$draw_group)
+GeomBarbell <- ggproto("GeomBarbell", Geom,
+  
+  required_aes = c("x", "y", "xend", "yend"),
+  
+  default_aes = aes(
+    colour = "black",
+    size = .5,
+    linetype = 1,
+    shape = 19,
+    fill = NA,
+    alpha = NA,
+    stroke = 1
+  ),
+  
+  draw_panel = function(data, panel_params, coord, fatten = 4, ...) {
+    
+    # transformed data for the points
+    point1 <- transform(data, size = size * fatten) 
+    point2 <- transform(data, x = xend, y = yend, size = size * fatten)
+    
+    # return all three components
+    grid::gList(
+      GeomSegment$draw_panel(data, panel_params, coord, ...),
+      GeomPoint$draw_panel(point1, panel_params, coord, ...),
+      GeomPoint$draw_panel(point2, panel_params, coord, ...)
+    )
+  }
+)
 ```
 
-If you cannot leverage any existing geom implementation for creating the grobs, you'd have to implement the full `draw_*()` method from scratch. Later chapters will have examples of this.
+Wrapper function to expose to the user:
+
+```{r}
+geom_barbell <- function (mapping = NULL, data = NULL, stat = "identity", position = "identity", 
+                          ..., na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+  layer(data = data, mapping = mapping, stat = stat, geom = GeomBarbell, 
+        position = position, show.legend = show.legend, inherit.aes = inherit.aes, 
+        params = list(na.rm = na.rm, ...))
+}
+```
+
+Example:
+
+`r columns(2, 1)`
+```{r}
+df <- data.frame(x = 1:10, xend = 0:9, y = 0, yend = 1:10)
+base <- ggplot(df, aes(x, y, xend = xend, yend = yend))
+
+base + geom_barbell()
+base + geom_barbell(shape = 4, linetype = "dashed")
+```
+
+If you cannot leverage any existing geom implementation for creating the grobs, you'd have to implement the full `draw_*()` method from scratch, which requires a little more understanding of the grid package. Chapter \ref@(spring1) provides an example of this.
 
 ## New coords {#new-coords}
+
 At its most basic, the coord is responsible for rescaling the position aesthetics into a [0, 1] range, potentially transforming them in the process. The only place where you might call any methods from a coord is in a geoms `draw_*()` method where the `transform()` method is called on the data to turn the position data into the right format before creating grobs from it. The most common (and default) is CoordCartesian, which simply rescales the position data:
 
 ```{r}
