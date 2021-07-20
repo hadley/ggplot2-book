@@ -111,7 +111,7 @@ base +
 
 In this code, the specific-first inheritance rule applies, and as such setting `axis.line` does not override the more specific `axis.line.x`.
 
-### Defining theme elements
+### Defining theme elements {#defining-theme-elements}
 
 In Chapter \@ref(polishing) we saw that the structure of a ggplot2 theme is defined by the element tree. The element tree specifies what type each theme element has and where it inherits its value from (you can use the `get_element_tree()` function to return this tree as a list). The extension system for ggplot2 makes it possible to define new theme elements by registering them as part of the element tree using the `register_theme_elements()` function. Let's say you're writing a new package called "ggxyz" that includes a panel annotation as part of the coordinate system and you want this panel annotation to be a theme element:
 
@@ -465,13 +465,18 @@ If you cannot leverage any existing geom implementation for creating the grobs, 
 
 ## New coords {#new-coords}
 
-At its most basic, the coord is responsible for rescaling the position aesthetics into a [0, 1] range, potentially transforming them in the process. The only place where you might call any methods from a coord is in a geoms `draw_*()` method where the `transform()` method is called on the data to turn the position data into the right format before creating grobs from it. The most common (and default) is CoordCartesian, which simply rescales the position data:
+The primary role of the coord is to rescale the position aesthetics onto the [0, 1] range, potentially transforming them in the process. Defining new coords is relatively rare: the coords described in Chapter \@ref(coord) are suitable for most non-cartographic cases, and with the introduction of `coord_sf()` discussed in Chapter \@ref(maps), ggplot2 is able to capture most cartographic projections out of the box. 
 
-```{r}
-print(CoordCartesian$transform)
-```
+The most common situation in which developers may need to know the internals of coordinate systems is when defining new geoms. It is not uncommon for one of the `draw_*()` methods in a geom to call the `transform()` method of the coord. For example, the `transform()` method for `CoordCartesian` is used to rescale position data but does not transform it in any other way, and the geom may need to apply this rescaling to draw the grob properly. An example of this use appears in Chapter \@ref(spring1).
 
-Apart from this seemingly simple use, coords have a lot of responsibility and power that extension developers can leverage, but which is probably best left alone. Coords takes care of rendering the axes, axis labels, and panel foreground and background and it can intercept both the layer data and facet layout and modify it. Still, with the introduction of `coord_sf()` there is little need for new coords as most non-cartography usecases are captured with existing coords, and `coord_sf()` supports all the various projections needed in cartography.
+
+<!-- DJN: not sure how much printing the source helps here? Maybe better to explain in next chapter -->
+<!-- ```{r} -->
+<!-- CoordCartesian$transform -->
+<!-- ``` -->
+
+
+In addition to transforming position data, the coord has responsibility for rendering the axes, axis labels, panel foreground and panel background. Additionally, the coord can intercept and modify the layer data and the facet layout. Much of this functionality is available to developers to leverage if it is absolutely necessary (an example is shown in Section \@ref(defining-theme-elements)), but in the majority of cases it is better to leave this functionality alone. 
 
 ## New scales
 There are three ways one might want to extend ggplot2 with new scales. The simplest is the case where you would like to provide a convenient wrapper for a new palette to an existing scale (this would often mean a new color/fill palette). For this case it will be sufficient to provide a new scale constructor that passes the relevant palette into the relevant basic scale constructor. This is used throughout ggplot2 itself as in e.g. the viridis scale:
