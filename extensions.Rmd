@@ -248,6 +248,8 @@ When defining new stats, it is often necessary to specify the `setup_params()` a
 - The `setup_params()` function is called first. It takes two arguments corresponding to the layer `data` and a list of parameters (`params`) specified during construction, and returns a modified list of parameters that will be used in later computations. Because the parameters are used by the `compute_*()` functions, the elements of the list should correspond to argument names in the `compute_*()` functions in order to be made available. 
 - The `setup_data()` function is called next. It also takes `data` and `params` as input---though the parameters it receives are the modified parameters returned from `setup_params()`---and returns the modified layer data. It is important that no matter what modifications happen in `setup_data()` the `PANEL` and `group` columns remain intact.
 
+In the example below I show how to use the `setup_params()` method to define a new stat. An example modifying the `setup_data()` method is included later, in Section \@ref(modifying-geoms).
+
 Suppose we want to create `StatDensityCommon`, a stat that computes a density estimate of a variable after estimating a default bandwidth to apply to all groups in the data. This could be done in many different ways but for simplicity let's imagine we have a function `common_bandwidth()` that estimates the bandwidth separately for each group using the `bw.nrd0()` function and then returns the average:
 
 ```{r common-bandwidth}
@@ -303,6 +305,7 @@ ggplot(mpg, aes(displ, colour = drv)) +
 ```
 
 
+
 ## New geoms {#new-geoms}
 While many things can be achieved by creating new stats, there are situations where creating a new geom is necessary. Some of these are
 
@@ -312,7 +315,7 @@ While many things can be achieved by creating new stats, there are situations wh
 
 Creating new geoms can feel slightly more daunting than creating new stats as the end result is a collection of grobs rather than a modified data.frame and this is something outside of the comfort zone of many developers. Still, Apart from the last point above, it is possible to get by without having to think too much about grid and grobs. 
 
-### Modifying existing geoms
+### Modifying geom defaults {#modifying-geom-defaults}
 
 In many situations your new geom may simply be an existing geom that expects slightly different input or has different default parameter values. The `stat_chull()` example from the previous section is a good example of this. Notice that in when creating plots using `stat_chull()` I had to manually specify the `fill` and `colour` parameters if those were not mapped to aesthetics. The reason for this is that `GeomPolygon` creates a borderless filled polygon by default, and this is not well suited to the needs of our convex hull geom. To make our lives a little easier then, we can create a subclass of `GeomPolygon` that modifies the defaults so that it produces a hollow polygon by default. We can do this in a straightforward way by overriding the `default_aes` value:
 
@@ -350,6 +353,53 @@ ggplot(mpg, aes(displ, hwy)) +
   geom_point() + 
   geom_chull()
 ```
+
+### Modifying geom data {#modifying-geom-data}
+
+In other cases you may want to define a geom that is visually equivalent to an existing geom, but accepts data in a different format. An example of this in the ggplot2 source code is `geom_spoke()`, a variation of `geom_segment()` that accepts data in polar coordinates. To make this work, the `GeomSpoke` ggproto object is subclassed from `GeomSegment`, and uses the `setup_data()` method to take polar coordinate data from the user and then transform it to the format that `GeomSegment` expects. To illustrate this technique we'll create `geom_spike()`, a geom that re-implements the functionality of `geom_spoke()`. This requires us to overwrite the `required_aes` field as well as the `setup_data()` method:
+
+```{r}
+GeomSpike <- ggproto("GeomSpike", GeomSegment,
+  
+  # specify the required aesthetics                   
+  required_aes = c("x", "y", "angle", "radius"),
+  
+  # transform the data before any drawing takes place
+  setup_data = function(data, params) {
+    transform(data,
+      xend = x + cos(angle) * radius,
+      yend = y + sin(angle) * radius
+    )
+  }
+)
+```
+
+We now write the user facing `geom_spike()` function:
+
+```{r}
+geom_spike <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ..., na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+    layer(data = data, mapping = mapping, geom = GeomSpike, stat = stat, 
+        position = position, show.legend = show.legend, inherit.aes = inherit.aes, 
+        params = list(na.rm = na.rm, ...))
+}
+```
+
+`r columns(1, 1/2, 1)`
+```{r}
+df <- data.frame(
+  x = 1:10,
+  y = 0,
+  angle = seq(from = 0, to = 2 * pi, length.out = 10),
+  radius = seq(from = 0, to = 2, length.out = 10)
+)
+ggplot(df, aes(x, y)) +
+  geom_spike(aes(angle = angle, radius = radius)) + 
+  coord_equal()
+```
+
+### Combining multiple geoms
+
+
 
 ### Blah
 
