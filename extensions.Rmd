@@ -517,10 +517,61 @@ The `Position` class is slightly simpler than the other ggproto classes as it ha
 While positions may appear simple from the look of the base class, they can be very fiddly to get to work correctly in a consistent manner. Positions have very little control over the shape and format of the layer data and should behave predictably in all situations. An example is the case of dodging, where users would like to be able to dodge e.g. both histograms and points and expect the point-cloud to appear in the same area as its respective boxplot. The challenge is that a boxplot has an explicit width that can be used to guide the dodging whereas the same is not true for points but we intuitively know that they should be dodged by the same value. Such considerations often mean that position implementations end up much more complex than their simplest solution to take care of a wide range of edge cases.
 
 ## New facets
-Facets are one of the most powerful concepts in ggplot2, and it follows that extending facets is one of the most powerful ways to modify how ggplot2 operates. All that power comes at a cost, though. Facets are responsible for recieving all the different panels, attching axes (and strips) to them, and arranging them in the expected manner. All of this requires a lot of gtable manipulation and grid understanding and can be a daunting undertaking.
+Facets are one of the most powerful concepts in ggplot2, and it follows that extending facets is one of the most powerful ways to modify how ggplot2 operates. All that power comes at a cost, though. Facets are responsible for receIving all the different panels, attAching axes (and strips) to them, and arranging them in the expected manner. All of this requires a lot of gtable manipulation and grid understanding and can be a daunting undertaking.
 
-Depending on what you want to achieve, you may be able to skip that almost completely. If your new facet will end up with a rectangular arrangement of panels, it is often possible to subclass either `FacetWrap` or `FacetGrid`, and simply provide new `compute_layout()`, and `map_data()` methods. The first takes care of recieving the original data and create a layout specification, while the second recieves the created layout along with the data, and attaches a `PANEL` column to it, mapping the data to one of the panels in the layout. An example of this type of subclassing will be given in a later chapter.
+Depending on what you want to achieve, you may be able to skip that almost completely. If your new facet will end up with a rectangular arrangement of panels, it is often possible to subclass either `FacetWrap` or `FacetGrid`, and simply provide new `compute_layout()`, and `map_data()` methods. The first takes care of recieving the original data and create a layout specification, while the second receIves the created layout along with the data, and attaches a `PANEL` column to it, mapping the data to one of the panels in the layout
 
-## New guides
+```{r}
+FacetScatter <- ggproto("FacetScatter", FacetWrap,
+  
+  setup_params = function(data, params) {
+    params <- FacetWrap$setup_params(data, params)
+    params$free <- list(x = FALSE, y = FALSE)
+    return(params)
+  },                      
+  
+  compute_layout = function(data, params) {
+                          
+    vars <- params$facets
+    base <- combine_vars(data, params$plot_env, vars, FALSE)
+                          
+    locations <- expand.grid(ROW = 1:params$nrow, COL = 1:params$ncol)
+    shuffle <- sample(nrow(locations), nrow(base))
+                          
+    layout <- data.frame(
+      PANEL = 1:nrow(base),
+      ROW = locations$ROW[shuffle],
+      COL = locations$COL[shuffle],
+      SCALE_X = 1L,
+      SCALE_Y = 1L
+    )
+    return(cbind(layout, base))
+  }                      
+)
+```
 
+```{r}
+facet_scatter <- function(facets, nrow, ncol, 
+  strip.position = "top", labeller = "label_value") {
+  
+  ggproto(NULL, FacetScatter, 
+    params = list(
+      facets = rlang::quos_auto_name(facets), 
+      strip.position = strip.position,
+      labeller = labeller, 
+      ncol = ncol, 
+      nrow = nrow
+    )
+  )
+}
+```
+
+`r columns(1, 1, 1)`
+```{r}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() + 
+  facet_scatter(vars(manufacturer), nrow = 5, ncol = 6)
+```
+
+<!-- ## New guides -->
 <!-- >Should probably not mention anything until they have been ported to `ggproto` -->
