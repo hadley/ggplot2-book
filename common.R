@@ -1,4 +1,5 @@
 library(ggplot2)
+conflicted::conflict_prefer("Position", "ggplot2")
 library(dplyr)
 conflicted::conflict_prefer("filter", "dplyr")
 conflicted::conflict_prefer("pull", "dplyr") # in case git2r is loaded

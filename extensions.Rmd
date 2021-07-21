@@ -512,7 +512,59 @@ A last possibility worth mentioning, but outside the scope of this book, is the 
 ## New positions
 Positions receives the data just before it is passed along to drawing, and can alter it in any way it likes, though there is an implicit agreement that only position aesthetics are affected by position adjustments. While it is possible to pass arguments to a position adjustment by calling its constructor, they are often called by name and will thus use default parameters. Keep this in mind when designing position adjustments and make the defaults work for most cases if at all possible.
 
-The `Position` class is slightly simpler than the other ggproto classes as it has a very narrow scope. Like `Stat` it has `compute_layer()` and `compute_panel()` methods (but no `compute_group()`) which allows for the same tiered specification of the transformation. It also has `setup_params()` and `setup_data()` but the former deviates a bit from the other `setup_params()` methods in that it only recieves the layer data and not a list of parameters to modify. This is because positions doesn't recieve parameters from the main `geom_*()`/`stat_*()` call.
+The `Position` class is slightly simpler than the other ggproto classes as it has a very narrow scope. Like `Stat` it has `compute_layer()` and `compute_panel()` methods (but no `compute_group()`) which allows for the same tiered specification of the transformation. It also has `setup_params()` and `setup_data()` but the former deviates a bit from the other `setup_params()` methods in that it only receives the layer data and not a list of parameters to modify. This is because positions doesn't receive parameters from the main `geom_*()`/`stat_*()` call.
+
+To give a simple example, let's reimplement the `position_jitternormal()` function from ggforce.
+
+```{r}
+PositionJitterNormal <- ggproto('PositionJitterNormal', Position,
+                                
+  required_aes = c('x', 'y'),
+
+  setup_params = function(self, data) {
+    if(is.null(self$sd_x)) {
+      self$sd_x <- .15
+    }
+    if(is.null(self$sd_y)) {
+      self$sd_y <- .15
+    }
+    return(self)
+  },
+
+  compute_layer = function(data, params, panel) {
+    trans_x <- if (params$sd_x > 0) {
+      function(x) x + rnorm(length(x), sd = params$sd_x)
+    }
+    trans_y <- if (params$sd_y > 0) {
+      function(x) x + rnorm(length(x), sd = params$sd_y)
+    }
+
+    transform_position(data, trans_x, trans_y)
+  }
+)
+
+position_jitternormal <- function(sd_x = NULL, sd_y = NULL) {
+  ggproto(NULL, PositionJitterNormal,
+    sd_x = sd_x,
+    sd_y = sd_y
+  )
+}
+
+
+df <- data.frame(
+  x = sample(1:3, 1500, TRUE),
+  y = sample(1:3, 1500, TRUE)
+)
+
+# position_jitter results in rectangular clusters
+ggplot(df, aes(x = x, y = y)) +
+  geom_point(position = position_jitter())
+
+# geom_jitternormal results in more circular clusters
+ggplot(df, aes(x = x, y = y)) +
+  geom_point(position = position_jitternormal())
+```
+
 
 While positions may appear simple from the look of the base class, they can be very fiddly to get to work correctly in a consistent manner. Positions have very little control over the shape and format of the layer data and should behave predictably in all situations. An example is the case of dodging, where users would like to be able to dodge e.g. both histograms and points and expect the point-cloud to appear in the same area as its respective boxplot. The challenge is that a boxplot has an explicit width that can be used to guide the dodging whereas the same is not true for points but we intuitively know that they should be dodged by the same value. Such considerations often mean that position implementations end up much more complex than their simplest solution to take care of a wide range of edge cases.
 
