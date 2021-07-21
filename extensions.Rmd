@@ -517,46 +517,72 @@ The `Position` class is slightly simpler than the other ggproto classes as it ha
 While positions may appear simple from the look of the base class, they can be very fiddly to get to work correctly in a consistent manner. Positions have very little control over the shape and format of the layer data and should behave predictably in all situations. An example is the case of dodging, where users would like to be able to dodge e.g. both histograms and points and expect the point-cloud to appear in the same area as its respective boxplot. The challenge is that a boxplot has an explicit width that can be used to guide the dodging whereas the same is not true for points but we intuitively know that they should be dodged by the same value. Such considerations often mean that position implementations end up much more complex than their simplest solution to take care of a wide range of edge cases.
 
 ## New facets
-Facets are one of the most powerful concepts in ggplot2, and it follows that extending facets is one of the most powerful ways to modify how ggplot2 operates. All that power comes at a cost, though. Facets are responsible for receIving all the different panels, attAching axes (and strips) to them, and arranging them in the expected manner. All of this requires a lot of gtable manipulation and grid understanding and can be a daunting undertaking.
 
-Depending on what you want to achieve, you may be able to skip that almost completely. If your new facet will end up with a rectangular arrangement of panels, it is often possible to subclass either `FacetWrap` or `FacetGrid`, and simply provide new `compute_layout()`, and `map_data()` methods. The first takes care of recieving the original data and create a layout specification, while the second receIves the created layout along with the data, and attaches a `PANEL` column to it, mapping the data to one of the panels in the layout
+Facets are one of the most powerful concepts in ggplot2, and extending facets is one of the most powerful ways to modify how ggplot2 operates. This power comes at a cost: facets are responsible for receiving all the panels, attaching the axes and strips to them, and then arranging them in the expected manner. To create an entirely new faceting system requires an in-depth understanding of grid and gtable, and can be a daunting challenge. Fortunately, you don't always need to create the facet from scratch. For example, if your new facet will produce panels that lie on a grid, you can often subclass `FacetWrap` or `FacetGrid` and modify one or two methods. In particular, you may wish to define new `compute_layout()` and/OR `map_data()` methods:
+
+- The `compute_layout()` method receives the original data set and creates a layout specification, a data frame with one row per panel that indicates where each panel falls on the grid, along with information about which axis limits should be free and which should be fixed.
+
+- The `map_data()` method receives this layout specification and the original data as the input, and attaches a `PANEL` column to it, which is used to assign each row in the data frame to one of the panels in the layout.
+
+To illustrate how you can create new facets by subclassing an existing facet, I'll create a relatively simple facetting system that "scatters" the panels, placing them in random locations on a grid. To do this I'll create a new ggproto object called `FacetScatter` that is a subclass of `FacetWrap`, and write a new `compute_layout()` method that places each panel in a randomly chosen cell of the panel grid:
 
 ```{r}
 FacetScatter <- ggproto("FacetScatter", FacetWrap,
   
+  # this isn't important to the example: all I'm doing is
+  # forcing all panels to use fixed scale so that the rest
+  # of the example can be kept simple
   setup_params = function(data, params) {
     params <- FacetWrap$setup_params(data, params)
     params$free <- list(x = FALSE, y = FALSE)
     return(params)
   },                      
   
+  # the compute_layout() method does the work
   compute_layout = function(data, params) {
-                          
-    vars <- params$facets
-    base <- combine_vars(data, params$plot_env, vars, FALSE)
-                          
-    locations <- expand.grid(ROW = 1:params$nrow, COL = 1:params$ncol)
-    shuffle <- sample(nrow(locations), nrow(base))
-                          
-    layout <- data.frame(
-      PANEL = 1:nrow(base),
-      ROW = locations$ROW[shuffle],
-      COL = locations$COL[shuffle],
-      SCALE_X = 1L,
-      SCALE_Y = 1L
+                  
+    # create a data frame with one column per facetting 
+    # variable, and one row for each possible combination
+    # of values (i.e., one row per panel)
+    panels <- combine_vars(
+      data = data,
+      env = params$plot_env, 
+      vars = params$facets, 
+      drop = FALSE
     )
-    return(cbind(layout, base))
+    
+    # create a data frame with columns for ROW and COL, 
+    # with one row for each possible cell in the panel grid
+    locations <- expand.grid(ROW = 1:params$nrow, COL = 1:params$ncol)
+    
+    # randomly sample a subset of the locations
+    shuffle <- sample(nrow(locations), nrow(panels))
+    
+    # assign each panel a location                      
+    layout <- data.frame(
+      PANEL = 1:nrow(panels),       # panel identifier
+      ROW = locations$ROW[shuffle], # row number for the panels
+      COL = locations$COL[shuffle], # column number for the panels
+      SCALE_X = 1L,                 # all x-axis scales are fixed
+      SCALE_Y = 1L                  # all y-axis scales are fixed
+    )
+    
+    # bind the layout information with the panel identification
+    # and return the resulting specification
+    return(cbind(layout, panels))
   }                      
 )
 ```
 
-```{r}
+To give you a sense of what this output looks like, this is the layout specification that is created when building the plot shown at the end of this section:
+
+```{r facet-scatter, echo=FALSE}
 facet_scatter <- function(facets, nrow, ncol, 
   strip.position = "top", labeller = "label_value") {
   
   ggproto(NULL, FacetScatter, 
     params = list(
-      facets = rlang::quos_auto_name(facets), 
+      facets = rlang::quos_auto_name(facets),
       strip.position = strip.position,
       labeller = labeller, 
       ncol = ncol, 
@@ -566,11 +592,34 @@ facet_scatter <- function(facets, nrow, ncol,
 }
 ```
 
+```{r facet-scatter-plot, echo=FALSE}
+scatter <- ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() + 
+  facet_scatter(vars(manufacturer), nrow = 5, ncol = 6)
+
+scatter_built <- ggplot_build(scatter)
+scatter_built$layout$layout
+```
+
+Next, I'll write the `facet_scatter()` constructor function to expose this functionality to the user. For facets this is as simple as creating a new instance of the relevant ggproto object (`FacetScatter` in this case) that passes user-specified parameters to the facet:
+
+```{r, ref.label="facet-scatter"}
+```
+
+There a couple of things to note about this constructor function. First, to keep the example simple, `facet_scatter()` contains fewer arguments than `facet_wrap()`, and I've made `nrow` and `ncol` required arguments: the user needs to specify the size of the grid over which the panels should be scattered. Second, the `facet_scatter()` function requires you to specify the facets using `vars()`. It won't work if the user tries to supply a formula. Relatedly, note the use of `rlang::quos_auto_name()`: the `vars()` function returns an unnamed list of expressions (technically, quosures), but the downstream code requires a named list. As long as you're expecting the user to use `vars()` this is all the preprocessing you need, but if you want to support other input formats you'll need to be a little fancier (you can see how to do this by looking at the ggplot2 source code). 
+
+In any case, we now have a working facet:
+
 `r columns(1, 1, 1)`
-```{r}
+```{r eval=FALSE}
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
   facet_scatter(vars(manufacturer), nrow = 5, ncol = 6)
+```
+```{r echo=FALSE}
+# use the earlier built one so that the random ROW and COL info
+# matches the layout specification shown above
+scatter_built$plot 
 ```
 
 <!-- ## New guides -->
