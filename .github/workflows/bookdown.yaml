@@ -30,12 +30,20 @@ jobs:
       - name: Setup pandoc
         uses: r-lib/actions/setup-pandoc@master
 
-      - name: Cache R packages
-        uses: actions/cache@v1
+      - name: Install pak and query dependencies
+        run: |
+          install.packages("pak", repos = "https://r-lib.github.io/p/pak/dev/")
+          saveRDS(pak::pkg_deps("local::.", dependencies = TRUE), ".github/r-depends.rds")
+        shell: Rscript {0}
+
+      - name: Restore R package cache
+        uses: actions/cache@v2
         with:
-          path: ${{ env.R_LIBS_USER }}
-          key: r-4-${{ hashFiles('DESCRIPTION') }}
-          restore-keys: r-4-
+          path: |
+            ${{ env.R_LIBS_USER }}/*
+            !${{ env.R_LIBS_USER }}/pak
+          key: bookdown-4-${{ hashFiles('.github/r-depends.rds') }}
+          restore-keys: bookdown-4-
 
       - name: Cache bookdown results
         uses: actions/cache@v1
@@ -43,11 +51,6 @@ jobs:
           path: _bookdown_files
           key: bookdown-4-${{ hashFiles('**/*Rmd') }}
           restore-keys: bookdown-4-
-
-      - name: Install pak
-        run: |
-          install.packages("pak", repos = "https://r-lib.github.io/p/pak/dev/")
-        shell: Rscript {0}
 
       - name: Install dependencies
         run: |
