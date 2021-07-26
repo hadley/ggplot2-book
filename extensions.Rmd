@@ -510,63 +510,78 @@ Another relatively simple case is where you provide a geom that takes a new type
 A last possibility worth mentioning, but outside the scope of this book, is the possibility of creating a new primary scale type. Historically, ggplot2 has had two primary scale types,  continuous and discrete. Recently the binned scale type joined which allows for binning of continuous data into discrete bins. It is possible to develop further primary scales, by following the example of `ScaleBinned`. It requires subclassing `Scale` or one of the provided primary scales, and create new `train()` and `map()` methods, among others.
 
 ## New positions
-Positions receives the data just before it is passed along to drawing, and can alter it in any way it likes, though there is an implicit agreement that only position aesthetics are affected by position adjustments. While it is possible to pass arguments to a position adjustment by calling its constructor, they are often called by name and will thus use default parameters. Keep this in mind when designing position adjustments and make the defaults work for most cases if at all possible.
 
-The `Position` class is slightly simpler than the other ggproto classes as it has a very narrow scope. Like `Stat` it has `compute_layer()` and `compute_panel()` methods (but no `compute_group()`) which allows for the same tiered specification of the transformation. It also has `setup_params()` and `setup_data()` but the former deviates a bit from the other `setup_params()` methods in that it only receives the layer data and not a list of parameters to modify. This is because positions doesn't receive parameters from the main `geom_*()`/`stat_*()` call.
+The `Position` ggproto class is somewhat simpler than other ggproto classes, reflecting the fact that the `position_*()` functions have a very narrow scope. The role of the position is to receive and modify the data immediately before it is passed to any drawing functions. Strictly speaking, the position is able to modify the data in any fashion, but there is an implicit expectation that it modifies position aesthetics only. A position possesses `compute_layer()` and `compute_panel()` methods that behave analogously to the equivalent methods for a stat, but it does not possess a `compute_group()` method. It also contains `setup_params()` and `setup_data()` methods that are similar to the `setup_*()` methods for other ggproto classes, with one notable exception: the `setup_params()` method only receives the data as input, and not a list of parameter. The reason for this is that `position_*()` functions are never used on their own in ggplot2: rather, they are always called within the main `geom_*()` or `stat_*()` command that specifies the layer, and the parameters from the main command are not passed to the `position_*()` function call.  
 
-To give a simple example, let's reimplement the `position_jitternormal()` function from ggforce.
+To give a simple example, I'll implement a slightly simplified version of the `position_jitternormal()` function from the ggforce package, which behaves in the same way as `position_jitter()` except that the perturbations are sampled from a normal distribution rather than a uniform distribution. In order to keep the exposition simple, I'll assume we have the following convenience function defined:
+
+```{r}
+normal_transformer <- function(x, sd) {
+  function(x) {x + rnorm(length(x), sd = sd)}
+}
+```
+
+When called, `normal_transformer()` returns a function that perturbs the input vector by adding random noise with mean zero and standard deviation `sd`. The first step when creating our new position is to make a subclass of the `Position` object:
 
 ```{r}
 PositionJitterNormal <- ggproto('PositionJitterNormal', Position,
-                                
+           
+  # we need an x and y position aesthetic                              
   required_aes = c('x', 'y'),
-
+  
+  # by using the "self" argument we can access parameters that the 
+  # user has passed to the position, and add them as layer parameters
   setup_params = function(self, data) {
-    if(is.null(self$sd_x)) {
-      self$sd_x <- .15
-    }
-    if(is.null(self$sd_y)) {
-      self$sd_y <- .15
-    }
-    return(self)
+    list(
+      sd_x = self$sd_x, 
+      sd_y = self$sd_y
+    )
   },
 
+  # when computing the layer, we can read the standard deviation 
+  # parameters off the param list, and use them to transform the
+  # position aesthetics
   compute_layer = function(data, params, panel) {
-    trans_x <- if (params$sd_x > 0) {
-      function(x) x + rnorm(length(x), sd = params$sd_x)
-    }
-    trans_y <- if (params$sd_y > 0) {
-      function(x) x + rnorm(length(x), sd = params$sd_y)
-    }
-
-    transform_position(data, trans_x, trans_y)
+    
+    # construct transformers for the x and y position scales 
+    x_transformer <- normal_transformer(x, params$sd_x)
+    y_transformer <- normal_transformer(y, params$sd_y)
+    
+    # return the transformed data
+    transform_position(
+      df = data,
+      trans_x = x_transformer,  
+      trans_y = y_transformer
+    )
   }
 )
+```
 
-position_jitternormal <- function(sd_x = NULL, sd_y = NULL) {
-  ggproto(NULL, PositionJitterNormal,
-    sd_x = sd_x,
-    sd_y = sd_y
-  )
+The `compute_layer()` method makes use of `transform_position()`, a convenience function provided by ggplot2 whose role is to apply the user-supplied functions to all aesthetics associated with the relevant position scale (e.g., not just x and y, but also xend and yend). 
+
+In a realistic implementation, the `position_jitternormal()` constructor would apply some input validation to make sure the user has not specified negative standard deviations, but in this context I'll keep it simple:
+
+```{r}
+position_jitternormal <- function(sd_x = .15, sd_y = .15) {
+  ggproto(NULL, PositionJitterNormal, sd_x = sd_x, sd_y = sd_y)
 }
+```
 
+We are now able to use our new position function when creating plots. To see the difference between `position_jitter()` and the `position_jitternormal()` function we have just defined, compare the following plots:
 
+`r columns(2, 1)`
+```{r}
 df <- data.frame(
   x = sample(1:3, 1500, TRUE),
   y = sample(1:3, 1500, TRUE)
 )
 
-# position_jitter results in rectangular clusters
-ggplot(df, aes(x = x, y = y)) +
-  geom_point(position = position_jitter())
-
-# geom_jitternormal results in more circular clusters
-ggplot(df, aes(x = x, y = y)) +
-  geom_point(position = position_jitternormal())
+ggplot(df, aes(x, y)) + geom_point(position = position_jitter())
+ggplot(df, aes(x, y)) + geom_point(position = position_jitternormal())
 ```
 
+One practical consideration to keep in mind when designing new positions is that users very rarely call the position constructor directly. The command specifying the layer is more likely to include an expression like `position = "dodge"` rather than `position = position_dodge()`, and even less likely to override your default values as would occur if the user specified `position = position_dodge(width = 0.9)`. As a consequence, it is important to think carefully and makethe defaults work for most cases if at all possible. This can be quite tricky: positions have very little control over the shape and format of the layer data, but the user will expect them to behave predictably in all situations. An example is the case of dodging, where users might like to dodge a boxplot and a point-cloud, and would expect the point-cloud to appear in the same area as its respective boxplot. This is a perfectly reasonable expectation at the user level, but it can be tricky for the developer. A boxplot has an explicit width that can be used to control the dodging whereas the same is not true for points, but the user will expect them to be moved in the same way. Such considerations often mean that position implementations end up much more complex than their simplest solution to take care of a wide range of edge cases.
 
-While positions may appear simple from the look of the base class, they can be very fiddly to get to work correctly in a consistent manner. Positions have very little control over the shape and format of the layer data and should behave predictably in all situations. An example is the case of dodging, where users would like to be able to dodge e.g. both histograms and points and expect the point-cloud to appear in the same area as its respective boxplot. The challenge is that a boxplot has an explicit width that can be used to guide the dodging whereas the same is not true for points but we intuitively know that they should be dodged by the same value. Such considerations often mean that position implementations end up much more complex than their simplest solution to take care of a wide range of edge cases.
 
 ## New facets
 
