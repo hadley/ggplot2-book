@@ -440,9 +440,7 @@ As with stats, geoms have a `setup_params()` method in addition to the `setup_da
 A useful technique for defining new geoms is to combine functionality from different geoms. For example, the `geom_smooth()` function for drawing nonparametric regression lines uses functionality from `geom_line()` to draw the regression line and `geom_ribbon()` to draw the shaded error bands. To do this within your new geom, it is helpful to consider the drawing process. In much the same way that a stat works by a tiered succession of calls to `compute_layer()` then `compute_panel()` and finally `compute_group()`, a geom is constructed by calls to  `draw_layer()`, `draw_panel()`, and `draw_group()`. From a conceptual standpoint it is usually easiest to write code that modifies the `draw_group()` method, but if the layer is expected to handle a large number of groups it is sometimes better to use `draw_panel()`. The reason for this is that the grid package that powers ggplot2 performs better when fewer grobs (graphical objects) are created: a single grob with 10,000 points can be drawn faster than 10,000 grobs with one point each. 
 
 If you want to combine the functionality of multiple geoms it can usually be achieved by preparing the data for each of the geoms inside the `draw_*()` call
-and send it off to the different geoms, collecting the output using `grid::gList()` when a list of grobs is needed or `grid::gTree()` if a single grob with multiple children is required. 
-
-Example:
+and send it off to the different geoms, collecting the output using `grid::gList()` when a list of grobs is needed or `grid::gTree()` if a single grob with multiple children is required. As a relatively minimal example, consider the `GeomBarbell` ggproto object that creates geoms consisting of two points connected by a bar:
 
 ```{r}
 GeomBarbell <- ggproto("GeomBarbell", Geom,
@@ -475,13 +473,13 @@ GeomBarbell <- ggproto("GeomBarbell", Geom,
 )
 ```
 
-Wrapper function to expose to the user:
+In this example the `draw_panel()` method returns a list of three grobs, one generated from `GeomSegment` and two from `GeomPoint`. As usual, if we want the geom to be exposed to the user we add a wrapper function:
 
 ```{r}
-geom_barbell <- function (mapping = NULL, data = NULL, 
-                          stat = "identity", position = "identity", 
-                          ..., na.rm = FALSE, show.legend = NA, 
-                          inherit.aes = TRUE) {
+geom_barbell <- function(mapping = NULL, data = NULL, 
+                         stat = "identity", position = "identity", 
+                         ..., na.rm = FALSE, show.legend = NA, 
+                         inherit.aes = TRUE) {
   layer(
     data = data, 
     mapping = mapping, 
@@ -495,7 +493,7 @@ geom_barbell <- function (mapping = NULL, data = NULL,
 }
 ```
 
-Example:
+We are now able to use the composite geom:
 
 `r columns(2, 1)`
 ```{r}
@@ -506,7 +504,7 @@ base + geom_barbell()
 base + geom_barbell(shape = 4, linetype = "dashed")
 ```
 
-If you cannot leverage any existing geom implementation for creating the grobs, you'd have to implement the full `draw_*()` method from scratch, which requires a little more understanding of the grid package. Chapter \@ref(spring1) provides an example of this.
+If you cannot leverage any existing geom implementation for creating the grobs, you'd have to implement the full `draw_*()` method from scratch, which requires a little more understanding of the grid package. For more information about grid and an example that uses this to construct a geom from grid primitives, see Chapter \@ref(spring1).
 
 ## New coords {#new-coords}
 
