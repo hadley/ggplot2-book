@@ -147,7 +147,11 @@ coord_annotate <- function(label = "panel annotation") {
           default = FALSE,
           clip = "on",
           render_fg = function(panel_params, theme) {
-            element_render(theme, "ggxyz.panel.annotation", label = label)
+            element_render(
+              theme = theme, 
+              element = "ggxyz.panel.annotation", 
+              label = label
+            )
           }
   )
 }
@@ -213,12 +217,18 @@ As described in Section \@ref(ggproto) the first two arguments to `ggproto()` ar
 By creating this ggproto object we have a working stat, but have not yet given the user a way to access it. To address this we write a layer function, `stat_chull()`. All layer functions have the same form: you specify defaults in the function arguments and then call `layer()`, sending `...` into the `params` argument. The arguments in `...` will either be arguments for the geom (if you're making a stat wrapper), arguments for the stat (if you're making a geom wrapper), or aesthetics to be set. `layer()` takes care of teasing the different parameters apart and making sure they're stored in the right place. So our `stat_chull()` function looks like this
 
 ```{r}
-stat_chull <- function(mapping = NULL, data = NULL, geom = "polygon",
-                       position = "identity", na.rm = FALSE, show.legend = NA, 
+stat_chull <- function(mapping = NULL, data = NULL, 
+                       geom = "polygon", position = "identity", 
+                       na.rm = FALSE, show.legend = NA, 
                        inherit.aes = TRUE, ...) {
   layer(
-    stat = StatChull, data = data, mapping = mapping, geom = geom, 
-    position = position, show.legend = show.legend, inherit.aes = inherit.aes,
+    stat = StatChull, 
+    data = data, 
+    mapping = mapping, 
+    geom = geom, 
+    position = position, 
+    show.legend = show.legend, 
+    inherit.aes = inherit.aes, 
     params = list(na.rm = na.rm, ...)
   )
 }
@@ -284,14 +294,23 @@ StatDensityCommon <- ggproto("StatDensityCommon", Stat,
 We then define a `stat_*()` function in the usual way:
 
 ```{r stat-density-common-2}
-stat_density_common <- function(mapping = NULL, data = NULL, geom = "line",
-                                position = "identity", na.rm = FALSE, show.legend = NA, 
-                                inherit.aes = TRUE, bandwidth = NULL,
-                                ...) {
+stat_density_common <- function(mapping = NULL, data = NULL, 
+                                geom = "line", position = "identity", 
+                                na.rm = FALSE, show.legend = NA, 
+                                inherit.aes = TRUE, bandwidth = NULL, ...) {
   layer(
-    stat = StatDensityCommon, data = data, mapping = mapping, geom = geom, 
-    position = position, show.legend = show.legend, inherit.aes = inherit.aes,
-    params = list(bandwidth = bandwidth, na.rm = na.rm, ...)
+    stat = StatDensityCommon, 
+    data = data, 
+    mapping = mapping, 
+    geom = geom, 
+    position = position, 
+    show.legend = show.legend, 
+    inherit.aes = inherit.aes, 
+    params = list(
+      bandwidth = bandwidth, 
+      na.rm = na.rm,
+      ...
+    )
   )
 }
 ```
@@ -335,11 +354,16 @@ We can now define our `geom_chull()` constructor function using `GeomPolygonHoll
 
 ```{r}
 geom_chull <- function(mapping = NULL, data = NULL, stat = "chull",
-                       position = "identity", na.rm = FALSE, show.legend = NA, 
-                       inherit.aes = TRUE, ...) {
+                       position = "identity", na.rm = FALSE, 
+                       show.legend = NA, inherit.aes = TRUE, ...) {
   layer(
-    geom = GeomPolygonHollow, data = data, mapping = mapping, stat = stat, 
-    position = position, show.legend = show.legend, inherit.aes = inherit.aes,
+    geom = GeomPolygonHollow, 
+    data = data, 
+    mapping = mapping, 
+    stat = stat, 
+    position = position, 
+    show.legend = show.legend, 
+    inherit.aes = inherit.aes,
     params = list(na.rm = na.rm, ...)
   )
 }
@@ -377,12 +401,24 @@ GeomSpike <- ggproto("GeomSpike", GeomSegment,
 We now write the user facing `geom_spike()` function:
 
 ```{r}
-geom_spike <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ..., na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
-    layer(data = data, mapping = mapping, geom = GeomSpike, stat = stat, 
-        position = position, show.legend = show.legend, inherit.aes = inherit.aes, 
-        params = list(na.rm = na.rm, ...))
+geom_spike <- function(mapping = NULL, data = NULL, 
+                       stat = "identity", position = "identity", 
+                       ..., na.rm = FALSE, show.legend = NA, 
+                       inherit.aes = TRUE) {
+  layer(
+    data = data, 
+    mapping = mapping, 
+    geom = GeomSpike, 
+    stat = stat, 
+    position = position, 
+    show.legend = show.legend, 
+    inherit.aes = inherit.aes, 
+    params = list(na.rm = na.rm, ...)
+  )
 }
 ```
+
+We are now able to use `geom_spike()` in plots:
 
 `r columns(1, 1/2, 1)`
 ```{r}
@@ -442,11 +478,20 @@ GeomBarbell <- ggproto("GeomBarbell", Geom,
 Wrapper function to expose to the user:
 
 ```{r}
-geom_barbell <- function (mapping = NULL, data = NULL, stat = "identity", position = "identity", 
-                          ..., na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
-  layer(data = data, mapping = mapping, stat = stat, geom = GeomBarbell, 
-        position = position, show.legend = show.legend, inherit.aes = inherit.aes, 
-        params = list(na.rm = na.rm, ...))
+geom_barbell <- function (mapping = NULL, data = NULL, 
+                          stat = "identity", position = "identity", 
+                          ..., na.rm = FALSE, show.legend = NA, 
+                          inherit.aes = TRUE) {
+  layer(
+    data = data, 
+    mapping = mapping, 
+    stat = stat, 
+    geom = GeomBarbell, 
+    position = position, 
+    show.legend = show.legend, 
+    inherit.aes = inherit.aes, 
+    params = list(na.rm = na.rm, ...)
+  )
 }
 ```
 
@@ -645,7 +690,8 @@ To give you a sense of what this output looks like, this is the layout specifica
 
 ```{r facet-scatter, echo=FALSE}
 facet_scatter <- function(facets, nrow, ncol, 
-  strip.position = "top", labeller = "label_value") {
+                          strip.position = "top", 
+                          labeller = "label_value") {
   
   ggproto(NULL, FacetScatter, 
     params = list(
