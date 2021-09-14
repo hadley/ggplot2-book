@@ -7,6 +7,8 @@ columns(1, 2 / 3)
 
 After position, the most commonly used aesthetics are those based on colour, and there are many ways to map values to colours in ggplot2. Before we look at the details, it's useful to learn a little bit of colour theory. Colour theory is complex because the underlying biology of the eye and brain is complex, and this introduction will only touch on some of the more important issues. An excellent and more detailed exposition is available online at <http://tinyurl.com/clrdtls>. \index{Colour} \index{Scales!colour}
 
+<!-- HW: again needs a bit of an overview -->
+
 ## A little colour theory
 <!-- ...as a treat -->
 
@@ -53,6 +55,8 @@ erupt + scale_fill_viridis_c(option = "magma")
 
 The second group of continuous colour scales built in to ggplot2 are derived from the ColorBrewer scales: `scale_fill_brewer()` provides these colours as discrete palettes, while `scale_fill_distiller()` and `scale_fill_fermenter()` are the continuous and binned analogs. I discuss these scales in Section \@ref(colour-discrete)), but for illustrative purposes include some examples here:
 
+<!-- HW: I think you could probably skip distiller here; most people will be better served by viridis -->
+
 ```{r}
 erupt + scale_fill_distiller()
 erupt + scale_fill_distiller(palette = "RdPu")
@@ -75,6 +79,7 @@ erupt + paletteer::scale_fill_paletteer_c("scico::tokyo")
 erupt + paletteer::scale_fill_paletteer_c("gameofthrones::targaryen")
 ```
 
+<!-- HW: love all this content :)  -->
 
 ### Robust recipes
 
@@ -159,7 +164,8 @@ All continuous colour scales have an `na.value` parameter that controls what col
 df <- data.frame(x = 1, y = 1:5, z = c(1, 3, 2, NA, 5))
 base <- ggplot(df, aes(x, y)) + 
   geom_tile(aes(fill = z), size = 5) + 
-  labs(x = NULL, y = NULL)
+  labs(x = NULL, y = NULL) +
+  scale_x_continuous(labels = NULL)
 
 base
 base + scale_fill_gradient(na.value = NA)
@@ -221,6 +227,8 @@ The appearance of the legend can be controlled using the `guide_colourbar()` fun
 
 * `direction` specifies the direction of the guide, `"horizontal"` or 
   `"vertical"`.
+
+<!-- HW: same thing about switching to guide() here -->
 
 ```{r}
 base + 
@@ -395,6 +403,8 @@ bars +
 
 For more information about manual scales see Section \@ref(scale-manual).
 
+<!-- HW: show off paleteer here too? -->
+
 ### Limits, breaks, and labels {#colour-discrete-limits}
 
 Scale limits for discrete colour scales can be set using the `limits` argument to the scale argument, or by using the `lims()` helper function. This can be important when the same variable is represented in different plots, and you want to ensure that the colours are consistent across plots. To demonstrate this I'll extend the example from Section \@ref(position-continuous-limits). Colour represents the fuel type, which can be **r**egular, **e**thanol, **d**iesel, **p**remium or **c**ompressed natural gas.
@@ -419,7 +429,9 @@ base_99 + scale_color_discrete(limits = c("c", "d", "e", "p", "r"))
 base_08 + scale_color_discrete(limits = c("c", "d", "e", "p", "r"))
 ```
 
-Note that because the fuel variable `fl` is discrete, the limits for the colour aesthetic are a vector of possible values rather than the two end points. Additionally, these plots are a little unsatisfying because the colour aesthetic is mapped consistently but the position aesthetics are not. In this situation the `lims()` function is useful. It takes name-value pairs as input, where the name specifies the aesthetic and the value specifies the limits:
+Remembmer because the fuel variable `fl` is discrete, the limits for the colour aesthetic are a vector of possible values rather than two end points. Additionally, these plots are a little unsatisfying because the colour aesthetic is mapped consistently but the position aesthetics are not. In this situation the `lims()` function is useful. It takes name-value pairs as input, where the name specifies the aesthetic and the value specifies the limits:
+
+<!-- HW: start with lims then switch to scale when you use breaks + labels? -->
 
 ```{r}
 base_99 + 
@@ -554,6 +566,8 @@ erupt +
 erupt + scale_fill_stepsn(n.breaks = 12, colours = terrain.colors(12))
 ```
 
+<!-- HW: viridis? -->
+
 A brewer analog for binned scales also exists, and is called `scale_fill_fermenter()`:
 
 ```{r}
@@ -621,6 +635,8 @@ ggplot(faithfuld, aes(waiting, eruptions, alpha = density)) +
 ```
 
 ## Legend position {#legend-layout}
+
+<!-- HW: I like this here! Nice foreshadowing :) -->
 
 A number of settings that affect the overall display of the legends are controlled through the theme system. You'll learn more about that in Section \@ref(themes), but for now, all you need to know is that you modify theme settings with the `theme()` function. \index{Themes!legend} 
 
