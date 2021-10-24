@@ -189,24 +189,27 @@ toy <- data.frame(
 toy
 ```
 
-<!-- HW: I wonder if we should suppress the y axis in all of these plots to give a bit more space -->
+To set breaks manually, pass a vector of data values to `breaks`, or set `breaks = NULL` to remove the breaks and the corresponding tick marks entirely. In the plot below, removing the y-axis breaks also removes the corresponding grid lines: 
 
-To set breaks manually, pass a vector of data values to `breaks`, or set `breaks = NULL` to remove the breaks and the corresponding tick marks entirely:
-
-`r columns(3, 1/2)`
+`r columns(2)`
 ```{r}
 base <- ggplot(toy, aes(big, const)) + 
   geom_point() + 
-  labs(x = NULL, y = NULL)
+  labs(x = NULL, y = NULL) +
+  scale_y_continuous(breaks = NULL) 
 
-base 
-base + scale_x_continuous(breaks = c(1000, 2000, 4000)) # uneven spacing
-base + scale_y_continuous(breaks = NULL)                # remove breaks
+base
 ```
 
-Note that removing the breaks also removes the corresponding grid lines.
+Alternatively, notice that when the breaks are set manually it moves the major gridlines and the minor gridlines between them:
 
-As well as specifying breaks manually, you can also pass a function to `breaks`. This function should have one argument that specifies the limits of the scale (a numeric vector of length two), and it should return a numeric vector of breaks. You can write your own break function, but in many cases there is no need, thanks to the scales package [@scales]. It provides several tools that are useful for this purpose:
+`r columns(2)`
+```{r}
+base + scale_x_continuous(breaks = c(1000, 2000, 4000))
+base + scale_x_continuous(breaks = c(1000, 1500, 2000, 4000))
+```
+
+It is also possible to pass a function to `breaks`. This function should have one argument that specifies the limits of the scale (a numeric vector of length two), and it should return a numeric vector of breaks. You can write your own break function, but in many cases there is no need, thanks to the scales package [@scales]. It provides several tools that are useful for this purpose:
 
 * `scales::breaks_extended()`	creates automatic breaks for numeric axes.
 * `scales::breaks_log()`	creates breaks appropriate for log axes.
@@ -214,16 +217,16 @@ As well as specifying breaks manually, you can also pass a function to `breaks`.
 * `scales::breaks_width()`	creates equally spaced breaks.
 
 The `breaks_extended()` function is the standard method used in ggplot2, and accordingly the first two plots below are the same. I can alter the desired number of breaks by setting `n = 2`, as illustrated in the third plot. Note that `breaks_extended()` treats `n` as a suggestion rather than a strict constraint. If you need to specify exact breaks it is better to do so manually.  
-
+`r columns(3)`
 ```{r}
-base
+base 
 base + scale_x_continuous(breaks = scales::breaks_extended())
 base + scale_x_continuous(breaks = scales::breaks_extended(n = 2))
 ```
 
 Another approach that is sometimes useful is specifying a fixed `width` that defines the spacing between breaks. The `breaks_width()` function is used for this. The first example below shows how to fix the width at a specific value; the second example illustrates the use of the `offset` argument that shifts all the breaks by a specified amount:
 
-`r columns(3, 1/2)`
+`r columns(3)`
 ```{r}
 base + 
   scale_x_continuous(breaks = scales::breaks_width(800))
@@ -250,10 +253,13 @@ mb
 The following plots illustrate the effect of setting the minor breaks:
 `r columns(2, 2/3)`
 ```{r}
-log_base <- ggplot(toy, aes(log, const)) + geom_point()
+base <- ggplot(toy, aes(log, const)) + 
+  geom_point() + 
+  labs(x = NULL, y = NULL) +
+  scale_y_continuous(breaks = NULL) 
 
-log_base + scale_x_log10()
-log_base + scale_x_log10(minor_breaks = mb)
+base + scale_x_log10()
+base + scale_x_log10(minor_breaks = mb)
 ```
 
 As with `breaks`, you can also supply a function to `minor_breaks`, such as `scales::minor_breaks_n()` or `scales::minor_breaks_width()` functions that can be helpful in controlling the minor breaks.
@@ -262,15 +268,22 @@ As with `breaks`, you can also supply a function to `minor_breaks`, such as `sca
 
 Every break is associated with a label and these can be changed by setting the `labels` argument to the scale function:
 
+`r columns(2, 2/3)`
 ```{r}
+base <- ggplot(toy, aes(big, const)) + 
+  geom_point() + 
+  labs(x = NULL, y = NULL) +
+  scale_y_continuous(breaks = NULL) 
+
+base
 base + 
   scale_x_continuous(
     breaks = c(2000, 4000), 
     labels = c("2k", "4k")
-  )
+  ) 
 ```
 
-But like with `breaks`, you'll instead usually supply a labelling function. A function passed to `labels` should accept a numeric vector of breaks as input and return a character vector of labels (the same length as the input). Again, the scales package provides a number of tools that will automatically construct label functions for you. Some of the more useful examples for numeric data include:
+Often you don't need to set the `labels` manually, and can instead specify a labelling function in the same way you can for `breaks`. A function passed to `labels` should accept a numeric vector of breaks as input and return a character vector of labels (the same length as the input). Again, the scales package provides a number of tools that will automatically construct label functions for you. Some of the more useful examples for numeric data include:
 
 * `scales::label_bytes()` formats numbers as kilobytes, megabytes etc.
 * `scales::label_comma()` formats numbers as decimals with commas added.
@@ -283,21 +296,24 @@ A few examples are shown below to illustrate how these functions are used:
 
 `r columns(3)`
 ```{r breaks-functions}
-base + 
-  scale_y_continuous(
-    labels = scales::label_percent()
-  )
+base <- ggplot(toy, aes(big, const)) + 
+  geom_point() + 
+  labs(x = NULL, y = NULL) +
+  scale_x_continuous(breaks = NULL)
 
-base + 
-  scale_y_continuous(
-    labels = scales::label_dollar(prefix = "", suffix = "€")
-  )
+base
+base + scale_y_continuous(labels = scales::label_percent())
+base + scale_y_continuous(
+  labels = scales::label_dollar(prefix = "", suffix = "€")
+)
 ```
 
-You can suppress labels with `labels = NULL`. This will remove the labels from the axis or legend while leaving its other properties unchanged:
+You can suppress labels with `labels = NULL`. This will remove the labels from the axis or legend while leaving its other properties unchanged. Notice the difference between setting `breaks = NULL` and `labels = NULL`:
 
+`r columns(2)`
 ```{r}
-base + scale_x_continuous(labels = NULL)
+base + scale_y_continuous(breaks = NULL)
+base + scale_y_continuous(labels = NULL)
 ```
 
 <!-- ### Exercises -->
