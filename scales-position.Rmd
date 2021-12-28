@@ -556,7 +556,23 @@ ggplot(mpg, aes(x = hwy, y = class)) +
   annotate("text", x = 5, y = 1:7, label = 1:7)
 ```
 
-<!-- HW: Maybe worth showing some non-integer positions? This is mildly important to know because it's how jitter works, and it's what allows the width of bars and boxplots to work. So maybe better to illustrate with bar width? -->
+Mapping each category to an integer value is useful because it means that other width quantities can be specified as a proportion of the category range. For instance, in the preceding plot, we could specify a vertical jitter for each point spanning half the width of the implied category bin:
+
+`r columns(1)`
+```{r}
+ggplot(mpg, aes(x = hwy, y = class)) + 
+  geom_jitter(width = 0, height = .25) +
+  annotate("text", x = 5, y = 1:7, label = 1:7)
+```
+
+The same mechanism underpins the widths of bars and boxplots. Because each category has width 1 in a discrete scale, setting `width = .4` when using `geom_boxplot()` ensures that the box occupies 40% of the width allocated to the category:
+
+`r columns(2)`
+```{r}
+ggplot(mpg, aes(x = drv, y = hwy)) + geom_boxplot()
+ggplot(mpg, aes(x = drv, y = hwy)) + geom_boxplot(width = .4)
+```
+
 
 ### Limits, breaks, and labels {#scale-labels}
 \index{Axis!labels} \index{Legend!keys}
