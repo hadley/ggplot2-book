@@ -452,23 +452,23 @@ set_breaks(the_year)
 
 ### Minor breaks
 
-For date/time scales, you can use the `date_minor_breaks` argument:
+Date/times scales also have a `date_minor_breaks` argument that allows you to specify the minor breaks in using date units, in exactly the same fashion that `date_breaks` does for major breaks. To illustrate this, I'll define an empty plot with a date scale on the y-axis, and tweak the theme (Chapter \@ref(polishing)) to make the grid lines more visually prominent:
 
-`r columns(2, 2/3)`
+
+`r columns(2, 1.5)`
 ```{r date-scale-2}
-date_base + scale_x_date(
-  limits = as.Date(c("2003-01-01", "2003-04-01")),
-  date_breaks = "1 month"
-)
+df <- data.frame(y = as.Date(c("2022-01-01", "2022-04-01")))
+base <- ggplot(df, aes(y = y)) + 
+  labs(y = NULL) + 
+  theme_minimal() + 
+  theme(
+    panel.grid.major = element_line(colour = "black"),
+    panel.grid.minor = element_line(colour = "grey50")
+  )
 
-date_base + scale_x_date(
-  limits = as.Date(c("2003-01-01", "2003-04-01")),
-  date_breaks = "1 month",
-  date_minor_breaks = "1 week"
-)
+base + scale_y_date(date_breaks = "1 month")
+base + scale_y_date(date_breaks = "1 month", date_minor_breaks = "1 week")
 ```
-
-<!-- HW: maybe date_breaks = "1 year" would make the minor breaks easier to see? Or maybe labels = NULL? -->
 
 Note that in the first plot, the minor breaks are spaced evenly between the monthly major breaks. In the second plot, the major and minor beaks follow slightly different patterns: the minor breaks are always spaced 7 days apart but the major breaks are 1 month apart. Because the months vary in length, this leads to slightly uneven spacing.
 
