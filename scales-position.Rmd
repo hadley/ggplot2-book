@@ -420,29 +420,35 @@ Assuming you have appropriately formatted data mapped to the x aesthetic, ggplot
 
 ### Breaks 
 
-The `date_breaks` argument allows you to position breaks by date units (years, months, weeks, days, hours, minutes, and seconds). For example, `date_breaks = "2 weeks"` will place a major tick mark every two weeks and `date_breaks = "25 years"` will place them every 25 years:
+The `date_breaks` argument allows you to position breaks by date units (years, months, weeks, days, hours, minutes, and seconds). For example, `date_breaks = "2 weeks"` will place a major tick mark every two weeks and `date_breaks = "15 years"` will place them every 15 years:
 
-`r columns(2, 1 / 2)`
+`r columns(2, 2/3)`
 ```{r date-scale}
 date_base <- ggplot(economics, aes(date, psavert)) + 
   geom_line(na.rm = TRUE) +
   labs(x = NULL, y = NULL)
 
 date_base 
-date_base + scale_x_date(date_breaks = "25 years")
+date_base + scale_x_date(date_breaks = "15 years")
 ```
 
-It may be useful to note that internally `date_breaks = "25 years"` is treated as a shortcut for `breaks = scales::breaks_width("25 years")`. The longer form is typically unnecessary, but it can be useful if---as discussed in Section \@ref(position-continuous-breaks)---you wish to specify an `offset`. Suppose the goal is to plot data that span the 20th century, beginning 1 January 1900, and we wish to set breaks in 25 year intervals. Specifying `date_breaks = "25 years"` produces breaks in the following fashion:
+Compared to the plot on the left, two things have changed in the plot on the right: the tick marks are placed at 15 year intervals, and the label format has changed. I'll discuss date labelling in Section \@ref(date-labels), but for now our focus is on the breaks.
+
+To understand how ggplot2 interprets `date_breaks = "15 years"`, it is helpful to note that it is merely a convenient shorthand for setting `breaks = scales::breaks_width("15 years")`. The longer form is typically unnecessary, but it can be useful if---as discussed in Section \@ref(position-continuous-breaks)---you wish to specify an `offset`. For example, suppose the goal is to plot data spanning a calendar year, with monthly breaks. Specifying `date_breaks = "1 month"` is equivalent to setting `scales::breaks_width("1 month")`, which produces these breaks:
 
 ```{r}
-century20 <- as.Date(c("1900-01-01", "1999-12-31"))
-breaks <- scales::breaks_width("25 years")
-breaks(century20)
+the_year <- as.Date(c("2021-01-01", "2021-12-31"))
+set_breaks <- scales::breaks_width("1 month")
+set_breaks(the_year)
 ```
 
-<!-- HW: I think this needs a little more motivation -->
+In this example, the `set_breaks()` function returned by `scales::break_width()` produces breaks spaced one month apart, where the date for each break falls on the first day of the month. Placing each break at the start of the calendar year is usually sensible, but there are exceptions. Perhaps the data track income and expenses for a household in which a monthly salary is paid on the ninth day of each month. In this situation it may be sensible to have the breaks aligned with the salary deposits. To do this, we can set `offset = 8` when we define the `set_breaks()` function:
 
-Because the range in `century20` starts on 1 January and the breaks increment in whole year values, each of the generated break dates falls on 1 January. We can shift all these breaks so that they fall on 1 February by setting `offset = 31` (since there are thirty one days in January).
+```{r}
+set_breaks <- scales::breaks_width("1 month", offset = 8)
+set_breaks(the_year)
+```
+
 
 ### Minor breaks
 
