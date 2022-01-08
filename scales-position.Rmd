@@ -467,7 +467,8 @@ base <- ggplot(df, aes(y = y)) +
   )
 
 base + scale_y_date(date_breaks = "1 month")
-base + scale_y_date(date_breaks = "1 month", date_minor_breaks = "1 week")
+base + 
+  scale_y_date(date_breaks = "1 month", date_minor_breaks = "1 week")
 ```
 
 Note that in the first plot, the minor breaks are spaced evenly between the monthly major breaks. In the second plot, the major and minor beaks follow slightly different patterns: the minor breaks are always spaced 7 days apart but the major breaks are 1 month apart. Because the months vary in length, this leads to slightly uneven spacing.
@@ -517,25 +518,18 @@ base + scale_x_date(limits = lim, date_labels = "%b %y")
 base + scale_x_date(limits = lim, date_labels = "%B\n%Y")
 ```
 
-In these examples I have specified the labels manually via the `date_labels` argument. An alternative approach is to pass a labelling function to the `labels` argument, in the same way I described in Section \@ref(position-continuous-labels). The scales package provides two convenient functions that will generate date labellers for you:
+In these examples I have specified the labels manually via the `date_labels` argument. An alternative approach is to pass a labelling function to the `labels` argument, in the same way I described in Section \@ref(position-continuous-labels). You can write your own custom labelling function, but this is often unnecessary. The scales package provides convenient functions that can generate labellers for you, notably `scales::label_date()` and `scales::label_date_short()`. You rarely need to call `scales::label_date()` directly, because that's the function that `date_labels` uses. However, if you want to use `scales::label_date_short()` you'll need to do so explicitly. The goal of `label_date_short()` is to automatically construct short labels that are sufficient to uniquely identify the dates: 
 
-<!-- HW: weird to have bulleted list with only two elements. Maybe describe label_date() as what date_labels does for you (like with breaks), and then have a paragraph about label_date_short()? -->
+`r columns(1, 1/2)`
+```{r date-scale-5}
+base + 
+  scale_x_date(
+    limits = lim, 
+    labels = scales::label_date_short()
+  )
+```
 
-* `label_date()` is what `date_labels` does for you behind the scenes, so you
-  rarely need to call it directly.
-
-* `label_date_short()` automatically constructs short labels that are 
-  sufficient to uniquely identify the dates: 
-
-    ```{r date-scale-5}
-    base + scale_x_date(labels = scales::label_date("%b %y"))
-    base + 
-      scale_x_date(
-        limits = lim, 
-        labels = scales::label_date_short()
-      )
-    ```
-
+This can often produce clearer plots: in the example above each year is labelled only once rather than appearing in every label, reducing the amount of visual clutter and making it easier for the viewer to see where each year begins and ends.
 
 ## Discrete position scales
 
