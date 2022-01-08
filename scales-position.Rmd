@@ -603,27 +603,28 @@ As with other scales, discrete position scales allow you to pass a function to t
 
 ### Label positions {#guide-axis}
 
-When plotting categorical data it is often necessary to move the axis labels in some way to prevent them from overlapping. You can do this easily with the help of the `guide` argument and the `guide_axis()` function. For example, to "dodge" the position of the labels, you can set `guide_axis(n.dodge = 3)`:
+When plotting categorical data it is often necessary to move the axis labels in some way to prevent them from overlapping:
 
-`r columns(2, 2/3)`
+`r columns(1, 2/3)`
 ```{r}
 base <- ggplot(mpg, aes(manufacturer, hwy)) + geom_boxplot() 
-
 base
-base + scale_x_discrete(guide = guide_axis(n.dodge = 3))
 ```
 
-An alternative way to accomplish the same task is with the `guides()` function 
-
-<!-- HW: again feels like we should consistently use `guides()` I think-->
-<!-- DN: plan: show bad plot -> introduce guide_axis() -> point out that technically you can use scale_*(guide = ) but don't show plot -> then do all the work with guides() -->
-
-The `guides()` helper works in a similar way to the `labs()` helper function described in Section \@ref(titles). Both take the name of different aesthetics (e.g., color, x, fill) as arguments and allow you to specify your own value. Where `labs()` provides a shorthand way to specify the `name` argument to one or more scales, the `guides()` function allows you to specify `guide` arguments to one or more scales. In the same way that `labs(x = "an axis label")` specifies the name associated with the x-axis scale, a command such as `guides(x = guide_axis())` can be used to specify its associated guide. For example, if you want to rotate the axis labels, either of the following will work:
+Even when allocated considerable horizontal space, the axis labels overlap considerably on this plot. We can control this with the help of the `guides()` function, which works in a similar way to the `labs()` helper function described in Section \@ref(titles). Both take the name of different aesthetics (e.g., color, x, fill) as arguments and allow you to specify your own value. For a position aesthetic, we use the `guide_axis()` to tell ggplot2 how we want to modify the axis labels.  For example, we could tell ggplot2 to "dodge" the position of the labels by setting `guide_axis(n.dodge = 3)`, or to rotate them by setting `guide_axis(rotate = 90)`:
 
 `r columns(2, 2/3)`
 ```{r}
-base + scale_x_discrete(guide = guide_axis(angle = 90))
+base + guides(x = guide_axis(n.dodge = 3))
 base + guides(x = guide_axis(angle = 90))
+```
+
+Note that, in the same way that where `labs()` is a shorthand way to specify the `name` argument to one or more scales, the `guides()` function is a shorthand way to set the `guide` arguments to one or more scales. So the code below achieves the same result:
+
+`r columns(2, 2/3)`
+```{r, fig.show='hide'}
+base + scale_x_discrete(guide = guide_axis(n.dodge = 3))
+base + scale_x_discrete(guide = guide_axis(angle = 90))
 ```
 
 To learn more about guide functions see Section \@ref(scale-guide).
