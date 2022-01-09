@@ -5,36 +5,33 @@ columns(1, 2 / 3)
 
 # Position scales and axes {#scale-position}
 
-Every plot has two position scales corresponding to the x and y aesthetics. Typically the user specifies the variables mapped to x and y explicitly, but sometimes an aesthetic is mapped to a computed variable, as happens with `geom_histogram()`, and does not need to be explicitly specified. For example, the following plot specifications are equivalent:
+Position scales are used to control the locations of visual entities in a plot, and how those locations are mapped to data values. Every plot has two position scales, corresponding to the x and y aesthetics. In most cases this is clear in the plot specification, because the user explicitly specifies the variables mapped to x and y explicitly. However, this is not always the case. Consider this plot specification:
 
 ```{r, fig.show = "hide", message = FALSE}
 ggplot(mpg, aes(x = displ)) + geom_histogram()
+```
+
+In this example the y aesthetic is not specified by the user. Rather, the aesthetic is mapped to a computed variable: `geom_histogram()` computes a `count` variable that gets mapped to the y aesthetic. The default behaviour of `geom_histogram()` is equivalent to the following:
+
+```{r, fig.show = "hide", message = FALSE}
 ggplot(mpg, aes(x = displ, y = after_stat(count))) + geom_histogram()
 ```
 
-Although the first example does not state the y-aesthetic mapping explicitly, it still exists and is associated with (in this case) a continuous position scale.
+Because position scales are used in every plot, it is useful to understand how they work and how they can be modified. In this chapter I'll discuss this in detail. The chapter is organised into four main sections:
+
+- Section \@ref(numeric-position-scales) discusses continuous position scales. In addition to covering core topics like controlling scale limits (Section \@ref(position-continuous-limits)), breaks (Section \@ref(position-continuous-breaks)), and labels (Section \@ref(position-continuous-labels)), there are sections providing a detailed coverage of scale transformations (Section \@ref(scale-transformation)) as well as the subtle issues that arise when you need to zoom in or zoom out on a plot (Sections \@ref(zooming-in) and \@ref(zooming-out)). 
+- Section \@ref(date-scales) discusses date/time scales, a special type of continuous scale. Because dates and times are a little more complicated than a standard continuous variable, ggplot2 provides special scales to help you control the major and minor breaks (Sections \@ref(date-breaks) and \@ref(date-minor-breaks)) and the labels (Section \@ref(date-labels)) for date/time data.
+- Section \@ref(discrete-position) discusses discrete position scales. It covers limits, breaks, and labels in Section \@ref(scale-labels) and axis label customisation in Section \@ref(guide-axis). 
+- Section \@ref(binned-position) discusses binned position scales. 
+
 
 \index{Scales!position} \index{Positioning!scales} 
 
-<!-- HW: needs a bit more of an overview here. What am I going to learn from this chapter? How is it organised? -->
-
 ## Numeric position scales {#numeric-position-scales}
 
-The most common continuous position scales are the default `scale_x_continuous()` and `scale_y_continuous()` functions. In the simplest case they map linearly from the data value to a location on the plot. There are several other position scales for continuous variables---`scale_x_log10()`, `scale_x_reverse()`, etc---most of which are convenience functions used to provide easy access to common transformations:
+The most common continuous position scales are the default `scale_x_continuous()` and `scale_y_continuous()` functions. In the simplest case they map linearly from the data value to a location on the plot. There are several other position scales for continuous variables---`scale_x_log10()`, `scale_x_reverse()`, etc---most of which are convenience functions used to provide easy access to common transformations, discussed in in Section \@ref(scale-transformation).
+\indexf{scale\_x\_continuous}
 
-`r columns(3)`
-```{r}
-base <- ggplot(mpg, aes(displ, hwy)) + geom_point()
-
-base
-base + scale_x_reverse()
-base + scale_y_reverse()
-```
-
-Scale transformations are discussed later in this chapter, in Section \@ref(scale-transformation).
-\indexf{scale\_x\_continuous} 
-
-<!-- HW: maybe a bit too much about position transformations here? Instead maybe give an overview of what you'll learn in this section?  -->
 
 ### Limits {#position-continuous-limits}
 
@@ -106,7 +103,7 @@ The only difference between the left and middle plots is that the latter is zoom
 
 You can learn more about coordinate systems in Section \@ref(cartesian). To learn more about how "out of bounds" values are handled for continuous and binned scales, see Section \@ref(oob).
 
-### Visual range expansion
+### Visual range expansion {#zooming-out}
 
 If you have eagle eyes, you'll have noticed that the visual range of the axes actually extends a little bit past the numeric limits that I have specified in the various examples. This ensures that the data does not overlap the axes, which is usually (but not always) desirable. You can override the defaults setting the `expand` argument, which expects a numeric vector created by `expansion()`. 
 
@@ -335,7 +332,18 @@ base + scale_y_continuous(labels = NULL)
 
 ### Transformations {#scale-transformation}
 
-When working with continuous data, the default is to map linearly from the data space onto the aesthetic space. It is possible to override this default using transformations. Every continuous scale takes a `trans` argument, allowing the use of a variety of transformations:
+When working with continuous data, the default is to map linearly from the data space onto the aesthetic space. It is possible to override this default using scale transformations, which alter the way in which this mapping takes place. In some cases you don't need to dive into the details, because there are convenience functions like `scale_x_log10()`, `scale_x_reverse()` that can do the work for you:
+
+`r columns(3)`
+```{r}
+base <- ggplot(mpg, aes(displ, hwy)) + geom_point()
+
+base
+base + scale_x_reverse()
+base + scale_y_reverse()
+```
+
+However, even in these cases a deeper understanding can be valuable. Every continuous scale takes a `trans` argument, allowing the use of a variety of transformations:
 \index{Scales!position} \index{Transformation!scales} \index{Log!scale} \indexf{scale\_x\_log10}
 
 `r columns(2, 1)`
@@ -418,7 +426,7 @@ A special case of numeric position arises when an aesthetic is mapped to a date/
 
 Assuming you have appropriately formatted data mapped to the x aesthetic, ggplot2 will use `scale_x_date()` as the default scale for dates and `scale_x_datetime()` as the default scale for date-time data. The corresponding scales for other aesthetics follow the usual naming rules. Date scales behave similarly to other continuous scales, but contain additional arguments that allow you to work in date-friendly units. This section discusses date/time scales for position aesthetics: see Section \@ref(date-colour-scales) for colour and fill aesthetics.
 
-### Breaks 
+### Breaks {#date-breaks}
 
 The `date_breaks` argument allows you to position breaks by date units (years, months, weeks, days, hours, minutes, and seconds). For example, `date_breaks = "2 weeks"` will place a major tick mark every two weeks and `date_breaks = "15 years"` will place them every 15 years:
 
@@ -450,7 +458,7 @@ set_breaks(the_year)
 ```
 
 
-### Minor breaks
+### Minor breaks {#date-minor-breaks}
 
 Date/times scales also have a `date_minor_breaks` argument that allows you to specify the minor breaks in using date units, in exactly the same fashion that `date_breaks` does for major breaks. To illustrate this, I'll define an empty plot with a date scale on the y-axis, and tweak the theme (Chapter \@ref(polishing)) to make the grid lines more visually prominent:
 
