@@ -56,6 +56,7 @@ erupt + scale_fill_viridis_c(option = "magma")
 The second group of continuous colour scales built in to ggplot2 are derived from the ColorBrewer scales: `scale_fill_brewer()` provides these colours as discrete palettes, while `scale_fill_distiller()` and `scale_fill_fermenter()` are the continuous and binned analogs. I discuss these scales in Section \@ref(colour-discrete), but for illustrative purposes include some examples here:
 
 <!-- HW: I think you could probably skip distiller here; most people will be better served by viridis -->
+<!-- DN: Probably, yeah. I confess I have a soft spot for distiller though! I've left it in, but can remove if we need the space -->
 
 ```{r}
 erupt + scale_fill_distiller()
@@ -78,8 +79,6 @@ erupt + paletteer::scale_fill_paletteer_c("viridis::plasma")
 erupt + paletteer::scale_fill_paletteer_c("scico::tokyo")
 erupt + paletteer::scale_fill_paletteer_c("gameofthrones::targaryen")
 ```
-
-<!-- HW: love all this content :)  -->
 
 ### Robust recipes
 
@@ -208,7 +207,7 @@ base + scale_fill_continuous(labels = scales::label_dollar())
 ### Legends {#guide-colourbar}
 \index{Legend!colour bar} \index{Colour bar}
 
-Every scale is associated with a guide that displays the relationship between the aesthetic and the data. For position scales, the axes serve this function. For colour scales this role is played by the legend, which can be customised by setting the `guide` argument to the corresponding scale function. For continuous colour scales, the default legend takes the form of a "colour bar" displaying a continuous gradient of colours:
+Every scale is associated with a guide that displays the relationship between the aesthetic and the data. For position scales, the axes serve this function. For colour scales this role is played by the legend, which can be customised with the help of a guide function. For continuous colour scales, the default legend takes the form of a "colour bar" displaying a continuous gradient of colours:
 
 `r columns(3)`
 ```{r}
@@ -228,36 +227,19 @@ The appearance of the legend can be controlled using the `guide_colourbar()` fun
 * `direction` specifies the direction of the guide, `"horizontal"` or 
   `"vertical"`.
 
-<!-- HW: same thing about switching to guide() here -->
+In Section \ref@(guide-axis) I introduced the `guides()` function that is used to set customised legends and axes. When applied to colour scales, it allows you to create custom legends like these:
 
 ```{r}
-base + 
-  scale_colour_continuous(
-    guide = guide_colourbar(reverse = TRUE)
-  )
-
-base + 
-  scale_colour_continuous(
-    guide = guide_colourbar(barheight = unit(2, "cm"))
-  )
-
-base + 
-  scale_colour_continuous(
-    guide = guide_colourbar(direction = "horizontal")
-  )
+base + guides(colour = guide_colourbar(reverse = TRUE))
+base + guides(colour = guide_colourbar(barheight = unit(2, "cm")))
+base + guides(colour = guide_colourbar(direction = "horizontal"))
 ```
 
-This task can also be accomplished using the `guides()` function, analogous to the `labs()` and `lims()` helper functions for labels and scale limits. These are equivalent plots:
+An alternative way to accomplish the same goal is to specify the `guide` argument to the scale function. These two plot specifications are identical:
 
 ```{r}
-base + 
-  scale_colour_continuous(
-    guide = guide_colourbar(reverse = TRUE)
-  )
-base + 
-  guides(
-    colour = guide_colourbar(reverse = TRUE)
-  )
+base + guides(colour = guide_colourbar(reverse = TRUE))
+base + scale_colour_continuous(guide = guide_colourbar(reverse = TRUE))
 ```
 
 You can learn more about guide functions in Section \@ref(scale-guide).
@@ -421,17 +403,14 @@ base_99
 base_08
 ```
 
-Each plot makes sense on its own, but visual comparison between the two is difficult. The axis limits are different, and because only regular, premium and diesel fuels are represented in the 1998 data the colours are mapped inconsistently. To ensure a consistent mapping for the colour aesthetic, we can set the `limits` argument:
-
+Each plot makes sense on its own, but visual comparison between the two is difficult. The axis limits are different, and because only regular, premium and diesel fuels are represented in the 1998 data the colours are mapped inconsistently. To ensure a consistent mapping for the colour aesthetic, we can use `lims()` to manually set the limits. As discussed in Section \@ref(position-continuous-limits) it takes name-value pairs as input, where the name specifies the aesthetic and the value specifies the limits:
 
 ```{r}
-base_99 + scale_color_discrete(limits = c("c", "d", "e", "p", "r"))
-base_08 + scale_color_discrete(limits = c("c", "d", "e", "p", "r"))
+base_99 + lims(colour = c("c", "d", "e", "p", "r"))
+base_08 + lims(colour = c("c", "d", "e", "p", "r"))
 ```
 
-Remember because the fuel variable `fl` is discrete, the limits for the colour aesthetic are a vector of possible values rather than two end points. Additionally, these plots are a little unsatisfying because the colour aesthetic is mapped consistently but the position aesthetics are not. In this situation the `lims()` function, discussed earlier in Section \@ref(position-continuous-limits), can be very useful. It takes name-value pairs as input, where the name specifies the aesthetic and the value specifies the limits:
-
-<!-- HW: start with lims then switch to scale when you use breaks + labels? -->
+The nice thing about `lims()` is that we can set the limits for multiple aesthetics at once. To ensure that x, y, and colour all use consistent limits we can do this:
 
 ```{r}
 base_99 + 
@@ -449,23 +428,9 @@ base_08 +
   )
 ```
 
-One potential limitation is that while setting the scale limits does ensure that colours are mapped identically in both plots, it also means that the plot for the 1999 data displays labels for all five fuel types, despite the fact that ethanol and compressed natural gas fuels were not in use at that time. To fix this, we can use the `breaks` argument to ensure that only those fuel types that appear in the data are shown in the legend:
+There are two potential limitations to these plots. First, while setting the scale limits does ensure that colours are mapped identically in both plots, it also means that the plot for the 1999 data displays labels for all five fuel types, despite the fact that ethanol and compressed natural gas fuels were not in use at that time. We can address this by manually setting the scale breaks, ensuring that only those fuel types that appear in the data are shown in the legend. The second limitation is that the labels are not particularly helpful, which we can address by specifying them manually. When setting multiple properties of a single scale, it can be more useful to customise using the arguments to the scale function rather than using the `lims()` helper function:
 
 `r columns(2, 1)`
-```{r}
-base_99
-base_99 + 
-  scale_color_discrete(
-    limits = c("c", "d", "e", "p", "r"), 
-    breaks = c("d", "p", "r")
-  )
-```
-
-These two versions of the 1999 plot display the same labels in the legend, but only the one on the right uses a colour mapping that is consistent with the 2008 plot. 
-
-Finally, we can use the `labels` argument to assign useful labels to a discrete colour scale. This argument behaves in a similar fashion to the corresponding argument for other scale types, discussed in Sections \@ref(position-continuous-labels), \@ref(scale-labels), and \@ref(colour-continuous-limits):
-
-`r columns(1, 2/3)`
 ```{r}
 base_99 + 
   scale_color_discrete(
@@ -473,6 +438,27 @@ base_99 +
     breaks = c("d", "p", "r"),
     labels = c("diesel", "premium", "regular")
   )
+```
+
+However, there is nothing stopping you from using `lims()` to control the position aesthetic limits, while using `scale_colour_discrete()` to exercise more fine-grained control over the colour aesthetic:
+
+`r columns(2, 1)`
+```{r}
+base_99 + 
+  lims(x = c(1, 7), y = c(10, 45)) +
+  scale_color_discrete(
+    limits = c("c", "d", "e", "p", "r"), 
+    breaks = c("d", "p", "r"),
+    labels = c("diesel", "premium", "regular")
+  )
+
+base_08 + 
+  lims(x = c(1, 7), y = c(10, 45)) +
+  scale_color_discrete(
+    limits = c("c", "d", "e", "p", "r"), 
+    labels = c("compressed", "diesel", "ethanol", "premium", "regular")
+  )
+
 ```
 
 
@@ -635,8 +621,6 @@ ggplot(faithfuld, aes(waiting, eruptions, alpha = density)) +
 ```
 
 ## Legend position {#legend-layout}
-
-<!-- HW: I like this here! Nice foreshadowing :) -->
 
 A number of settings that affect the overall display of the legends are controlled through the theme system. You'll learn more about that in Section \@ref(themes), but for now, all you need to know is that you modify theme settings with the `theme()` function. \index{Themes!legend} 
 
