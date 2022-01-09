@@ -5,43 +5,88 @@ columns(1, 2 / 3)
 
 # Position scales and axes {#scale-position}
 
-<!-- HW: this content also feels a bit out of place -->
-<!-- DN: my guess is this will feel more natural when position scales are a distinct chapter? -->
-
-Every plot has two position scales corresponding to the x and y aesthetics. Typically the user specifies the variables mapped to x and y explicitly, but sometimes an aesthetic is mapped to a computed variable, as happens with `geom_histogram()`, and does not need to be explicitly specified. For example, the following plot specifications are equivalent:
+Position scales are used to control the locations of visual entities in a plot, and how those locations are mapped to data values. Every plot has two position scales, corresponding to the x and y aesthetics. In most cases this is clear in the plot specification, because the user explicitly specifies the variables mapped to x and y explicitly. However, this is not always the case. Consider this plot specification:
 
 ```{r, fig.show = "hide", message = FALSE}
 ggplot(mpg, aes(x = displ)) + geom_histogram()
+```
+
+In this example the y aesthetic is not specified by the user. Rather, the aesthetic is mapped to a computed variable: `geom_histogram()` computes a `count` variable that gets mapped to the y aesthetic. The default behaviour of `geom_histogram()` is equivalent to the following:
+
+```{r, fig.show = "hide", message = FALSE}
 ggplot(mpg, aes(x = displ, y = after_stat(count))) + geom_histogram()
 ```
 
-Although the first example does not state the y-aesthetic mapping explicitly, it still exists and is associated with (in this case) a continuous position scale.
+Because position scales are used in every plot, it is useful to understand how they work and how they can be modified. In this chapter I'll discuss this in detail. The chapter is organised into four main sections:
+
+- Section \@ref(numeric-position-scales) discusses continuous position scales. In addition to covering core topics like controlling scale limits (Section \@ref(position-continuous-limits)), breaks (Section \@ref(position-continuous-breaks)), and labels (Section \@ref(position-continuous-labels)), there are sections providing a detailed coverage of scale transformations (Section \@ref(scale-transformation)) as well as the subtle issues that arise when you need to zoom in or zoom out on a plot (Sections \@ref(zooming-in) and \@ref(zooming-out)). 
+- Section \@ref(date-scales) discusses date/time scales, a special type of continuous scale. Because dates and times are a little more complicated than a standard continuous variable, ggplot2 provides special scales to help you control the major and minor breaks (Sections \@ref(date-breaks) and \@ref(date-minor-breaks)) and the labels (Section \@ref(date-labels)) for date/time data.
+- Section \@ref(discrete-position) discusses discrete position scales. It covers limits, breaks, and labels in Section \@ref(scale-labels) and axis label customisation in Section \@ref(guide-axis). 
+- Section \@ref(binned-position) discusses binned position scales. 
+
 
 \index{Scales!position} \index{Positioning!scales} 
 
-## Numeric
+## Numeric position scales {#numeric-position-scales}
 
-The most common continuous position scales are the default `scale_x_continuous()` and `scale_y_continuous()` functions. In the simplest case they map linearly from the data value to a location on the plot. There are several other position scales for continuous variables---`scale_x_log10()`, `scale_x_reverse()`, etc---most of which are convenience functions used to provide easy access to common transformations:
+The most common continuous position scales are the default `scale_x_continuous()` and `scale_y_continuous()` functions. In the simplest case they map linearly from the data value to a location on the plot. There are several other position scales for continuous variables---`scale_x_log10()`, `scale_x_reverse()`, etc---most of which are convenience functions used to provide easy access to common transformations, discussed in in Section \@ref(scale-transformation).
+\indexf{scale\_x\_continuous}
 
-`r columns(3)`
+
+### Limits {#position-continuous-limits}
+
+\index{Axis!limits} \index{Scales!limits}
+
+All scales have limits that specify the values of the aesthetic over which the scale is defined. It's very natural to think about these limits for numeric position scales, as they map directly to the ranges of the axes. By default, the limits are calculated from the range of the data variable, but sometimes you will need to set the limits manually using the `limits` argument to the scale function. Whenever the scale is continuous, as is the case for numeric position scales, this should be a numeric vector of length two. If you only want to set the upper or lower limit, you can set the other value to `NA`. 
+
+Manually setting scale limits is a common task when you need to ensure that scales in different plots are consistent with one another. To illustrate why this is necessary consider this faceted plot:
+
+`r columns(1, aspect_ratio = 1/2, max_width = 1)`
 ```{r}
-base <- ggplot(mpg, aes(displ, hwy)) + geom_point()
-
-base
-base + scale_x_reverse()
-base + scale_y_reverse()
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() +
+  facet_wrap(vars(year))
 ```
 
-For more information on scale transformations see Section \@ref(scale-transformation).
-\indexf{scale\_x\_continuous} 
+In this plot, ggplot2 has automatically ensured that both facets have the same axis limits, making visual comparison of the two scatter plots easy. However, when creating the plots individually the scale limits in different plots will often be inconsistent:
 
-### Limits
+`r columns(2, 1)`
+```{r}
+mpg_99 <- mpg %>% filter(year == 1999)
+mpg_08 <- mpg %>% filter(year == 2008)
 
+base_99 <- ggplot(mpg_99, aes(displ, hwy)) + geom_point() 
+base_08 <- ggplot(mpg_08, aes(displ, hwy)) + geom_point() 
 
-### Out of bounds values {#oob}
-\index{Zooming}
+base_99
+base_08
+```
 
-By default, ggplot2 converts data outside the scale limits to `NA`. This means that changing the limits of a scale is not precisely the same as visually zooming in to a region of the plot. If your goal is to zoom in part of the plot, it is better to use the `xlim` and `ylim` arguments of `coord_cartesian()`:
+Each plot makes sense on its own, but visual comparison between the two is difficult due to the inconsistent axis scaling. To ensure consistent axis scaling, we can set the `limits` argument to each scale separately:
+
+```{r}
+base_99 + 
+  scale_x_continuous(limits = c(1, 7)) +
+  scale_y_continuous(limits = c(10, 45))
+
+base_08 + 
+  scale_x_continuous(limits = c(1, 7)) +
+  scale_y_continuous(limits = c(10, 45))
+```
+
+However, this code is a little unwieldy. Because modifying scale limits is such a common task, ggplot2 provides the `lims()` convenience function to simplify the code. Analogous to the `labs()` function used to specify axis labels (Section \@ref(titles)), `lims()` takes name-value pairs as inputs: the argument name is used to specify the aesthetic, and the value is used to specify the scale limits.
+\indexf{xlim}  \indexf{ylim} \indexf{lims}
+
+```{r}
+base_99 + lims(x = c(1, 7), y = c(10, 45))
+base_08 + lims(x = c(1, 7), y = c(10, 45))
+```
+
+In the special case where only one axis limit needs to be specified, ggplot2 also provides `xlim()` and `ylim()` helper functions, which can save you a few keystrokes. In practice `lims()` tends to be more useful, because it can be used to set limits for several aesthetics at once. You'll see an example of `lims()` applied to non-position aesthetics in Section \@ref(colour-discrete-limits).
+
+### Zooming in {#zooming-in}
+
+The examples in the previous section expand the scale limits beyond the range spanned by the data. It is also possible to narrow the default scale limits, but care is required: when you truncate the scale limits, some data points will fall outside the boundaries you set, and ggplot2 has to make a decision about what to do with these data points. The default behaviour in ggplot2 is to convert any data values outside the scale limits to `NA`. This means that changing the limits of a scale is not always the same as visually zooming in to a region of the plot. If your goal is to zoom in on part of the plot, it is usually better to use the `xlim` and `ylim` arguments of `coord_cartesian()`:
 
 `r columns(3, 1.5)`
 ```{r}
@@ -50,82 +95,83 @@ base <- ggplot(mpg, aes(drv, hwy)) +
   geom_boxplot() 
 
 base
-base + coord_cartesian(ylim = c(10, 35)) # zoom only
-base + ylim(10, 35) # alters the boxplot
+base + coord_cartesian(ylim = c(10, 35)) # works as expected
+base + ylim(10, 35) # distorts the boxplot 
 ```
 
-The only difference between the left and middle plots is that the latter is zoomed in. Some of the outlier points are not shown due to the restriction of the range, but the boxplots themselves remain identical. In contrast, in the plot on the right one of the boxplots has changed. When `ylim()` is used to set the scale limits, all observations with highway mileage greater than 35 are converted to `NA` before the stat (in this case the boxplot) is computed. This has the effect of shifting the sample median downward. You can learn more about coordinate systems in Section \@ref(cartesian).
+The only difference between the left and middle plots is that the latter is zoomed in. Some of the outlier points are not shown due to the restriction of the range, but the boxplots themselves remain identical. In contrast, in the plot on the right one of the boxplots has changed. When modifying the scale limits, all observations with highway mileage greater than 35 are converted to `NA` before the stat (in this case the boxplot) is computed. Because these "out of bounds" values are no longer available, the end result is that the sample median is shifted downward, which is almost never desirable behaviour. In hindsight, I regret this design choice as it is a common source of confusion for users. Unfortunately it would be very hard to change this default without breaking a lot of existing code. 
 
-Although the default behaviour is to convert the **o**ut **o**f **b**ounds values to `NA`, you can override this by setting `oob` argument of the scale, a function that is applied to all observations outside the scale limits. The default is `scales::censor()` which replaces any value outside the limits with `NA`. Another option is `scales::squish()` which squishes all values into the range. An example using a fill scale is shown below:
+You can learn more about coordinate systems in Section \@ref(cartesian). To learn more about how "out of bounds" values are handled for continuous and binned scales, see Section \@ref(oob).
 
-`r columns(3,1)`
-```{r}
-df <- data.frame(x = 1:6, y = 8:13)
-base <- ggplot(df, aes(x, y)) + 
-  geom_col(aes(fill = x)) +                    # bar chart
-  geom_vline(xintercept = 3.5, colour = "red") # for visual clarity only
+### Visual range expansion {#zooming-out}
 
-base
-base + scale_fill_gradient(limits = c(1, 3))
-base + scale_fill_gradient(limits = c(1, 3), oob = scales::squish)
-```
+If you have eagle eyes, you'll have noticed that the visual range of the axes actually extends a little bit past the numeric limits that I have specified in the various examples. This ensures that the data does not overlap the axes, which is usually (but not always) desirable. You can override the defaults setting the `expand` argument, which expects a numeric vector created by `expansion()`. 
 
-On the left the default fill colours are shown, ranging from dark blue to light blue. In the middle panel the scale limits for the fill aesthetic are reduced so that the values for the three rightmost bars are replace with `NA` and are mapped to a grey shade. In some cases this is desired behaviour but often it is not: the right panel addresses this by modifying the `oob` function appropriately.  
-
-### Visual range expansion
-
-If you have eagle eyes, you'll have noticed that the visual range of the axes actually extends a little bit past the numeric limits that I have specified in the various examples. This ensures that the data does not overlap the axes, which is usually (but not always) desirable. 
-
-You can eliminate this space with `expand = c(0, 0)`. One scenario where it is usually preferable to remove this space is when using `geom_raster()`: \index{Axis!expansion}
-
-<!-- mention expansion() since it documents the parameters? -->
+For example, one case where it's usually preferable to remove this space is when using `geom_raster()`, which we can achieve by setting `expand = expansion(0)`: \index{Axis!expansion}
 
 `r columns(2, 1, 1)`
 ```{r}
-ggplot(faithfuld, aes(waiting, eruptions)) + 
+base <- ggplot(faithfuld, aes(waiting, eruptions)) + 
   geom_raster(aes(fill = density)) + 
-  theme(legend.position = "none")
+  theme(legend.position = "none") + 
+  labs(x = NULL, y = NULL)
 
-ggplot(faithfuld, aes(waiting, eruptions)) + 
-  geom_raster(aes(fill = density)) + 
-  scale_x_continuous(expand = c(0,0)) + 
-  scale_y_continuous(expand = c(0,0)) +
-  theme(legend.position = "none")
+base 
+base + 
+  scale_x_continuous(expand = expansion(0)) + 
+  scale_y_continuous(expand = expansion(0)) 
 ```
 
-### Exercises
+Axis expansions are described in terms of an "additive" factor, which specifies a constant space added to outside of the nominal axis limits, and a "multiplicative" one that adds space defined as a proportion of the size of the axis limit. These correspond to the `add` and `mult` arguments to `expansion()`, which can be length one (if the expansion is the same on both sides) or length two (to set different expansions on each side):
 
-1.  The following code creates two plots of the mpg dataset. Modify the code
-    so that the legend and axes match, without using faceting!
-    
-    `r columns(2, 2/3)`
-    ```{r}
-    fwd <- subset(mpg, drv == "f")
-    rwd <- subset(mpg, drv == "r")
-    
-    ggplot(fwd, aes(displ, hwy, colour = class)) + geom_point()
-    ggplot(rwd, aes(displ, hwy, colour = class)) + geom_point()
-    ```
+`r columns(3, 1, 1)`
+```{r}
+# additive expansion of three units on both axes
+base + 
+  scale_x_continuous(expand = expansion(add = 3)) + 
+  scale_y_continuous(expand = expansion(add = 3))
 
-1.  What happens if you add two `xlim()` calls to the same plot? Why?
+# multiplicative expansion of 20% on both axes
+base + 
+  scale_x_continuous(expand = expansion(mult = .2)) + 
+  scale_y_continuous(expand = expansion(mult = .2)) 
 
-1.  What does `scale_x_continuous(limits = c(NA, NA))` do?
+# multiplicative expansion of 5% at the lower end of each axes,
+# and 20% at the upper end; for the y-axis the expansion is 
+# set directly instead of using expansion()
+base + 
+  scale_x_continuous(expand = expansion(mult = c(.05, .2))) + 
+  scale_y_continuous(expand = c(.05, 0, .2, 0))
+```
 
-1.  What does `expand_limits()` do and how does it work?  Read the source code.
+Note the different behaviour in the left and middle plots: the `add` argument is specified on the same scale as the data variable, whereas the `mult` argument is specified relative to the axis range. 
 
 
-### Breaks {#break-functions}
+<!-- ### Exercises -->
 
-In the examples above, I specified breaks manually, but ggplot2 also allows you to pass a function to `breaks`. This function should have one argument that specifies the limits of the scale (a numeric vector of length two), and it should return a numeric vector of breaks. You can write your own break function, but in many cases there is no need, thanks to the scales package [@scales]. It provides several tools that are useful for this purpose:
+<!-- 1.  The following code creates two plots of the mpg dataset. Modify the code -->
+<!--     so that the legend and axes match, without using faceting! -->
 
-* `scales::breaks_extended()`	creates automatic breaks for numeric axes.
-* `scales::breaks_log()`	creates breaks appropriate for log axes.
-* `scales::breaks_pretty()`	creates "pretty" breaks for date/times.
-* `scales::breaks_width()`	creates equally spaced breaks.
+<!--     `r columns(2, 2/3)` -->
+<!--     ```{r} -->
+<!--     fwd <- subset(mpg, drv == "f") -->
+<!--     rwd <- subset(mpg, drv == "r") -->
 
-The `breaks_extended()` function is the standard method used in ggplot2, and accordingly the first two plots below are the same. I can alter the desired number of breaks by setting `n = 2`, as illustrated in the third plot. Note that `breaks_extended()` treats `n` as a suggestion rather than a strict constraint. If you need to specify exact breaks it is better to do so manually.  
+<!--     ggplot(fwd, aes(displ, hwy, colour = class)) + geom_point() -->
+<!--     ggplot(rwd, aes(displ, hwy, colour = class)) + geom_point() -->
+<!--     ``` -->
 
-`r columns(3, 1/2)`
+<!-- 1.  What happens if you add two `xlim()` calls to the same plot? Why? -->
+
+<!-- 1.  What does `scale_x_continuous(limits = c(NA, NA))` do? -->
+
+<!-- 1.  What does `expand_limits()` do and how does it work?  Read the source code. -->
+
+
+### Breaks {#position-continuous-breaks}
+
+Setting the locations of the axis tick marks is a common data visualisation task. In ggplot2, axis tick marks and legend tick marks are both special cases of "scale breaks", and can be modified using the `breaks` argument to the scale function. I'll illustrate this using a toy data set that will reappear in several places throughout this part of the book:
+
 ```{r}
 toy <- data.frame(
   const = 1, 
@@ -135,31 +181,56 @@ toy <- data.frame(
   log = c(2, 5, 10, 2000)
 )
 toy
-axs <- ggplot(toy, aes(big, const)) + 
+```
+
+To set breaks manually, pass a vector of data values to `breaks`, or set `breaks = NULL` to remove the breaks and the corresponding tick marks entirely. In the plot below, removing the y-axis breaks also removes the corresponding grid lines: 
+
+`r columns(2)`
+```{r}
+base <- ggplot(toy, aes(big, const)) + 
   geom_point() + 
-  labs(x = NULL, y = NULL)
-axs
-axs + scale_x_continuous(breaks = scales::breaks_extended())
-axs + scale_x_continuous(breaks = scales::breaks_extended(n = 2))
+  labs(x = NULL, y = NULL) +
+  scale_y_continuous(breaks = NULL) 
+
+base
+```
+
+Alternatively, notice that when the breaks are set manually it moves the major gridlines and the minor gridlines between them:
+
+`r columns(2)`
+```{r}
+base + scale_x_continuous(breaks = c(1000, 2000, 4000))
+base + scale_x_continuous(breaks = c(1000, 1500, 2000, 4000))
+```
+
+It is also possible to pass a function to `breaks`. This function should have one argument that specifies the limits of the scale (a numeric vector of length two), and it should return a numeric vector of breaks. You can write your own break function, but in many cases there is no need, thanks to the scales package [@scales]. It provides several tools that are useful for this purpose:
+
+* `scales::breaks_extended()`	creates automatic breaks for numeric axes.
+* `scales::breaks_log()`	creates breaks appropriate for log axes.
+* `scales::breaks_pretty()`	creates "pretty" breaks for date/times.
+* `scales::breaks_width()`	creates equally spaced breaks.
+
+The `breaks_extended()` function is the standard method used in ggplot2, and accordingly the first two plots below are the same. I can alter the desired number of breaks by setting `n = 2`, as illustrated in the third plot. Note that `breaks_extended()` treats `n` as a suggestion rather than a strict constraint. If you need to specify exact breaks it is better to do so manually.  
+`r columns(3)`
+```{r}
+base 
+base + scale_x_continuous(breaks = scales::breaks_extended())
+base + scale_x_continuous(breaks = scales::breaks_extended(n = 2))
 ```
 
 Another approach that is sometimes useful is specifying a fixed `width` that defines the spacing between breaks. The `breaks_width()` function is used for this. The first example below shows how to fix the width at a specific value; the second example illustrates the use of the `offset` argument that shifts all the breaks by a specified amount:
 
-`r columns(3, 1/2)`
+`r columns(3)`
 ```{r}
-axs + scale_x_continuous(breaks = scales::breaks_width(800))
-axs + scale_x_continuous(breaks = scales::breaks_width(800, offset = 200))
-axs + scale_x_continuous(breaks = scales::breaks_width(800, offset = -200))
+base + 
+  scale_x_continuous(breaks = scales::breaks_width(800))
+base + 
+  scale_x_continuous(breaks = scales::breaks_width(800, offset = 200))
+base + 
+  scale_x_continuous(breaks = scales::breaks_width(800, offset = -200))
 ```
 
 Notice the difference between setting an offset of 200 and -200.
-
-You can suppress the breaks entirely by setting them to `NULL`:
-
-`r columns(2, 2/3)`
-```{r}
-axs + scale_x_continuous(breaks = NULL)
-```
 
 ### Minor breaks {#minor-breaks}
 \index{Minor breaks}\index{Log!ticks}
@@ -176,23 +247,37 @@ mb
 The following plots illustrate the effect of setting the minor breaks:
 `r columns(2, 2/3)`
 ```{r}
-log_base <- ggplot(toy, aes(log, const)) + geom_point()
+base <- ggplot(toy, aes(log, const)) + 
+  geom_point() + 
+  labs(x = NULL, y = NULL) +
+  scale_y_continuous(breaks = NULL) 
 
-log_base + scale_x_log10()
-log_base + scale_x_log10(minor_breaks = mb)
+base + scale_x_log10()
+base + scale_x_log10(minor_breaks = mb)
 ```
 
 As with `breaks`, you can also supply a function to `minor_breaks`, such as `scales::minor_breaks_n()` or `scales::minor_breaks_width()` functions that can be helpful in controlling the minor breaks.
 
-### Labels {#label-functions}
+### Labels {#position-continuous-labels}
 
 Every break is associated with a label and these can be changed by setting the `labels` argument to the scale function:
 
+`r columns(2, 2/3)`
 ```{r}
-axs + scale_x_continuous(breaks = c(2000, 4000), labels = c("2k", "4k"))
+base <- ggplot(toy, aes(big, const)) + 
+  geom_point() + 
+  labs(x = NULL, y = NULL) +
+  scale_y_continuous(breaks = NULL) 
+
+base
+base + 
+  scale_x_continuous(
+    breaks = c(2000, 4000), 
+    labels = c("2k", "4k")
+  ) 
 ```
 
-In the examples above I specified the vector of `labels` manually, but ggplot2 also allows you to pass a labelling function. A function passed to `labels` should accept a numeric vector of breaks as input and return a character vector of labels (the same length as the input). The scales package provides a number of tools that will automatically construct label functions for you. Some of the more useful examples for numeric data include:
+Often you don't need to set the `labels` manually, and can instead specify a labelling function in the same way you can for `breaks`. A function passed to `labels` should accept a numeric vector of breaks as input and return a character vector of labels (the same length as the input). Again, the scales package provides a number of tools that will automatically construct label functions for you. Some of the more useful examples for numeric data include:
 
 * `scales::label_bytes()` formats numbers as kilobytes, megabytes etc.
 * `scales::label_comma()` formats numbers as decimals with commas added.
@@ -205,39 +290,60 @@ A few examples are shown below to illustrate how these functions are used:
 
 `r columns(3)`
 ```{r breaks-functions}
-axs + scale_y_continuous(labels = scales::label_percent())
-axs + scale_y_continuous(labels = scales::label_dollar(prefix = "", suffix = "€"))
+base <- ggplot(toy, aes(big, const)) + 
+  geom_point() + 
+  labs(x = NULL, y = NULL) +
+  scale_x_continuous(breaks = NULL)
+
+base
+base + scale_y_continuous(labels = scales::label_percent())
+base + scale_y_continuous(
+  labels = scales::label_dollar(prefix = "", suffix = "€")
+)
 ```
 
-You can suppress labels with `labels = NULL`. This will remove the labels from the axis or legend while leaving its other properties unchanged:
+You can suppress labels with `labels = NULL`. This will remove the labels from the axis or legend while leaving its other properties unchanged. Notice the difference between setting `breaks = NULL` and `labels = NULL`:
 
+`r columns(2)`
 ```{r}
-axs + scale_x_continuous(labels = NULL)
+base + scale_y_continuous(breaks = NULL)
+base + scale_y_continuous(labels = NULL)
 ```
 
-### Exercises
+<!-- ### Exercises -->
 
-1.  Recreate the following graphic:
+<!-- 1.  Recreate the following graphic: -->
 
-    ```{r, echo = FALSE}
-    ggplot(mpg, aes(displ, hwy)) + 
-      geom_point() +  
-      scale_x_continuous("Displacement", labels = scales::unit_format(suffix = "L")) + 
-      scale_y_continuous(quote(paste("Highway ", (frac(miles, gallon))))) 
-    ```
-    
-    Adjust the y axis label so that the parentheses are the right size.
+<!--     ```{r, echo = FALSE} -->
+<!--     ggplot(mpg, aes(displ, hwy)) +  -->
+<!--       geom_point() +   -->
+<!--       scale_x_continuous("Displacement", labels = scales::unit_format(suffix = "L")) +  -->
+<!--       scale_y_continuous(quote(paste("Highway ", (frac(miles, gallon)))))  -->
+<!--     ``` -->
 
-1.  List the three different types of object you can supply to the
-    `breaks` argument. How do `breaks` and `labels` differ?
+<!--     Adjust the y axis label so that the parentheses are the right size. -->
 
-1.  What label function allows you to create mathematical expressions?
-    What label function converts 1 to 1st, 2 to 2nd, and so on?
+<!-- 1.  List the three different types of object you can supply to the -->
+<!--     `breaks` argument. How do `breaks` and `labels` differ? -->
+
+<!-- 1.  What label function allows you to create mathematical expressions? -->
+<!--     What label function converts 1 to 1st, 2 to 2nd, and so on? -->
 
 
 ### Transformations {#scale-transformation}
 
-When working with continuous data, the default is to map linearly from the data space onto the aesthetic space. It is possible to override this default using transformations. Every continuous scale takes a `trans` argument, allowing the use of a variety of transformations:
+When working with continuous data, the default is to map linearly from the data space onto the aesthetic space. It is possible to override this default using scale transformations, which alter the way in which this mapping takes place. In some cases you don't need to dive into the details, because there are convenience functions like `scale_x_log10()`, `scale_x_reverse()` that can do the work for you:
+
+`r columns(3)`
+```{r}
+base <- ggplot(mpg, aes(displ, hwy)) + geom_point()
+
+base
+base + scale_x_reverse()
+base + scale_y_reverse()
+```
+
+However, even in these cases a deeper understanding can be valuable. Every continuous scale takes a `trans` argument, allowing the use of a variety of transformations:
 \index{Scales!position} \index{Transformation!scales} \index{Log!scale} \indexf{scale\_x\_log10}
 
 `r columns(2, 1)`
@@ -254,29 +360,42 @@ ggplot(diamonds, aes(price, carat)) +
   scale_y_continuous(trans = "log10")
 ```
 
-The transformation is carried out by a "transformer", which describes the transformation, its inverse, and how to draw the labels. You can construct your own transformer using `scales::trans_new()`, but, as the plots above illustrate, ggplot2 understands many common transformations supplied by the scales package. The following table lists the most common variants: 
+The transformation is carried out by a "transformer", which describes the transformation, its inverse, and how to draw the labels. You can construct your own transformer using `scales::trans_new()`, but as the plots above illustrate, ggplot2 understands many common transformations supplied by the scales package. The following table lists some of the more common variants: 
 
-| Name      | Function $f(x)$         | Inverse $f^{-1}(y)$
-|-----------|-------------------------|------------------------
-| asn       | $\tanh^{-1}(x)$         | $\tanh(y)$
-| exp       | $e ^ x$                 | $\log(y)$
-| identity  | $x$                     | $y$
-| log       | $\log(x)$               | $e ^ y$
-| log10     | $\log_{10}(x)$          | $10 ^ y$
-| log2      | $\log_2(x)$             | $2 ^ y$
-| logit     | $\log(\frac{x}{1 - x})$ | $\frac{1}{1 + e(y)}$
-| pow10     | $10^x$                  | $\log_{10}(y)$
-| probit    | $\Phi(x)$               | $\Phi^{-1}(y)$
-| reciprocal| $x^{-1}$                | $y^{-1}$
-| reverse   | $-x$                    | $-y$
-| sqrt      | $x^{1/2}$               | $y ^ 2$
+| Name                   | Transformer                  | Function $f(x)$         | Inverse $f^{-1}(x)$
+|------------------------|------------------------------|-------------------------|------------------------
+| `"asn"`                | `scales::asn_trans()`        | $\tanh^{-1}(x)$         | $\tanh(y)$
+| `"exp"`                | `scales::exp_trans()`        | $e ^ x$                 | $\log(y)$
+| `"identity"`           | `scales::identity_trans()`   | $x$                     | $y$
+| `"log"`                | `scales::log_trans()`        | $\log(x)$               | $e ^ y$
+| `"log10"`              | `scales::log10_trans()`      | $\log_{10}(x)$          | $10 ^ y$
+| `"log2"`               | `scales::log2_trans()`       | $\log_2(x)$             | $2 ^ y$
+| `"logit"`              | `scales::logit_trans()`      | $\log(\frac{x}{1 - x})$ | $\frac{1}{1 + e(y)}$
+| `"probit"`             | `scales::probit_trans()`     | $\Phi(x)$               | $\Phi^{-1}(y)$
+| `"reciprocal"`         | `scales::reciprocal_trans()` | $x^{-1}$                | $y^{-1}$
+| `"reverse"`            | `scales::reverse_trans()`    | $-x$                    | $-y$
+| `"sqrt"`               | `scales::scale_x_sqrt()`     | $x^{1/2}$               | $y ^ 2$
 
-To simplify matters, ggplot2 provides convenience functions for the most common transformations: `scale_x_log10()`, `scale_x_sqrt()` and `scale_x_reverse()` provide the relevant transformation on the x axis, with similar functions provided for the y axis. Thus, the code below produces the same two plots shown in the previous example:
+
+You can specify the `trans` argument as a string containing the name of the transformation, or by calling the transformer directly. The following are equivalent:
+
+```{r, fig.show='hide'}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() + 
+  scale_y_continuous(trans = "reciprocal")
+
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point() + 
+  scale_y_continuous(trans = scales::reciprocal_trans())
+```
+
+In a few cases ggplot2 simplifies this even further, and provides convenience functions for the most common transformations: `scale_x_log10()`, `scale_x_sqrt()` and `scale_x_reverse()` provide the relevant transformation on the x axis, with similar functions provided for the y axis. Thus, these two plot specifications are also equivalent:
 
 ```{r, fig.show="hide"}
-ggplot(mpg, aes(displ, hwy)) + 
-  geom_point() +
-  scale_y_reverse()
+ggplot(diamonds, aes(price, carat)) + 
+  geom_bin2d() + 
+  scale_x_continuous(trans = "log10") +
+  scale_y_continuous(trans = "log10")
 
 ggplot(diamonds, aes(price, carat)) + 
   geom_bin2d() + 
@@ -284,7 +403,7 @@ ggplot(diamonds, aes(price, carat)) +
   scale_y_log10()
 ```
 
-Note that there is nothing preventing you from performing these transformations manually. For example, instead of using `scale_x_log10()` to transform the scale, you could transform the data instead and plot `log10(x)`. The appearance of the geom will be the same, but the tick labels will be different. Specifically, if you use a transformed scale, the axes will be labelled in the original data space; if you transform the data, the axes will be labelled in the transformed space. 
+Note that there is nothing preventing you from performing these transformations manually. For example, instead of using `scale_x_log10()` to transform the scale, you could transform the data instead and plot `log10(x)`. The appearance of the geom will be the same, but the tick labels will be different. Specifically, if you use a transformed scale, the axes will be labelled in the original data space; if you transform the data, the axes will be labelled in the transformed space. As a consequence, these plot specifications are slightly different: 
 
 `r columns(2, 1)`
 ```{r}
@@ -300,63 +419,72 @@ ggplot(mpg, aes(displ, hwy)) +
 
 Regardless of which method you use, the transformation occurs before any statistical summaries. To transform _after_ statistical computation use `coord_trans()`. See Section \@ref(cartesian) for more details on coordinate systems, and Section \@ref(scale-transformation-extras) if you need to transform something other than a numeric position scale.
 
-## Date-time
-
-### Breaks {#date-scales}
+## Date-time position scales {#date-scales}
 \index{Date/times} \index{Data!date/time} \index{Time} \index{Scales!date/time} \indexf{scale\_x\_datetime}
 
-A special case arises when an aesthetic is mapped to a date/time type: such as the base `Date` (for dates) and `POSIXct` (for date-times) classes, as well as the `hms` class for "time of day" values provided by the hms package [@hms]. If your dates are in a different format you will need to convert them using `as.Date()`, `as.POSIXct()` or `hms::as_hms()`. You may also find the lubridate package helpful to manipulate date/time data [@lubridate]. 
+A special case of numeric position arises when an aesthetic is mapped to a date/time type. Examples of date/time types include the base `Date` (for dates) and `POSIXct` (for date-times) classes, as well as the `hms` class for "time of day" values provided by the hms package [@hms]. If your dates are in a different format you will need to convert them using `as.Date()`, `as.POSIXct()` or `hms::as_hms()`. You may also find the lubridate package helpful to manipulate date/time data [@lubridate]. 
 
-Assuming you have appropriately formatted data mapped to the x aesthetic, ggplot2 will use `scale_x_date()` as the default scale for dates and `scale_x_datetime()` as the default scale for date-time data. The corresponding scales for other aesthetics follow the usual naming rules. Date scales behave similarly to other continuous scales, but contain additional arguments that are allow you to work in date-friendly units. This section discusses breaks: controlling the labels for date scales is discussed in Section \@ref(date-labels).
+Assuming you have appropriately formatted data mapped to the x aesthetic, ggplot2 will use `scale_x_date()` as the default scale for dates and `scale_x_datetime()` as the default scale for date-time data. The corresponding scales for other aesthetics follow the usual naming rules. Date scales behave similarly to other continuous scales, but contain additional arguments that allow you to work in date-friendly units. This section discusses date/time scales for position aesthetics: see Section \@ref(date-colour-scales) for colour and fill aesthetics.
 
-The `date_breaks` argument allows you to position breaks by date units (years, months, weeks, days, hours, minutes, and seconds). For example, `date_breaks = "2 weeks"` will place a major tick mark every two weeks and `date_breaks = 25 years"` will place them every 25 years:
+### Breaks {#date-breaks}
 
-`r columns(2, 1 / 2)`
+The `date_breaks` argument allows you to position breaks by date units (years, months, weeks, days, hours, minutes, and seconds). For example, `date_breaks = "2 weeks"` will place a major tick mark every two weeks and `date_breaks = "15 years"` will place them every 15 years:
+
+`r columns(2, 2/3)`
 ```{r date-scale}
 date_base <- ggplot(economics, aes(date, psavert)) + 
   geom_line(na.rm = TRUE) +
   labs(x = NULL, y = NULL)
 
 date_base 
-date_base + scale_x_date(date_breaks = "25 years")
+date_base + scale_x_date(date_breaks = "15 years")
 ```
 
-It may be useful to note that internally `date_breaks = "25 years"` is treated as a shortcut for `breaks = scales::breaks_width("25 years")`. The longer form is typically unnecessary, but it can be useful if---as discussed in Section \@ref(break-functions)---you wish to specify an `offset`. Suppose the goal is to plot data that span the 20th century, beginning 1 January 1900, and we wish to set breaks in 25 year intervals. Specifying `date_breaks = "25 years"` produces breaks in the following fashion:
+Compared to the plot on the left, two things have changed in the plot on the right: the tick marks are placed at 15 year intervals, and the label format has changed. I'll discuss date labelling in Section \@ref(date-labels), but for now our focus is on the breaks.
+
+To understand how ggplot2 interprets `date_breaks = "15 years"`, it is helpful to note that it is merely a convenient shorthand for setting `breaks = scales::breaks_width("15 years")`. The longer form is typically unnecessary, but it can be useful if---as discussed in Section \@ref(position-continuous-breaks)---you wish to specify an `offset`. For example, suppose the goal is to plot data spanning a calendar year, with monthly breaks. Specifying `date_breaks = "1 month"` is equivalent to setting `scales::breaks_width("1 month")`, which produces these breaks:
 
 ```{r}
-century20 <- as.Date(c("1900-01-01", "1999-12-31"))
-breaks <- scales::breaks_width("25 years")
-breaks(century20)
+the_year <- as.Date(c("2021-01-01", "2021-12-31"))
+set_breaks <- scales::breaks_width("1 month")
+set_breaks(the_year)
 ```
 
-Because the range in `century20` starts on 1 January and the breaks increment in whole year values, each of the generated break dates falls on 1 January. We can shift all these breaks so that they fall on 1 February by setting `offset = 31` (since there are thirty one days in January).
+In this example, the `set_breaks()` function returned by `scales::break_width()` produces breaks spaced one month apart, where the date for each break falls on the first day of the month. Placing each break at the start of the calendar year is usually sensible, but there are exceptions. Perhaps the data track income and expenses for a household in which a monthly salary is paid on the ninth day of each month. In this situation it may be sensible to have the breaks aligned with the salary deposits. To do this, we can set `offset = 8` when we define the `set_breaks()` function:
 
-### Minor breaks
+```{r}
+set_breaks <- scales::breaks_width("1 month", offset = 8)
+set_breaks(the_year)
+```
 
-For date/time scales, you can use the `date_minor_breaks` argument:
 
-`r columns(2, 2/3)`
+### Minor breaks {#date-minor-breaks}
+
+Date/times scales also have a `date_minor_breaks` argument that allows you to specify the minor breaks in using date units, in exactly the same fashion that `date_breaks` does for major breaks. To illustrate this, I'll define an empty plot with a date scale on the y-axis, and tweak the theme (Chapter \@ref(polishing)) to make the grid lines more visually prominent:
+
+
+`r columns(2, 1.5)`
 ```{r date-scale-2}
-date_base + scale_x_date(
-  limits = as.Date(c("2003-01-01", "2003-04-01")),
-  date_breaks = "1 month"
-)
+df <- data.frame(y = as.Date(c("2022-01-01", "2022-04-01")))
+base <- ggplot(df, aes(y = y)) + 
+  labs(y = NULL) + 
+  theme_minimal() + 
+  theme(
+    panel.grid.major = element_line(colour = "black"),
+    panel.grid.minor = element_line(colour = "grey50")
+  )
 
-date_base + scale_x_date(
-  limits = as.Date(c("2003-01-01", "2003-04-01")),
-  date_breaks = "1 month",
-  date_minor_breaks = "1 week"
-)
+base + scale_y_date(date_breaks = "1 month")
+base + 
+  scale_y_date(date_breaks = "1 month", date_minor_breaks = "1 week")
 ```
 
 Note that in the first plot, the minor breaks are spaced evenly between the monthly major breaks. In the second plot, the major and minor beaks follow slightly different patterns: the minor breaks are always spaced 7 days apart but the major breaks are 1 month apart. Because the months vary in length, this leads to slightly uneven spacing.
 
-### Labels
 
+### Labels {#date-labels}
 
-### Date scale labels {#date-labels}
-
-Like `date_breaks`, date scales include a `date_labels` argument. It controls the display of the labels using the same formatting strings as in `strptime()` and `format()`. To display dates like 14/10/1979, for example, you would use the  string `"%d/%m/%Y"`: in this expression `%d` produces a numeric day of month, `%m` produces a numeric month, and `%Y` produces a four digit year. The table below provides a list of formatting strings:
+Date scales contain a `labels` argument that behaves similarly to the corresponding argument for numeric scales, but is often more convenient to use the `date_labels` argument. It controls the display of the labels using the same formatting strings as in `strptime()` and `format()`. To display dates like 14/10/1979, for example, you would use the  string `"%d/%m/%Y"`: in this expression `%d` produces a numeric day of month, `%m` produces a numeric month, and `%Y` produces a four digit year. The table below provides a list of formatting strings:
 
 | String        | Meaning
 |:--------------|:-----------------------------------------
@@ -398,23 +526,22 @@ base + scale_x_date(limits = lim, date_labels = "%b %y")
 base + scale_x_date(limits = lim, date_labels = "%B\n%Y")
 ```
 
-In these examples I have specified the labels manually via the `date_labels` argument. An alternative approach is to pass a labelling function to the `labels` argument, in the same way I described in Section \@ref(label-functions). The scales package provides two convenient functions that will generate date labellers for you:
+In these examples I have specified the labels manually via the `date_labels` argument. An alternative approach is to pass a labelling function to the `labels` argument, in the same way I described in Section \@ref(position-continuous-labels). You can write your own custom labelling function, but this is often unnecessary. The scales package provides convenient functions that can generate labellers for you, notably `scales::label_date()` and `scales::label_date_short()`. You rarely need to call `scales::label_date()` directly, because that's the function that `date_labels` uses. However, if you want to use `scales::label_date_short()` you'll need to do so explicitly. The goal of `label_date_short()` is to automatically construct short labels that are sufficient to uniquely identify the dates: 
 
-* `label_date()` is what `date_labels` does for you behind the scenes, so you
-  rarely need to call it directly.
+`r columns(1, 1/2)`
+```{r date-scale-5}
+base + 
+  scale_x_date(
+    limits = lim, 
+    labels = scales::label_date_short()
+  )
+```
 
-* `label_date_short()` automatically constructs short labels that are 
-  sufficient to uniquely identify the dates: 
+This can often produce clearer plots: in the example above each year is labelled only once rather than appearing in every label, reducing the amount of visual clutter and making it easier for the viewer to see where each year begins and ends.
 
-    ```{r date-scale-5}
-    base + scale_x_date(labels = scales::label_date("%b %y"))
-    base + scale_x_date(limits = lim, labels = scales::label_date_short())
-    ```
+## Discrete position scales {#discrete-position}
 
-
-## Discrete
-
-It is also possible to map discrete variables to position scales, with the default scales being `scale_x_discrete()` and `scale_y_discrete()` in this case. For example, the following two plot specifications are equivalent
+It is also possible to map discrete variables to position scales, with the default scales being `scale_x_discrete()` and `scale_y_discrete()`. For example, the following two plot specifications are equivalent
 
 ```{r default-scales-discrete, fig.show = "hide"}
 ggplot(mpg, aes(x = hwy, y = class)) + 
@@ -435,162 +562,108 @@ ggplot(mpg, aes(x = hwy, y = class)) +
   annotate("text", x = 5, y = 1:7, label = 1:7)
 ```
 
-### Limits
+Mapping each category to an integer value is useful because it means that other width quantities can be specified as a proportion of the category range. For instance, in the preceding plot, we could specify a vertical jitter for each point spanning half the width of the implied category bin:
 
-* For discrete scales, `limits` should be a character vector that enumerates all 
-  possible values.
-
-### Scale labels {#scale-labels}
-\index{Axis!labels} \index{Legend!keys}
-
-When the data are categorical, you also have the option of using a named vector to set the labels associated with particular values. This allows you to change some labels and not others, without altering the ordering or the breaks:
-
-`r columns(2, 2/3)`
+`r columns(1)`
 ```{r}
-base <- ggplot(toy, aes(const, txt)) + 
-  geom_point() +
-  labs(x = NULL, y = NULL)
-
-base
-base + scale_y_discrete(labels = c(c = "carrot", b = "banana"))
+ggplot(mpg, aes(x = hwy, y = class)) + 
+  geom_jitter(width = 0, height = .25) +
+  annotate("text", x = 5, y = 1:7, label = 1:7)
 ```
 
-The also contains functions relevant for other kinds of data, such as `scales::label_wrap()` which allows you to wrap long strings across lines. 
+The same mechanism underpins the widths of bars and boxplots. Because each category has width 1 in a discrete scale, setting `width = .4` when using `geom_boxplot()` ensures that the box occupies 40% of the width allocated to the category:
 
-### `guide_axis()`
+`r columns(2)`
+```{r}
+ggplot(mpg, aes(x = drv, y = hwy)) + geom_boxplot()
+ggplot(mpg, aes(x = drv, y = hwy)) + geom_boxplot(width = .4)
+```
 
-Guide functions exist mostly to control plot legends, but---as legends and axes are both kinds of guide---ggplot2 also supplies a `guide_axis()` function for axes. Its main purpose is to provide additional controls that prevent labels from overlapping:
+
+### Limits, breaks, and labels {#scale-labels}
+\index{Axis!labels} \index{Legend!keys}
+
+The limits, breaks. and labels for a discrete position scale can be set using the `limits`, `breaks`, and `labels` arguments. For the most part these behave identically to the corresponding arguments for numeric scales (Section \@ref(numeric-position-scales)), though there are some differences. For example, the limits of a discrete scale are not defined in terms of endpoints, but instead correspond to the set of allowable values for that variable. Accordingly, ggplot2 expects that the `limits` of a discrete scale should be a character vector that enumerates all possible values in the order they should appear:
+
+`r columns(3)`
+```{r}
+base <- ggplot(toy, aes(const, txt)) + 
+  geom_label(aes(label = txt)) +
+  scale_x_continuous(breaks = NULL) +
+  labs(x = NULL, y = NULL)
+
+base 
+base + scale_y_discrete(limits = c("a", "b", "c", "d", "e"))
+base + scale_y_discrete(limits = c("d", "c", "a", "b"))
+```
+
+The `breaks` argument is largely unchanged, enumerating a set of values to be displayed on the axis labels. The `labels` argument for discrete scales has some additional functionality: you also have the option of using a named vector to set the labels associated with particular values. This allows you to change some labels and not others, without altering the ordering or the breaks:
 
 `r columns(2, 2/3)`
 ```{r}
-base <- ggplot(mpg, aes(manufacturer, hwy)) + geom_boxplot() 
+base + scale_y_discrete(breaks = c("b", "c"))
+base + scale_y_discrete(labels = c(c = "carrot", b = "banana")) 
+```
 
+As with other scales, discrete position scales allow you to pass a function to the `labels` argument. The `scales::label_wrap()` function can be particularly valuable for categorical data, as it allows you to wrap long strings across multiple lines. 
+
+### Label positions {#guide-axis}
+
+When plotting categorical data it is often necessary to move the axis labels in some way to prevent them from overlapping:
+
+`r columns(1, 2/3)`
+```{r}
+base <- ggplot(mpg, aes(manufacturer, hwy)) + geom_boxplot() 
+base
+```
+
+Even when allocated a lot of horizontal space, the axis labels overlap considerably on this plot. We can control this with the help of the `guides()` function, which works in a similar way to the `labs()` helper function described in Section \@ref(titles). Both take the name of different aesthetics (e.g., color, x, fill) as arguments and allow you to specify your own value. For a position aesthetic, we use the `guide_axis()` to tell ggplot2 how we want to modify the axis labels.  For example, we could tell ggplot2 to "dodge" the position of the labels by setting `guide_axis(n.dodge = 3)`, or to rotate them by setting `guide_axis(rotate = 90)`:
+
+`r columns(2, 2/3)`
+```{r}
 base + guides(x = guide_axis(n.dodge = 3))
 base + guides(x = guide_axis(angle = 90))
 ```
 
-
-## Binned {#binned-position}
-
-A variation on discrete position scales are binned scales, where a continuous variable is sliced into multiple bins and the discretised variable is plotted. For example, if we want to modify the plot above to show the number of observations at each location, we could use `geom_count()` instead of `geom_point()` so that the size of the dots scales with the number of observations. As the left plot below illustrates, this is an improvement but is still rather cluttered. To improve this, the plot on the right uses `scale_x_binned()` to cut the `hwy` values into 10 bins before passing them to the geom:
+Note that, in the same way that where `labs()` is a shorthand way to specify the `name` argument to one or more scales, the `guides()` function is a shorthand way to set the `guide` arguments to one or more scales. So the code below achieves the same result:
 
 `r columns(2, 2/3)`
-```{r}
-base <- ggplot(mpg, aes(hwy, class)) + geom_count()
-
-base 
-base + scale_x_binned(n.breaks = 10)
+```{r, fig.show='hide'}
+base + scale_x_discrete(guide = guide_axis(n.dodge = 3))
+base + scale_x_discrete(guide = guide_axis(angle = 90))
 ```
 
-## Limits
+To learn more about guide functions see Section \@ref(scale-guide).
 
-\index{Axis!limits} \index{Scales!limits}
+## Binned position scales {#binned-position}
 
-<!--HW: I took a stab at this but it needs more work. I don't think domain vs range are natural to most people -->
-<!-- DN: note to self: revisit this during the restructure -->
-
-All scales have limits that define the domain over which the scale is defined and are usually derived from the range of the data. Here we'll discuss why you might want to specify the limits rather than relying on the data:
-
-1. You want to shrink the limits to focus on an interesting area of the plot.
-1. You want to expand the limits to make multiple plots match up or to match the natural limits of a variable (e.g. percentages go from 0 to 100).
-
-It's most natural to think about the limits of position scales: they map directly to the ranges of the axes. But limits also apply to scales that have legends, like colour, size, and shape, and these limits are particularly important if you want colours to be consistent across multiple plots. 
-
-Use the `limits` argument to modify limits:
-
-* For continuous scales, `limits` should be a numeric vector of length two. 
-  If you only want to set the upper or lower limit, you can set the other value
-  to `NA`.
-  
-
-A minimal example is shown below. In the left panel the limits of the x scale are set to the default values (the range of the data), the middle panel expands the limits, and the right panel shrinks them:
-
-`r columns(3)`
-```{r, messages = FALSE}
-df <- data.frame(x = 1:3, y = 1:3)
-base <- ggplot(df, aes(x, y)) + geom_point() 
-
-base
-base + scale_x_continuous(limits = c(0, 4))
-base + scale_x_continuous(limits = c(1.5, 2.5))
-```
-
-You might be surprised that the final plot generates a warning, as there's no missing value in the input dataset. I'll talk about this in Section \@ref(oob). 
-
-### Setting multiple limits
-
-Manually setting scale limits is a common task when you need to ensure that scales in different plots are consistent with one another. When you create a faceted plot, ggplot2 automatically does this for you:
-
-`r columns(1, aspect_ratio = 1/2, max_width = 1)`
-```{r}
-ggplot(mpg, aes(displ, hwy, colour = fl)) + 
-  geom_point() +
-  facet_wrap(vars(year))
-```
-
-(Colour represents the fuel type, which can be **r**egular, **e**thanol, **d**iesel, **p**remium or **c**ompressed natural gas.)
-
-In this plot the x and y axes have the same limits in both facets and the colours are consistent. However, it is sometimes necessary to maintain consistency across multiple plots, which has the often-undesirable property of causing each plot to set scale limits independently:
+A variation on discrete position scales are binned scales, where a continuous variable is sliced into multiple bins and the discretised variable is plotted. For position aesthetics, binned scales are mostly used to create histograms and related plots. The example below shows how to approximate the behaviour of `geom_histogram()` using `geom_bar()` in combination with a binned position scale:
 
 `r columns(2, 1)`
 ```{r}
-mpg_99 <- mpg %>% filter(year == 1999)
-mpg_08 <- mpg %>% filter(year == 2008)
-
-base_99 <- ggplot(mpg_99, aes(displ, hwy, colour = fl)) + geom_point() 
-base_08 <- ggplot(mpg_08, aes(displ, hwy, colour = fl)) + geom_point() 
-
-base_99
-base_08
+ggplot(mpg, aes(hwy)) + geom_histogram(bins = 8)
+ggplot(mpg, aes(hwy)) + 
+  geom_bar() +
+  scale_x_binned() 
 ```
 
-Each plot makes sense on its own, but visual comparison between the two is difficult. The axis limits are different, and because only regular, premium and diesel fuels are represented in the 1998 data the colours are mapped inconsistently. 
+In practice this is not the most useful example, since `geom_histogram()` already exists and supplies defaults that are generally more appropriate for histograms, but the technique can be extended. Suppose we want to use `geom_count()` in place of `geom_point()` in order to show the number of observations at each location. The advantage of `geom_count()` is that the size of each dot scales with the number of observations at each location, but as the figure below illustrates, this method doesn't work very well when data vary continuously:
+
+`r columns(1, 2/3, 1)`
+```{r}
+base <- ggplot(mpg, aes(displ, hwy)) + 
+  geom_count()
+
+base
+```
+
+This plot is rather cluttered, and not particularly easy to read. To improve this, we can use `scale_x_binned()` to cut the values into bins before passing them to the geom:
 
 ```{r}
-base_99 + 
-  scale_x_continuous(limits = c(1, 7)) +
-  scale_y_continuous(limits = c(10, 45))
-
-base_08 + 
-  scale_x_continuous(limits = c(1, 7)) +
-  scale_y_continuous(limits = c(10, 45))
+base + 
+  scale_x_binned(n.breaks = 15) +
+  scale_y_binned(n.breaks = 15)
 ```
 
-In many cases setting the limits for x and y axes would be sufficient to solve the problem, but in this example we still need to ensure that the colour scale is consistent across plots.  
-
-```{r}
-base_99 + 
-  scale_x_continuous(limits = c(1, 7)) +
-  scale_y_continuous(limits = c(10, 45)) +
-  scale_color_discrete(limits = c("c", "d", "e", "p", "r"))
-
-base_08 + 
-  scale_x_continuous(limits = c(1, 7)) +
-  scale_y_continuous(limits = c(10, 45)) +
-  scale_color_discrete(limits = c("c", "d", "e", "p", "r"))
-```
-
-Note that because the fuel variable `fl` is discrete, the limits for the colour aesthetic are a vector of possible values rather than the two end points.
-
-Because modifying scale limits is such a common task, ggplot2 provides some convenience functions to make this easier. For position scales the `xlim()` and `ylim()` helper functions inspect their input and then specify the appropriate scale for the x and y axes respectively. The results depend on the type of scale: \indexf{xlim}  \indexf{ylim}
-
-* `xlim(10, 20)`: a continuous scale from 10 to 20
-* `ylim(20, 10)`: a reversed continuous scale from 20 to 10
-* `xlim("a", "b", "c")`: a discrete scale
-* `xlim(as.Date(c("2008-05-01", "2008-08-01")))`: a date scale from May 1 to August 1 2008 (date scales are discussed in Section \@ref(date-scales))
-
-To ensure consistent axis scaling in the previous example, we can use these helper functions:
-
-```{r}
-base_99 + xlim(1, 7) + ylim(10, 45)
-base_08 + xlim(1, 7) + ylim(10, 45)
-```
-
-Another option for setting limits is the `lims()` function which takes name-value pairs as input, where the name specifies the aesthetic and the value specifies the limits:
-
-```{r}
-base_99 + lims(x = c(1, 7), y = c(10, 45), colour = c("c", "d", "e", "p", "r"))
-base_08 + lims(x = c(1, 7), y = c(10, 45), colour = c("c", "d", "e", "p", "r"))
-```
-
+You can read more about how binned scales are used for non-position aesthetics in Sections \@ref(binned-colour) and Section \@ref(guide-bins). 
 
