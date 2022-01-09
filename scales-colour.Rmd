@@ -27,7 +27,22 @@ The combination of these three components does not produce a simple geometric sh
 knitr::include_graphics("diagrams/hcl-space.png", dpi = 300)
 ```
 
-An additional complication is that many people (~10% of men) do not possess the normal complement of colour receptors and so can distinguish fewer colours than usual. \index{Colour!blindness} In brief, it's best to avoid red-green contrasts, and to check your plots with systems that simulate colour blindness. Vischeck (https://www.vischeck.com/) is one online solution. Another alternative is the **dichromat** package [@dichromat] which provides tools for simulating colour blindness, and a set of colour schemes known to work well for colour-blind people. You can also help people with colour blindness in the same way that you can help people with black-and-white printers: by providing redundant mappings to other aesthetics like size, line type or shape.
+### Color blindness {#color-blindness}
+
+An additional complication is that a sizeable minority of people do not possess the usual complement of colour receptors and so can distinguish fewer colours than others. \index{Colour!blindness} Because of this, it is important to consider how a colour palette will look to people with common forms of colour blindness. A simple heuristic is to avoid red-green contrasts, and to check your plots with systems that simulate colour blindness. In addition to the many online tools that can assist with this (e.g., https://www.vischeck.com/), there are several R packages provide tools you may find helpful. The dichromat package [@dichromat] provides tools for simulating colour blindness, and a set of colour schemes known to work well for colour-blind people. Another useful tool is the colorBlindness package [@colorBlindness] which provides a `displayAllColors()` function that helps you approximate the appearance of a given set of colours under different forms of colour blindness. As an illustration, it quickly reveals that colours provided by the `rainbow()` palette are not appropriate if you are trying to create plots that are readable by colour blind people, nor do they reproduce well in greyscale:
+
+`r columns(1, 2/3, 1)`
+```{r, warning=FALSE}
+colorBlindness::displayAllColors(rainbow(6))
+```
+
+By way of contrast, colours provided by `viridis::viridis()` are discriminable under the most common forms of colour blindness, and reproduce well in greyscale:
+
+```{r, warning=FALSE}
+colorBlindness::displayAllColors(viridis::viridis(6))
+```
+
+In addition to the viridis package there are other R packages that provide palettes that are explicitly colour blind safe, and you'll see these in use throughout the chapter. Finally, you can also help people with colour blindness in the same way that you can help people with black-and-white printers: by providing redundant mappings to other aesthetics like size, line type or shape.
 
 ## Continuous colour scales {#colour-continuous}
 
@@ -332,11 +347,9 @@ bars + scale_fill_hue(c = 40)
 bars + scale_fill_hue(h = c(180, 300))
 ```
     
-One disadvantage of the default colour scheme is that because the colours all have the same luminance and chroma, when you print them in black and white, they all appear as an identical shade of grey. Noting this, if you are intending a discrete colour scale to be printed in black and white, it is better to use `scale_fill_grey()` which maps discrete data to grays, from light to dark:
+There are some problems with this default scheme. One is that unlike many of the other palettes discussed in this chapter, they are not colour blind safe (discussed in Section \@ref(colour-blindness)). A second is that because the colours all have the same luminance and chroma, they all appear as an identical shade of grey when printed in black and white. If you are intending a discrete colour scale to be printed in black and white, it is better to explicitly use `scale_fill_grey()` which maps discrete data to grays, from light to dark:
 \indexf{scale\_colour\_grey} \index{Colour!greys}
 
-<!-- HW: also need to note challenges for colour blind folks -->
-<!-- DN: agreed. might try to discuss accessibility issues for colour scales as a distinct section when I restructure -->
 
 ```{r}
 bars + scale_fill_grey()
