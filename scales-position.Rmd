@@ -531,7 +531,7 @@ base +
 
 This can often produce clearer plots: in the example above each year is labelled only once rather than appearing in every label, reducing the amount of visual clutter and making it easier for the viewer to see where each year begins and ends.
 
-## Discrete position scales
+## Discrete position scales {#discrete-position}
 
 It is also possible to map discrete variables to position scales, with the default scales being `scale_x_discrete()` and `scale_y_discrete()`. For example, the following two plot specifications are equivalent
 
@@ -629,15 +629,33 @@ To learn more about guide functions see Section \@ref(scale-guide).
 
 ## Binned position scales {#binned-position}
 
-A variation on discrete position scales are binned scales, where a continuous variable is sliced into multiple bins and the discretised variable is plotted. For example, if we want to modify the plot above to show the number of observations at each location, we could use `geom_count()` instead of `geom_point()` so that the size of the dots scales with the number of observations. As the left plot below illustrates, this is an improvement but is still rather cluttered. To improve this, the plot on the right uses `scale_x_binned()` to cut the `hwy` values into 10 bins before passing them to the geom:
+A variation on discrete position scales are binned scales, where a continuous variable is sliced into multiple bins and the discretised variable is plotted. For position aesthetics, binned scales are mostly used to create histograms and related plots. The example below shows how to approximate the behaviour of `geom_histogram()` using `geom_bar()` in combination with a binned position scale:
 
-`r columns(2, 2/3)`
+`r columns(2, 1)`
 ```{r}
-base <- ggplot(mpg, aes(hwy, class)) + geom_count()
-
-base 
-base + scale_x_binned(n.breaks = 10)
+ggplot(mpg, aes(hwy)) + geom_histogram(bins = 8)
+ggplot(mpg, aes(hwy)) + 
+  geom_bar() +
+  scale_x_binned() 
 ```
 
-<!-- HW: this feels a bit brief. Maybe Thomas will have some ideas for more content? -->
-<!-- DN: partial solution... foreshadow that binned colour scales and binned size scales are more useful, and add links. But yes, needs additional binned position examples -->
+In practice this is not the most useful example, since `geom_histogram()` already exists and supplies defaults that are generally more appropriate for histograms, but the technique can be extended. Suppose we want to use `geom_count()` in place of `geom_point()` in order to show the number of observations at each location. The advantage of `geom_count()` is that the size of each dot scales with the number of observations at each location, but as the figure below illustrates, this method doesn't work very well when data vary continuously:
+
+`r columns(1, 2/3, 1)`
+```{r}
+base <- ggplot(mpg, aes(displ, hwy)) + 
+  geom_count()
+
+base
+```
+
+This plot is rather cluttered, and not particularly easy to read. To improve this, we can use `scale_x_binned()` to cut the values into bins before passing them to the geom:
+
+```{r}
+base + 
+  scale_x_binned(n.breaks = 15) +
+  scale_y_binned(n.breaks = 15)
+```
+
+You can read more about how binned scales are used for non-position aesthetics in Sections \@ref(binned-colour) and Section \@ref(guide-bins). 
+
