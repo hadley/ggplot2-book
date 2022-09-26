@@ -254,88 +254,36 @@ pcp(mpg, aes(colour = drv))
 
 The `piechart()` function above is a little unappealing because it requires the user to know the exact `aes()` specification that generates a pie chart. It would be more convenient if the user could simply specify the name of the variable to plot. To do that you'll need to learn a bit more about how `aes()` works.
 
-`aes()` uses non-standard evaluation: rather than looking at the values of its arguments, it looks at their expressions. This makes it difficult to work with programmatically as there's no way to store the name of a variable in an object and then refer to it later:
+`aes()` uses tidy-evaluation: rather than looking at the values of its arguments, it looks at their expressions. This makes programming difficult because when you want it to refer to a variable provided in an argument it instead uses the name of the argument:
 
 ```{r}
-x_var <- "displ"
-aes(x_var)
+my_function <- function(x_var) {
+  aes(x = x_var)
+}
+my_function(abc)
 ```
 
-Instead we need to use `aes_()`, which uses regular evaluation. There are two basic ways to create a mapping with `aes_()`: \indexf{aes\_}
+We resolve this using the standard technique for programming with tidy-evaluation: embracing. Embracing tells gglot2 to look "inside" the argument use its value, not its literal name:
 
-*   Using a _quoted call_, created by `quote()`, `substitute()`, `as.name()`, 
-    or `parse()`. \indexf{quote} \indexf{substitute} \indexf{parse} \indexf{as.name}
-    
-    ```{r}
-    aes_(quote(displ))
-    aes_(as.name(x_var))
-    aes_(parse(text = x_var)[[1]])
-    
-    f <- function(x_var) {
-      aes_(substitute(x_var))
-    }
-    f(displ)
-    ```
-
-    The difference between `as.name()` and `parse()` is subtle. If `x_var` 
-    is "a + b", `as.name()` will turn it into a variable called `` `a + b` ``,
-    `parse()` will turn it into the function call `a + b`. (If this is
-    confusing, <http://adv-r.had.co.nz/Expressions.html> might help).
-
-*   Using a formula, created with `~`. \indexc{\textasciitilde}
-
-    ```{r}
-    aes_(~displ)
-    ```
-
-`aes_()` gives us three options for how a user can supply variables: as a string, as a formula, or as a bare expression. These three options are illustrated below
-
-`r columns(3, 1)`
 ```{r}
-piechart1 <- function(data, var, ...) {
-  piechart(data, aes_(~factor(1), fill = as.name(var)))
+my_function <- function(x_var) {
+  aes(x = {{ x_var }})
 }
-piechart1(mpg, "class") + theme(legend.position = "none")
-
-piechart2 <- function(data, var, ...) {
-  piechart(data, aes_(~factor(1), fill = var))
-}
-piechart2(mpg, ~class) + theme(legend.position = "none")
-
-piechart3 <- function(data, var, ...) {
-  piechart(data, aes_(~factor(1), fill = substitute(var)))
-}
-piechart3(mpg, class) + theme(legend.position = "none")
+my_function(abc)
 ```
 
-There's another advantage to `aes_()` over `aes()` if you're writing ggplot2 plots inside a package: using `aes_(~x, ~y)` instead of `aes(x, y)` avoids the global variables NOTE in `R CMD check`. \index{Global variables}
+This makes it easy to update our piechart function:
 
-### The plot environment
-
-As you create more sophisticated plotting functions, you'll need to understand a bit more about ggplot2's scoping rules. ggplot2 was written well before I understood the full intricacies of non-standard evaluation, so it has a rather simple scoping system. If a variable is not found in the `data`, it is looked for in _the_ plot environment. There is only one environment for a plot (not one for each layer), and it is the environment in which `ggplot()` is called from (i.e. the `parent.frame()`). \index{Environments} \indexf{parent.frame}
-
-This means that the following function won't work because `n` is not stored in an environment accessible when the expressions in `aes()` are evaluated. 
-
-```{r, error = TRUE, fig.show = "hide"}
-f <- function() {
-  n <- 10
-  geom_line(aes(x / n)) 
+```{r}
+piechart <- function(data, var) {
+  ggplot(data, aes(factor(1), fill = {{ var }})) +
+    geom_bar(width = 1) + 
+    coord_polar(theta = "y") + 
+    xlab(NULL) + 
+    ylab(NULL)
 }
-df <- data.frame(x = 1:3, y = 1:3)
-ggplot(df, aes(x, y)) + f()
+mpg |> piechart(class)
 ```
-
-Note that this is only a problem with the `mapping` argument. All other arguments are evaluated immediately so their values (not a reference to a name) are stored in the plot object. This means the following function will work:
-
-```{r, fig.show = "hide"}
-f <- function() {
-  colour <- "blue"
-  geom_line(colour = colour) 
-}
-ggplot(df, aes(x, y)) + f()
-```
-
-If you need to use a different environment for the plot, you can specify it with the `environment` argument to `ggplot()`. You'll need to do this if you're creating a plot function that takes user provided data.
 
 ### Exercises
 
@@ -347,17 +295,6 @@ If you need to use a different environment for the plot, you can specify it with
 
 1.  What additional arguments should `pcp()` take? What are the downsides
     of how `...` is used in the current code?
-
-1.  Advanced: why doesn't this code work? How can you fix it?
-
-    ```{r, error = TRUE, fig.show = "hide"}
-    f <- function() {
-      levs <- c("2seater", "compact", "midsize", "minivan", "pickup", 
-        "subcompact", "suv")
-      piechart3(mpg, factor(class, levels = levs))
-    }
-    f()
-    ```
 
 ## Functional programming
 
