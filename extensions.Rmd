@@ -5,7 +5,7 @@ source("common.R")
 # Writing ggplot2 extensions {#extensions}
 ggplot2 has been designed in a way that makes it relatively easy to extend the functionality with new types of the common grammar components. The extension system allows you to distribute these extensions as packages should you choose to, but the ease with which extensions can be made means that writing one-off extensions to solve a particular plotting challenge is also viable (and often preferable to manipulating the gtable output).
 
-In this chapter we will go through the different ways ggplot2 can be extended, and discuss any specific issues you may need to be aware of. The later chapter will showcase the development of specific extensions.
+In this chapter we will go through the different ways ggplot2 can be extended, and discuss any specific issues you may need to be aware of. The next chapter will showcase the development of specific extensions.
 
 ## New themes
 Themes are probably the easiest form of extensions as they only require you to write code you would normally write when creating plots with ggplot2. While it is possible to build up a new theme from the ground it is usually easier and less error-prone to modify an existing theme. This is done in ggplot2 as well as can be seen by looking at e.g. `theme_minimal()`:
@@ -53,7 +53,7 @@ and send it off to the different geoms, collecting the output in a `gList` (a li
 print(GeomSmooth$draw_group)
 ```
 
-If you cannot leverage any existing geom implementation for creating the grobs, you'd have to implement the full `draw_*()` method from scratch. Later chapters will have examples of this.
+If you cannot leverage any existing geom implementation for creating the grobs, you'd have to implement the full `draw_*()` method from scratch. The next chapter will have examples of this.
 
 ## New coords
 At its most basic, the coord is responsible for rescaling the position aesthetics into a [0, 1] range, potentially transforming them in the process. The only place where you might call any methods from a coord is in a geoms `draw_*()` method where the `transform()` method is called on the data to turn the position data into the right format before creating grobs from it. The most common (and default) is CoordCartesian, which simply rescales the position data:
@@ -85,7 +85,7 @@ While positions may appear simple from the look of the base class, they can be v
 ## New facets
 Facets are one of the most powerful concepts in ggplot2, and it follows that extending facets is one of the most powerful ways to modify how ggplot2 operates. All that power comes at a cost, though. Facets are responsible for recieving all the different panels, attching axes (and strips) to them, and arranging them in the expected manner. All of this requires a lot of gtable manipulation and grid understanding and can be a daunting undertaking.
 
-Depending on what you want to achieve, you may be able to skip that almost completely. If your new facet will end up with a rectangular arrangement of panels, it is often possible to subclass either `FacetWrap` or `FacetGrid`, and simply provide new `compute_layout()`, and `map_data()` methods. The first takes care of recieving the original data and create a layout specification, while the second recieves the created layout along with the data, and attaches a `PANEL` column to it, mapping the data to one of the panels in the layout. An example of this type of subclassing will be given in a later chapter.
+Depending on what you want to achieve, you may be able to skip that almost completely. If your new facet will end up with a rectangular arrangement of panels, it is often possible to subclass either `FacetWrap` or `FacetGrid`, and simply provide new `compute_layout()`, and `map_data()` methods. The first takes care of recieving the original data and create a layout specification, while the second recieves the created layout along with the data, and attaches a `PANEL` column to it, mapping the data to one of the panels in the layout. An example of this type of subclassing will be given in the next chapter.
 
 ## New guides
 >Should probably not mention anything until they have been ported to `ggproto`
