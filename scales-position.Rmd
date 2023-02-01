@@ -17,7 +17,7 @@ In this example the y aesthetic is not specified by the user. Rather, the aesthe
 ggplot(mpg, aes(x = displ, y = after_stat(count))) + geom_histogram()
 ```
 
-Because position scales are used in every plot, it is useful to understand how they work and how they can be modified. In this chapter I'll discuss this in detail. The chapter is organised into four main sections:
+Because position scales are used in every plot, it is useful to understand how they work and how they can be modified. In this chapter we'll discuss this in detail. The chapter is organised into four main sections:
 
 - Section \@ref(numeric-position-scales) discusses continuous position scales. In addition to covering core topics like controlling scale limits (Section \@ref(position-continuous-limits)), breaks (Section \@ref(position-continuous-breaks)), and labels (Section \@ref(position-continuous-labels)), there are sections providing a detailed coverage of scale transformations (Section \@ref(scale-transformation)) as well as the subtle issues that arise when you need to zoom in or zoom out on a plot (Sections \@ref(zooming-in) and \@ref(zooming-out)). 
 - Section \@ref(date-scales) discusses date/time scales, a special type of continuous scale. Because dates and times are a little more complicated than a standard continuous variable, ggplot2 provides special scales to help you control the major and minor breaks (Sections \@ref(date-breaks) and \@ref(date-minor-breaks)) and the labels (Section \@ref(date-labels)) for date/time data.
@@ -105,7 +105,7 @@ You can learn more about coordinate systems in Section \@ref(cartesian). To lear
 
 ### Visual range expansion {#zooming-out}
 
-If you have eagle eyes, you'll have noticed that the visual range of the axes actually extends a little bit past the numeric limits that I have specified in the various examples. This ensures that the data does not overlap the axes, which is usually (but not always) desirable. You can override the defaults setting the `expand` argument, which expects a numeric vector created by `expansion()`. 
+If you have eagle eyes, you'll have noticed that the visual range of the axes actually extends a little bit past the numeric limits that we have specified in the various examples. This ensures that the data does not overlap the axes, which is usually (but not always) desirable. You can override the defaults setting the `expand` argument, which expects a numeric vector created by `expansion()`. 
 
 For example, one case where it's usually preferable to remove this space is when using `geom_raster()`, which we can achieve by setting `expand = expansion(0)`: \index{Axis!expansion}
 
@@ -170,7 +170,7 @@ Note the different behaviour in the left and middle plots: the `add` argument is
 
 ### Breaks {#position-continuous-breaks}
 
-Setting the locations of the axis tick marks is a common data visualisation task. In ggplot2, axis tick marks and legend tick marks are both special cases of "scale breaks", and can be modified using the `breaks` argument to the scale function. I'll illustrate this using a toy data set that will reappear in several places throughout this part of the book:
+Setting the locations of the axis tick marks is a common data visualisation task. In ggplot2, axis tick marks and legend tick marks are both special cases of "scale breaks", and can be modified using the `breaks` argument to the scale function. We'll illustrate this using a toy data set that will reappear in several places throughout this part of the book:
 
 ```{r}
 toy <- data.frame(
@@ -210,7 +210,7 @@ It is also possible to pass a function to `breaks`. This function should have on
 * `scales::breaks_pretty()`	creates "pretty" breaks for date/times.
 * `scales::breaks_width()`	creates equally spaced breaks.
 
-The `breaks_extended()` function is the standard method used in ggplot2, and accordingly the first two plots below are the same. I can alter the desired number of breaks by setting `n = 2`, as illustrated in the third plot. Note that `breaks_extended()` treats `n` as a suggestion rather than a strict constraint. If you need to specify exact breaks it is better to do so manually.  
+The `breaks_extended()` function is the standard method used in ggplot2, and accordingly the first two plots below are the same. We can alter the desired number of breaks by setting `n = 2`, as illustrated in the third plot. Note that `breaks_extended()` treats `n` as a suggestion rather than a strict constraint. If you need to specify exact breaks it is better to do so manually.  
 `r columns(3)`
 ```{r}
 base 
@@ -237,7 +237,7 @@ Notice the difference between setting an offset of 200 and -200.
 
 You can adjust the minor breaks (the unlabelled faint grid lines that appear between the major grid lines) by supplying a numeric vector of positions to the `minor_breaks` argument. 
 
-Minor breaks are particularly useful for log scales because they give a clear visual indicator that the scale is non-linear. To show them off, I'll first create a vector of minor break values (on the transformed scale), using `%o%` to quickly generate a multiplication table and `as.numeric()` to flatten the table to a vector.
+Minor breaks are particularly useful for log scales because they give a clear visual indicator that the scale is non-linear. To show them off, we'll first create a vector of minor break values (on the transformed scale), using `%o%` to quickly generate a multiplication table and `as.numeric()` to flatten the table to a vector.
 
 ```{r}
 mb <- unique(as.numeric(1:10 %o% 10 ^ (0:3)))
@@ -440,7 +440,7 @@ date_base
 date_base + scale_x_date(date_breaks = "15 years")
 ```
 
-Compared to the plot on the left, two things have changed in the plot on the right: the tick marks are placed at 15 year intervals, and the label format has changed. I'll discuss date labelling in Section \@ref(date-labels), but for now our focus is on the breaks.
+Compared to the plot on the left, two things have changed in the plot on the right: the tick marks are placed at 15 year intervals, and the label format has changed. We'll discuss date labelling in Section \@ref(date-labels), but for now our focus is on the breaks.
 
 To understand how ggplot2 interprets `date_breaks = "15 years"`, it is helpful to note that it is merely a convenient shorthand for setting `breaks = scales::breaks_width("15 years")`. The longer form is typically unnecessary, but it can be useful if---as discussed in Section \@ref(position-continuous-breaks)---you wish to specify an `offset`. For example, suppose the goal is to plot data spanning a calendar year, with monthly breaks. Specifying `date_breaks = "1 month"` is equivalent to setting `scales::breaks_width("1 month")`, which produces these breaks:
 
@@ -460,7 +460,7 @@ set_breaks(the_year)
 
 ### Minor breaks {#date-minor-breaks}
 
-Date/times scales also have a `date_minor_breaks` argument that allows you to specify the minor breaks in using date units, in exactly the same fashion that `date_breaks` does for major breaks. To illustrate this, I'll define an empty plot with a date scale on the y-axis, and tweak the theme (Chapter \@ref(polishing)) to make the grid lines more visually prominent:
+Date/times scales also have a `date_minor_breaks` argument that allows you to specify the minor breaks in using date units, in exactly the same fashion that `date_breaks` does for major breaks. To illustrate this, we'll define an empty plot with a date scale on the y-axis, and tweak the theme (Chapter \@ref(polishing)) to make the grid lines more visually prominent:
 
 
 `r columns(2, 1.5)`
@@ -526,7 +526,7 @@ base + scale_x_date(limits = lim, date_labels = "%b %y")
 base + scale_x_date(limits = lim, date_labels = "%B\n%Y")
 ```
 
-In these examples I have specified the labels manually via the `date_labels` argument. An alternative approach is to pass a labelling function to the `labels` argument, in the same way I described in Section \@ref(position-continuous-labels). You can write your own custom labelling function, but this is often unnecessary. The scales package provides convenient functions that can generate labellers for you, notably `scales::label_date()` and `scales::label_date_short()`. You rarely need to call `scales::label_date()` directly, because that's the function that `date_labels` uses. However, if you want to use `scales::label_date_short()` you'll need to do so explicitly. The goal of `label_date_short()` is to automatically construct short labels that are sufficient to uniquely identify the dates: 
+In these examples we have specified the labels manually via the `date_labels` argument. An alternative approach is to pass a labelling function to the `labels` argument, in the same way we described in Section \@ref(position-continuous-labels). You can write your own custom labelling function, but this is often unnecessary. The scales package provides convenient functions that can generate labellers for you, notably `scales::label_date()` and `scales::label_date_short()`. You rarely need to call `scales::label_date()` directly, because that's the function that `date_labels` uses. However, if you want to use `scales::label_date_short()` you'll need to do so explicitly. The goal of `label_date_short()` is to automatically construct short labels that are sufficient to uniquely identify the dates: 
 
 `r columns(1, 1/2)`
 ```{r date-scale-5}

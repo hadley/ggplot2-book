@@ -6,7 +6,7 @@ source("common.R")
 columns(1, 2 / 3)
 ```
 
-Plotting geospatial data is a common visualisation task, and one that requires specialised tools. Typically the problem can be decomposed into two problems: using one data source to draw a map, and adding metadata from another information source to the map. This chapter will help you tackle both problems. I've structured the chapter in the following way: Section \@ref(polygonmaps) outlines a simple way to draw maps using `geom_polygon()`, which is followed in Section \@ref(sf) by a modern "simple features" (sf) approach using `geom_sf()`. Next, Sections \@ref(mapproj) and \@ref(sfdetail) discuss how to work with map projections and the underlying sf data structure. Finally, Section \@ref(rastermaps) discusses how to draw maps based on raster data.
+Plotting geospatial data is a common visualisation task, and one that requires specialised tools. Typically the problem can be decomposed into two problems: using one data source to draw a map, and adding metadata from another information source to the map. This chapter will help you tackle both problems. We've structured the chapter in the following way: Section \@ref(polygonmaps) outlines a simple way to draw maps using `geom_polygon()`, which is followed in Section \@ref(sf) by a modern "simple features" (sf) approach using `geom_sf()`. Next, Sections \@ref(mapproj) and \@ref(sfdetail) discuss how to work with map projections and the underlying sf data structure. Finally, Section \@ref(rastermaps) discusses how to draw maps based on raster data.
 
 ## Polygon maps {#polygonmaps}
 \index{Maps!geoms} 
@@ -34,7 +34,7 @@ ggplot(mi_counties, aes(lon, lat, group = group)) +
   coord_quickmap()
 ```
 
-In both plots I use `coord_quickmap()` to adjust the axes to ensure that longitude and latitude are rendered on the same scale. Chapter \@ref(coord) discusses coordinate systems in ggplot2 in more general terms, but as we'll see below, geospatial data often require a more exacting approach. For this reason, ggplot2 provides `geom_sf()` and `coord_sf()` to handle spatial data specified in simple features format.
+In both plots we use `coord_quickmap()` to adjust the axes to ensure that longitude and latitude are rendered on the same scale. Chapter \@ref(coord) discusses coordinate systems in ggplot2 in more general terms, but as we'll see below, geospatial data often require a more exacting approach. For this reason, ggplot2 provides `geom_sf()` and `coord_sf()` to handle spatial data specified in simple features format.
 
 ## Simple features maps {#sf} 
 
@@ -77,7 +77,7 @@ The `coord_sf()` function governs the map projection, discussed in Section \@ref
 
 ### Layered maps
 
-In some instances you may want to overlay one map on top of another. The ggplot2 package supports this by allowing you to add multiple `geom_sf()` layers to a plot. As an example, I'll use the `oz_states` data to draw the Australian states in different colours, and will overlay this plot with the boundaries of Australian electoral regions. To do this, there are two preprocessing steps to perform. First, I'll use `dplyr::filter()` to remove the "Other Territories" from the state boundaries.
+In some instances you may want to overlay one map on top of another. The ggplot2 package supports this by allowing you to add multiple `geom_sf()` layers to a plot. As an example, I'll use the `oz_states` data to draw the Australian states in different colours, and will overlay this plot with the boundaries of Australian electoral regions. To do this, there are two preprocessing steps to perform. First, we'll use `dplyr::filter()` to remove the "Other Territories" from the state boundaries.
 
 
 The code below draws a plot with two map layers: the first uses `oz_states` to fill the states in different colours, and the second uses `oz_votes` to draw the electoral boundaries. Second, I'll extract the electoral boundaries in a simplified form using the `ms_simplify()` function from the rmapshaper package [@rmapshaper]. This is generally a good idea if the original data set (in this case `ozmaps::abs_ced`) is stored at a higher resolution than your plot requires, in order to reduce the time taken to render the plot. 
@@ -88,7 +88,7 @@ oz_states <- ozmaps::ozmap_states %>% filter(NAME != "Other Territories")
 oz_votes <- rmapshaper::ms_simplify(ozmaps::abs_ced)
 ```
 
-Now that I have data sets `oz_states` and `oz_votes` to represent the state borders and electoral borders respectively, the desired plot can be constructed by adding two `geom_sf()` layers to the plot:
+Now that we have data sets `oz_states` and `oz_votes` to represent the state borders and electoral borders respectively, the desired plot can be constructed by adding two `geom_sf()` layers to the plot:
 
 ```{r}
 ggplot() + 
@@ -160,7 +160,7 @@ In this example `geom_point` is used only to specify the locations of the capita
 
 ## Map projections {#mapproj}
 
-At the start of the chapter I drew maps by plotting longitude and latitude on a Cartesian plane, as if geospatial data were no different to other kinds of data one might want to plot. To a first approximation this is okay, but it's not good enough if you care about accuracy. There are two fundamental problems with the approach.
+At the start of the chapter we drew maps by plotting longitude and latitude on a Cartesian plane, as if geospatial data were no different to other kinds of data one might want to plot. To a first approximation this is okay, but it's not good enough if you care about accuracy. There are two fundamental problems with the approach.
 
 The first issue is the shape of the planet. The Earth is neither a flat plane, nor indeed is it a perfect sphere. As a consequence, to map a co-ordinate value (longitude and latitude) to a location we need to make assumptions about all kinds of things. How ellipsoidal is the Earth? Where is the centre of the planet? Where is the origin point for longitude and latitude? Where is the sea level? How do the tectonic plates move? All these things are relevant, and depending on what assumptions one makes the same co-ordinate can be mapped to locations that are many meters apart. The set of assumptions about the shape of the Earth is referred to as the **geodetic datum** and while it might not matter for some data visualisations, for others it is critical. There are several different choices one might consider: if your focus is North America the "North American Datum" (NAD83) is a good choice, whereas if your perspective is global the "World Geodetic System" (WGS84) is probably better. 
 
@@ -206,7 +206,7 @@ ggplot(oz_votes) + geom_sf() + coord_sf(crs = st_crs(3112))
 
 As noted earlier, maps created using `geom_sf()` and `coord_sf()` rely heavily on tools
 provided by the sf package, and indeed the sf package contains many more useful tools for
-manipulating simple features data. In this section I provide an introduction to a few 
+manipulating simple features data. In this section we provide an introduction to a few 
 such tools; more detailed coverage can be found on the sf package website 
 https://r-spatial.github.io/sf/.
 
@@ -237,7 +237,7 @@ The metadata for the edenmonaro object can accessed using helper functions. For 
 st_bbox(edenmonaro)
 ```
 
-Normally when we print the `edenmonaro` object the output would display all the additional information (dimension, bounding box, geodetic datum etc) but for the remainder of this section I will show only the relevant lines of the output. In this case edenmonaro is defined by a MULTIPOLYGON geometry containing one feature:
+Normally when we print the `edenmonaro` object the output would display all the additional information (dimension, bounding box, geodetic datum etc) but for the remainder of this section we will show only the relevant lines of the output. In this case edenmonaro is defined by a MULTIPOLYGON geometry containing one feature:
 
 ```{r, output.lines = -(3:6)}
 edenmonaro 
@@ -322,7 +322,7 @@ sat_vis <- read_stars(img_vis, RasterIO = list(nBufXSize = 600, nBufYSize = 600)
 sat_inf <- read_stars(img_inf, RasterIO = list(nBufXSize = 600, nBufYSize = 600))
 ```
 
-In the code above, the first argument specifies the path to the raster file, and the `RasterIO` argument is used to pass a list of low-level parameters to GDAL. In this case, I have used `nBufXSize` and `nBufYSize` to ensure that R reads the data at low resolution (as a 600x600 pixel image). To see what information R has imported, we can inspect the `sat_vis` object:
+In the code above, the first argument specifies the path to the raster file, and the `RasterIO` argument is used to pass a list of low-level parameters to GDAL. In this case, we have used `nBufXSize` and `nBufYSize` to ensure that R reads the data at low resolution (as a 600x600 pixel image). To see what information R has imported, we can inspect the `sat_vis` object:
 
 ```{r}
 sat_vis
@@ -349,13 +349,13 @@ ggplot() +
   scale_fill_gradient(low = "black", high = "white")
 ```
 
-One limitation to displaying only the raw image is that it is not easy to work out where the relevant landmasses are, and we may wish to overlay the satellite data with the `oz_states` vector map to show the outlines of Australian political entities. However, some care is required in doing so because the two data sources are associated with different coordinate reference systems. To project the `oz_states` data correctly, the data should be transformed using the `st_transform()` function from the sf package. In the code below, I extract the CRS from the `sat_vis` raster object, and transform the `oz_states` data to use the same system.
+One limitation to displaying only the raw image is that it is not easy to work out where the relevant landmasses are, and we may wish to overlay the satellite data with the `oz_states` vector map to show the outlines of Australian political entities. However, some care is required in doing so because the two data sources are associated with different coordinate reference systems. To project the `oz_states` data correctly, the data should be transformed using the `st_transform()` function from the sf package. In the code below, we extract the CRS from the `sat_vis` raster object, and transform the `oz_states` data to use the same system.
 
 ```{r}
 oz_states <- st_transform(oz_states, crs = st_crs(sat_vis))
 ```
 
-Having done so, I can now draw the vector map over the top of the raster image to make the image more interpretable to the reader. It is now clear from inspection that the satellite image was taken during the Australian sunrise: 
+Having done so, we can now draw the vector map over the top of the raster image to make the image more interpretable to the reader. It is now clear from inspection that the satellite image was taken during the Australian sunrise: 
 
 ```{r}
 ggplot() + 
