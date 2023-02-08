@@ -4,7 +4,7 @@ source("common.R")
 
 # Extending ggplot2 {#extensions}
 
-ggplot2 has been designed in a way that makes it relatively easy to extend the functionality with new types of the common grammar components. The extension system allows you to distribute these extensions as packages should you choose to, but the ease with which extensions can be made means that writing one-off extensions to solve a particular plotting challenge is also viable. This chapter discusses different ways ggplot2 can be extended and highlights specific issues to keep in mind. I'll present small examples throughout the chapter, but to see a worked example from beginning to end, see Chapters \@ref(spring1). 
+ggplot2 has been designed in a way that makes it relatively easy to extend the functionality with new types of the common grammar components. The extension system allows you to distribute these extensions as packages should you choose to, but the ease with which extensions can be made means that writing one-off extensions to solve a particular plotting challenge is also viable. This chapter discusses different ways ggplot2 can be extended and highlights specific issues to keep in mind. We'll present small examples throughout the chapter, but to see a worked example from beginning to end, see Chapters \@ref(spring1). 
 
 ## New themes
 
@@ -137,7 +137,7 @@ There are two points to note here when defining new theme elements in a package:
 
 - It is always a good idea to include the name of your package as a prefix for any new theme elements. That way, if someone else writes a panel annotation package `ggabc`, there is no potential conflict between theme elements `ggxyz.panel.annotation` and `ggabc.panel.annotation`. 
 
-Once the element tree has been updated, the package can define a new coordinate system that uses the new theme element. A simple way to do this is to define a function that creates a new instance of the `CoordCartesian` ggproto object. I'll talk more about this in Section \@ref(new-coords), but for now it is sufficient to note that this code will work:
+Once the element tree has been updated, the package can define a new coordinate system that uses the new theme element. A simple way to do this is to define a function that creates a new instance of the `CoordCartesian` ggproto object. We'll talk more about this in Section \@ref(new-coords), but for now it is sufficient to note that this code will work:
 
 ```{r}
 coord_annotate <- function(label = "panel annotation") {
@@ -212,7 +212,7 @@ StatChull <- ggproto("StatChull", Stat,
 )
 ```
 
-As described in Section \@ref(ggproto) the first two arguments to `ggproto()` are used to indicate that this object defines a new class (conveniently named `"StatChull"`) which inherits fields and methods from the `Stat` object. We then specify only those fields and methods that need to be altered from the defaults provided by `Stat`, in this case `compute_group()` and `required_aes`. Our `compute_group()` function takes two inputs, `data` and `scales`---because this is what ggplot2 expects---but the actual computation is dependent only on the `data`. Note that because the computation necessarily requires both position aesthetics to be present, I have also specified the `required_aes` field to make sure that ggplot2 knows that these aesthetics are required. 
+As described in Section \@ref(ggproto) the first two arguments to `ggproto()` are used to indicate that this object defines a new class (conveniently named `"StatChull"`) which inherits fields and methods from the `Stat` object. We then specify only those fields and methods that need to be altered from the defaults provided by `Stat`, in this case `compute_group()` and `required_aes`. Our `compute_group()` function takes two inputs, `data` and `scales`---because this is what ggplot2 expects---but the actual computation is dependent only on the `data`. Note that because the computation necessarily requires both position aesthetics to be present, we have also specified the `required_aes` field to make sure that ggplot2 knows that these aesthetics are required. 
 
 By creating this ggproto object we have a working stat, but have not yet given the user a way to access it. To address this we write a layer function, `stat_chull()`. All layer functions have the same form: you specify defaults in the function arguments and then call `layer()`, sending `...` into the `params` argument. The arguments in `...` will either be arguments for the geom (if you're making a stat wrapper), arguments for the stat (if you're making a geom wrapper), or aesthetics to be set. `layer()` takes care of teasing the different parameters apart and making sure they're stored in the right place. So our `stat_chull()` function looks like this
 
@@ -247,7 +247,7 @@ ggplot(mpg, aes(displ, hwy, colour = drv)) +
   stat_chull(fill = NA)
 ```
 
-When creating new stats it is usually a good idea to provide an accompanying `geom_*()` constructor as well as the `stat_*()` constructor, because most users are accustomed to adding plot layers with geoms rather than stats. I'll show what a `geom_chull()` function might look like in Section \@ref(new-geoms). 
+When creating new stats it is usually a good idea to provide an accompanying `geom_*()` constructor as well as the `stat_*()` constructor, because most users are accustomed to adding plot layers with geoms rather than stats. We'll show what a `geom_chull()` function might look like in Section \@ref(new-geoms). 
 
 Note that it is not always possible to define `geom_*()` constructor in a sensible way. This can happen when there is no obvious default geom for the new stat, or if the stat is intended to offer a slight modification to an existing geom/stat pair. In such cases it may be wise to provide only a `stat_*()` function. 
 
@@ -258,7 +258,7 @@ When defining new stats, it is often necessary to specify the `setup_params()` a
 - The `setup_params()` function is called first. It takes two arguments corresponding to the layer `data` and a list of parameters (`params`) specified during construction, and returns a modified list of parameters that will be used in later computations. Because the parameters are used by the `compute_*()` functions, the elements of the list should correspond to argument names in the `compute_*()` functions in order to be made available. 
 - The `setup_data()` function is called next. It also takes `data` and `params` as input---though the parameters it receives are the modified parameters returned from `setup_params()`---and returns the modified layer data. It is important that no matter what modifications happen in `setup_data()` the `PANEL` and `group` columns remain intact.
 
-In the example below I show how to use the `setup_params()` method to define a new stat. An example modifying the `setup_data()` method is included later, in Section \@ref(modifying-geoms).
+In the example below we show how to use the `setup_params()` method to define a new stat. An example modifying the `setup_data()` method is included later, in Section \@ref(modifying-geoms).
 
 Suppose we want to create `StatDensityCommon`, a stat that computes a density estimate of a variable after estimating a default bandwidth to apply to all groups in the data. This could be done in many different ways but for simplicity let's imagine we have a function `common_bandwidth()` that estimates the bandwidth separately for each group using the `bw.nrd0()` function and then returns the average:
 
@@ -336,7 +336,7 @@ Creating new geoms can feel slightly more daunting than creating new stats as th
 
 ### Modifying geom defaults {#modifying-geom-defaults}
 
-In many situations your new geom may simply be an existing geom that expects slightly different input or has different default parameter values. The `stat_chull()` example from the previous section is a good example of this. Notice that in when creating plots using `stat_chull()` I had to manually specify the `fill` and `colour` parameters if those were not mapped to aesthetics. The reason for this is that `GeomPolygon` creates a borderless filled polygon by default, and this is not well suited to the needs of our convex hull geom. To make our lives a little easier then, we can create a subclass of `GeomPolygon` that modifies the defaults so that it produces a hollow polygon by default. We can do this in a straightforward way by overriding the `default_aes` value:
+In many situations your new geom may simply be an existing geom that expects slightly different input or has different default parameter values. The `stat_chull()` example from the previous section is a good example of this. Notice that in when creating plots using `stat_chull()` we had to manually specify the `fill` and `colour` parameters if those were not mapped to aesthetics. The reason for this is that `GeomPolygon` creates a borderless filled polygon by default, and this is not well suited to the needs of our convex hull geom. To make our lives a little easier then, we can create a subclass of `GeomPolygon` that modifies the defaults so that it produces a hollow polygon by default. We can do this in a straightforward way by overriding the `default_aes` value:
 
 ```{r}
 GeomPolygonHollow <- ggproto("GeomPolygonHollow", GeomPolygon,
@@ -556,7 +556,7 @@ A last possibility worth mentioning, but outside the scope of this book, is the 
 
 The `Position` ggproto class is somewhat simpler than other ggproto classes, reflecting the fact that the `position_*()` functions have a very narrow scope. The role of the position is to receive and modify the data immediately before it is passed to any drawing functions. Strictly speaking, the position is able to modify the data in any fashion, but there is an implicit expectation that it modifies position aesthetics only. A position possesses `compute_layer()` and `compute_panel()` methods that behave analogously to the equivalent methods for a stat, but it does not possess a `compute_group()` method. It also contains `setup_params()` and `setup_data()` methods that are similar to the `setup_*()` methods for other ggproto classes, with one notable exception: the `setup_params()` method only receives the data as input, and not a list of parameter. The reason for this is that `position_*()` functions are never used on their own in ggplot2: rather, they are always called within the main `geom_*()` or `stat_*()` command that specifies the layer, and the parameters from the main command are not passed to the `position_*()` function call.  
 
-To give a simple example, I'll implement a slightly simplified version of the `position_jitternormal()` function from the ggforce package, which behaves in the same way as `position_jitter()` except that the perturbations are sampled from a normal distribution rather than a uniform distribution. In order to keep the exposition simple, I'll assume we have the following convenience function defined:
+To give a simple example, we'll implement a slightly simplified version of the `position_jitternormal()` function from the ggforce package, which behaves in the same way as `position_jitter()` except that the perturbations are sampled from a normal distribution rather than a uniform distribution. In order to keep the exposition simple, we'll assume we have the following convenience function defined:
 
 ```{r}
 normal_transformer <- function(x, sd) {
@@ -602,7 +602,7 @@ PositionJitterNormal <- ggproto('PositionJitterNormal', Position,
 
 The `compute_layer()` method makes use of `transform_position()`, a convenience function provided by ggplot2 whose role is to apply the user-supplied functions to all aesthetics associated with the relevant position scale (e.g., not just x and y, but also xend and yend). 
 
-In a realistic implementation, the `position_jitternormal()` constructor would apply some input validation to make sure the user has not specified negative standard deviations, but in this context I'll keep it simple:
+In a realistic implementation, the `position_jitternormal()` constructor would apply some input validation to make sure the user has not specified negative standard deviations, but in this context we'll keep it simple:
 
 ```{r}
 position_jitternormal <- function(sd_x = .15, sd_y = .15) {
@@ -634,12 +634,12 @@ Facets are one of the most powerful concepts in ggplot2, and extending facets is
 
 - The `map_data()` method receives this layout specification and the original data as the input, and attaches a `PANEL` column to it, which is used to assign each row in the data frame to one of the panels in the layout.
 
-To illustrate how you can create new facets by subclassing an existing facet, I'll create a relatively simple facetting system that "scatters" the panels, placing them in random locations on a grid. To do this I'll create a new ggproto object called `FacetScatter` that is a subclass of `FacetWrap`, and write a new `compute_layout()` method that places each panel in a randomly chosen cell of the panel grid:
+To illustrate how you can create new facets by subclassing an existing facet, we'll create a relatively simple facetting system that "scatters" the panels, placing them in random locations on a grid. To do this we'll create a new ggproto object called `FacetScatter` that is a subclass of `FacetWrap`, and write a new `compute_layout()` method that places each panel in a randomly chosen cell of the panel grid:
 
 ```{r}
 FacetScatter <- ggproto("FacetScatter", FacetWrap,
   
-  # this isn't important to the example: all I'm doing is
+  # this isn't important to the example: all we're doing is
   # forcing all panels to use fixed scale so that the rest
   # of the example can be kept simple
   setup_params = function(data, params) {
@@ -712,12 +712,12 @@ scatter_built <- ggplot_build(scatter)
 scatter_built$layout$layout
 ```
 
-Next, I'll write the `facet_scatter()` constructor function to expose this functionality to the user. For facets this is as simple as creating a new instance of the relevant ggproto object (`FacetScatter` in this case) that passes user-specified parameters to the facet:
+Next, we'll write the `facet_scatter()` constructor function to expose this functionality to the user. For facets this is as simple as creating a new instance of the relevant ggproto object (`FacetScatter` in this case) that passes user-specified parameters to the facet:
 
 ```{r, ref.label="facet-scatter"}
 ```
 
-There a couple of things to note about this constructor function. First, to keep the example simple, `facet_scatter()` contains fewer arguments than `facet_wrap()`, and I've made `nrow` and `ncol` required arguments: the user needs to specify the size of the grid over which the panels should be scattered. Second, the `facet_scatter()` function requires you to specify the facets using `vars()`. It won't work if the user tries to supply a formula. Relatedly, note the use of `rlang::quos_auto_name()`: the `vars()` function returns an unnamed list of expressions (technically, quosures), but the downstream code requires a named list. As long as you're expecting the user to use `vars()` this is all the preprocessing you need, but if you want to support other input formats you'll need to be a little fancier (you can see how to do this by looking at the ggplot2 source code). 
+There a couple of things to note about this constructor function. First, to keep the example simple, `facet_scatter()` contains fewer arguments than `facet_wrap()`, and we've made `nrow` and `ncol` required arguments: the user needs to specify the size of the grid over which the panels should be scattered. Second, the `facet_scatter()` function requires you to specify the facets using `vars()`. It won't work if the user tries to supply a formula. Relatedly, note the use of `rlang::quos_auto_name()`: the `vars()` function returns an unnamed list of expressions (technically, quosures), but the downstream code requires a named list. As long as you're expecting the user to use `vars()` this is all the preprocessing you need, but if you want to support other input formats you'll need to be a little fancier (you can see how to do this by looking at the ggplot2 source code). 
 
 In any case, we now have a working facet:
 
