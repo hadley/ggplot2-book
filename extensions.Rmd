@@ -4,7 +4,7 @@ source("common.R")
 
 # Extending ggplot2 {#extensions}
 
-ggplot2 has been designed in a way that makes it relatively easy to extend the functionality with new types of the common grammar components. The extension system allows you to distribute these extensions as packages should you choose to, but the ease with which extensions can be made means that writing one-off extensions to solve a particular plotting challenge is also viable. This chapter discusses different ways ggplot2 can be extended and highlights specific issues to keep in mind. We'll present small examples throughout the chapter, but to see a worked example from beginning to end, see Chapters \@ref(spring1). 
+The ggplot2 package has been designed in a way that makes it relatively easy to extend the functionality with new types of the common grammar components. The extension system allows you to distribute these extensions as packages should you choose to, but the ease with which extensions can be made means that writing one-off extensions to solve a particular plotting challenge is also viable. This chapter discusses different ways ggplot2 can be extended and highlights specific issues to keep in mind. We'll present small examples throughout the chapter, but to see a worked example from beginning to end, see Chapters \@ref(spring1). 
 
 ## New themes
 
@@ -91,6 +91,7 @@ base + theme_surprising()
 ```
 
 However, suppose the user of your theme wants to remove the axis lines:
+
 ```{r}
 base + theme_classic() + theme(axis.line = element_blank())
 base + theme_predictable() + theme(axis.line = element_blank())
@@ -323,9 +324,8 @@ ggplot(mpg, aes(displ, colour = drv)) +
   stat_density_common()
 ```
 
-
-
 ## New geoms {#new-geoms}
+
 While many things can be achieved by creating new stats, there are situations where creating a new geom is necessary. Some of these are
 
 - It is not meaningful to return data from the stat in a form that is understandable by any current geoms.
@@ -385,10 +385,10 @@ In other cases you may want to define a geom that is visually equivalent to an e
 ```{r}
 GeomSpike <- ggproto("GeomSpike", GeomSegment,
   
-  # specify the required aesthetics                   
+  # Specify the required aesthetics                   
   required_aes = c("x", "y", "angle", "radius"),
   
-  # transform the data before any drawing takes place
+  # Transform the data before any drawing takes place
   setup_data = function(data, params) {
     transform(data,
       xend = x + cos(angle) * radius,
@@ -459,11 +459,11 @@ GeomBarbell <- ggproto("GeomBarbell", Geom,
   
   draw_panel = function(data, panel_params, coord, fatten = 4, ...) {
     
-    # transformed data for the points
+    # Transformed data for the points
     point1 <- transform(data, size = size * fatten) 
     point2 <- transform(data, x = xend, y = yend, size = size * fatten)
     
-    # return all three components
+    # Return all three components
     grid::gList(
       GeomSegment$draw_panel(data, panel_params, coord, ...),
       GeomPoint$draw_panel(point1, panel_params, coord, ...),
@@ -511,13 +511,6 @@ If you cannot leverage any existing geom implementation for creating the grobs, 
 The primary role of the coord is to rescale the position aesthetics onto the [0, 1] range, potentially transforming them in the process. Defining new coords is relatively rare: the coords described in Chapter \@ref(coord) are suitable for most non-cartographic cases, and with the introduction of `coord_sf()` discussed in Chapter \@ref(maps), ggplot2 is able to capture most cartographic projections out of the box. 
 
 The most common situation in which developers may need to know the internals of coordinate systems is when defining new geoms. It is not uncommon for one of the `draw_*()` methods in a geom to call the `transform()` method of the coord. For example, the `transform()` method for `CoordCartesian` is used to rescale position data but does not transform it in any other way, and the geom may need to apply this rescaling to draw the grob properly. An example of this use appears in Chapter \@ref(spring1).
-
-
-<!-- DJN: not sure how much printing the source helps here? Maybe better to explain in next chapter -->
-<!-- ```{r} -->
-<!-- CoordCartesian$transform -->
-<!-- ``` -->
-
 
 In addition to transforming position data, the coord has responsibility for rendering the axes, axis labels, panel foreground and panel background. Additionally, the coord can intercept and modify the layer data and the facet layout. Much of this functionality is available to developers to leverage if it is absolutely necessary (an example is shown in Section \@ref(defining-theme-elements)), but in the majority of cases it is better to leave this functionality alone. 
 
@@ -569,10 +562,10 @@ When called, `normal_transformer()` returns a function that perturbs the input v
 ```{r}
 PositionJitterNormal <- ggproto('PositionJitterNormal', Position,
            
-  # we need an x and y position aesthetic                              
+  # We need an x and y position aesthetic                              
   required_aes = c('x', 'y'),
   
-  # by using the "self" argument we can access parameters that the 
+  # By using the "self" argument we can access parameters that the 
   # user has passed to the position, and add them as layer parameters
   setup_params = function(self, data) {
     list(
@@ -581,7 +574,7 @@ PositionJitterNormal <- ggproto('PositionJitterNormal', Position,
     )
   },
 
-  # when computing the layer, we can read the standard deviation 
+  # When computing the layer, we can read the standard deviation 
   # parameters off the param list, and use them to transform the
   # position aesthetics
   compute_layer = function(data, params, panel) {
@@ -625,7 +618,6 @@ ggplot(df, aes(x, y)) + geom_point(position = position_jitternormal())
 
 One practical consideration to keep in mind when designing new positions is that users very rarely call the position constructor directly. The command specifying the layer is more likely to include an expression like `position = "dodge"` rather than `position = position_dodge()`, and even less likely to override your default values as would occur if the user specified `position = position_dodge(width = 0.9)`. As a consequence, it is important to think carefully and make the defaults work for most cases if at all possible. This can be quite tricky: positions have very little control over the shape and format of the layer data, but the user will expect them to behave predictably in all situations. An example is the case of dodging, where users might like to dodge a boxplot and a point-cloud, and would expect the point-cloud to appear in the same area as its respective boxplot. This is a perfectly reasonable expectation at the user level, but it can be tricky for the developer. A boxplot has an explicit width that can be used to control the dodging whereas the same is not true for points, but the user will expect them to be moved in the same way. Such considerations often mean that position implementations end up much more complex than their simplest solution to take care of a wide range of edge cases.
 
-
 ## New facets
 
 Facets are one of the most powerful concepts in ggplot2, and extending facets is one of the most powerful ways to modify how ggplot2 operates. This power comes at a cost: facets are responsible for receiving all the panels, attaching the axes and strips to them, and then arranging them in the expected manner. To create an entirely new faceting system requires an in-depth understanding of grid and gtable, and can be a daunting challenge. Fortunately, you don't always need to create the facet from scratch. For example, if your new facet will produce panels that lie on a grid, you can often subclass `FacetWrap` or `FacetGrid` and modify one or two methods. In particular, you may wish to define new `compute_layout()` and/OR `map_data()` methods:
@@ -639,7 +631,7 @@ To illustrate how you can create new facets by subclassing an existing facet, we
 ```{r}
 FacetScatter <- ggproto("FacetScatter", FacetWrap,
   
-  # this isn't important to the example: all we're doing is
+  # This isn't important to the example: all we're doing is
   # forcing all panels to use fixed scale so that the rest
   # of the example can be kept simple
   setup_params = function(data, params) {
@@ -648,7 +640,7 @@ FacetScatter <- ggproto("FacetScatter", FacetWrap,
     return(params)
   },                      
   
-  # the compute_layout() method does the work
+  # The compute_layout() method does the work
   compute_layout = function(data, params) {
                   
     # create a data frame with one column per facetting 
@@ -661,14 +653,14 @@ FacetScatter <- ggproto("FacetScatter", FacetWrap,
       drop = FALSE
     )
     
-    # create a data frame with columns for ROW and COL, 
+    # Create a data frame with columns for ROW and COL, 
     # with one row for each possible cell in the panel grid
     locations <- expand.grid(ROW = 1:params$nrow, COL = 1:params$ncol)
     
-    # randomly sample a subset of the locations
+    # Randomly sample a subset of the locations
     shuffle <- sample(nrow(locations), nrow(panels))
     
-    # assign each panel a location                      
+    # Assign each panel a location                      
     layout <- data.frame(
       PANEL = 1:nrow(panels),       # panel identifier
       ROW = locations$ROW[shuffle], # row number for the panels
@@ -677,7 +669,7 @@ FacetScatter <- ggproto("FacetScatter", FacetWrap,
       SCALE_Y = 1L                  # all y-axis scales are fixed
     )
     
-    # bind the layout information with the panel identification
+    # Bind the layout information with the panel identification
     # and return the resulting specification
     return(cbind(layout, panels))
   }                      
@@ -728,7 +720,7 @@ ggplot(mpg, aes(displ, hwy)) +
   facet_scatter(vars(manufacturer), nrow = 5, ncol = 6)
 ```
 ```{r echo=FALSE}
-# use the earlier built one so that the random ROW and COL info
+# Use the earlier built one so that the random ROW and COL info
 # matches the layout specification shown above
 scatter_built$plot 
 ```
