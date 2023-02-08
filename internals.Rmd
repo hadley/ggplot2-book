@@ -6,13 +6,14 @@ source("internals_gggtable.R")
 
 # Internals of ggplot2 {#internals}
 
-Throughout this book we have described ggplot2 from the perspective of a user rather than a developer. From the user point of view, the important thing is to understand how the interface to ggplot2 works. To make a data visualisation the user needs to know how functions like `ggplot()` and `geom_point()` can be used to *specify* a plot, but rarely does the user need to understand how ggplot2 translates this plot specification into an image. For a ggplot2 developer who hopes to design extensions, however, this understanding is paramount. 
+Throughout this book we have described ggplot2 from the perspective of a user rather than a developer. From the user point of view, the important thing is to understand how the interface to ggplot2 works. To make a data visualisation the user needs to know how functions like `ggplot()` and `geom_point()` can be used to *specify* a plot, but very few users need to understand how ggplot2 translates this plot specification into an image. For a ggplot2 developer who hopes to design extensions, however, this understanding is paramount. 
 
 When making the jump from user to developer, it is common to encounter frustrations because the nature of the ggplot2 *interface* is very different to the structure of the underlying *machinery* that makes it work. As extending ggplot2 becomes more common, so too does the frustration related to understanding how it all fits together. This chapter is dedicated to providing a description of how ggplot2 works "behind the curtains". We focus on the design of the system rather than technical details of its implementation, and the goal is to provide a conceptual understanding of how the parts fit together. We begin with a general overview of the process that unfolds when a ggplot object is plotted, and then dive into details, describing how the data flows through this whole process and ends up as visual elements in your plot.
 
 ## The `plot()` method {#plot-method}
 
 To understand the machinery underpinning ggplot2, it is important to recognise that almost everything related to the plot drawing happens when you print the ggplot object, not when you construct it. For instance, in the code below, the object `p` is an abstract specification of the plot data, the layers, etc. It does not construct the image itself:
+
 ```{r}
 p <- ggplot(mpg, aes(displ, hwy, color = drv)) + 
   geom_point(position = "jitter") +
@@ -21,7 +22,7 @@ p <- ggplot(mpg, aes(displ, hwy, color = drv)) +
   ggtitle("A plot for expository purposes")
 ```
 
-The reason ggplot2 is designed this way is to allow the user to continue to add new elements to a plot at a later point, without needing to recalculate anything. One implication of this is that if you want to understand the mechanics of ggplot2, you have to follow your plot as it goes down the `plot()`[^plot-note] rabbit hole. You can inspect the print method for ggplot objects by typing `ggplot2:::plot.ggplot` at the console, but for this chapter We will work with a simplified version. Stripped to its bare essentials, the ggplot2 plot method has the same structure as the following `ggprint()` function:
+The reason ggplot2 is designed this way is to allow the user to add new elements to a plot without needing to recalculate anything. One implication of this is that if you want to understand the mechanics of ggplot2, you have to follow your plot as it goes down the `plot()`[^plot-note] rabbit hole. You can inspect the print method for ggplot objects by typing `ggplot2:::plot.ggplot` at the console, but for this chapter we will work with a simplified version. Stripped to its bare essentials, the ggplot2 plot method has the same structure as the following `ggprint()` function:
 
 [^plot-note]: You usually don't call this `plot()` method directly as it is invoked by the print method and thus called whenever a ggplot object is printed. 
 
@@ -38,7 +39,7 @@ ggprint <- function(x) {
 This function does not handle every possible use case, but it is sufficient to draw the plot specified above:
 
 `r columns(1, 2/3, max_width = .8)`
-```{r, cache.vars=p}
+```{r}
 ggprint(p) 
 ```
 
