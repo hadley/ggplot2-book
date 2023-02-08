@@ -9,7 +9,7 @@ columns(1, 1 / 1.61, 1)
 To make the ideas in the previous chapter concrete, here we'll work through the process of building a new geom that looks like a spring.
 This is a carefully crafted example: you're unlikely to actually want to use springs to visualise your data (so no geom already exists), and they're just complicated enough to illustrate the most important parts of the process.
 
-We'll development the extension in five phases:
+We'll develop the extension in five phases:
 
 1.  We'll start as simple as possible by using the existing `geom_path()`, pairing it with a new stat.
 2.  The new stat only allows fixed diameter and tension, so we'll next allow these to be set as parameters.
@@ -17,7 +17,7 @@ We'll development the extension in five phases:
 4.  Geoms can only use dimensions relative to the data, and can't use absolute sizes like 2cm, so next we'll show you how to draw the spring with grid.
 5.  We'll finish up by providing a custom scale and legend to pair with the geom.
 
-Once you've worked your way through this chapter, I highly recommend browsing the ggplot2 source code to look at how other stats and geoms are implemented.
+Once you've worked your way through this chapter, we highly recommend browsing the ggplot2 source code to look at how other stats and geoms are implemented.
 They will often be more complicated than what you need, but they'll give you a sense of the things you can do.
 
 ## What is a spring?
@@ -45,14 +45,14 @@ ggplot(rbind(circle, spring)) +
   facet_wrap(~ type, scales = "free_x")
 ```
 
-It is clear that simply continuing to trace the circle while moving along x will make the spring longer, and that the speed of the x-movement will controls how tightly spiralled the spring is.
+It is clear that simply continuing to trace the circle while moving along x will make the spring longer, and that the speed of the x-movement will control how tightly spiralled the spring is.
 This gives us two parameters for our spring:
 
 -   The `diameter` of the circle.
 
 -   The `tension`, how fast we move along x.
 
-While I'm pretty sure this is not a physically correct parameterisation of a spring, it is good enough for us.
+Although we can be pretty sure this is not a physically correct parameterisation of a spring, it is good enough for us.
 
 At this point, it's worthwhile to spend a little time thinking about how we might turn this into a geom.
 How will we specify the diameter?
@@ -164,7 +164,7 @@ We first start with the class definition:
 ```{r, eval = FALSE}
 StatSpring <- ggproto("StatSpring", Stat, 
   ...
-}
+)
 ```
 
 This creates a new `Stat`[^ext-springs-1] subclass, named `StatSpring`. ggproto classes always use CamelCase for naming, and the new class is always saved into a variable with the same name.
@@ -176,7 +176,7 @@ This creates a new `Stat`[^ext-springs-1] subclass, named `StatSpring`. ggproto 
 Inside the class definition we implement methods by assigning functions to a name.
 You can see a complete list of methods by printing the class.
 The only methods that you shouldn't touch are `aesthetics` and `parameters`; these are for internal use only.
-(To understand exactly what is passed to these methods I highly recommend adding a `browser()` statement)
+(To understand exactly what is passed to these methods we highly recommend adding a `browser()` statement)
 
 ```{r}
 print(Stat)
@@ -199,7 +199,7 @@ In the end we combine the individual springs into a single data frame that gets 
 
 Two other common methods are `setup_data` and `setup_params` which allows the class to do early checks and modifications of the parameters and data.
 Here our `setup_data()` method ensures that each input row has a unique group aesthetic.
-This is important because the we're going to draw our springs with `GeomPath()`, so we need to make sure that each row has it's own id so the springs don't get tangled.
+This is important because we're going to draw our springs with `GeomPath()`, so we need to make sure that each row has it's own id so the springs don't get tangled.
 The group aesthetic is sometimes used to carry metadata so we preserve the existing value, and pasting on a unique id if needed.
 
 ```{r}
@@ -321,7 +321,7 @@ We can test it out by drawing our springs with dots:
 ggplot(some_data) + 
   stat_spring(
     aes(x, y, xend = xend, yend = yend, colour = class),
-    geom = 'point', 
+    geom = "point", 
     n = 15
   ) + 
   facet_wrap(~ class)
@@ -529,7 +529,7 @@ You can see this approach all over the place in the ggplot2 source code.
 If you compare this code to our `StatSpring` implementation in the last chapter you can see that the `compute_panel()` and `draw_panel()` methods are quite similar with the main difference being that we pass on the computed spring coordinates to `GeomPath$draw_panel()` in the latter method.
 Our `setup_data()` method has been greatly simplified because we now relies on the `default_aes` functionality in `Geom` to fill out non-mapped aesthetics.
 
-Creating the `geom_spring()` constructor is almost similar, except that we now uses the identity stat instead of our spring stat and uses the new `GeomSpring` instead of `GeomPath`.
+Creating the `geom_spring()` constructor is almost similar, except that we now use the identity stat instead of our spring stat and use the new `GeomSpring` instead of `GeomPath`.
 
 ```{r}
 geom_spring <- function(mapping = NULL, data = NULL, stat = "identity", 
@@ -577,7 +577,7 @@ The final choice is ultimately up to you and should be guided by how you envisio
 We haven't talked about what goes on inside the `draw_*()` methods yet.
 Often it is enough to use a method from existing geom.
 For example, even the relatively component [`GeomBoxplot`](https://github.com/tidyverse/ggplot2/blob/master/R/geom-boxplot.r) just uses the draw methods from `GeomPoint()`, `GeomSegment` and `GeomCrossbar`.
-But if you need to go deeper, you'll need to learn a little about grid
+But if you need to go deeper, you'll need to learn a little about grid.
 
 ## Part 4: A grid grob {#spring4}
 
@@ -610,7 +610,7 @@ Grobs (***gr***aphic ***ob***jects) are the atomic representations of graphical 
 All grid objects are vectorised, so that (e.g.) a point grob can represent multiple points.
 As well as simple geometric primitive, grid also comes the means to combine multiple grobs into a complex objects called `gTree()`s.
 
-You can create a new grob new grob classes with the `grob()` or `gTree()` constructors, and then give it special behaviour by override the `makeContext()` and `makeContent()` S3 generics:
+You can create a new grob class with the `grob()` or `gTree()` constructors, and then give it special behaviour by override the `makeContext()` and `makeContent()` S3 generics:
 
 -   `makeContext()` is called when the parent grob is rendered and allows you to control the viewport of the grob (see below).
 
@@ -718,7 +718,7 @@ This is a useless example, of course, but hopefully you can see how this techniq
 
 ### The springGrob
 
-With our new knowledge of the grid system we can now see how we might construct a spring grob that have an absolute diameter.
+With our new knowledge of the grid system we can now see how we might construct a spring grob that has an absolute diameter.
 If we wait with the expansion to the spring path until the `makeContent()` function, and calculate it based on coordinates in absolute units we can make sure that the diameter stays constant during resizing of the plot.
 With that in mind, we can create our constructor.
 We model the arguments after `segmentsGrob()` since we are basically creating modified segments:
@@ -852,12 +852,12 @@ geom_spring <- function(mapping = NULL, data = NULL, stat = "identity",
 ```
 
 The main differences from our last `GeomSpring` implementation is that we no longer care about a `group` column because each spring is defined in one line, and then of course the `draw_panel()` method.
-Since we are no longer passing on the call to another geoms `draw_panel()` method we have additional obligations in that call.
-If the coordinate system is no linear (e.g. `coord_polar()`) we emit a warning because our spring will not be adapted to that coordinate system.
+Since we are no longer passing on the call to another geoms' `draw_panel()` method we have additional obligations in that call.
+If the coordinate system is non-linear (e.g. `coord_polar()`) we emit a warning because our spring will not be adapted to that coordinate system.
 We then use the coordinate system to rescale our positional aesthetics with the `transform()` method.
 This will remap all positional aesthetics to lie between 0 and 1, with 0 being the lowest value visible in our viewport (scale expansions included) and 1 being the highest.
 With this remapping the coordinates are ready to be passed into a grob as `"npc"` units.
-By definition we understands the provided diameter as been given in centimeters.
+By definition we understand the provided diameter as being given in centimeters.
 With all the values properly converted we call the `springGrob()` constructor and return the resulting grob.
 One thing we haven't touched upon is the `gpar()` call inside the `springGrob()` construction.
 grid operates with a short list of very well-defined visual characteristics for grobs that are given by the `gp` argument in the constructor.
@@ -876,8 +876,8 @@ ggplot(some_data) +
   ))
 ```
 
-As can be seen in the example above we now have springs that do not shear with the aspect ratio of the plot and thus looks conform at every angle and aspect ratio.
-Further, resizing the plot will result in recalculations of the correct path so that it will continues to look as it should.
+As can be seen in the example above we now have springs that do not shear with the aspect ratio of the plot and thus look to conform at every angle and aspect ratio.
+Further, resizing the plot will result in recalculations of the correct path so that it will continue to look as it should.
 
 ### Post-Mortem
 
@@ -888,7 +888,7 @@ Most notably our `create_spring()` function remains un-vectorised and needs to b
 Correctly vectorizing this function will allow for considerable speed-up when rendering many springs (if that was ever a need).
 We will leave this as an exercise for the reader.
 
-While the geom is now done, we still a have a little work to do.
+While the geom is now done, we still have a little work to do.
 We need to create a diameter scale and provide legend keys that can correctly communicate diameter and tension.
 This will be the topic of the final section.
 
@@ -1000,7 +1000,7 @@ draw_key_spring <- function(data, params, size) {
 We add a little flourish here that is not necessary for the point key constructor, which is that we define a clipping viewport for our grob.
 This means that the spring will not spill-out into the neighboring keys.
 
-Along with that we will also have to modify our Geom to use this key constructor instead (I know I said the last version was final).
+Along with that we will also have to modify our Geom to use this key constructor instead (We know we said the last version was final).
 We don't have to define our Geom from scratch again, though but simply change the `draw_key()` method of our existing Geom:
 
 ```{r}

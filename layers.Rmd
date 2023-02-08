@@ -96,17 +96,17 @@ observations in the rows. This is a strong restriction, but there are good reaso
 * It enforces a clean separation of concerns: ggplot2 turns data frames into
   visualisations. Other packages can make data frames in the right format.
 
-The data on each layer doesn't need to be the same, and it's often useful to combine multiple datasets in a single plot. To illustrate that idea I'm going to generate two new datasets related to the mpg dataset. First I'll fit a loess model and generate predictions from it. (This is what `geom_smooth()` does behind the scenes)
+The data on each layer doesn't need to be the same, and it's often useful to combine multiple datasets in a single plot. To illustrate that idea we'll generate two new datasets related to the mpg dataset. First we'll fit a loess model and generate predictions from it. (This is what `geom_smooth()` does behind the scenes)
 
 ```{r loess-pred}
 mod <- loess(hwy ~ displ, data = mpg)
-grid <- data_frame(displ = seq(min(mpg$displ), max(mpg$displ), length = 50))
+grid <- tibble(displ = seq(min(mpg$displ), max(mpg$displ), length = 50))
 grid$hwy <- predict(mod, newdata = grid)
 
 grid
 ```
 
-Next, I'll isolate observations that are particularly far away from their predicted values:
+Next, we'll isolate observations that are particularly far away from their predicted values:
 
 ```{r loess-outlier}
 std_resid <- resid(mod) / mod$s
@@ -114,7 +114,7 @@ outlier <- filter(mpg, abs(std_resid) > 2)
 outlier
 ```
 
-I've generated these datasets because it's common to enhance the display of raw data with a statistical summary and some annotations. With these new datasets, I can improve our initial scatterplot by overlaying a smoothed line, and labelling the outlying points:
+We've generated these datasets because it's common to enhance the display of raw data with a statistical summary and some annotations. With these new datasets, we can improve our initial scatterplot by overlaying a smoothed line, and labelling the outlying points:
 
 ```{r}
 ggplot(mpg, aes(displ, hwy)) + 
@@ -136,7 +136,7 @@ ggplot(mapping = aes(displ, hwy)) +
   geom_text(data = outlier, aes(label = model))
 ```
 
-I don't particularly like this style in this example because it makes it less clear what the primary dataset is (and because of the way that the arguments to `ggplot()` are ordered, it actually requires more keystrokes). However, you may prefer it in cases where there isn't a clear primary dataset, or where the aesthetics also vary from layer to layer. 
+We don't particularly like this style in this example because it makes it less clear what the primary dataset is (and because of the way that the arguments to `ggplot()` are ordered, it actually requires more keystrokes). However, you may prefer it in cases where there isn't a clear primary dataset, or where the aesthetics also vary from layer to layer. 
 
 ### Exercises
 
@@ -308,7 +308,7 @@ Geometric objects, or **geoms** for short, perform the actual rendering of the l
 * One variable:
     * Discrete: 
         * `geom_bar()`: display distribution of discrete variable.
-    * Continuous
+    * Continuous:
         * `geom_histogram()`: bin and count continuous variable, display with bars.
         * `geom_density()`: smoothed density estimate.
         * `geom_dotplot()`: stack individual points into a dot plot.
@@ -332,7 +332,7 @@ Geometric objects, or **geoms** for short, perform the actual rendering of the l
         * `geom_bar(stat = "identity")`: a bar chart of precomputed summaries.
         * `geom_boxplot()`: boxplots.
         * `geom_violin()`: show density of values in each group.
-    * One time, one continuous
+    * One time, one continuous:
         * `geom_area()`: area plot.
         * `geom_line()`: line plot.
         * `geom_step()`: step plot.
@@ -341,7 +341,7 @@ Geometric objects, or **geoms** for short, perform the actual rendering of the l
         * `geom_errorbar()`: error bars.
         * `geom_linerange()`: vertical line.
         * `geom_pointrange()`: vertical line with center.
-    * Spatial
+    * Spatial:
         * `geom_map()`: fast version of `geom_polygon()` for map data.
 
 * Three variables:
@@ -372,7 +372,7 @@ If alternative parameterisations are available, picking the right one for your d
 ### Exercises
 
 1.  Download and print out the ggplot2 cheatsheet from 
-    <http://www.rstudio.com/resources/cheatsheets/> so you have a handy visual
+    <https://posit.co/resources/cheatsheets/> so you have a handy visual
     reference for all the geoms.
     
 1.  Look at the documentation for the graphical primitive geoms. Which
@@ -448,7 +448,7 @@ ggplot(mpg, aes(trans, cty)) +
   geom_point(stat = "summary", fun = "mean", colour = "red", size = 4)
 ```
 
-I think it's best to use the second form because it makes it more clear that you're displaying a summary, not the raw data.
+We think it's best to use the second form because it makes it more clear that you're displaying a summary, not the raw data.
 
 ### Generated variables {#generated-variables}
 
@@ -493,8 +493,8 @@ The result of this plot is rather surprising: low quality diamonds seem to be mo
     smoothed <- data.frame(displ = seq(1.6, 7, length = 50))
     pred <- predict(mod, newdata = smoothed, se = TRUE) 
     smoothed$hwy <- pred$fit
-    smoothed$hwy_lwr <- pred$fit - 1.96 * pred$se.fit
-    smoothed$hwy_upr <- pred$fit + 1.96 * pred$se.fit
+    smoothed$hwy_lwr <- pred$fit - (1.96 * pred$se.fit)
+    smoothed$hwy_upr <- pred$fit + (1.96 * pred$se.fit)
     ```
     
 1.  What stats were used to create the following plots?
