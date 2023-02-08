@@ -77,10 +77,10 @@ The `coord_sf()` function governs the map projection, discussed in Section \@ref
 
 ### Layered maps
 
-In some instances you may want to overlay one map on top of another. The ggplot2 package supports this by allowing you to add multiple `geom_sf()` layers to a plot. As an example, I'll use the `oz_states` data to draw the Australian states in different colours, and will overlay this plot with the boundaries of Australian electoral regions. To do this, there are two preprocessing steps to perform. First, we'll use `dplyr::filter()` to remove the "Other Territories" from the state boundaries.
+In some instances you may want to overlay one map on top of another. The ggplot2 package supports this by allowing you to add multiple `geom_sf()` layers to a plot. As an example, we'll use the `oz_states` data to draw the Australian states in different colours, and will overlay this plot with the boundaries of Australian electoral regions. To do this, there are two preprocessing steps to perform. First, we'll use `dplyr::filter()` to remove the "Other Territories" from the state boundaries.
 
 
-The code below draws a plot with two map layers: the first uses `oz_states` to fill the states in different colours, and the second uses `oz_votes` to draw the electoral boundaries. Second, I'll extract the electoral boundaries in a simplified form using the `ms_simplify()` function from the rmapshaper package [@rmapshaper]. This is generally a good idea if the original data set (in this case `ozmaps::abs_ced`) is stored at a higher resolution than your plot requires, in order to reduce the time taken to render the plot. 
+The code below draws a plot with two map layers: the first uses `oz_states` to fill the states in different colours, and the second uses `oz_votes` to draw the electoral boundaries. Second, we'll extract the electoral boundaries in a simplified form using the `ms_simplify()` function from the rmapshaper package [@rmapshaper]. This is generally a good idea if the original data set (in this case `ozmaps::abs_ced`) is stored at a higher resolution than your plot requires, in order to reduce the time taken to render the plot. 
 
 `r columns(n = 1, aspect_ratio = 1)`
 ```{r}
@@ -223,7 +223,7 @@ p + coord_sf(xlim = c(147.75, 150.25), ylim = c(-37.5, -34.5))
 p + coord_sf(xlim = c(150, 150.25), ylim = c(-36.3, -36)) 
 ```
 
-As this illustrates, Eden-Monaro is defined in terms of two distinct polygons, a large one on the Australian mainland and a small island. However, the large region has a hole in the middle (the hole exists because the Australian Capital Territory is a distinct political unit that is wholly contained within Eden-Monaro, and as illustrated above, electoral boundaries in Australia do not cross state lines). In sf terminology this is an example of a `MULTIPOLYGON` geometry. In this section I'll talk about the structure of these objects and how to work with them.
+As this illustrates, Eden-Monaro is defined in terms of two distinct polygons, a large one on the Australian mainland and a small island. However, the large region has a hole in the middle (the hole exists because the Australian Capital Territory is a distinct political unit that is wholly contained within Eden-Monaro, and as illustrated above, electoral boundaries in Australia do not cross state lines). In sf terminology this is an example of a `MULTIPOLYGON` geometry. In this section we'll talk about the structure of these objects and how to work with them.
 
 First, let's use dplyr to grab only the geometry object:
 
@@ -283,7 +283,7 @@ ggplot(dawson[-69]) +
 
 A second way to supply geospatial information for mapping is to rely on **raster data**. Unlike the simple features format, in which geographical entities are specified in terms of a set of lines, points and polygons, rasters take the form of images. In the simplest case raster data might be nothing more than a bitmap file, but there are many different image formats out there. In the geospatial context specifically, there are image formats that include metadata (e.g., geodetic datum, coordinate reference system) that can be used to map the image information to the surface of the Earth. For example, one common format is GeoTIFF, which is a regular TIFF file with additional metadata supplied. Happily, most formats can be easily read into R with the assistance of GDAL (the Geospatial Data Abstraction Library, https://gdal.org/). For example the sf package contains a function `sf::gdal_read()` that provides access to the GDAL raster drivers from R. However, you rarely need to call this function directly, as there are other high level functions that take care of this for you. 
 
-As an illustration, suppose we wish to plot satellite images made publicly available by the Australian Bureau of Meterorology (BOM) on their FTP server. The bomrang package [@bomrang] provides a convenient interface to the server, including a `get_available_imagery()` function that returns a vector of filenames and a `get_satellite_imagery()` function that downloads a file and imports it directly into R. For expository purposes, however, I'll use a more flexible method that could be adapted to any FTP server, and use the `download.file()` function:
+As an illustration, suppose we wish to plot satellite images made publicly available by the Australian Bureau of Meterorology (BOM) on their FTP server. The bomrang package [@bomrang] provides a convenient interface to the server, including a `get_available_imagery()` function that returns a vector of filenames and a `get_satellite_imagery()` function that downloads a file and imports it directly into R. For expository purposes, however, we'll use a more flexible method that could be adapted to any FTP server, and use the `download.file()` function:
 
 ```{r eval=FALSE}
 # list of all file names with time stamp 2020-01-07 21:00 GMT 
@@ -314,7 +314,7 @@ img_vis  <- file.path("raster", "IDE00422.202001072100.tif")
 img_inf <- file.path("raster", "IDE00421.202001072100.tif")
 ```
 
-To import the data in the img_visible file into R, I'll use the stars package [@stars] to import the data as stars objects:
+To import the data in the img_visible file into R, we'll use the stars package [@stars] to import the data as stars objects:
 
 ```{r}
 library(stars)
