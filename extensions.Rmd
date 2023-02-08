@@ -343,7 +343,7 @@ GeomPolygonHollow <- ggproto("GeomPolygonHollow", GeomPolygon,
   default_aes = aes(
     colour = "black", 
     fill = NA, 
-    size = 0.5, 
+    linewidth = 0.5,
     linetype = 1,
     alpha = NA
   )
@@ -366,7 +366,7 @@ geom_chull <- function(mapping = NULL, data = NULL, stat = "chull",
     inherit.aes = inherit.aes,
     params = list(na.rm = na.rm, ...)
   )
-}
+} 
 ```
 
 For the sake of consistency we would also define `stat_chull()` to use this as the default. In any case, we now have a new `geom_chull()` function that works fairly well without the user needing to set parameters:
@@ -374,8 +374,8 @@ For the sake of consistency we would also define `stat_chull()` to use this as t
 `r columns(1, 1)`
 ```{r}
 ggplot(mpg, aes(displ, hwy)) + 
-  geom_point() + 
-  geom_chull()
+  geom_chull() +
+  geom_point()
 ```
 
 ### Modifying geom data {#modifying-geom-data}
@@ -449,7 +449,8 @@ GeomBarbell <- ggproto("GeomBarbell", Geom,
   
   default_aes = aes(
     colour = "black",
-    size = .5,
+    linewidth = .5,
+    size = 2,
     linetype = 1,
     shape = 19,
     fill = NA,
@@ -457,11 +458,11 @@ GeomBarbell <- ggproto("GeomBarbell", Geom,
     stroke = 1
   ),
   
-  draw_panel = function(data, panel_params, coord, fatten = 4, ...) {
+  draw_panel = function(data, panel_params, coord, ...) {
     
     # Transformed data for the points
-    point1 <- transform(data, size = size * fatten) 
-    point2 <- transform(data, x = xend, y = yend, size = size * fatten)
+    point1 <- transform(data) 
+    point2 <- transform(data, x = xend, y = yend)    
     
     # Return all three components
     grid::gList(
@@ -470,12 +471,12 @@ GeomBarbell <- ggproto("GeomBarbell", Geom,
       GeomPoint$draw_panel(point2, panel_params, coord, ...)
     )
   }
-)
+) 
 ```
 
 In this example the `draw_panel()` method returns a list of three grobs, one generated from `GeomSegment` and two from `GeomPoint`. As usual, if we want the geom to be exposed to the user we add a wrapper function:
 
-```{r}
+```{r, cache.vars=GeomBarbell}
 geom_barbell <- function(mapping = NULL, data = NULL, 
                          stat = "identity", position = "identity", 
                          ..., na.rm = FALSE, show.legend = NA, 
@@ -501,7 +502,7 @@ df <- data.frame(x = 1:10, xend = 0:9, y = 0, yend = 1:10)
 base <- ggplot(df, aes(x, y, xend = xend, yend = yend))
 
 base + geom_barbell()
-base + geom_barbell(shape = 4, linetype = "dashed")
+base + geom_barbell(shape = 4, linetype = "dashed")  
 ```
 
 If you cannot leverage any existing geom implementation for creating the grobs, you'd have to implement the full `draw_*()` method from scratch, which requires a little more understanding of the grid package. For more information about grid and an example that uses this to construct a geom from grid primitives, see Chapter \@ref(spring1).
