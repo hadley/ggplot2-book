@@ -59,8 +59,6 @@ Although it is not strictly correct to do so, we will refer to this conversion i
 
 ## The build step {#ggplotbuild}
 
-
-
 <!-- As may be apparent from the section above, the main actor in the rendering process is the layer data, and the rendering process is really a long progression of steps to convert the data from the format supplied by the user, to a format that fits with the graphic primitives needed to create the desired visual elements. This also means that to gain an understanding of the mechanics of ggplot2 we must understand how data flows through the mechanics and how it transforms along the way. -->
 
 `ggplot_build()`, as discussed above, takes the declarative representation constructed with the public API and augments it by preparing the data for conversion to graphic primitives.
@@ -97,14 +95,11 @@ The second step in the process is to map the position aesthetics using the posit
 ggbuild(p + xlim(2, 8))$positioned[[1]] %>% head(n = 3)
 ```
 
-
 For discrete positions the change is more radical, because the values are matched to the `limits` values or the `breaks` specification provided by the user, and then converted to integer-valued positions. Finally, for binned position scales the continuous data is first cut into bins using the `breaks` argument, and the position for each bin is set to the midpoint of its range. The reason for performing the mapping at this stage of the process is consistency: no matter what type of position scale is used, it will look continuous to the stat and geom computations. This is important because otherwise computations such as dodging and jitter would fail for discrete scales. 
 
 At the third stage in this transformation the data is handed to the layer stat where any statistical transformation takes place. The procedure is as follows: first, the stat is allowed to inspect the data and modify its parameters, then do a one off preparation of the data. Next, the layer data is split by `PANEL` and `group`, and statistics are calculated before the data is reassembled.[^compute-method] Once the data has been reassembled in its new form it goes through another aesthetic mapping process. This is where any aesthetics whose computation has been delayed using `stat()` (or the old `..var..` notation) get added to the data. Notice that this is why `stat()` expressions -- including the formula used to specify the regression model in the `geom_smooth()` layer of our example plot `p` -- cannot refer to the original data. It simply doesn't exist at this point. 
 
-
 [^compute-method]: It is possible for a stat to circumvent this splitting by overwriting specific `compute_*()` methods and thus do some optimisation.
-
 
 As an example consider the second layer in our plot, which produces the linear regressions. Before the stat computations have been performed the data for this layer simply contain the coordinates and the required `PANEL` and `group` columns.
 
@@ -118,7 +113,6 @@ After the stat computations have taken place, the layer data are changed conside
 ```{r echo=FALSE}
 bb$poststat[[2]] %>% head(n = 3)
 ```
-
 
 At this point the geom takes over from the stat (almost). The first action it takes is to inspect the data, update its parameters and possibly make a first pass modification of the data (same setup as for stat). This is possibly where some of the columns gets reparameterised e.g. `x`+`width` gets changed to `xmin`+`xmax`. After this the position adjustment gets applied, so that e.g. overlapping bars are stacked, etc. For our example plot `p`, it is at this step that the jittering is applied in the first layer of the plot and the `x` and `y` coordinates are perturbed:
 
@@ -135,12 +129,15 @@ ggbuild(p)$built$data[[1]] %>% head(n = 3)
 ```
 
 ### Output
+
 The return value of `ggplot_build()` is a list structure with the `ggplot_built` class. It contains the computed data, as well as a `Layout` object holding information about the trained coordinate system and faceting. Further it holds a copy of the original plot object, but now with trained scales.
 
 ## The gtable step {#ggplotgtable}
+
 The purpose of `ggplot_gtable()` is to take the output of the build step and turn it into a single `gtable` object that can be plotted using grid. At this point the main elements responsible for further computations are the geoms, the coordinate system, the facet, and the theme. The stats and position adjustments have all played their part already.
 
 ### Rendering the panels
+
 The first thing that happens is that the data is converted into its graphical representation. This happens in two steps. First, each layer is converted into a list of graphical objects (`grobs`). As with stats the conversion happens by splitting the data, first by `PANEL`, and then by `group`, with the possibility of the geom intercepting this splitting for performance reasons. While a lot of the data preparation has been performed already it is not uncommon that the geom does some additional transformation of the data during this step. A crucial part is to transform and normalise the position data. This is done by the coordinate system and while it often simply means that the data is normalised based on the limits of the coordinate system, it can also include radical transformations such as converting the positions into polar coordinates. The output of this is for each layer a list of `gList` objects corresponding to each panel in the facet layout. After this the facet takes over and assembles the panels. It does this by first collecting the grobs for each panel from the layers, along with rendering strips, backgrounds, gridlines,and axes based on the theme and combines all of this into a single gList for each panel. It then proceeds to arranging all these panels into a gtable based on the calculated panel layout. For most plots this is simple as there is only a single panel, but for e.g. plots using `facet_wrap()` it can be quite complicated. The output is the basis of the final gtable object. At this stage in the process our example plot `p` looks like this: 
 
 ```{r echo=FALSE}
@@ -151,6 +148,7 @@ grid::grid.draw(x$panels)
 ```
 
 ### Adding guides
+
 There are two types of guides in ggplot2: axes and legends. As our plot `p` illustrates at this point the axes has already been rendered and assembled together with the panels, but the legends are still missing. Rendering the legends is a complicated process that first trains a guide for each scale. Then, potentially multiple guides are merged if their mapping allows it before the layers that contribute to the legend is asked for key grobs for each key in the legend. These key grobs are then assembled across layers and combined to the final legend in a process that is quite reminiscent of how layers get combined into the gtable of panels. In the end the output is a gtable that holds each legend box arranged and styled according to the theme and guide specifications. Once created the guide gtable is then added to the main gtable according to the `legend.position` theme setting. At this stage, our example plot is complete in most respects: the only thing missing is the title.
 
 ```{r echo=FALSE}
@@ -190,7 +188,8 @@ grid::grid.draw(p_gtable)
 
 ## Introducing ggproto {#ggproto}
 
-Sections \@ref(plot-method) to \@ref(ggplotgtable) focus on the sequence of events involved in building a ggplot, but are intentionally vague as to what kind of programming objects perform this work. 
+Sections \@ref(plot-method) to \@ref(ggplotgtable) focus on the sequence of events involved in building a ggplot, but are intentionally vague as to what kind of programming objects perform this work.
+
 All ggplot2 objects are built using the **ggproto** system for object oriented programming, and is unusual in that it is used only by ggplot2. This is something of a historical accident: ggplot2 originally used proto [@proto] for object oriented programming, which became a problem once the need for an official extension mechanism arose due to the limitations of the proto system. Attempts to switch ggplot2 to other systems such as R6 [@R6] proved difficult, and creating an object oriented system specific to the needs of ggplot2 turned out to be the least bad solution. 
 
 Understanding the ggproto object oriented programming system is important if you wish to write ggplot2 extensions. We will encounter ggproto objects as they are used by ggplot2 in Chapters \@ref(extensions) and \@ref(spring1). Like the better-known R6 system, ggproto uses reference semantics and allows inheritance and access to methods from parent classes. It is accompanied by a set of design principles that, while not enforced by ggproto, is essential to understanding how the system is used in ggplot2. To illustrate these concepts, this section introduces the core mechanics of ggproto in a simplified form.
@@ -236,7 +235,6 @@ However, so far the only thing we have done is create an object that specifies a
 
 To illustrate this, we'll create a new class called `Person` that will be used to store and manipulate information about a person. We can do this by supplying the `ggproto()` function with name/value pairs:
 
-
 ```{r}
 Person <- ggproto("Person", NULL,
   
@@ -277,8 +275,8 @@ Another thing to note when defining methods is the use of `self` as their first 
 ```{r}
 Person$full_name
 ```
-This output may seem a little surprising: when we defined `full_name()` earlier we only provided the code listed as the "inner function". What has happened is that `ggproto()` automatically enclosed my function within a wrapper function that calls my code as the inner function, while ensuring that an appropriate definition of `self` is used. When the method is printed, the console displays both the wrapper function (typically of little interest) and the inner function. Output in this format appears in Chapters \@ref(extensions) and \@ref(spring1).
 
+This output may seem a little surprising: when we defined `full_name()` earlier we only provided the code listed as the "inner function". What has happened is that `ggproto()` automatically enclosed my function within a wrapper function that calls my code as the inner function, while ensuring that an appropriate definition of `self` is used. When the method is printed, the console displays both the wrapper function (typically of little interest) and the inner function. Output in this format appears in Chapters \@ref(extensions) and \@ref(spring1).
 
 ### Creating new instances {#ggproto-instances}
 
@@ -305,7 +303,6 @@ Thomas$description()
 
 Danielle$description()
 ```
-
 
 ### Creating subclasses {#ggproto-subclass}
 
