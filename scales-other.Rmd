@@ -201,6 +201,34 @@ ggplot(airquality, aes(Day, Temp, group = Month)) +
 
 This can sometimes be useful when some lines in a plot need to be visually emphasised more than others.
 
+Much like size scales, linewidth scales can be binned as well as continuous. To illustrate this, let's revisit the plot from Section \@ref(guide-bins), using linewidth rather than size to represent the highway mileage:
+
+`r columns(1, 1, 1)`
+```{r}
+ggplot(mpg, aes(
+  x = displ - .02, 
+  xend = displ + .02, 
+  y = manufacturer, 
+  yend = manufacturer, 
+  linewidth = hwy)
+) +
+  geom_segment(alpha = .3) +
+  scale_linewidth_binned(
+    range = c(0, 8), 
+    breaks = c(0, 20, 40, 60)
+  ) + 
+  theme_bw() + 
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  ) + 
+  labs(x = "displ")
+```
+
+In this version of the plot, each vehicle is plotted using a partially-transparent line segment whose linewidth (which in this case translates to the height) scales with the highway mileage.
+
+Comparing this version of the plot to previous ones highlights an important difference between linewidth scales and size scales: as discussed earlier the default behaviour of a size scale is to increase linearly with the area of the plot marker (e.g., the diameter of a circular plot marker increases with the square root of the data value). In contrast, the linewidth increases linearly with the data value, which you can see by inspecting the legend for the plot.
+
 ## Line type {#scale-linetype}
 
 It is possible to map a variable onto the linetype aesthetic in ggplot2. This works best for discrete variables with a small number of categories, and `scale_linetype()` is an alias for `scale_linetype_discrete()`. Continuous variables cannot be mapped to line types unless `scale_linetype_binned()` is used: although there is a `scale_linetype_continuous()` function, all it does is produce an error. To see why the linetype aesthetic is suited only to cases with a few categories, consider this plot:
