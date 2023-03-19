@@ -283,43 +283,14 @@ ggplot(dawson[-69]) +
 
 A second way to supply geospatial information for mapping is to rely on **raster data**. Unlike the simple features format, in which geographical entities are specified in terms of a set of lines, points and polygons, rasters take the form of images. In the simplest case raster data might be nothing more than a bitmap file, but there are many different image formats out there. In the geospatial context specifically, there are image formats that include metadata (e.g., geodetic datum, coordinate reference system) that can be used to map the image information to the surface of the Earth. For example, one common format is GeoTIFF, which is a regular TIFF file with additional metadata supplied. Happily, most formats can be easily read into R with the assistance of GDAL (the Geospatial Data Abstraction Library, https://gdal.org/). For example the sf package contains a function `sf::gdal_read()` that provides access to the GDAL raster drivers from R. However, you rarely need to call this function directly, as there are other high level functions that take care of this for you. 
 
-As an illustration, suppose we wish to plot satellite images made publicly available by the Australian Bureau of Meterorology (BOM) on their FTP server. The bomrang package [@bomrang] provides a convenient interface to the server, including a `get_available_imagery()` function that returns a vector of filenames and a `get_satellite_imagery()` function that downloads a file and imports it directly into R. For expository purposes, however, we'll use a more flexible method that could be adapted to any FTP server, and use the `download.file()` function:
-
-```{r eval=FALSE}
-# list of all file names with time stamp 2020-01-07 21:00 GMT 
-# (BOM images are retained for 24 hours, so this will return an
-# empty vector if you run this code without editing the time stamp)
-files <- bomrang::get_available_imagery() %>%
-  stringr::str_subset("202001072100") 
-
-# use curl_download() to obtain a single file, and purrr to 
-# vectorise this operation
-purrr::walk2(
-  .x = paste0("ftp://ftp.bom.gov.au/anon/gen/gms/", files),
-  .y = file.path("raster", files),
-  .f = ~ download.file(url = .x, destfile = .y)
-)
-```
-
-Note that if you want to run this code yourself you will need to change the time stamp string from `"202001072100"` to one day prior to the current date, and you will need to make sure there is a folder called "raster" in your working directory into which files will be downloaded. After caching the files locally (which is generally a good idea) we can inspect the list of files we have downloaded:
-
-```{r}
-dir("raster")
-```
-
-All 14 files are constructed from images taken by the Himawari-8 geostationary satellite operated by the Japan Meteorological Agency and takes images across 13 distinct bands. The images released by the Australian BOM include data on the visible spectrum (channel 3) and the infrared spectrum (channel 13):
-
-```{r}
-img_vis  <- file.path("raster", "IDE00422.202001072100.tif")
-img_inf <- file.path("raster", "IDE00421.202001072100.tif")
-```
-
-To import the data in the img_visible file into R, we'll use the stars package [@stars] to import the data as stars objects:
+As an illustration, we'll use a satellite image taken by the Himawari-8 geostationary satellite operated by the Japan Meteorological Agency, and originally sourced from the Australian Bureau of Meteorology website. This image is stored in a GeoTIFF file called "IDE00422.202001072100.tif".^[If you want to try this code yourself, you can find a copy of the image on the github repository for the book: https://github.com/hadley/ggplot2-book/raw/master/IDE00422.202001072100.tif.] To import this data into R, we'll use the stars package [@stars] to create a stars objects:
 
 ```{r}
 library(stars)
-sat_vis <- read_stars(img_vis, RasterIO = list(nBufXSize = 600, nBufYSize = 600))
-sat_inf <- read_stars(img_inf, RasterIO = list(nBufXSize = 600, nBufYSize = 600))
+sat_vis <- read_stars(
+  "IDE00422.202001072100.tif", 
+  RasterIO = list(nBufXSize = 600, nBufYSize = 600)
+)
 ```
 
 In the code above, the first argument specifies the path to the raster file, and the `RasterIO` argument is used to pass a list of low-level parameters to GDAL. In this case, we have used `nBufXSize` and `nBufYSize` to ensure that R reads the data at low resolution (as a 600x600 pixel image). To see what information R has imported, we can inspect the `sat_vis` object:
