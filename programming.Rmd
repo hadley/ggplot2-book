@@ -29,8 +29,8 @@ Each component of a ggplot plot is an object. Most of the time you create the co
 bestfit <- geom_smooth(
   method = "lm", 
   se = FALSE, 
-  colour = alpha("steelblue", 0.5), 
-  size = 2
+  colour = alpha("steelblue", 0.5),
+  linewidth = 2
 )
 ggplot(mpg, aes(cty, hwy)) + 
   geom_point() + 
@@ -40,20 +40,20 @@ ggplot(mpg, aes(displ, hwy)) +
   bestfit
 ```
 
-That's a great way to reduce simple types of duplication (it's much better than copying-and-pasting!), but requires that the component be exactly the same each time.  If you need more flexibility, you can wrap these reusable snippets in a function. For example, we could extend our `bestfit` object to a more general function for adding lines of best fit to a plot. The following code creates a `geom_lm()` with three parameters: the model `formula`, the line `colour` and the line `size`:
+That's a great way to reduce simple types of duplication (it's much better than copying-and-pasting!), but requires that the component be exactly the same each time.  If you need more flexibility, you can wrap these reusable snippets in a function. For example, we could extend our `bestfit` object to a more general function for adding lines of best fit to a plot. The following code creates a `geom_lm()` with three parameters: the model `formula`, the line `colour` and the `linewidth`:
 
 ```{r geom-lm}
 geom_lm <- function(formula = y ~ x, colour = alpha("steelblue", 0.5), 
-                    size = 2, ...)  {
+                    linewidth = 2, ...)  {
   geom_smooth(formula = formula, se = FALSE, method = "lm", colour = colour,
-    size = size, ...)
+    linewidth = linewidth, ...)
 }
 ggplot(mpg, aes(displ, 1 / hwy)) + 
   geom_point() + 
   geom_lm()
 ggplot(mpg, aes(displ, 1 / hwy)) + 
   geom_point() + 
-  geom_lm(y ~ poly(x, 2), size = 1, colour = "red")
+  geom_lm(y ~ poly(x, 2), linewidth = 1, colour = "red")
 ```
 
 Pay close attention to the use of "`...`". When included in the function definition "`...`" allows a function to accept arbitrary additional arguments. Inside the function, you can then use "`...`" to pass those arguments on to another function. Here we pass "`...`" onto `geom_smooth()` so the user can still modify all the other arguments we haven't explicitly overridden. When you write your own component functions, it's a good idea to always use "`...`" in this way. \indexc{...}
@@ -175,7 +175,7 @@ geom_mean <- function(..., bar.params = list(), errorbar.params = list()) {
 ggplot(mpg, aes(class, cty)) + 
   geom_mean(
     colour = "steelblue",
-    errorbar.params = list(width = 0.5, size = 1)
+    errorbar.params = list(width = 0.5, linewidth = 1)
   )
 ggplot(mpg, aes(class, cty)) + 
   geom_mean(

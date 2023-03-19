@@ -5,7 +5,7 @@ columns(1, 2 / 3)
 
 # Other aesthetics {#scale-other}
 
-In addition to position and colour, there are several other aesthetics that ggplot2 can use to represent data. In this chapter we'll look at size scales (Section \@ref(scale-size)), shape scales (Section \@ref(scale-shape)), and line type scales (Section \@ref(scale-linetype)), which use visual features other than location and colour to represent data values. Additionally, we'll talk about manual scales (Section \@ref(scale-manual)) and identity scales (Section \@ref(scale-identity)): these don't necessarily use different visual features, but they construct data mappings in an unusual way.  
+In addition to position and colour, there are several other aesthetics that ggplot2 can use to represent data. In this chapter we'll look at size scales (Section \@ref(scale-size)), shape scales (Section \@ref(scale-shape)), line width scales (Section \@ref(scale-linewidth)), and line type scales (Section \@ref(scale-linetype)), which use visual features other than location and colour to represent data values. Additionally, we'll talk about manual scales (Section \@ref(scale-manual)) and identity scales (Section \@ref(scale-identity)): these don't necessarily use different visual features, but they construct data mappings in an unusual way.  
 
 ## Size {#scale-size}
 \index{Size}
@@ -168,6 +168,41 @@ base +
 ```
 
 For more information about manual scales see Section \@ref(scale-manual).
+
+## Line width {#scale-linewidth}
+
+The linewidth aesthetic, introduced in ggplot2 3.4.0, is used to control the width of lines. In earlier versions of ggplot2 the size aesthetic was used for this purpose, which caused some difficulty for complex geoms such as `geom_pointrange()` that contain both points and lines. For these geoms it's often important to be able to separately control the size of the points and the width of the lines. This is illustrated in the plots below. In the leftmost plot both the size and linewidth aesthetics are set at their default values. The middle plot increases the size of the points while leaving the linewidth unchanged, whereas the plot on the right increases the linewidth while leaving the point size unchanged. 
+
+`r columns(3, 2)`
+```{r}
+base <- ggplot(airquality, aes(x = factor(Month), y = Temp))
+
+base + geom_pointrange(stat = "summary", fun.data = "median_hilow")
+base + geom_pointrange(
+  stat = "summary", 
+  fun.data = "median_hilow", 
+  size = 2
+)
+base + geom_pointrange(
+  stat = "summary", 
+  fun.data = "median_hilow", 
+  linewidth = 2
+)
+```
+
+In practice you're most likely to set linewidth as a fixed parameter, as shown in the previous example, but it is a true aesthetic and can be mapped onto data values:
+
+`r columns(1, 1/2, 1)`
+```{r}
+ggplot(airquality, aes(Day, Temp, group = Month)) + 
+  geom_line(aes(linewidth = Month)) + 
+  scale_linewidth(range = c(0.5, 3))
+```
+
+Linewidth scales behave like size scales in most ways, but there are differences. As discussed earlier the default behaviour of a size scale is to increase linearly with the area of the plot marker (e.g., the diameter of a circular plot marker increases with the square root of the data value). In contrast, the linewidth increases linearly with the data value.
+
+Binned linewidth scales can be added using `scale_linewidth_binned()`. 
+
 
 ## Line type {#scale-linetype}
 
