@@ -6,62 +6,65 @@ columns(1, 1 / 1.61, 1)
 
 # A case study {#spring1}
 
-To make the ideas in the previous chapter concrete, here we'll work through the process of building a new geom that looks like a spring.
-This is a carefully crafted example: you're unlikely to actually want to use springs to visualise your data (so no geom already exists), and they're just complicated enough to illustrate the most important parts of the process.
+Chapter \@ref(extensions) provided a high-level overview showing you how to create ggplot2 extensions, building on the discussion of ggplot2 internals in Chapter \@ref(internals). In this chapter we'll take that knowledge a step further, providing a deeper dive into the process of developing full-featured extensions. To do this, we'll take a single example -- building a new geom that looks like a spring -- and follow it all the way through the development process.
+
+This is a carefully crafted example. You're unlikely to actually want to use springs to visualise your data, which is the reason why ggplot2 doesn't already provide a geom for this. However, springs are just complicated enough to illustrate the most important parts of the process, making them ideal for our purposes! 
 
 We'll develop the extension in five phases:
 
-1.  We'll start as simple as possible by using the existing `geom_path()`, pairing it with a new stat.
-2.  The new stat only allows fixed diameter and tension, so we'll next allow these to be set as parameters.
-3.  A stat is a great place to start but has some fundamental restrictions so we'll convert our work so far in to a proper geom.
-4.  Geoms can only use dimensions relative to the data, and can't use absolute sizes like 2cm, so next we'll show you how to draw the spring with grid.
-5.  We'll finish up by providing a custom scale and legend to pair with the geom.
+1.  We'll start as simple as possible by using the existing `geom_path()`, pairing it with a new stat (Section \@ref(spring-stat)).
+2.  The new stat only allows fixed diameter and tension, so we'll next allow these to be set as parameters  (Section \@ref(spring2)).
+3.  A stat is a great place to start but has some fundamental restrictions so we'll convert our work so far in to a proper geom (Section \@ref(spring3)).
+4.  Geoms can only use dimensions relative to the data, and can't use absolute sizes like 2cm, so next we'll show you how to draw the spring with grid (Section \@ref(spring4)).
+5.  We'll finish up by providing a custom scale and legend to pair with the geom (Section \@ref(spring5)).
 
 Once you've worked your way through this chapter, we highly recommend browsing the ggplot2 source code to look at how other stats and geoms are implemented.
 They will often be more complicated than what you need, but they'll give you a sense of the things you can do.
 
 ## What is a spring?
 
-Developing an extension usually starts with idea of what to draw.
-In this case, we want to draw a spring between two points.
-To begin, we'll need to consider how to draw a spring.
-There are probably many ways, but one simple approach is to draw a circle while moving the "pen" in one direction:
+Developing an extension usually starts with an idea of what you want to draw. In this case, we want to draw a spring between two points, so we need some code that will draw a plausible-looking spring! There are probably many ways to do this, but one simple approach is to draw a circle while moving the "pen" in one direction. Here's a data set that defines a circle using 100 points:
 
 ```{r}
 circle <- tibble(
-  x = sin(seq(0, 2 * pi, length.out = 100)),
-  y = cos(seq(0, 2 * pi, length.out = 100)),
+  angle = seq(0, 2 * pi, length.out = 100),
+  x = sin(angle),
+  y = cos(angle),
   index = 1:100,
   type = "circle"
 )
-spring <- circle
-spring$x <- spring$x + seq(0, 1.5, length.out = 100)
-spring$type <- "spring"
-ggplot(rbind(circle, spring)) + 
-  geom_path(
-    aes(x = x, y = y, group = type, alpha = index), 
-    show.legend = FALSE
-  ) + 
-  facet_wrap(~ type, scales = "free_x")
+
+ggplot(circle, aes(x = x, y = y, alpha = index)) + 
+  geom_path(show.legend = FALSE) + 
+  coord_equal()
 ```
 
-It is clear that simply continuing to trace the circle while moving along x will make the spring longer, and that the speed of the x-movement will control how tightly spiralled the spring is.
-This gives us two parameters for our spring:
+To transform this circle into a spring that stretches along the x axis using dplyr, we might do something like this:
 
--   The `diameter` of the circle.
+```{r}
+spring <- circle %>% 
+  mutate(
+    motion = seq(0, 1.5, length.out = 100),
+    x = x + motion,
+    type = "spring"
+  )
 
--   The `tension`, how fast we move along x.
+ggplot(spring, aes(x = x, y = y, alpha = index)) + 
+  geom_path(show.legend = FALSE) + 
+  coord_equal()
+```
 
-Although we can be pretty sure this is not a physically correct parameterisation of a spring, it is good enough for us.
+In this case our spring has only looped around once, but if we were to continue tracing the circle while moving along the x axis we'd end up with a spring with multiple loops. The faster we move the "pen", the more we will stretch the spring. This gives us some insight into the two parameters that characterise our springs:
 
-At this point, it's worthwhile to spend a little time thinking about how we might turn this into a geom.
-How will we specify the diameter?
-How do we keep the circles circular even as we change the aspect ratio of the plot?
-Can we map diameter and tension to variables in the data?
-Are they scaled aesthetic?
-Or they both simple values that must be the same for all springs in a layer?
+-   The `diameter` of the spring, defined by the size of the circle.
 
-## Part 1: A stat
+-   The `tension` of the spring, defined by how fast we move along x.
+
+Although we can be pretty sure this is not a physically correct parameterisation of springs in the real world, it will be good enough for our purposes. 
+
+Now that we have a method for drawing springs, it's worth spending a little time thinking about what a geom based on this method will require. The code we've written up to this point is perfectly fine for a single plot, but when creating an extension there are new questions to consider. How will we specify the diameter of a spring? How do we keep the circles circular even as we change the aspect ratio of the plot? Can we map diameter and tension to variables in the data? Should they be scaled aesthetics, or are they always parameters that must be the same for all springs in a layer? If we plan to distribute our spring geom to other R users, is it a good idea for our geom to depend on the dplyr package?
+
+## Part 1: A stat {#spring-stat}
 
 When developing a new layer, you have a choice between developing a `Stat` or a `Geom`.
 Surprisingly, the decision not guided by whether you want to end up with `geom_spring()` or `stat_spring()` because plenty of `Stat` extensions are used via a `geom_*()` constructor.
