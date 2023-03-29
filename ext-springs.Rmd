@@ -21,20 +21,20 @@ We'll develop the extension in five phases:
 Once you've worked your way through this chapter, we highly recommend browsing the ggplot2 source code to look at how other stats and geoms are implemented.
 They will often be more complicated than what you need, but they'll give you a sense of the things you can do.
 
-## What is a spring?
+## What is a spring? {#intuitive-spring}
 
 Developing an extension usually starts with an idea of what you want to draw. In this case, we want to draw a spring between two points, so we need some code that will draw a plausible-looking spring! There are probably many ways to do this, but one simple approach is to draw a circle while moving the "pen" in one direction. Here's a data set that defines a circle using 100 points:
 
 ```{r}
 circle <- tibble(
-  angle = seq(0, 2 * pi, length.out = 100),
-  x = sin(angle),
-  y = cos(angle),
+  radians = seq(0, 2 * pi, length.out = 100),
+  x = cos(radians),
+  y = sin(radians),
   index = 1:100,
   type = "circle"
 )
 
-ggplot(circle, aes(x = x, y = y, alpha = index)) + 
+ggplot(circle, aes(x = x, y = y, alpha = -index)) + 
   geom_path(show.legend = FALSE) + 
   coord_equal()
 ```
@@ -44,17 +44,17 @@ To transform this circle into a spring that stretches along the x axis using dpl
 ```{r}
 spring <- circle %>% 
   mutate(
-    motion = seq(0, 1.5, length.out = 100),
+    motion = seq(0, 1, length.out = 100),
     x = x + motion,
     type = "spring"
   )
 
-ggplot(spring, aes(x = x, y = y, alpha = index)) + 
+ggplot(spring, aes(x = x, y = y, alpha = -index)) + 
   geom_path(show.legend = FALSE) + 
   coord_equal()
 ```
 
-In this case our spring has only looped around once, but if we were to continue tracing the circle while moving along the x axis we'd end up with a spring with multiple loops. The faster we move the "pen", the more we will stretch the spring. This gives us some insight into the two parameters that characterise our springs:
+In this case our "spring" has only looped around once -- and doesn't look much like an actual spring -- but if we were to continue tracing the circle while moving along the x axis we'd end up with a spring with multiple loops. The faster we move the "pen", the more we will stretch the spring. This gives us some insight into the two parameters that characterise our springs:
 
 -   The `diameter` of the spring, defined by the size of the circle.
 -   The `tension` of the spring, defined by how fast we move along x.
@@ -65,23 +65,32 @@ Now that we have a method for drawing springs, it's worth spending a little time
 
 ## Part 1: A stat {#spring-stat}
 
-When developing a new layer, you have a choice between developing a `Stat` or a `Geom`.
-Surprisingly, the decision not guided by whether you want to end up with `geom_spring()` or `stat_spring()` because plenty of `Stat` extensions are used via a `geom_*()` constructor.
-Instead, you need to consider what you're doing: if you're just drawing transformed data with pre-existing geom, then you can use a `Stat`.
-`Stat`s are much easier to extend than `Geom`s as they are simply data-transformation pipelines.
+Let's start turning this idea into a ggplot2 extension. Because we're creating an extension that draws a new ggplot2 layer, we need to decide whether the ggproto object we create should be a `Stat` or a `Geom`. Perhaps surprisingly, this decision isn't guided by whether we want to end up with `geom_spring()` or `stat_spring()`: there are a lot of `Stat` extensions that are used via a `geom_*()` constructor. A better way to think about this decision is to think carefully about what your code is doing: if what you're doing is drawing transformed data using pre-existing geom, then you can use a `Stat`. This is often a good strategy: unlike `Geom` objects, a `Stat` is simply a data-transformation pipeline, and that's usually simpler to code. 
 
-Here we're drawing a path but circling around instead of going in straight line.
-This is good fit of `Stat`, because we can transform data and then use the existing `GeomPath`.
+The code we wrote in the last section fits this description nicely. All we're doing is drawing a path, but we're circling around instead of going in a straight line. That suggests we can use a `Stat` that transforms the data and then uses `GeomPath` to take care of the actual drawing. So we'll attempt this first.
 
 ### Building functionality
 
-When developing a new `Stat` it's a good idea to first write the data transformation function.
-Here we need a function that takes a start and end point, a diameter, and a tension.
-We will define tension to mean "times of diameter moved per revolution minus one", thus `0` will mean that it doesn't move at all, and will be forbidden as it would not allow our spring to extend between two points.
-We'll also use a parameter `n` to give the number of points used per revolution, defining the visual fidelity of the spring.
+Whenever you are developing a new `Stat` a sensible strategy is to begin by writing the data transformation function. Later on you can incorporate this function into the ggproto `Stat` object itself, but it makes your life easier if you write this function as a separate exercise. In this case, we're going to need a `create_spring()` function that takes a start point, an end point, a diameter, and a tension. More precisely:
+
+- Our start point will be defined by arguments `x` and `y`.
+- Our end point will be defined by arguments `xend` and `yend`. 
+- The `diameter` argument will be used to scale the size of our circle. 
+- Defining `tension` is slightly trickier. The quantity we actually want to express is "how far the spring moves relative to the size of the circles". So we'll define `tension` to refer to the total distance moved from the start point to the end point, divided by the size of the circles.^[If you have a background in statistics, you'll recognise this as roughly analogous to how a z-statistic is calculated.]
+- We'll also have a parameter `n` to give the number of points used per revolution, defining the visual fidelity of the spring. 
+
+We can now write code for our `create_spring()` function:
 
 ```{r}
-create_spring <- function(x, y, xend, yend, diameter = 1, tension = 0.75, n = 50) {
+create_spring <- function(x, 
+                          y, 
+                          xend, 
+                          yend, 
+                          diameter = 1, 
+                          tension = 0.75, 
+                          n = 50) {
+  
+  # Validate the input arguments
   if (tension <= 0) {
     rlang::abort("`tension` must be larger than zero.")
   }
@@ -91,19 +100,20 @@ create_spring <- function(x, y, xend, yend, diameter = 1, tension = 0.75, n = 50
   if (n == 0) {
     rlang::abort("`n` must be greater than zero.")
   }
-  # Calculate direct length of segment
+  
+  # Calculate the direct length of the spring path
   length <- sqrt((x - xend)^2 + (y - yend)^2)
   
-  # Figure out how many revolutions and points we need
+  # Calculate the number of revolutions and points we need
   n_revolutions <- length / (diameter * tension)
   n_points <- n * n_revolutions
   
-  # Calculate sequence of radians and x and y offset
+  # Calculate the sequence of radians and the x and y offset values
   radians <- seq(0, n_revolutions * 2 * pi, length.out = n_points)
   x <- seq(x, xend, length.out = n_points)
   y <- seq(y, yend, length.out = n_points)
   
-  # Create the new data
+  # Create and return the transformed data frame
   data.frame(
     x = cos(radians) * diameter/2 + x,
     y = sin(radians) * diameter/2 + y
@@ -111,120 +121,140 @@ create_spring <- function(x, y, xend, yend, diameter = 1, tension = 0.75, n = 50
 }
 ```
 
-One nice thing about writing this function is that we can immediately test it out to convince ourselves that the logic works:
+This function preserves the logic of the spring code we wrote in Section \@ref(intuitive-spring), but it does a few new things that matter a lot when writing extensions:
+
+- It is precise in specifying the parameters that define the spring.
+- It explicitly checks the input, and uses `rlang::abort()` to throw an error if the user passes an invalid value to the function.
+- It uses base R functions to do the work: there is no dplyr code in this function because we don't want our `Stat` to depend on dplyr.^[If you have experience developing packages you might wonder about the choice to use `rlang::abort()` rather than using the base `stop()` function. We could certainly have chosen to use the base R function here, but since ggplot2 itself uses the rlang package it makes very little difference in this case.]
+
+One nice thing about writing `create_spring()` as a function is that we can test it out^[If we were planning to bundle this code as an R package, we could expand on this and write formal unit tests for `create_spring()` using the testthat package.] to convince ourselves that the logic works:
 
 ```{r}
 spring <- create_spring(
   x = 4, y = 2, xend = 10, yend = 6,
-  diameter = 2, tension = 0.75, n = 50
+  diameter = 2, tension = 0.6, n = 50
 )
 
 ggplot(spring) + 
-  geom_path(aes(x = x, y = y))
+  geom_path(aes(x = x, y = y)) + 
+  coord_equal()
 ```
 
-(This would also be a great function to formally test with a unit testing package like testthat)
+### Creating the `Stat`
 
-Now we have the transformation function we can encapsulate it in a new `Stat`.
-We'll define the `Stat` below and then work our way through each of the pieces.
+Now that we know what we want to do with the user input, our next task is to encapsulate this functionality in a `Stat`. To do this, we'll take what we learned about creating `Stat` objects in Section \@ref(new-stats) and extend it a little. Our first step is to write some code that creates a subclass of `Stat` that we'll call `StatSpring`:
+
+```{r, eval = FALSE}
+StatSpring <- ggproto("StatSpring", Stat)
+```
+
+This creates a new `Stat`^[You can also choose to extend an existing `Stat` class, but that is relatively uncommon.] subclass named `StatSpring`. This class doesn't do anything interesting at this point: the only thing this code does so far is give the class a name.^[By convention ggproto classes always use CamelCase for naming, and the new class is always saved into a variable with the same name.] To make this useful, we'll need to specify the methods that will build in the functionality we desire. In Section \@ref(new-stats) we created a `Stat` by overriding the default method `compute_group()` and the default field for `required_aes`,^[As we mentioned earlier, ggproto doesn't make a strong distinction between methods and fields. `Stat` objects expect `compute_group()` to be a function, so we refer to `compute_group()` as a method because that is the standard terminology in object oriented programming. In contrast, `Stat` expects `required_aes` to be a variable, so we call it a field.] but `Stat` objects have many properties you can modify. If we print the `Stat` object, we can see a list of those properties:
 
 ```{r}
-`%||%` <- function(x, y) {
-  if (is.null(x)) y else x
-}
+Stat
+```
 
+You can modify almost any of these: the only ones that you shouldn't touch are `aesthetics` and `parameters`, which are intended for internal use only. 
+
+For our `StatSpring` example, the three methods/fields that we'll need to specify are `setup_data()`, `compute_panel()`, and `required_aes`. We'll go through this in more detail in the next section, but to help you see what we're aiming for, the complete code for our stat is shown below:
+
+```{r}
 StatSpring <- ggproto("StatSpring", Stat, 
+  
+  # Edit the input data to ensure the group identifiers are unique
   setup_data = function(data, params) {
     if (anyDuplicated(data$group)) {
       data$group <- paste(data$group, seq_len(nrow(data)), sep = "-")
     }
     data
   },
-  compute_panel = function(data, scales, 
+  
+  # Construct data for this panel by calling create_spring()
+  compute_panel = function(data, 
+                           scales, 
                            diameter = 1, 
                            tension = 0.75, 
                            n = 50) {
     cols_to_keep <- setdiff(names(data), c("x", "y", "xend", "yend"))
-    springs <- lapply(seq_len(nrow(data)), function(i) {
-      spring_path <- create_spring(
-        data$x[i], data$y[i], 
-        data$xend[i], data$yend[i], 
-        diameter = diameter, 
-        tension = tension, 
-        n = n
-      )
-      cbind(spring_path, unclass(data[i, cols_to_keep]))
-    })
+    springs <- lapply(
+      seq_len(nrow(data)), 
+      function(i) {
+        spring_path <- create_spring(
+          data$x[i], 
+          data$y[i], 
+          data$xend[i], 
+          data$yend[i], 
+          diameter = diameter, 
+          tension = tension, 
+          n = n
+        )
+        cbind(spring_path, unclass(data[i, cols_to_keep]))
+      }
+    )
     do.call(rbind, springs)
   },
+  
+  # Specify which aesthetics are required input
   required_aes = c("x", "y", "xend", "yend")
 )
 ```
 
-We first start with the class definition:
+We can print any of these methods with a command such as `StatSpring$compute_panel` or `StatSpring$setup_data`.
 
-```{r, eval = FALSE}
-StatSpring <- ggproto("StatSpring", Stat, 
-  ...
-)
-```
-
-This creates a new `Stat`[^ext-springs-1] subclass, named `StatSpring`. ggproto classes always use CamelCase for naming, and the new class is always saved into a variable with the same name.
-
-[^ext-springs-1]: You can also choose to extend an existing `Stat` class, but that is relatively uncommon.
 
 ### Methods
 
-Inside the class definition we implement methods by assigning functions to a name.
-You can see a complete list of methods by printing the class.
-The only methods that you shouldn't touch are `aesthetics` and `parameters`; these are for internal use only.
-(To understand exactly what is passed to these methods we highly recommend adding a `browser()` statement)
+Let's take a closer look at the methods defined for our `StatSpring`. As discussed in Section \@ref(new-stats) the most important methods for a stat are the three `compute_*` methods. One of these must always be defined, usually `compute_group()` or `compute_panel()`. As a rule of thumb, if the stat operates on multiple rows we start by implementing a `compute_group()` method, and if the stat operates on single rows we implement a `compute_panel()` method. Our spring stat is the latter kind: each spring is defined by a single row of the original data, so we'll use the `compute_panel()` method which receives all the data for a single panel.
 
-```{r}
-print(Stat)
+As you can see by looking at source code for our `compute_panel()` method, we're doing a bit more than simply calling our `create_spring()` function:
+
+```{r, results='hide'}
+function(data, scales, diameter = 1, tension = 0.75, n = 50) {
+    cols_to_keep <- setdiff(names(data), c("x", "y", "xend", "yend"))
+    springs <- lapply(
+      seq_len(nrow(data)), 
+      function(i) {
+        spring_path <- create_spring(
+          data$x[i], 
+          data$y[i], 
+          data$xend[i], 
+          data$yend[i], 
+          diameter = diameter, 
+          tension = tension, 
+          n = n
+        )
+        cbind(spring_path, unclass(data[i, cols_to_keep]))
+      }
+    )
+    do.call(rbind, springs)
+  }
 ```
 
-As discussed in the last chapter, the most important are the three `compute_*` methods.
-One of these must always be defined (and usually it's the `group` or `panel` version).
-Here we use the `compute_panel()` method because it receives all the data for a single panel.
-As a rule of thumb, if the stat operates on multiple rows, start by implementing a `compute_group()` method, and if the stat operates on single rows, implement a `compute_panel()` method.
-Inside our `compute_panel()` method we do a bit more than simply call our `create_spring()` function.
+We use `lapply()` to loop over each row of the data and create the points required to draw the corresponding spring. For each such spring, we use `cbind()` to combine the spring data with all the non-position columns of the input row. This is very important, since otherwise the aesthetic mappings to e.g. color and size would be lost. Finally, because the output of `lapply()` is a list of data frames (one per spring), we use `rbind()` to combine these into a single data frame that gets returned.
 
-```{r}
-StatSpring$compute_panel
+When defining a new stat, it is very common to specify one or both of the `setup_data()` and `setup_params()` methods. These methods are called at the very beginning of the plot building process, so you can use them to do early checks and modifications of the parameters and data.
+
+For our `StatSpring` example, we use the `setup_data()` method to ensure that each input row has a unique group aesthetic. This is important because we're going to draw our springs with `GeomPath`, and we need to make sure that the data frame output by the stat has a unique identifier for each spring. Doing so ensures that the geom draws each spring as a distinct path, and won't draw any connecting lines between different springs. Again, there are some subtle details to call attention to in the implementation:
+
+```{r, results='hide'}
+function(data, params) {
+  if (anyDuplicated(data$group)) {
+    data$group <- paste(data$group, seq_len(nrow(data)), sep = "-")
+  }
+  data
+}
 ```
 
-We loop over each row of the data and create the points required to draw the spring.
-Then we combine our new data with all the non-position columns of the row.
-This is very important, since otherwise the aesthetic mappings to e.g. color and size would be lost.
-In the end we combine the individual springs into a single data frame that gets returned.
+Notice that this implementation preserves the original value of `data$group`, appending a unique id if needed. This is important because the group aesthetic is sometimes used to carry metadata, and we don't want to lose that information.
 
-Two other common methods are `setup_data` and `setup_params` which allows the class to do early checks and modifications of the parameters and data.
-Here our `setup_data()` method ensures that each input row has a unique group aesthetic.
-This is important because we're going to draw our springs with `GeomPath()`, so we need to make sure that each row has it's own id so the springs don't get tangled.
-The group aesthetic is sometimes used to carry metadata so we preserve the existing value, and pasting on a unique id if needed.
-
-```{r}
-StatSpring$setup_data
-```
-
-The last part of our new class is the `required_aes` field.
-This is a character vector that gives the names of aesthetics that the user *must* provide to the stat.
-`required_aes`, along with `default_aes` and `non_missing_aes`, also defines the aesthetics that this stat understands.
-Any aesthetics that don't appear in these fields (or in the fields in the corresponding geom) will generate a warning and the mapping will be ignored.
-
-```{r}
-StatSpring$required_aes
-```
+The final part of our new class is the `required_aes` field. This is a character vector that gives the names of aesthetics that the user *must* provide to the stat. In this case, we need to make sure the user specifies four position aesthetics: x and y define where the spring starts, while xend and yend define where it ends. The `required_aes` field, along with `default_aes` and `non_missing_aes`, also defines the aesthetics that this stat understands. Any aesthetics that don't appear in these fields (or in the fields of the corresponding geom) will generate a warning and the mapping will be ignored.
 
 ### Constructors
 
-Users never really see the ggproto objects (unless they go looking for them), since they are abstracted away into the well-known constructor functions that make up the ggplot2 API.
-Having created our stat, we should also create a constructor.
-A constructor isn't strictly needed as `geom_path(stat = "spring")` will already work, but without a constructor there's no good place to document our new functionality.
-Stat objects are almost paired with a `geom_*()` constructor because most ggplot2 users are accustomed to adding geoms, not stats, when building up a plot.
+Now that we have our `StatSpring` ggproto object, it's time to write constructor functions that the user will interact with. Strictly speaking we don't need to do this, because `geom_path(stat = "spring")` will already work, but it's good practice to write constructor functions for the convenience of your users. In addition, the constructor function provides a good place to document the new functionality. 
 
-The constructor is mostly boilerplate; just take care to match the argument order and naming used in the ggplot2's constructors so you don't surprise your users.
+
+Perhaps surprisingly, stat objects are almost always paired with a `geom_*()` constructor because most ggplot2 users are accustomed to adding geoms, not stats, when building up a plot. The constructor itself is mostly boilerplate code that wraps a call to `layer()`; just take care to match the argument order and naming used in the ggplot2's constructors so you don't surprise your users.
 
 ```{r}
 geom_spring <- function(mapping = NULL,
@@ -264,39 +294,19 @@ geom_spring <- function(mapping = NULL,
 }
 ```
 
-Now that everything is in place, we can test out our new layer:
+For the sake of completeness you should also create a `stat_*()` constructor function. There are no surprises here: `stat_spring()` is very similar to `geom_spring()` except that it provides a default geom instead of a default stat.
 
 ```{r}
-some_data <- tibble(
-  x = runif(5, max = 10),
-  y = runif(5, max = 10),
-  xend = runif(5, max = 10),
-  yend = runif(5, max = 10),
-  class = sample(letters[1:2], 5, replace = TRUE)
-)
-
-ggplot(some_data) + 
-  geom_spring(aes(x = x, y = y, xend = xend, yend = yend))
-```
-
-Because we've written a new stat, we get a number of features, like scaling and faceting, for free:
-
-```{r}
-ggplot(some_data) + 
-  geom_spring(
-    aes(x, y, xend = xend, yend = yend, colour = class),
-    linewidth = 1
-  ) + 
-  facet_wrap(~ class)
-```
-
-For completion you should also create a stat constructor.
-Here our `stat_spring()` is very similar to `geom_spring()` except that it provides a default geom instead of a default stat.
-
-```{r}
-stat_spring <- function(mapping = NULL, data = NULL, geom = "path", 
-                        position = "identity", ..., diameter = 1, tension = 0.75, 
-                        n = 50, na.rm = FALSE, show.legend = NA, 
+stat_spring <- function(mapping = NULL, 
+                        data = NULL, 
+                        geom = "path", 
+                        position = "identity", 
+                        ..., 
+                        diameter = 1, 
+                        tension = 0.75, 
+                        n = 50, 
+                        na.rm = FALSE, 
+                        show.legend = NA, 
                         inherit.aes = TRUE) {
   layer(
     data = data, 
@@ -317,7 +327,38 @@ stat_spring <- function(mapping = NULL, data = NULL, geom = "path",
 }
 ```
 
-We can test it out by drawing our springs with dots:
+
+### Testing the stat
+
+Now that everything is in place, we can test out our new layer:
+
+```{r}
+df <- tibble(
+  x = runif(5, max = 10),
+  y = runif(5, max = 10),
+  xend = runif(5, max = 10),
+  yend = runif(5, max = 10),
+  class = sample(letters[1:2], 5, replace = TRUE)
+)
+
+ggplot(df) + 
+  geom_spring(aes(x = x, y = y, xend = xend, yend = yend)) +
+  coord_equal()
+```
+
+This looks pretty good. Users can call our `geom_spring()` constructor function and get sensible results. Better yet, because we've written a new stat, we get a number of features for free, like scaling and faceting:
+
+```{r}
+ggplot(some_data) + 
+  geom_spring(
+    aes(x, y, xend = xend, yend = yend, colour = class),
+    linewidth = 1
+  ) +
+  coord_equal() + 
+  facet_wrap(~ class)
+```
+
+Users also have the option of calling the `stat_spring()` constructor, which can be helpful if for some reason they want to draw the springs with points rather than paths:
 
 ```{r}
 ggplot(some_data) + 
@@ -325,30 +366,32 @@ ggplot(some_data) +
     aes(x, y, xend = xend, yend = yend, colour = class),
     geom = "point", 
     n = 15
-  ) + 
+  ) +
+  coord_equal() + 
   facet_wrap(~ class)
 ```
 
 ### Post-mortem
 
-We have now successfully created our first extension.
-One shortcoming of our implementation is that diameter and tension are constants that can only be set for the full layer.
-These settings feel more like aesthetics and it would be nice if their values could be mapped to a variable in the data.
+We have now successfully created our first extension. It works, but it has some limitations that we now need to think about. 
 
-Another, potentially bigger, issue is that the spring path is relative to the coordinate system of the plot.
-This means that strong deviations from an aspect ratio of 1 will visibly distort the spring, as can be seen in the example below:
+One shortcoming of our implementation is that diameter and tension are constants that can only be set for the full layer. These settings feel more like aesthetics and it would be nice if their values could be mapped to a variable in the data. We'll discuss solutions to this problem in Sections \@ref(spring2) and \@ref(spring3).
+
+Another, potentially bigger, issue is that the spring path is defined relative to the coordinate system of the plot. This means that strong deviations from an aspect ratio of 1 will visibly distort the spring, as you can see in the example below:
 
 ```{r}
 ggplot() + 
   geom_spring(aes(x = 0, y = 0, xend = 3, yend = 20))
 ```
 
-The same underlying problem means that the diameter is expressed in coordinate space, meaning that it is difficult to define a meaningful default:
+The same underlying problem means that the diameter of the spring is expressed in coordinate space, meaning that it is difficult to define a meaningful default:
 
 ```{r}
 ggplot() + 
   geom_spring(aes(x = 0, y = 0, xend = 100, yend = 80))
 ```
+
+We'll ignore this issue for the moment, and address it in Section \@ref(spring4).
 
 ## Part 2: Adding aesthetics {#spring2}
 
@@ -987,6 +1030,10 @@ draw_key_point
 To create one that matches well with our new geom we should simply try to create a key that uses our springGrob instead:
 
 ```{r}
+`%||%` <- function(x, y) {
+  if (is.null(x)) y else x
+}
+
 draw_key_spring <- function(data, params, size) {
   springGrob(
     x0 = 0, y0 = 0, x1 = 1, y1 = 1,
