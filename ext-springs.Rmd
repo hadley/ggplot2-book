@@ -1,5 +1,6 @@
 ```{r setup, include = FALSE}
 source("common.R")
+library(grid)
 set.seed(12L)
 columns(1, 1 / 1.61, 1)
 ```
@@ -655,13 +656,13 @@ In this section we finally created our own `Geom` extension. This is often the n
 
 Perhaps surprisingly, we haven't talked about what goes on inside the `draw_*()` methods yet. Our `GeomSpring` object relies on the `draw_panel()` method from `GeomPath` to do the work of creating the graphical output. This is quite common. For example, even the relatively complex [`GeomBoxplot`](https://github.com/tidyverse/ggplot2/blob/master/R/geom-boxplot.r) just uses the draw methods from `GeomPoint()`, `GeomSegment` and `GeomCrossbar`. 
 
-If you need to go deeper, you'll need to learn a little about grid. Creating grid grobs is an advanced technique, needed by relatively few geoms. But creating a grid grob gives you the power to use absolute units (e.g. 1cm) and to adjust the display of the geom based on the size of the output device. We'll turn to that in the next section.
+If you need to go deeper, you'll need to learn a little about grid. Creating grid grobs is an advanced technique, needed by relatively few geoms. But creating a grid grob gives you the power to use absolute units (e.g. 1cm) and to adjust the display of the geom based on the size of the output device. We'll turn to that next.
 
-## Part 4: A grid grob {#spring4}
+## An introduction to grid
 
-Up to this point we have tried to create a springs extension without delving into the grid package. However, there are still some limitations to our code, and we are now out of options. We now need to learn grid.
+The grid package provides the underlying graphics system upon which ggplot2 is built. It's one of two quite different drawing systems that are included in base R: base graphics and grid. Base graphics has an imperative "pen-on-paper" model: every function immediately draws something on the graphics device. Much like ggplot2 itself, grid takes a more declarative approach where you build up a description of the graphic as an object, which is later rendered. This declarative approach allows us to create objects that exists independently of the graphic device and can be passed around, analysed, and modified. Importantly, parts of a graphical object can refer to other parts, which allows you to do things like define this rectangle to have width equal to the length of that string of text, and so on. 
 
-The grid package provides the underlying graphic system that ggplot2 builds upon and while much can be achieved by ignoring grid entirely, there are situations where it is impossible to achieve what you want without going down to the grid level. The two most common reasons why you might need to use grid directly are:
+As a ggplot2 developer you will find that you can achieve a lot without ever needing to interact with grid directly, but there are situations where it is impossible to achieve what you want without going down to the grid level. The two most common situations are:
 
 1.  You need to create graphical objects that are positioned correctly on the coordinate system, but where some part of their appearance has a fixed absolute size.
     In our case this would be the spring correctly going between two points in the plot, but the diameter being defined in cm instead of relative to the coordinate system.
@@ -669,73 +670,123 @@ The grid package provides the underlying graphic system that ggplot2 builds upon
 2.  You need graphical objects that are updated during resizing.
     This could e.g. be the position of labels such as in the ggrepel package or the `geom_mark_*()` geoms in ggforce.
 
-Before we begin developing the new version of our geom it will be good to have at least a cursory understanding of the key concepts in grid:
+A comprehensive introduction to grid is far more than we can cover in this book, but to help you get started we'll give you the absolute minimum vocabulary to understand how ggplot2 uses grid. We'll introduce core concepts like grobs, viewports, graphical parameters, and units but if you want to go deeper, we highly recommend *R Graphics* by @murrell:2011.
 
-### Grid in 5 minutes
+### Grobs
 
-There are two drawing systems included in base R: base graphics and grid.
-Base graphics has an imperative "pen-on-paper" model: every function immediately draws something on the graphics device.
-Grid takes a more declarative approach where you build up a nested description of the graphic as an object, which is later rendered (much like ggplot2).
-This gives us an object that exists independently of the graphic device and can be passed around, analysed, and modified.
-Importantly, parts of the object can refer to other parts, so that you can say (e.g.) make this rectangle as wide as that string of text.
-
-The next few sections will give you the absolute minimum vocabulary to understand ggplot2's use of grid: grobs, viewports, and units.
-To get a sufficient understanding of grid to create your own geoms, we highly recommend @murrell:2011.
-
-#### Grobs
-
-Grobs (***gr***aphic ***ob***jects) are the atomic representations of graphical elements in grid, and include types like points, lines, rectangles, and text.
-All grid objects are vectorised, so that (e.g.) a point grob can represent multiple points.
-As well as simple geometric primitive, grid also comes the means to combine multiple grobs into a complex objects called `gTree()`s.
-
-You can create a new grob class with the `grob()` or `gTree()` constructors, and then give it special behaviour by override the `makeContext()` and `makeContent()` S3 generics:
-
--   `makeContext()` is called when the parent grob is rendered and allows you to control the viewport of the grob (see below).
-
--   `makeContent()` is called every time the drawing region is resized and allows you to customise the look based on the size or other aspect.
-
-#### Viewports
-
-grid **viewports** define rectangular plotting regions.
-Each viewport defines a coordinate system for position grobs, and optionally, a tabular grid that child viewports can occupy.
-A grob can have its own viewport or inherit the viewport of its parent.
-While we won't need to consider viewports for our spring grob, they're an important concept that powers much of the high-level layout of ggplot2 graphics.
-
-#### Units
-
-grid **units** provide a flexible way of specifying positions (e.g. `x` and `y`) and dimensions (e.g. `length` and `width)` of grobs and viewports.
-There are three types of unit:
-
--   Absolute units (e.g. centimeters, inches, and points).
--   Relative units (e.g. npc which scales the viewport size between 0 and 1).
--   Units based on other grobs (e.g. grobwidth).
-
-units support arithmetic operations and are only resolved at draw time so it is possible to combine different types of units.
-For example `unit(0.5, "npc") + unit(1, "cm")` defines a point one centimeter to the right of the center of the current viewport.
-
-#### Example
-
-Given this very cursory introduction, let's now look at an example grob. The code below will create a grob that appears as a square if bigger than 5 cm and a circle if smaller:
+To understand how grid works, the first thing we need to talk about are grobs. 
+Grobs (**gr**aphic **ob**jects) are the atomic representations of graphical elements in grid, and include types like points, lines, circles, rectangles, and text. The grid package provides functions like `pointsGrob()`, `linesGrob()`, `circleGrob()`, `rectGrob()`, and `textGrob()` that create graphical objects without drawing anything to the graphics device. These functions are vectorised, allowing a single point grob to represent multiple points, for instance:
 
 ```{r}
 library(grid)
+circles <- circleGrob(
+  x = c(0.1, 0.4, 0.7), 
+  y = c(0.5, 0.3, 0.6),
+  r = c(0.1, 0.2, 0.3)
+)
+```
 
-surpriseGrob <- function(x, y, size, 
+Notice that this does not create any output. Much like a ggplot2 plot object, this grob is a declarative description of a set of circles. To trigger a drawing operation we first call `grid.newpage()` to clear the current graphics device, and then `grid.draw()` to perform a draw operation:
+
+```{r}
+grid.newpage()
+grid.draw(circles)
+```
+
+In addition to providing geometric primitives, grid also allows you to construct composite objects that combine multiple grobs using `grobTree()`. Here's an illustration:
+
+```{r}
+labels <- textGrob(
+  label = c("small", "medium", "large"),
+  x = c(0.1, 0.4, 0.7), 
+  y = c(0.5, 0.3, 0.6),
+)
+
+composite <- grobTree(circles, labels)
+grid.newpage()
+grid.draw(composite)
+```
+
+It is also possible to define your own grob classes. You can define a new primitive grob class using `grob()` or a new composite class using `gTree()`, and specify special behaviour for your new class. We'll see an example of this in a moment. 
+
+### Viewports
+
+The second key concept in grid is the idea of a viewport. A viewport is a rectangular plotting region that supplies its own coordinate system for grobs that are drawn within it, and can also provide a tabular grid in which other viewports an be nested. An individual grob can have its own viewport or, if none is provided, it will inherit one. While we won't need to consider viewports when building the grob for our springs, they're an important concept that powers much of the high-level layout of ggplot2 graphics so we'll very briefly introduce them here. In the example below we use `viewport()` to define two different viewports, one with default parameters, and second one that is rotated around the midpoint by 15 degrees:
+
+```{r}
+vp_default <- viewport()
+vp_rotated <- viewport(angle = 15)
+```
+
+This time around, when we create our composite grobs, we'll explicitly assign them to specific viewports by setting the `vp` argument:
+
+```{r}
+composite_default <- grobTree(circles, labels, vp = vp_default)
+composite_rotated <- grobTree(circles, labels, vp = vp_rotated)
+```
+
+When we plot these two grobs, we can see the effect of the viewport: although `composite_default` and `composite_rotated` are comprised of the same two primitive grobs (i.e., `circles` and `labels`), they belong to different viewports so they look different when the plot is drawn:
+
+```{r}
+grid.newpage()
+grid.draw(composite_default)
+grid.draw(composite_rotated)
+```
+
+### Graphical parameters
+
+The next concept we need to understand is the idea of graphical parameters. When we defined the `circles` and `labels` grobs, we only specified some of its properties. For example, we said nothing about colour or transparency, and so these properties are all set to their default values. The `gpar()` function in grid allows you to specify graphical parameters as distinct objects:
+
+```{r}
+gp_blue <- gpar(col = "blue", alpha = 0.5)
+gp_orange <- gpar(col = "orange", alpha = 0.5)
+```
+
+The `gp_blue` and `gp_orange` objects provide lists of graphical settings that can now be applied to any grob we like using the `gp` argument:
+
+```{r}
+grob1 <- grobTree(circles, labels, vp = vp_default, gp = gp_blue)
+grob2 <- grobTree(circles, labels, vp = vp_rotated, gp = gp_orange)
+```
+
+When we plot these two grobs, they inherit the settings provided by the graphical parameters as well as the viewports to which they are assigned:
+
+```{r}
+grid.newpage()
+grid.draw(grob1)
+grid.draw(grob2)
+```
+
+
+### Units
+
+The last core concept that we need to discuss is the grid unit system. The grid package allows you to specify the positions (e.g. `x` and `y`) and dimensions (e.g. `length` and `width)` of grobs and viewports using a flexible language. In the grid unit system there are three qualitatively different styles of unit:
+
+-   Absolute units (e.g. centimeters, inches, and points refer to physical sizes).
+-   Relative units (e.g. npc which scales the viewport size between 0 and 1).
+-   Units based on other grobs (e.g. grobwidth).
+
+The `unit()` function is the main function we use when specifying units: `unit(1, "cm")` refers to a length of 1 centimeter, whereas `unit(0.5, "npc")` refers to a length half the size of the relevant viewport. The unit system supports arithmetic operations that are only resolved at draw time, which makes it possible to combine different types of units: `unit(0.5, "npc") + unit(1, "cm")` defines a point one centimeter to the right of the center of the current viewport.
+
+### Building grob classes
+
+Now that we have a basic understanding of grid, let's attempt to create our own "surprise" grob class: objects that are circles if they are smaller than 3cm, but transform into squares whenever they are larger than 3cm. This is not the most useful kind of graphical object, but it's useful for illustrating the flexibility of the grid system. The first step is to write our own constructor function using `grob()` or `gTree()`, depending on whether we are creating a primitive or composite object. We begin by creating a "thin" constructor function:
+
+```{r}
+surpriseGrob <- function(x, 
+                         y, 
+                         size, 
                          default.units = "npc", 
                          name = NULL, 
                          gp = gpar(), 
                          vp = NULL) {
-  # Check if input needs to be converted to units
-  if (!is.unit(x)) {
-    x <- unit(x, default.units)
-  }
-  if (!is.unit(y)) {
-    y <- unit(y, default.units)
-  }
-  if (!is.unit(size)) {
-    size <- unit(size, default.units)
-  }
-  # Construct our surprise grob subclass as a gTree
+  
+  # Ensure that input arguments are units
+  if (!is.unit(x)) x <- unit(x, default.units)
+  if (!is.unit(y)) y <- unit(y, default.units)
+  if (!is.unit(size)) size <- unit(size, default.units)
+  
+  # Construct the surprise grob subclass as a gTree
   gTree(
     x = x, 
     y = y, 
@@ -746,13 +797,24 @@ surpriseGrob <- function(x, y, size,
     cl = "surprise"
   )
 }
+```
+
+This function doesn't do very much. All it does is ensure that the `x`, `y`, and `size` arguments are grid units, and sets the class name to be "surprise". To define the behaviour of our grob, we need to specify methods for one or both of the generic functions `makeContext()` and `makeContent()`:
+
+-   `makeContext()` is called when the parent grob is rendered and allows you to control the viewport of the grob. We won't need to use that for our surprise grob.
+
+-   `makeContent()` is called every time the drawing region is resized and allows you to customise the look of the grob based on the size or other aspect.
+
+Because these generic functions use the S3 object oriented programming system, we can define our method simply by appending the class name to the end of the function name. That is, the `makeContent()` method for our surprise grob is defined by creating a function called `makeContent.surprise()` that takes a grob as input and returns a modified grob as output:
+
+```{r}
 makeContent.surprise <- function(x) {
   x_pos <- x$x
   y_pos <- x$y
   size <- convertWidth(x$size, unitTo = "cm", valueOnly = TRUE)
   
-  # Figure out if the given sizes are bigger or smaller than 5 cm
-  circles <- size < 5
+  # Figure out if the given sizes are bigger or smaller than 3 cm
+  circles <- size < 3
   
   # Create a circle grob for the small ones
   if (any(circles)) {
@@ -777,40 +839,68 @@ makeContent.surprise <- function(x) {
     square_grob <- nullGrob()
   }
   
-  # Add the circle and rect grob as childrens of our input grob
+  # Add the circle and rect grob as children of our input grob
   setChildren(x, gList(circle_grob, square_grob))
 }
-
-# Create an instance of our surprise grob defining to object with different
-# sizes
-gr <- surpriseGrob(x = c(0.25, 0.75), y = c(0.5, 0.5), size = c(0.1, 0.4))
-
-# Draw it
-grid.newpage()
-grid.draw(gr)
 ```
 
-If you run the code above interactively and resize the plotting window you can see that the two objects will change form based on the size of the plotting window.
-This is a useless example, of course, but hopefully you can see how this technique can be used to do real work.
+Some of the functions we've called here are new, but they all reuse the core concepts that we discussed earlier. Specifically:
+
+- `convertWidth()` is used to convert grid units from one type to another.
+- `nullGrob()` creates a blank grob.
+- `gList()` creates a list of grobs.
+- `setChildren()` specifies the grobs that belong to a gTree composite grob. 
+
+The effect of this function is to ensure that every time the grob is rendered the absolute size of each shape is recalculated. All shapes smaller than 3cm become circles, and all shapes larger than 3cm become squares. To see how this plays out, lets call our new function:
+
+```{r}
+surprises <- surpriseGrob(
+  x = c(0.25, 0.45, 0.75), 
+  y = c(0.5, 0.5, 0.5), 
+  size = c(0.05, 0.15, 0.25)
+)
+```
+
+The `surprises` grob contains three shapes whose locations and sizes have been specified relative to the size of the viewport. At this point in time we have no idea which of these shapes will be circles and which will be squares: that depends in on the absolute size of the viewport in which the `surprises` grob is to be drawn. We can now draw the grob in the usual way:
+
+```{r}
+grid.newpage()
+grid.draw(surprises)
+```
+
+If you run the code above interactively and resize the plotting window you'll see that the three objects will change shape based on the size of the plotting window. It's not the most useful way to employ grid, of course, but hopefully you can see how this technique can be used to do real work.
+
+## Part 4: A grid grob {#spring4}
+
+Let's return to the problem at hand. Armed with our new knowledge of the grid system, we can now see how we might construct a spring grob that has an absolute diameter.
 
 ### The springGrob
 
-With our new knowledge of the grid system we can now see how we might construct a spring grob that has an absolute diameter.
 If we wait with the expansion to the spring path until the `makeContent()` function, and calculate it based on coordinates in absolute units we can make sure that the diameter stays constant during resizing of the plot.
 With that in mind, we can create our constructor.
 We model the arguments after `segmentsGrob()` since we are basically creating modified segments:
 
 ```{r}
-springGrob <- function(x0 = unit(0, "npc"), y0 = unit(0, "npc"), 
-                       x1 = unit(1, "npc"), y1 = unit(1, "npc"), 
-                       diameter = unit(0.1, "npc"), tension = 0.75,
-                       n = 50, default.units = "npc", name = NULL, 
-                       gp = gpar(), vp = NULL) {
+springGrob <- function(x0 = unit(0, "npc"), 
+                       y0 = unit(0, "npc"), 
+                       x1 = unit(1, "npc"), 
+                       y1 = unit(1, "npc"), 
+                       diameter = unit(0.1, "npc"), 
+                       tension = 0.75,
+                       n = 50, 
+                       default.units = "npc", 
+                       name = NULL, 
+                       gp = gpar(), 
+                       vp = NULL) {
+  
+  # Use the default unit if the user does not specify one
   if (!is.unit(x0)) x0 <- unit(x0, default.units)
   if (!is.unit(x1)) x1 <- unit(x1, default.units)
   if (!is.unit(y0)) y0 <- unit(y0, default.units)
   if (!is.unit(y1)) y1 <- unit(y1, default.units)
   if (!is.unit(diameter)) diameter <- unit(diameter, default.units)
+  
+  # Return a gTree of class "spring"
   gTree(x0 = x0, y0 = y0, x1 = x1, y1 = y1, diameter = diameter, 
        tension = tension, n = n, name = name, gp = gp, vp = vp, 
        cl = "spring")
