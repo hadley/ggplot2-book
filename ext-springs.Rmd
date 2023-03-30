@@ -861,14 +861,14 @@ surprises <- surpriseGrob(
 )
 ```
 
-The `surprises` grob contains three shapes whose locations and sizes have been specified relative to the size of the viewport. At this point in time we have no idea which of these shapes will be circles and which will be squares: that depends in on the absolute size of the viewport in which the `surprises` grob is to be drawn. We can now draw the grob in the usual way:
+The `surprises` grob contains three shapes whose locations and sizes have been specified relative to the size of the viewport. At this point in time we have no idea which of these shapes will be circles and which will be squares: that depends on the size of the viewport in which the `surprises` grob is to be drawn. We can now draw the grob in the usual way:
 
 ```{r}
 grid.newpage()
 grid.draw(surprises)
 ```
 
-If you run the code above interactively and resize the plotting window you'll see that the three objects will change shape based on the size of the plotting window. It's not the most useful way to employ grid, of course, but hopefully you can see how this technique can be used to do real work.
+If you run this code interactively and resize the plotting window you'll see that the three objects change shape based on the size of the plotting window. This is not the most useful way to employ grid, of course, but hopefully you can see how this technique can be used to do real work.
 
 ## Part 4: A grid grob {#spring4}
 
@@ -901,34 +901,65 @@ springGrob <- function(x0 = unit(0, "npc"),
   if (!is.unit(diameter)) diameter <- unit(diameter, default.units)
   
   # Return a gTree of class "spring"
-  gTree(x0 = x0, y0 = y0, x1 = x1, y1 = y1, diameter = diameter, 
-       tension = tension, n = n, name = name, gp = gp, vp = vp, 
-       cl = "spring")
+  gTree(
+    x0 = x0, 
+    y0 = y0, 
+    x1 = x1, 
+    y1 = y1, 
+    diameter = diameter, 
+    tension = tension, 
+    n = n, 
+    name = name, 
+    gp = gp, 
+    vp = vp, 
+    cl = "spring"
+  )
 }
 ```
 
-We see that once again our constructor is a very thin wrapper around the `gTree()` constructor, simply ensuring that arguments are converted to units if they are not already.
+We see that once again our constructor is a very thin wrapper around `gTree()`. All this is doing is ensuring that arguments are converted to units if necessary, and then returning a grob with class "spring". 
 
 We now need to create the `makeContent()` method that creates the actual spring coordinates.
 
 ```{r}
 makeContent.spring <- function(x) {
+  
+  # Convert position and diameter values absolute units
   x0 <- convertX(x$x0, "mm", valueOnly = TRUE)
   x1 <- convertX(x$x1, "mm", valueOnly = TRUE)
   y0 <- convertY(x$y0, "mm", valueOnly = TRUE)
   y1 <- convertY(x$y1, "mm", valueOnly = TRUE)
   diameter <- convertWidth(x$diameter, "mm", valueOnly = TRUE)
+  
+  # Leave tension and n untouched
   tension <- x$tension
   n <- x$n
+  
+  # Transform the input data to a data frame containing spring paths
   springs <- lapply(seq_along(x0), function(i) {
     cbind(
-      create_spring(x0[i], y0[i], x1[i], y1[i], diameter[i], tension[i], n),
+      create_spring(
+        x = x0[i], 
+        y = y0[i], 
+        xend = x1[i], 
+        yend = y1[i], 
+        diameter = diameter[i], 
+        tension = tension[i], 
+        n = n
+      ),
       id = i
     )
   })
   springs <- do.call(rbind, springs)
-  spring_paths <- polylineGrob(springs$x, springs$y, springs$id, 
-                               default.units = "mm", gp = x$gp)
+  
+  # Construct the grob
+  spring_paths <- polylineGrob(
+    x = springs$x, 
+    y = springs$y, 
+    name = springs$id, 
+    default.units = "mm", 
+    gp = x$gp
+  )
   setChildren(x, gList(spring_paths))
 }
 ```
@@ -958,6 +989,8 @@ It appears to work and we can now design our new (and final) geom.
 
 ```{r}
 GeomSpring <- ggproto("GeomSpring", Geom,
+  
+  # Check that the user has specified sensible parameters                    
   setup_params = function(data, params) {
     if (is.null(params$n)) {
       params$n <- 50
@@ -966,31 +999,52 @@ GeomSpring <- ggproto("GeomSpring", Geom,
     }
     params
   },
+  
+  # Check input data and return grobs
   draw_panel = function(data, 
                         panel_params, 
                         coord, 
                         n = 50, 
                         lineend = "butt", 
                         na.rm = FALSE) {
-    data <- remove_missing(data, na.rm = na.rm,
-      c("x", "y", "xend", "yend", "linetype", "linewidth"),
-      name = "geom_spring")
+    
+    # Remove missing data, returning early if all are missing
+    data <- remove_missing(
+      df = data, 
+      na.rm = na.rm,
+      vars = c("x", "y", "xend", "yend", "linetype", "linewidth"),
+      name = "geom_spring"
+    )
     if (is.null(data) || nrow(data) == 0) return(zeroGrob())
+    
+    # Supply the coordinate system for the plot
     if (!coord$is_linear()) {
-      rlang::warn("spring geom only works correctly on linear coordinate systems")
+      rlang::warn(
+        "spring geom only works correctly on linear coordinate systems"
+      )
     }
     coord <- coord$transform(data, panel_params)
-    return(springGrob(coord$x, coord$y, coord$xend, coord$yend,
-      default.units = "native", diameter = unit(coord$diameter, "cm"),
-      tension = coord$tension, n = n,
+    
+    # Construct the grob
+    springGrob(
+      coord$x, 
+      coord$y, 
+      coord$xend, 
+      coord$yend,
+      default.units = "native", 
+      diameter = unit(coord$diameter, "cm"),
+      tension = coord$tension, 
+      n = n,
       gp = gpar(
         col = alpha(coord$colour, coord$alpha),
         lwd = coord$linewidth * .pt,
         lty = coord$linetype,
         lineend = lineend
       )
-    ))
+    )
   },
+  
+  # Specify the default and required aesthetics
   required_aes = c("x", "y", "xend", "yend"),
   default_aes = aes(
     colour = "black", 
@@ -1001,6 +1055,11 @@ GeomSpring <- ggproto("GeomSpring", Geom,
     tension = 0.75
   )
 )
+```
+
+Now that `GeomSpring` is defined, all that remains is to create a constructor function that the user can call: 
+
+```{r}
 geom_spring <- function(mapping = NULL, 
                         data = NULL, 
                         stat = "identity", 
@@ -1057,7 +1116,7 @@ ggplot(df) +
 As can be seen in the example above we now have springs that do not shear with the aspect ratio of the plot and thus look to conform at every angle and aspect ratio.
 Further, resizing the plot will result in recalculations of the correct path so that it will continue to look as it should.
 
-### Post-Mortem
+### Post-mortem
 
 We have finally arrived at the spring geom we set out to make.
 The diameter of the spring behaves in the same way as a line width in that it remains fixed when resizing and/or changing the aspect ratio of the plot.
