@@ -1133,16 +1133,12 @@ This will be the topic of the final section.
 
 ## Part 5: Scales {#spring5}
 
-Now that we have our final geom, there's still a bit of work to do before we are done.
-This is because we have defined a couple of new aesthetics in the process and we would like users to be able to scale them.
-There's nothing wrong with defining new aesthetics without providing a scale --- that simply means that the mapped values are passed through unchanged --- but if we want users to have some control as well as the possibility of a legend we will need to provide scales for the aesthetics.
+The last step in our process is to define new scales. We want to do this because we have defined two new aesthetics (diameter and tension), and we'd like users to be able to scale them. There's nothing wrong with defining new aesthetics without providing a scale --- that simply means that the mapped values are passed through unchanged --- but if we want users to have some control as well as the possibility of a legend we will need to provide scales for the aesthetics.
 This will be the goal of this final section.
 
 ### Scaling
 
-Thankfully, compared to grid, creating new scales is not a huge undertaking.
-It basically surmounts to creating a function with the correct name that outputs a `Scale` object.
-In the code below you can see how this is done for the `tension` aesthetic:
+Thankfully, compared to the work we've done so far, creating new scales is not a huge undertaking. We discussed the basic ideas in Section \@ref(new-scales), and we can apply those concepts here without too much pain. Our main task is to create a function with the appropriate name that outputs a `Scale` object. In the code below you can see how this is done for the `tension` aesthetic:
 
 ```{r}
 scale_tension_continuous <- function(..., range = c(0.1, 1)) {
@@ -1174,8 +1170,14 @@ The reason why we need `scale_tension_continuous()` when we also have `scale_ten
 While we are at it we'll create a scale for the diameter as well:
 
 ```{r}
-scale_diameter_continuous <- function(..., range = c(0.25, 0.7), unit = "cm") {
-  range <- grid::convertWidth(unit(range, unit), "cm", valueOnly = TRUE)
+scale_diameter_continuous <- function(..., 
+                                      range = c(0.25, 0.7), 
+                                      unit = "cm") {
+  range <- grid::convertWidth(
+    unit(range, unit), 
+    "cm", 
+    valueOnly = TRUE
+  )
   continuous_scale(
     aesthetics = "diameter", 
     scale_name = "diameter_c", 
@@ -1197,8 +1199,14 @@ With our scales defined let us have a look:
 
 ```{r}
 ggplot(df) + 
-  geom_spring(aes(x = x, y = y, xend = xend, yend = yend, tension = tension, 
-                  diameter = diameter)) + 
+  geom_spring(aes(
+    x = x, 
+    y = y, 
+    xend = xend, 
+    yend = yend, 
+    tension = tension, 
+    diameter = diameter
+  )) + 
   scale_tension(range = c(0.1, 5)) 
 ```
 
@@ -1227,7 +1235,10 @@ To create one that matches well with our new geom we should simply try to create
 
 draw_key_spring <- function(data, params, size) {
   springGrob(
-    x0 = 0, y0 = 0, x1 = 1, y1 = 1,
+    x0 = 0, 
+    y0 = 0, 
+    x1 = 1, 
+    y1 = 1,
     diameter = unit(data$diameter, "cm"), 
     tension = data$tension,
     gp = gpar(
@@ -1254,8 +1265,14 @@ With that final change our legend is beginning to make sense:
 
 ```{r}
 ggplot(df) + 
-  geom_spring(aes(x = x, y = y, xend = xend, yend = yend, tension = tension, 
-                  diameter = diameter)) + 
+  geom_spring(aes(
+    x = x, 
+    y = y, 
+    xend = xend, 
+    yend = yend, 
+    tension = tension, 
+    diameter = diameter
+  )) + 
   scale_tension(range = c(0.1, 5))
 ```
 
@@ -1263,8 +1280,14 @@ The default key size is a bit cramped for our key, but that has to be modified b
 
 ```{r}
 ggplot(df) + 
-  geom_spring(aes(x = x, y = y, xend = xend, yend = yend, tension = tension, 
-                  diameter = diameter)) + 
+  geom_spring(aes(
+    x = x, 
+    y = y, 
+    xend = xend, 
+    yend = yend, 
+    tension = tension, 
+    diameter = diameter
+  )) + 
   scale_tension(range = c(0.1, 5)) +
   theme(legend.key.size = unit(1, "cm"))
 ```
@@ -1273,7 +1296,13 @@ The new legend key will be used for all scaled aesthetics, not just our new `dia
 
 ```{r}
 ggplot(df) + 
-  geom_spring(aes(x = x, y = y, xend = xend, yend = yend, colour = class)) + 
+  geom_spring(aes(
+    x = x, 
+    y = y, 
+    xend = xend, 
+    yend = yend, 
+    colour = class
+  )) + 
   theme(legend.key.size = unit(1, "cm"))
 ```
 
