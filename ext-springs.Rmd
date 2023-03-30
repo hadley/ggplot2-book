@@ -872,13 +872,13 @@ If you run this code interactively and resize the plotting window you'll see tha
 
 ## Part 4: A grid grob {#spring4}
 
-Let's return to the problem at hand. Armed with our new knowledge of the grid system, we can now see how we might construct a spring grob that has an absolute diameter.
+Let's return to the problem at hand. Armed with our new knowledge of the grid system, we can construct a spring grob that specifies the diameter in physical coordinates (i.e., absolute units).
 
 ### The springGrob
 
-If we wait with the expansion to the spring path until the `makeContent()` function, and calculate it based on coordinates in absolute units we can make sure that the diameter stays constant during resizing of the plot.
-With that in mind, we can create our constructor.
-We model the arguments after `segmentsGrob()` since we are basically creating modified segments:
+Let's start by defining the `springGrob()` function. Our key insight is that we can write the grob code in a way that pushes the spring drawing action down to the level of the `makeContent()` function. By doing this, we can ensure that the diameter is computed at draw time, and calculate it in absolute units instead of defining the diameter relative to the plot coordinates. 
+
+We'll start by creating our constructor function. The arguments to this function are based on the `segmentsGrob()` since we are, in essence, drawing modified segments:
 
 ```{r}
 springGrob <- function(x0 = unit(0, "npc"), 
@@ -917,9 +917,7 @@ springGrob <- function(x0 = unit(0, "npc"),
 }
 ```
 
-We see that once again our constructor is a very thin wrapper around `gTree()`. All this is doing is ensuring that arguments are converted to units if necessary, and then returning a grob with class "spring". 
-
-We now need to create the `makeContent()` method that creates the actual spring coordinates.
+We see that once again our constructor is a very thin wrapper around `gTree()`. It doesn't introduce any new concepts: all it does is ensure that arguments are converted to units if necessary, and then returns a composite grob with class "spring". The work of drawing our spring occurs in the `makeContent()` method:
 
 ```{r}
 makeContent.spring <- function(x) {
@@ -956,7 +954,7 @@ makeContent.spring <- function(x) {
   spring_paths <- polylineGrob(
     x = springs$x, 
     y = springs$y, 
-    name = springs$id, 
+    id = springs$id, 
     default.units = "mm", 
     gp = x$gp
   )
@@ -964,11 +962,9 @@ makeContent.spring <- function(x) {
 }
 ```
 
-There is not anything fancy going on here.
-We grabs the coordinates and diameter settings from the gTree and converts them all to millimeters.
-As we now have everything in absolute units we calculate the spring paths using our trusted `create_spring()` function and puts the returned coordinates in a polyline grob.
+Again there are a couple of new grid functions here, but hopefully it's not too hard to work out what they do. In truth there is nothing fancy happening here. Whenever the plot is resized, we grab the coordinates and the diameter settings from the spring grob, and convert them all to millimeters. Only after converting the important quantities to absolute units do we construct the spring paths using the `create_spring()` function we wrote at the beginning: by pushing the call to `create_spring()` to this level, we can ensure that the path is defined using absolute units, and then return the result as a polyline grob.
 
-Before we use this in a geom let us test it out:
+We now have a spring grob suitable for use in ggplot2. In the next section we'll build a geom around it, but before we do that let's check that our code behaves as expected:
 
 ```{r}
 springs <- springGrob(
@@ -983,9 +979,11 @@ grid.newpage()
 grid.draw(springs)
 ```
 
-It appears to work and we can now design our new (and final) geom.
+This looks good, so we can now design our new (and final) geom.
 
 ### The last GeomSpring
+
+Now that we have a custom grob that draws springs, we can create a `GeomSpring` ggproto object that uses it. Here's the complete code for that geom:
 
 ```{r}
 GeomSpring <- ggproto("GeomSpring", Geom,
@@ -1057,6 +1055,22 @@ GeomSpring <- ggproto("GeomSpring", Geom,
 )
 ```
 
+There are a few things to note here. As you might expect, the main changes from the last version are in the `draw_panel()` method (see below). But there are a couple of other changes. 
+
+- Previous versions of `GeomSpring` -- and `StatSpring` before it -- included a `setup_data()` method that modified the group column in the input data. That's gone now: we no longer need to worry about this because this new version of the geom doesn't call `create_spring()` directly. As far as the geom is concerned, each spring is defined by one (and only one) row in the input data. All the work of "expanding" this to a spring-like path is handled by the grob. 
+
+- This version of `GeomSpring` has a `setup_params()` method. Its only job is to check the number of points used to define the spring.
+
+- The `default_aes` field is slightly different. The important change is that we can now set a meaningful default value for `diameter`.
+
+Let's now take a closer look at the new `draw_panel()` method. Because we are no longer relying on `GeomPath$draw_panel()` to do the work, we have a few new tasks to take care of:
+
+- It checks to see if the coordinate system is non-linear (e.g. `coord_polar()`), and if so it emits a warning because our spring grob is not designed to work in that context. 
+
+- It uses the coordinate system to rescale the positional aesthetics by calling the `transform()` method for the `coord` object. This remaps all positional aesthetics to lie between 0 and 1, with 0 being the lowest value visible in our viewport (scale expansions included) and 1 being the highest. With this remapping the coordinates are ready to be passed to the grob.
+
+- We pass a set of graphical parameters to the grob using the grid `gpar()` function. Not all grobs care about all entries in `gpar()` and since we are constructing a line we only care about the graphical parameters that `polylineGrob()` understands, namely: `col` (stroke colour), `lwd` (line width), `lty` (line type), `lineend` (the terminator shape of the line).
+
 Now that `GeomSpring` is defined, all that remains is to create a constructor function that the user can call: 
 
 ```{r}
@@ -1088,23 +1102,12 @@ geom_spring <- function(mapping = NULL,
 }
 ```
 
-The main differences from our last `GeomSpring` implementation is that we no longer care about a `group` column because each spring is defined in one line, and then of course the `draw_panel()` method.
-Since we are no longer passing on the call to another geoms' `draw_panel()` method we have additional obligations in that call.
-If the coordinate system is non-linear (e.g. `coord_polar()`) we emit a warning because our spring will not be adapted to that coordinate system.
-We then use the coordinate system to rescale our positional aesthetics with the `transform()` method.
-This will remap all positional aesthetics to lie between 0 and 1, with 0 being the lowest value visible in our viewport (scale expansions included) and 1 being the highest.
-With this remapping the coordinates are ready to be passed into a grob as `"npc"` units.
-By definition we understand the provided diameter as being given in centimeters.
-With all the values properly converted we call the `springGrob()` constructor and return the resulting grob.
-One thing we haven't touched upon is the `gpar()` call inside the `springGrob()` construction.
-grid operates with a short list of very well-defined visual characteristics for grobs that are given by the `gp` argument in the constructor.
-This takes a `gpar` object that holds information such as colour of the stroke and fill, linetype, font, size, etc.
-Not all grobs care about all entries in `gpar()` and since we are constructing a line we only care about the gpar entries that the pathGrob understands, namely: `col` (stroke colour), `lwd` (line width), `lty` (line type), `lineend` (the terminator shape of the line).
+At long last we can put our new `geom_spring()` function to good use:
 
 ```{r}
 ggplot(df) + 
   geom_spring(aes(
-    x = x, 
+    x = x * 100, 
     y = y, 
     xend = xend, 
     yend = yend, 
@@ -1113,16 +1116,15 @@ ggplot(df) +
   ))
 ```
 
-As can be seen in the example above we now have springs that do not shear with the aspect ratio of the plot and thus look to conform at every angle and aspect ratio.
-Further, resizing the plot will result in recalculations of the correct path so that it will continue to look as it should.
+As you can see from the output above, we now have springs that behave sensibly when the aspect ratio of the plot changes or when the x and y axes are on different scales. Resizing the plot will trigger a recalculation of the correct path, so it will continue to look as it should.
 
 ### Post-mortem
 
 We have finally arrived at the spring geom we set out to make.
-The diameter of the spring behaves in the same way as a line width in that it remains fixed when resizing and/or changing the aspect ratio of the plot.
-There are still improvements we could (and perhaps, should) do to our geom.
+The diameter aesthetic for our spring has similar behaviour to the linewidth aesthetic, in that it remains fixed when resizing and/or changing the aspect ratio of the plot.
+There are still improvements we could (and perhaps, should) make.
 Most notably our `create_spring()` function remains un-vectorised and needs to be called for each spring separately.
-Correctly vectorizing this function will allow for considerable speed-up when rendering many springs (if that was ever a need).
+Correctly vectorising this function will allow for considerable speed-up when rendering many springs (if that was ever a need).
 We will leave this as an exercise for the reader.
 
 While the geom is now done, we still have a little work to do.
