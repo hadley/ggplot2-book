@@ -1133,12 +1133,11 @@ This will be the topic of the final section.
 
 ## Part 5: Scales {#spring5}
 
-The last step in our process is to define new scales. We want to do this because we have defined two new aesthetics (diameter and tension), and we'd like users to be able to scale them. There's nothing wrong with defining new aesthetics without providing a scale --- that simply means that the mapped values are passed through unchanged --- but if we want users to have some control as well as the possibility of a legend we will need to provide scales for the aesthetics.
-This will be the goal of this final section.
+The last step in our process is to define new scales. We want to do this because we have defined two new aesthetics (diameter and tension), and we'd like users to be able to scale them. There's nothing wrong with defining new aesthetics without providing a scale --- that simply means that the mapped values are passed through unchanged --- but if we want users to have some control as well as the possibility of a legend we will need to provide scales for the aesthetics. This will be the goal of this final section.
 
 ### Scaling
 
-Thankfully, compared to the work we've done so far, creating new scales is not a huge undertaking. We discussed the basic ideas in Section \@ref(new-scales), and we can apply those concepts here without too much pain. Our main task is to create a function with the appropriate name that outputs a `Scale` object. In the code below you can see how this is done for the `tension` aesthetic:
+Thankfully, compared to the work we've done so far, creating new scales is not a huge undertaking. We discussed the basic ideas in Section \@ref(new-scales), and we can apply those concepts here without too much pain. Our main task is to create a function with the appropriate name that outputs a `Scale` object. Most scale functions are simple wrappers around one of the three fundamental scale constructor functions, `continuous_scale()`, `discrete_scale()`, and `binned_scale()`. Here's how we do that for the tension aesthetic:
 
 ```{r}
 scale_tension_continuous <- function(..., range = c(0.1, 1)) {
@@ -1151,23 +1150,25 @@ scale_tension_continuous <- function(..., range = c(0.1, 1)) {
 }
 ```
 
-Most scale functions are simply wrappers around calls to one of the scale constructors (`continuous_scale()`, `discrete_scale()`, and `binned_scale()`).
-Most importantly it names the aesthetic(s) this scale relates to and provides a palette function which transforms the input domain to the output range.
-All the remaining well-known arguments from scale functions such as `name`, `breaks`, `limits`, etc. are carried through with the `...`.
-For cases such as these where only a single scale is relevant for an aesthetic you'll often create a short-named version as well.
-We'll also add a discrete scale to catch if this aesthetic is erroneously being used with discrete data:
+This `scale_tension_continuous()` function indicates which `aesthetics` it applies to, provides an explicit `scale_name`, and provides a `palette` function that transforms the input domain to the output range. All the other arguments that you'd typically expect to see in a scale function, such as `name`, `breaks`, `limits`, get passed down to `continuous_scale()` with the dots `...`.  
+
+For the tension aesthetic, we expect that users will apply it to continuous scales only, so it's convenient to define `scale_tension()` as an alias for `scale_tension_continuous()`:
 
 ```{r}
 scale_tension <- scale_tension_continuous
+```
 
+Finally, because we don't want people trying to map the tension aesthetic to discrete data, we'll also define a `scale_tension_discrete()` function that always throws an error:
+
+```{r}
 scale_tension_discrete <- function(...) {
   rlang::abort("Tension cannot be used with discrete data")
 }
 ```
 
-The reason why we need `scale_tension_continuous()` when we also have `scale_tension()` is that the default scale for aesthetics is looked up by searching for a function called `scale_<aesthetic-name>_<data-type>`.
+The reason this works is that ggplot2 assigns the default scale for aesthetics by searching for a function called `scale_<aesthetic-name>_<data-type>`, so any time the user maps the tension aesthetic to a discrete variable ggplot2 will find the `scale_tension_discrete()` function and throw the error. This is also the reason why it is important to include `scale_tension_continuous()` even when we expect most users will use the `scale_tension()` alias. 
 
-While we are at it we'll create a scale for the diameter as well:
+The scale functions for the diameter aesthetic are only slightly more complicated:
 
 ```{r}
 scale_diameter_continuous <- function(..., 
@@ -1210,29 +1211,29 @@ ggplot(df) +
   scale_tension(range = c(0.1, 5)) 
 ```
 
-The code above shows us that both the default scale (we didn't add an explicit scale for diameter) and the custom scales (`scale_tension()`) work.
-It also tells us that our job is not done, because the legend is pretty uninformative.
-That is because our geom uses the default legend key constructor which is `draw_key_point()`.
-This key constructor doesn't know what to do about our new aesthetics and ignores it completely.
+From this output we can see that default scales work (i.e., we didn't add an explicit scale for diameter but the plot renders correctly), as do the custom scales (i.e., we called `scale_tension()` explicitly).
+
+The output also tells us that our job is not quite done, because the legend isn't very helpful. The reason for this is that our geom is using the default legend key constructor, `draw_key_point()`. This function doesn't understand our new aesthetics, so it ignores them completely. We can fix this by defining a custom legend key function, `draw_key_spring()`.
 
 ### draw_key_spring
 
-The key constructors are pretty simple constructors that take a data.frame of aesthetic values and uses that to draw a given representation.
-If we look at the point key constructor we see that it simply constructs a pointsGrob:
+Let's take a look at how a key constructor is written, by inspecting the source code for `draw_key_point()`. Thankfully, these are pretty simple functions that take a data frame of aesthetic values, and return an appropriate grob that supplies the depictions shown in the legend key: 
 
 ```{r}
 draw_key_point
 ```
 
-`data` is a data.frame with a single row giving the aesthetic values to use for the key, `params` are the geom params for the layer, and `size` is the size of the key area in centimeters.
-
-To create one that matches well with our new geom we should simply try to create a key that uses our springGrob instead:
+In this code, `data` is a data frame with a single row giving the aesthetic values to use for the key, `params` are the geom parameters for the layer, and `size` is the size of the key area in centimeters. The `%||%` operator, which you often see in tidyverse source code, is used to supply default values whenever a variable has a null value:
 
 ```{r}
 `%||%` <- function(x, y) {
   if (is.null(x)) y else x
 }
+```
 
+To define our `draw_key_spring()` function, we need to create an analogous function that uses `springGrob()` to draw the key:
+
+```{r}
 draw_key_spring <- function(data, params, size) {
   springGrob(
     x0 = 0, 
@@ -1251,11 +1252,9 @@ draw_key_spring <- function(data, params, size) {
 } 
 ```
 
-We add a little flourish here that is not necessary for the point key constructor, which is that we define a clipping viewport for our grob.
-This means that the spring will not spill-out into the neighboring keys.
+The only part of this code that might be unfamiliar is the little flourish -- not strictly necessary -- that defines a clipping viewport for our grob using the `vp` argument. The reason we add this is to ensure the springs drawn in the legend keys will be strictly contained within their boxes and not spill over into the neighboring key areas.
 
-Along with that we will also have to modify our Geom to use this key constructor instead (We know we said the last version was final).
-We don't have to define our Geom from scratch again, though but simply change the `draw_key()` method of our existing Geom:
+Now that we have this function, all we need to do is tell `GeomSpring` to use it when drawing the legend key. That's pretty straightforward: all we have to do is change the `draw_key()` method of our existing Geom:
 
 ```{r}
 GeomSpring$draw_key <- draw_key_spring
@@ -1276,7 +1275,7 @@ ggplot(df) +
   scale_tension(range = c(0.1, 5))
 ```
 
-The default key size is a bit cramped for our key, but that has to be modified by the user (ggplot2 doesn't know about the `diameter` aesthetic and cannot scale the key size to that in the same way as it does with the `size` aesthetic).
+The default key size is a bit cramped for our key, but that's something that the user will need to do: ggplot2 doesn't know about the `diameter` aesthetic and cannot scale the key size as cleverly as it does with the `size` aesthetic.
 
 ```{r}
 ggplot(df) + 
@@ -1292,7 +1291,7 @@ ggplot(df) +
   theme(legend.key.size = unit(1, "cm"))
 ```
 
-The new legend key will be used for all scaled aesthetics, not just our new `diameter` and `tension` meaning that the key will always match the style of the layer:
+Conveniently, our new legend key will be used for all scaled aesthetics, not just `diameter` and `tension`, thus ensuring that the style of the key will always match the style of the layer:
 
 ```{r}
 ggplot(df) + 
@@ -1308,7 +1307,4 @@ ggplot(df) +
 
 ### Post-mortem
 
-This concludes our, admittedly a bit far-fetched, case study on how to create a spring geom.
-Hopefully it has become clear that there are many different ways to achieve the same geom extension and where you end up is largely guided by your needs and how much energy you want to put into it.
-While extending layers (and scales) are only a single (but important) part of the ggplot2 extension system, we will not discuss how to create other types of extensions such as coord and facet extensions.
-The curious reader is invited to study the source code of both ggplot2's own Facet and Coord classes as well as the extensions available in e.g. the ggforce package.
+This concludes our detailed case study on creating a spring geom. Hopefully it has become clear that there are many different ways to achieve the same geom extension and where you end up is largely guided by your needs and how much energy you want to put into it. The case study focused on layers and (to a lesser extent) scales, but hopefully you can use the simpler examples from Chapter \@ref(extensions) to guide you if you want to explore other types of ggplot2 extensions. You can also study the source code of the facet and coord classes in ggplot2 and the extensions available in ggforce and other packages.
