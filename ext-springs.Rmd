@@ -7,15 +7,15 @@ columns(1, 1 / 1.61, 1)
 
 # A case study {#spring1}
 
-Chapter \@ref(extensions) provided a high-level overview showing you how to create ggplot2 extensions, building on the discussion of ggplot2 internals in Chapter \@ref(internals). In this chapter we'll take that knowledge a step further, providing a deeper dive into the process of developing full-featured extensions. To do this, we'll take a single example -- building a new geom that looks like a spring -- and follow it all the way through the development process.
+Chapter \@ref(extensions) provided a high-level overview of creating ggplot2 extensions, building on the discussion of ggplot2 internals in Chapter \@ref(internals). In this chapter we'll take that knowledge a step further, providing a deeper dive into the process of developing full-featured extensions. To do this, we'll take a single example --- building a new geom that looks like a spring --- and follow it all the way through the development process.
 
-This is a carefully crafted example. You're unlikely to actually want to use springs to visualise your data, which is the reason why ggplot2 doesn't already provide a geom for this. However, springs are just complicated enough to illustrate the most important parts of the process, making them ideal for our purposes! 
+This is a carefully crafted example. You're unlikely to actually want to use springs to visualise your data, so ggplot2 doesn't already provide a spring geom. However, springs are just complicated enough to illustrate the most important parts of the process. This makes them ideal for our purposes! 
 
 We'll develop the extension in five phases:
 
 1.  We'll start as simple as possible by using the existing `geom_path()`, pairing it with a new stat (Section \@ref(spring-stat)).
 2.  The new stat only allows fixed diameter and tension, so we'll next allow these to be used as aesthetics (Section \@ref(spring2)).
-3.  A stat is a great place to start but has some fundamental restrictions so we'll convert our work so far in to a proper geom (Section \@ref(spring3)).
+3.  A stat is a great place to start but has some fundamental restrictions so we'll next convert our work to a proper geom (Section \@ref(spring3)).
 4.  Geoms can only use dimensions relative to the data, and can't use absolute sizes like 2cm, so next we'll show you how to draw the spring with grid (Section \@ref(spring4)).
 5.  We'll finish up by providing a custom scale and legend to pair with the geom (Section \@ref(spring5)).
 
@@ -58,21 +58,29 @@ ggplot(spring, aes(x = x, y = y, alpha = -index)) +
 In this case our "spring" has only looped around once -- and doesn't look much like an actual spring -- but if we were to continue tracing the circle while moving along the x axis we'd end up with a spring with multiple loops. The faster we move the "pen", the more we will stretch the spring. This gives us some insight into the two parameters that characterise our springs:
 
 -   The `diameter` of the spring, defined by the size of the circle.
--   The `tension` of the spring, defined by how fast we move along x.
+-   The `tension` of the spring, defined by how fast we move along `x`.
 
-Although we can be pretty sure this is not a physically correct parameterisation of springs in the real world, it will be good enough for our purposes. 
+Although this is probably not a physically correct parameterisation of springs in the real world, it's good enough for our purposes. 
 
-Now that we have a method for drawing springs, it's worth spending a little time thinking about what a geom based on this method will require. The code we've written up to this point is perfectly fine for a single plot, but when creating an extension there are new questions to consider. How will we specify the diameter of a spring? How do we keep the circles circular even as we change the aspect ratio of the plot? Can we map diameter and tension to variables in the data? Should they be scaled aesthetics, or are they always parameters that must be the same for all springs in a layer? If we plan to distribute our spring geom to other R users, is it a good idea for our geom to depend on the dplyr package?
+Now that we have a method for drawing springs, it's worth spending a little time thinking about what a geom based on this method will require. The code we've written up to this point is perfectly fine for a single plot, but there are new questions to consider when creating an extension: 
+
+* How will we specify the diameter of a spring? 
+* How do we keep the circles circular even as we change the aspect ratio of the plot? 
+* Can we map diameter and tension to variables in the data? 
+* Should diameter and tension be parameters that must be the same for all springs in a layer or should they be scaled aesthetics that can vary from spring to spring? 
+* If we plan to distribute our spring geom to other R users, do we want to depend on the dplyr package?
+
+We'll consider these questions as we work through the chapter.
 
 ## Part 1: A stat {#spring-stat}
 
-Let's start turning this idea into a ggplot2 extension. Because we're creating an extension that draws a new ggplot2 layer, we need to decide whether the ggproto object we create should be a `Stat` or a `Geom`. Perhaps surprisingly, this decision isn't guided by whether we want to end up with `geom_spring()` or `stat_spring()`: there are a lot of `Stat` extensions that are used via a `geom_*()` constructor. A better way to think about this decision is to think carefully about what your code is doing: if what you're doing is drawing transformed data using pre-existing geom, then you can use a `Stat`. This is often a good strategy: unlike `Geom` objects, a `Stat` is simply a data-transformation pipeline, and that's usually simpler to code. 
+Let's start turning this idea into a ggplot2 extension. Because we're creating an extension that draws a new ggplot2 layer, we need to decide whether the ggproto object we create should be a `Stat` or a `Geom`. Perhaps surprisingly, this decision isn't guided by whether we want to end up with `geom_spring()` or `stat_spring()`: there are a lot of `Stat` extensions that are used via a `geom_*()` constructor. A better way to think about this decision is to consider if we can use an existing geom with transformed data. In that case we can use a `Stat` which is usually simpler to code than a `Geom`. 
 
-The code we wrote in the last section fits this description nicely. All we're doing is drawing a path, but we're circling around instead of going in a straight line. That suggests we can use a `Stat` that transforms the data and then uses `GeomPath` to take care of the actual drawing. So we'll attempt this first.
+The code we wrote in the last section fits this description nicely. All we're doing is drawing a path, but we're circling around instead of going in a straight line. That suggests we can use a `Stat` that transforms the data and then uses `GeomPath` to take care of the actual drawing.
 
 ### Building functionality
 
-Whenever you are developing a new `Stat` a sensible strategy is to begin by writing the data transformation function. Later on you can incorporate this function into the ggproto `Stat` object itself, but it makes your life easier if you write this function as a separate exercise. In this case, we're going to need a `create_spring()` function that takes a start point, an end point, a diameter, and a tension. More precisely:
+Whenever you are developing a new `Stat` a sensible strategy is to begin by writing the data transformation function, and then once it's working incorporating it into a ggproto `Stat`. In this case, we're going to need a `create_spring()` function that takes a start point, an end point, a diameter, and a tension. More precisely:
 
 - Our start point will be defined by arguments `x` and `y`.
 - Our end point will be defined by arguments `xend` and `yend`. 
@@ -143,13 +151,13 @@ ggplot(spring) +
 
 ### Creating the stat
 
-Now that we know what we want to do with the user input, our next task is to encapsulate this functionality in a `Stat`. To do this, we'll take what we learned about creating `Stat` objects in Section \@ref(new-stats) and extend it a little. Our first step is to write some code that creates a subclass of `Stat` that we'll call `StatSpring`:
+Now that we have our transformation function, our next task is to encapsulate it into a `Stat`. To do this, we'll take what we learned about creating `Stat` objects in Section \@ref(new-stats) and extend it a little. Our first step is to write some code that creates a subclass of `Stat` that we'll call `StatSpring`:
 
 ```{r, eval = FALSE}
 StatSpring <- ggproto("StatSpring", Stat)
 ```
 
-This creates a new `Stat`^[You can also choose to extend an existing `Stat` class, but that is relatively uncommon.] subclass named `StatSpring`. This class doesn't do anything interesting at this point: the only thing this code does so far is give the class a name.^[By convention ggproto classes always use CamelCase for naming, and the new class is always saved into a variable with the same name.] To make this useful, we'll need to specify the methods that will build in the functionality we desire. In Section \@ref(new-stats) we created a `Stat` by overriding the default method `compute_group()` and the default field for `required_aes`,^[As we mentioned earlier, ggproto doesn't make a strong distinction between methods and fields. `Stat` objects expect `compute_group()` to be a function, so we refer to `compute_group()` as a method because that is the standard terminology in object oriented programming. In contrast, `Stat` expects `required_aes` to be a variable, so we call it a field.] but `Stat` objects have many properties you can modify. If we print the `Stat` object, we can see a list of those properties:
+This creates a new `Stat` subclass named `StatSpring`. This class doesn't do anything interesting at this point: the only thing this code does so far is give the class a name.^[By convention ggproto classes always use CamelCase for naming, and the new class is always saved into a variable with the same name.] To make this useful, we'll need to specify the methods that will build in the functionality we desire. In Section \@ref(new-stats) we created a `Stat` by overriding the default method `compute_group()` and the default field for `required_aes`,^[As we mentioned earlier, ggproto doesn't make a strong distinction between methods and fields. `Stat` objects expect `compute_group()` to be a function, so we refer to `compute_group()` as a method because that is the standard terminology in object oriented programming. In contrast, `Stat` expects `required_aes` to be a variable, so we call it a field.] but `Stat` objects have many properties you can modify. If we print the `Stat` object, we can see a list of those properties:
 
 ```{r}
 Stat
@@ -157,7 +165,7 @@ Stat
 
 You can modify almost any of these: the only ones that you shouldn't touch are `aesthetics` and `parameters`, which are intended for internal use only. 
 
-For our `StatSpring` example, the three methods/fields that we'll need to specify are `setup_data()`, `compute_panel()`, and `required_aes`. We'll go through this in more detail in the next section, but to help you see what we're aiming for, the complete code for our stat is shown below:
+For our `StatSpring` example, the three methods/fields that we'll need to specify are `setup_data()`, `compute_panel()`, and `required_aes`. We'll go through this in more detail in the next section, but to help you see what we're aiming for, here's the complete code for our stat:
 
 ```{r}
 StatSpring <- ggproto("StatSpring", Stat, 
@@ -211,24 +219,24 @@ As you can see by looking at source code for our `compute_panel()` method, we're
 
 ```{r, results='hide'}
 function(data, scales, diameter = 1, tension = 0.75, n = 50) {
-    cols_to_keep <- setdiff(names(data), c("x", "y", "xend", "yend"))
-    springs <- lapply(
-      seq_len(nrow(data)), 
-      function(i) {
-        spring_path <- create_spring(
-          data$x[i], 
-          data$y[i], 
-          data$xend[i], 
-          data$yend[i], 
-          diameter = diameter, 
-          tension = tension, 
-          n = n
-        )
-        cbind(spring_path, unclass(data[i, cols_to_keep]))
-      }
-    )
-    do.call(rbind, springs)
-  }
+  cols_to_keep <- setdiff(names(data), c("x", "y", "xend", "yend"))
+  springs <- lapply(
+    seq_len(nrow(data)), 
+    function(i) {
+      spring_path <- create_spring(
+        data$x[i], 
+        data$y[i], 
+        data$xend[i], 
+        data$yend[i], 
+        diameter = diameter, 
+        tension = tension, 
+        n = n
+      )
+      cbind(spring_path, unclass(data[i, cols_to_keep]))
+    }
+  )
+  do.call(rbind, springs)
+}
 ```
 
 We use `lapply()` to loop over each row of the data and create the points required to draw the corresponding spring. For each such spring, we use `cbind()` to combine the spring data with all the non-position columns of the input row. This is very important, since otherwise the aesthetic mappings to e.g. color and size would be lost. Finally, because the output of `lapply()` is a list of data frames (one per spring), we use `rbind()` to combine these into a single data frame that gets returned.
@@ -253,7 +261,6 @@ The final part of our new class is the `required_aes` field. This is a character
 ### Constructors
 
 Now that we have our `StatSpring` ggproto object, it's time to write constructor functions that the user will interact with. Strictly speaking we don't need to do this, because `geom_path(stat = "spring")` will already work, but it's good practice to write constructor functions for the convenience of your users. In addition, the constructor function provides a good place to document the new functionality. 
-
 
 Perhaps surprisingly, stat objects are almost always paired with a `geom_*()` constructor because most ggplot2 users are accustomed to adding geoms, not stats, when building up a plot. The constructor itself is mostly boilerplate code that wraps a call to `layer()`; just take care to match the argument order and naming used in the ggplot2's constructors so you don't surprise your users.
 
@@ -377,6 +384,8 @@ ggplot(df) +
 We have now successfully created our first extension. It works, but it has some limitations that we now need to think about. 
 
 One shortcoming of our implementation is that diameter and tension are constants that can only be set for the full layer. These settings feel more like aesthetics and it would be nice if their values could be mapped to a variable in the data. We'll discuss solutions to this problem in Sections \@ref(spring2) and \@ref(spring3).
+
+<!-- HW: Maybe only introduce this problem later in "testing the geom"? Otherwise it's a long gap between tension and resolution -->
 
 Another, potentially bigger, issue is that the spring path is defined relative to the coordinate system of the plot. This means that strong deviations from an aspect ratio of 1 will visibly distort the spring, as you can see in the example below:
 
@@ -646,9 +655,7 @@ ggplot(df, aes(x, y, xend = xend, yend = yend)) +
   geom_spring(diameter = 0.5)
 ```
 
-It does have some limitations still, because the units for `diameter` and `tension` are expressed relative to the scale of the raw data. The actual diameter of a spring with `diameter = 0.5` will be different depending on the axis limits, and if the x and y axes are not on the same scale the shape of the spring will be distorted. However, this is about as far as we can get without learning about grid. 
-
-
+It does have some limitations still, because the units for `diameter` and `tension` are expressed relative to the scale of the raw data. The actual diameter of a spring with `diameter = 0.5` will be different depending on the axis limits, and if the x and y axes are not on the same scale the shape of the spring will be distorted. 
 
 ### Post-mortem
 
@@ -656,7 +663,7 @@ In this section we finally created our own `Geom` extension. This is often the n
 
 Perhaps surprisingly, we haven't talked about what goes on inside the `draw_*()` methods yet. Our `GeomSpring` object relies on the `draw_panel()` method from `GeomPath` to do the work of creating the graphical output. This is quite common. For example, even the relatively complex [`GeomBoxplot`](https://github.com/tidyverse/ggplot2/blob/master/R/geom-boxplot.r) just uses the draw methods from `GeomPoint()`, `GeomSegment` and `GeomCrossbar`. 
 
-If you need to go deeper, you'll need to learn a little about grid. Creating grid grobs is an advanced technique, needed by relatively few geoms. But creating a grid grob gives you the power to use absolute units (e.g. 1cm) and to adjust the display of the geom based on the size of the output device. We'll turn to that next.
+If you need to go deeper, you'll need to learn a little about grid. Creating grid grobs is an advanced technique, needed by relatively few geoms. But creating a grid grob gives you the power to use absolute units for diameter (e.g. 1cm) and to adjust the display of the geom based on the size of the output device. We'll turn to that next.
 
 ## An introduction to grid
 
@@ -670,11 +677,11 @@ As a ggplot2 developer you will find that you can achieve a lot without ever nee
 2.  You need graphical objects that are updated during resizing.
     This could e.g. be the position of labels such as in the ggrepel package or the `geom_mark_*()` geoms in ggforce.
 
-A comprehensive introduction to grid is far more than we can cover in this book, but to help you get started we'll give you the absolute minimum vocabulary to understand how ggplot2 uses grid. We'll introduce core concepts like grobs, viewports, graphical parameters, and units but if you want to go deeper, we highly recommend *R Graphics* by @murrell:2011.
+A comprehensive introduction to grid is far more than we can cover in this book, but to help you get started we'll give you the absolute minimum vocabulary to understand how ggplot2 uses grid. We'll introduce core concepts like grobs, viewports, graphical parameters, and units but please read *R Graphics* by @murrell:2018 to get the full details.
 
 ### Grobs
 
-To understand how grid works, the first thing we need to talk about are grobs. 
+To understand how grid works, the first thing we need to talk about are **grobs**. 
 Grobs (**gr**aphic **ob**jects) are the atomic representations of graphical elements in grid, and include types like points, lines, circles, rectangles, and text. The grid package provides functions like `pointsGrob()`, `linesGrob()`, `circleGrob()`, `rectGrob()`, and `textGrob()` that create graphical objects without drawing anything to the graphics device. These functions are vectorised, allowing a single point grob to represent multiple points, for instance:
 
 ```{r}
@@ -684,16 +691,17 @@ circles <- circleGrob(
   y = c(0.5, 0.3, 0.6),
   r = c(0.1, 0.2, 0.3)
 )
+circles
 ```
 
-Notice that this does not create any output. Much like a ggplot2 plot object, this grob is a declarative description of a set of circles. To trigger a drawing operation we first call `grid.newpage()` to clear the current graphics device, and then `grid.draw()` to perform a draw operation:
+Note that this code doesn't draw anything: it's just a description of a set of circles. To draw it, we first call `grid.newpage()` to clear the current graphics device then `grid.draw()`:
 
 ```{r}
 grid.newpage()
 grid.draw(circles)
 ```
 
-In addition to providing geometric primitives, grid also allows you to construct composite objects that combine multiple grobs using `grobTree()`. Here's an illustration:
+grid also provides `grobTree()`, which construct composite objects from multiple atomic grobs. Here's an illustration:
 
 ```{r}
 labels <- textGrob(
@@ -707,11 +715,13 @@ grid.newpage()
 grid.draw(composite)
 ```
 
-It is also possible to define your own grob classes. You can define a new primitive grob class using `grob()` or a new composite class using `gTree()`, and specify special behaviour for your new class. We'll see an example of this in a moment. 
+It is also possible to define your own grobs. You can define a new primitive grob class using `grob()` or a new composite class using `gTree()`, then specify special behaviour for your new class. We'll see an example of this in a moment. 
 
 ### Viewports
 
-The second key concept in grid is the idea of a viewport. A viewport is a rectangular plotting region that supplies its own coordinate system for grobs that are drawn within it, and can also provide a tabular grid in which other viewports an be nested. An individual grob can have its own viewport or, if none is provided, it will inherit one. While we won't need to consider viewports when building the grob for our springs, they're an important concept that powers much of the high-level layout of ggplot2 graphics so we'll very briefly introduce them here. In the example below we use `viewport()` to define two different viewports, one with default parameters, and second one that is rotated around the midpoint by 15 degrees:
+<!-- HW: Maybe introduce tabular grid in a later paragraph -->
+
+The second key concept in grid is the idea of a **viewport**. A viewport is a rectangular plotting region that supplies its own coordinate system for grobs that are drawn within it, and can also provide a tabular grid in which other viewports an be nested. An individual grob can have its own viewport or, if none is provided, it will inherit one. While we won't need to consider viewports when building the grob for our springs, they're an important concept that powers much of the high-level layout of ggplot2 graphics so we'll very briefly introduce them here. In the example below we use `viewport()` to define two different viewports, one with default parameters, and second one that is rotated around the midpoint by 15 degrees:
 
 ```{r}
 vp_default <- viewport()
@@ -733,13 +743,17 @@ grid.draw(composite_default)
 grid.draw(composite_rotated)
 ```
 
+ggplot2 automatically generates most of the viewports that you'll need for plotting, but it's important to understand the basic idea.
+
 ### Graphical parameters
 
-The next concept we need to understand is the idea of graphical parameters. When we defined the `circles` and `labels` grobs, we only specified some of its properties. For example, we said nothing about colour or transparency, and so these properties are all set to their default values. The `gpar()` function in grid allows you to specify graphical parameters as distinct objects:
+The next concept we need to understand is the idea of **graphical parameters**. When we defined the `circles` and `labels` grobs, we only specified some of their properties. For example, we said nothing about colour or transparency, so these properties are all set to their default values. The `gpar()` function in grid allows you to specify graphical parameters as distinct objects:
+
+<!-- HW: I found the high transparency hard to read -->
 
 ```{r}
-gp_blue <- gpar(col = "blue", alpha = 0.5)
-gp_orange <- gpar(col = "orange", alpha = 0.5)
+gp_blue <- gpar(col = "blue", fill = NA)
+gp_orange <- gpar(col = "orange", fill = NA)
 ```
 
 The `gp_blue` and `gp_orange` objects provide lists of graphical settings that can now be applied to any grob we like using the `gp` argument:
@@ -757,16 +771,17 @@ grid.draw(grob1)
 grid.draw(grob2)
 ```
 
-
 ### Units
 
-The last core concept that we need to discuss is the grid unit system. The grid package allows you to specify the positions (e.g. `x` and `y`) and dimensions (e.g. `length` and `width)` of grobs and viewports using a flexible language. In the grid unit system there are three qualitatively different styles of unit:
+The last core concept that we need to discuss is the **unit** system. The grid package allows you to specify the positions (e.g. `x` and `y`) and dimensions (e.g. `length` and `width`) of grobs and viewports using a flexible specification. In the grid unit system there are three qualitatively different styles of unit:
 
--   Absolute units (e.g. centimeters, inches, and points refer to physical sizes).
--   Relative units (e.g. npc which scales the viewport size between 0 and 1).
--   Units based on other grobs (e.g. grobwidth).
+-   Absolute units, e.g. centimeters, inches, and points, refer to physical sizes.
+-   Relative units e.g. `npc` which represents a proportion of the current viewport size.
+-   Units based on other grobs, e.g. grobwidth.
 
-The `unit()` function is the main function we use when specifying units: `unit(1, "cm")` refers to a length of 1 centimeter, whereas `unit(0.5, "npc")` refers to a length half the size of the relevant viewport. The unit system supports arithmetic operations that are only resolved at draw time, which makes it possible to combine different types of units: `unit(0.5, "npc") + unit(1, "cm")` defines a point one centimeter to the right of the center of the current viewport.
+<!-- HW: do we need to mention data units here? I think maybe ggplot2 doesn't use them, but might be worth mentioning anyway --> 
+
+The `unit()` function is the main function we use when specifying units: `unit(1, "cm")` is 1 centimeter, whereas `unit(0.5, "npc")` is half the size of the relevant viewport. The unit system supports arithmetic operations that are only resolved at draw time, which makes it possible to combine different types of units: `unit(0.5, "npc") + unit(1, "cm")` defines a point one centimeter to the right of the center of the current viewport.
 
 ### Building grob classes
 
@@ -824,7 +839,7 @@ makeContent.surprise <- function(x) {
       r = unit(size[circles] / 2, "cm")
     )
   } else {
-    circle_grob <- nullGrob()
+    circle_grob <- NULL
   }
   
   # Create a rect grob for the large ones
@@ -836,7 +851,7 @@ makeContent.surprise <- function(x) {
       height = unit(size[!circles], "cm")
     )
   } else {
-    square_grob <- nullGrob()
+    square_grob <- NULL
   }
   
   # Add the circle and rect grob as children of our input grob
@@ -847,7 +862,6 @@ makeContent.surprise <- function(x) {
 Some of the functions we've called here are new, but they all reuse the core concepts that we discussed earlier. Specifically:
 
 - `convertWidth()` is used to convert grid units from one type to another.
-- `nullGrob()` creates a blank grob.
 - `gList()` creates a list of grobs.
 - `setChildren()` specifies the grobs that belong to a gTree composite grob. 
 
@@ -872,11 +886,11 @@ If you run this code interactively and resize the plotting window you'll see tha
 
 ## Part 4: A grid grob {#spring4}
 
-Let's return to the problem at hand. Armed with our new knowledge of the grid system, we can construct a spring grob that specifies the diameter in physical coordinates (i.e., absolute units).
+Let's return to the problem at hand. Armed with our new knowledge of the grid system, we can construct a spring grob that specifies the diameter in absolute units.
 
 ### The springGrob
 
-Let's start by defining the `springGrob()` function. Our key insight is that we can write the grob code in a way that pushes the spring drawing action down to the level of the `makeContent()` function. By doing this, we can ensure that the diameter is computed at draw time, and calculate it in absolute units instead of defining the diameter relative to the plot coordinates. 
+Let's start by defining the `springGrob()` function. Our key insight is that we can write the grob code in a way that pushes the spring drawing action down to the level of the `makeContent()` function. By doing this, we can ensure that the diameter is computed at draw time using absolute units instead of defining the diameter relative to the plot coordinates. 
 
 We'll start by creating our constructor function. The arguments to this function are based on the `segmentsGrob()` since we are, in essence, drawing modified segments:
 
@@ -1133,7 +1147,7 @@ This will be the topic of the final section.
 
 ## Part 5: Scales {#spring5}
 
-The last step in our process is to define new scales. We want to do this because we have defined two new aesthetics (diameter and tension), and we'd like users to be able to scale them. There's nothing wrong with defining new aesthetics without providing a scale --- that simply means that the mapped values are passed through unchanged --- but if we want users to have some control as well as the possibility of a legend we will need to provide scales for the aesthetics. This will be the goal of this final section.
+The last step in our process is to define new scales. We want to do this because we have defined two new aesthetics (diameter and tension), and we'd like users to be able to scale them. There's nothing wrong with defining new aesthetics without providing a scale --- which means that the mapped values are passed through unchanged --- but if we want users to have some control as well as the possibility of a legend we will need to provide scales for the aesthetics. This is the goal of this final section.
 
 ### Scaling
 
@@ -1151,7 +1165,6 @@ scale_tension_continuous <- function(..., range = c(0.1, 1)) {
 ```
 
 This `scale_tension_continuous()` function indicates which `aesthetics` it applies to, provides an explicit `scale_name`, and provides a `palette` function that transforms the input domain to the output range. All the other arguments that you'd typically expect to see in a scale function, such as `name`, `breaks`, `limits`, get passed down to `continuous_scale()` with the dots `...`.  
-
 For the tension aesthetic, we expect that users will apply it to continuous scales only, so it's convenient to define `scale_tension()` as an alias for `scale_tension_continuous()`:
 
 ```{r}
@@ -1252,7 +1265,7 @@ draw_key_spring <- function(data, params, size) {
 } 
 ```
 
-The only part of this code that might be unfamiliar is the little flourish -- not strictly necessary -- that defines a clipping viewport for our grob using the `vp` argument. The reason we add this is to ensure the springs drawn in the legend keys will be strictly contained within their boxes and not spill over into the neighboring key areas.
+The only part of this code that might be unfamiliar is the little flourish --- not strictly necessary --- that defines a clipping viewport for our grob using the `vp` argument. The reason we add this is to ensure the springs drawn in the legend keys will be strictly contained within their boxes and not spill over into the neighboring key areas.
 
 Now that we have this function, all we need to do is tell `GeomSpring` to use it when drawing the legend key. That's pretty straightforward: all we have to do is change the `draw_key()` method of our existing Geom:
 
