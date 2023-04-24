@@ -6,7 +6,7 @@ source("common.R")
 columns(1, 2 / 3)
 ```
 
-Plotting geospatial data is a common visualisation task, and one that requires specialised tools. Typically the problem can be decomposed into two problems: using one data source to draw a map, and adding metadata from another information source to the map. This chapter will help you tackle both problems. We've structured the chapter in the following way: Section \@ref(polygonmaps) outlines a simple way to draw maps using `geom_polygon()`, which is followed in Section \@ref(sf) by a modern "simple features" (sf) approach using `geom_sf()`. Next, Sections \@ref(mapproj) and \@ref(sfdetail) discuss how to work with map projections and the underlying sf data structure. Finally, Section \@ref(rastermaps) discusses how to draw maps based on raster data.
+Plotting geospatial data is a common visualisation task, and one that requires specialised tools. Typically, the problem can be decomposed into two problems: using one data source to draw a map, and adding metadata from another information source to the map. This chapter will help you tackle both problems. We've structured the chapter in the following way: Section \@ref(polygonmaps) outlines a simple way to draw maps using `geom_polygon()`, which is followed in Section \@ref(sf) by a modern "simple features" (sf) approach using `geom_sf()`. Next, Sections \@ref(mapproj) and \@ref(sfdetail) discuss how to work with map projections and the underlying sf data structure. Finally, Section \@ref(rastermaps) discusses how to draw maps based on raster data.
 
 ## Polygon maps {#polygonmaps}
 \index{Maps!geoms} 
@@ -156,7 +156,7 @@ ggplot() +
   coord_sf()
 ```
 
-In this example `geom_point` is used only to specify the locations of the capital cities, but the basic idea can be extended to handle point metadata more generally. For example if the oz_capitals data were to include an additional variable specifying the number of electorates within each metropolitan area, we could encode that data using the `size` aesthetic.
+In this example `geom_point` is used only to specify the locations of the capital cities, but the basic idea can be extended to handle point metadata more generally. For example, if the oz_capitals data were to include an additional variable specifying the number of electorates within each metropolitan area, we could encode that data using the `size` aesthetic.
 
 ## Map projections {#mapproj}
 
@@ -164,7 +164,7 @@ At the start of the chapter we drew maps by plotting longitude and latitude on a
 
 The first issue is the shape of the planet. The Earth is neither a flat plane, nor indeed is it a perfect sphere. As a consequence, to map a co-ordinate value (longitude and latitude) to a location we need to make assumptions about all kinds of things. How ellipsoidal is the Earth? Where is the centre of the planet? Where is the origin point for longitude and latitude? Where is the sea level? How do the tectonic plates move? All these things are relevant, and depending on what assumptions one makes the same co-ordinate can be mapped to locations that are many meters apart. The set of assumptions about the shape of the Earth is referred to as the **geodetic datum** and while it might not matter for some data visualisations, for others it is critical. There are several different choices one might consider: if your focus is North America the "North American Datum" (NAD83) is a good choice, whereas if your perspective is global the "World Geodetic System" (WGS84) is probably better. 
 
-The second issue is the shape of your map. The Earth is approximately ellipsoidal, but in most instances your spatial data need to be drawn on a two dimensional plane. It is not possible to map the surface of an ellipsoid to a plane without some distortion or cutting, and you will have to make choices about what distortions you are prepared to accept when drawing a map. This is the job of the **map projection**. 
+The second issue is the shape of your map. The Earth is approximately ellipsoidal, but in most instances your spatial data need to be drawn on a two-dimensional plane. It is not possible to map the surface of an ellipsoid to a plane without some distortion or cutting, and you will have to make choices about what distortions you are prepared to accept when drawing a map. This is the job of the **map projection**. 
 
 <!-- HW: this discussion is great, and was sorely missing from the previous edition of the book, and indeed my understanding of spatial data when I wrote it -->
 
@@ -178,7 +178,7 @@ regions is preserved.
 
 And unfortunately, it's not possible for any projection to be shape-preserving and area-preserving. This makes it a little beyond the scope of this book to discuss map projections in detail, other than to note that the simple features specification allows you to indicate which map projection you want to use. For more information on map projections, see Geocomputation with R <https://geocompr.robinlovelace.net/> [@lovelace_geocomputation_2019].
 
-Taken together, the geodetic datum (e.g, WGS84), the type of map projection (e.g., Mercator) and the parameters of the projection (e.g., location of the origin) specify a **coordinate reference system**, or CRS, a complete set of assumptions used to translate the latitude and longitude information into a two dimensional map. An sf object often includes a default CRS, as illustrated below:
+Taken together, the geodetic datum (e.g, WGS84), the type of map projection (e.g., Mercator) and the parameters of the projection (e.g., location of the origin) specify a **coordinate reference system**, or CRS, a complete set of assumptions used to translate the latitude and longitude information into a two-dimensional map. An sf object often includes a default CRS, as illustrated below:
 
 ```{r}
 st_crs(oz_votes)
@@ -299,7 +299,7 @@ In the code above, the first argument specifies the path to the raster file, and
 sat_vis
 ```
 
-This output tells us something about the structure of a stars object. For the `sat_vis` object the underlying data is stored as a three dimensional array, with `x` and `y` dimensions specifying the spatial data. The `band` dimension in this case corresponds to the colour channel (RGB) but is redundant for this image as the data are greyscale. In other data sets there might be bands corresponding to different sensors, and possibly a time dimension as well. Note that the spatial data is also associated with a coordinate reference system (referred to as "refsys" in the output). 
+This output tells us something about the structure of a stars object. For the `sat_vis` object the underlying data is stored as a three-dimensional array, with `x` and `y` dimensions specifying the spatial data. The `band` dimension in this case corresponds to the colour channel (RGB) but is redundant for this image as the data are greyscale. In other data sets there might be bands corresponding to different sensors, and possibly a time dimension as well. Note that the spatial data is also associated with a coordinate reference system (referred to as "refsys" in the output). 
 
 To plot the `sat_vis` data in ggplot2, we can use the `geom_stars()` function provided by the stars package. A minimal plot might look like this:
 
@@ -362,7 +362,7 @@ ggplot() +
   scale_fill_gradient(low = "black", high = "white")
 ```
 
-This version of the image makes clearer that the satellite image was taken at approximately sunrise in Darwin: the sun had risen for all the eastern cities but not in Perth. This could be made clearer in the data visualisation using the `geom_sf_text()` function to add labels to each city. For instance we could add another layer to the plot using code like this,
+This version of the image makes clearer that the satellite image was taken at approximately sunrise in Darwin: the sun had risen for all the eastern cities but not in Perth. This could be made clearer in the data visualisation using the `geom_sf_text()` function to add labels to each city. For instance, we could add another layer to the plot using code like this,
 
 ```{r eval = FALSE}
 geom_sf_text(data = cities, mapping = aes(label = city)) 
