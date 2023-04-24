@@ -283,7 +283,7 @@ Because we've written a new stat, we get a number of features, like scaling and 
 ggplot(some_data) + 
   geom_spring(
     aes(x, y, xend = xend, yend = yend, colour = class),
-    size = 1
+    linewidth = 1
   ) + 
   facet_wrap(~ class)
 ```
@@ -514,7 +514,7 @@ GeomSpring <- ggproto("GeomSpring", Geom,
   required_aes = c("x", "y", "xend", "yend"),
   default_aes = aes(
     colour = "black", 
-    size = 0.5, 
+    linewidth = 0.5, 
     linetype = 1L, 
     alpha = NA, 
     diameter = 1, 
@@ -637,12 +637,15 @@ For example `unit(0.5, "npc") + unit(1, "cm")` defines a point one centimeter to
 
 #### Example
 
-Given this very cursory introduction, let's now look at an example grob.
-The code below will create a grob that appears as a square if bigger than 5 cm and a circle if smaller:
+Given this very cursory introduction, let's now look at an example grob. First, let's load the grid package:
 
 ```{r}
 library(grid)
+```
 
+The code below will create a grob that appears as a square if bigger than 5 cm and a circle if smaller:
+
+```{r}
 surpriseGrob <- function(x, y, size, 
                          default.units = "npc", 
                          name = NULL, 
@@ -802,7 +805,7 @@ GeomSpring <- ggproto("GeomSpring", Geom,
   draw_panel = function(data, panel_params, coord, n = 50, lineend = "butt", 
                         na.rm = FALSE) {
     data <- remove_missing(data, na.rm = na.rm,
-      c("x", "y", "xend", "yend", "linetype", "size"),
+      c("x", "y", "xend", "yend", "linetype", "linewidth"),
       name = "geom_spring")
     if (is.null(data) || nrow(data) == 0) return(zeroGrob())
     if (!coord$is_linear()) {
@@ -814,7 +817,7 @@ GeomSpring <- ggproto("GeomSpring", Geom,
       tension = coord$tension, n = n,
       gp = gpar(
         col = alpha(coord$colour, coord$alpha),
-        lwd = coord$size * .pt,
+        lwd = coord$linewidth * .pt,
         lty = coord$linetype,
         lineend = lineend
       )
@@ -823,7 +826,7 @@ GeomSpring <- ggproto("GeomSpring", Geom,
   required_aes = c("x", "y", "xend", "yend"),
   default_aes = aes(
     colour = "black", 
-    size = 0.5, 
+    linewidth = 0.5, 
     linetype = 1L, 
     alpha = NA, 
     diameter = 0.35, 
@@ -960,7 +963,7 @@ With our scales defined let us have a look:
 ggplot(some_data) + 
   geom_spring(aes(x = x, y = y, xend = xend, yend = yend, tension = tension, 
                   diameter = diameter)) + 
-  scale_tension(range = c(0.1, 5))
+  scale_tension(range = c(0.1, 5)) 
 ```
 
 The code above shows us that both the default scale (we didn't add an explicit scale for diameter) and the custom scales (`scale_tension()`) work.
@@ -994,7 +997,7 @@ draw_key_spring <- function(data, params, size) {
     ),
     vp = viewport(clip = "on")
   )
-}
+} 
 ```
 
 We add a little flourish here that is not necessary for the point key constructor, which is that we define a clipping viewport for our grob.
@@ -1022,7 +1025,7 @@ The default key size is a bit cramped for our key, but that has to be modified b
 ggplot(some_data) + 
   geom_spring(aes(x = x, y = y, xend = xend, yend = yend, tension = tension, 
                   diameter = diameter)) + 
-  scale_tension(range = c(0.1, 5)) + 
+  scale_tension(range = c(0.1, 5)) +
   theme(legend.key.size = unit(1, "cm"))
 ```
 
