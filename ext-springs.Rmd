@@ -385,24 +385,6 @@ We have now successfully created our first extension. It works, but it has some 
 
 One shortcoming of our implementation is that diameter and tension are constants that can only be set for the full layer. These settings feel more like aesthetics and it would be nice if their values could be mapped to a variable in the data. We'll discuss solutions to this problem in Sections \@ref(spring2) and \@ref(spring3).
 
-<!-- HW: Maybe only introduce this problem later in "testing the geom"? Otherwise it's a long gap between tension and resolution -->
-
-Another, potentially bigger, issue is that the spring path is defined relative to the coordinate system of the plot. This means that strong deviations from an aspect ratio of 1 will visibly distort the spring, as you can see in the example below:
-
-```{r}
-ggplot() + 
-  geom_spring(aes(x = 0, y = 0, xend = 3, yend = 20))
-```
-
-The same underlying problem means that the diameter of the spring is expressed in coordinate space, meaning that it is difficult to define a meaningful default:
-
-```{r}
-ggplot() + 
-  geom_spring(aes(x = 0, y = 0, xend = 100, yend = 80))
-```
-
-We'll ignore this issue for the moment, and address it in Section \@ref(spring4).
-
 ## Part 2: Adding aesthetics {#spring2}
 
 The stat we created in the last section treats the `diameter` and `tension` as constant arguments: they're not aesthetics and the user can't map them onto a variable in the data. We can fix this by making a few small changes to the `StatSpring` code:
@@ -655,7 +637,21 @@ ggplot(df, aes(x, y, xend = xend, yend = yend)) +
   geom_spring(diameter = 0.5)
 ```
 
-It does have some limitations still, because the units for `diameter` and `tension` are expressed relative to the scale of the raw data. The actual diameter of a spring with `diameter = 0.5` will be different depending on the axis limits, and if the x and y axes are not on the same scale the shape of the spring will be distorted. 
+It does have some limitations still, because the units for `diameter` and `tension` are expressed relative to the scale of the raw data. The actual diameter of a spring with `diameter = 0.5` will be different depending on the axis limits, and if the x and y axes are not on the same scale the shape of the spring will be distorted. You can see this in the example below:
+
+```{r}
+ggplot() + 
+  geom_spring(aes(x = 0, y = 0, xend = 3, yend = 20))
+```
+
+The same underlying problem means that the diameter of the spring is expressed in coordinate space. This makes it difficult to define a meaningful default because the absolute size of the spring diameter changes when the scale of the data changes:
+
+```{r}
+ggplot() + 
+  geom_spring(aes(x = 0, y = 0, xend = 100, yend = 80))
+```
+
+We'll address this issue in Section \@ref(spring4).
 
 ### Post-mortem
 
@@ -749,8 +745,6 @@ ggplot2 automatically generates most of the viewports that you'll need for plott
 
 The next concept we need to understand is the idea of **graphical parameters**. When we defined the `circles` and `labels` grobs, we only specified some of their properties. For example, we said nothing about colour or transparency, so these properties are all set to their default values. The `gpar()` function in grid allows you to specify graphical parameters as distinct objects:
 
-<!-- HW: I found the high transparency hard to read -->
-
 ```{r}
 gp_blue <- gpar(col = "blue", fill = NA)
 gp_orange <- gpar(col = "orange", fill = NA)
@@ -777,9 +771,7 @@ The last core concept that we need to discuss is the **unit** system. The grid p
 
 -   Absolute units, e.g. centimeters, inches, and points, refer to physical sizes.
 -   Relative units e.g. `npc` which represents a proportion of the current viewport size.
--   Units based on other grobs, e.g. grobwidth.
-
-<!-- HW: do we need to mention data units here? I think maybe ggplot2 doesn't use them, but might be worth mentioning anyway --> 
+-   Units defined by strings or other grobs, e.g. `strwidth`, `grobwidth`.
 
 The `unit()` function is the main function we use when specifying units: `unit(1, "cm")` is 1 centimeter, whereas `unit(0.5, "npc")` is half the size of the relevant viewport. The unit system supports arithmetic operations that are only resolved at draw time, which makes it possible to combine different types of units: `unit(0.5, "npc") + unit(1, "cm")` defines a point one centimeter to the right of the center of the current viewport.
 
