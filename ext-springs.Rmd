@@ -715,8 +715,6 @@ It is also possible to define your own grobs. You can define a new primitive gro
 
 ### Viewports
 
-<!-- HW: Maybe introduce tabular grid in a later paragraph -->
-
 The second key concept in grid is the idea of a **viewport**. A viewport is a rectangular plotting region that supplies its own coordinate system for grobs that are drawn within it, and can also provide a tabular grid in which other viewports an be nested. An individual grob can have its own viewport or, if none is provided, it will inherit one. While we won't need to consider viewports when building the grob for our springs, they're an important concept that powers much of the high-level layout of ggplot2 graphics so we'll very briefly introduce them here. In the example below we use `viewport()` to define two different viewports, one with default parameters, and second one that is rotated around the midpoint by 15 degrees:
 
 ```{r}
@@ -875,6 +873,102 @@ grid.draw(surprises)
 ```
 
 If you run this code interactively and resize the plotting window you'll see that the three objects change shape based on the size of the plotting window. This is not the most useful way to employ grid, of course, but hopefully you can see how this technique can be used to do real work.
+
+### Tabular grid {#tabular-grid}
+
+The last aspect to grid we'll discuss here is the layout engine provided by the gtable package. It's not necessary to know about gtable in order to build our spring grob, but there are other kinds of ggplot2 extensions that do require this knowledge, so we'll give a brief overview here.
+
+As discussed in Section \@ref(ggplotgtable), when ggplot2 passes the plot to grid for rendering it does so by creating a gtable object with `ggplot_gtable()`. We can extract this object using the `ggplotGrob()` function:
+
+```{r}
+p <- ggplot(mpg, aes(displ, hwy)) + geom_point()
+grob_table <- ggplotGrob(p)
+grob_table
+```
+
+The output illustrates how the ggplot2 layout is structured. The plot is comprised of 18 distinct grobs that are arranged in a `TableGrob` that specifies a 12 x 9 grid, which in turn supplies a collection of viewports within which individual grobs can be drawn. This `TableGrob` is itself a grobtree, and can be rendered with grid in by calling `grid.draw()`: 
+
+```{r}
+grid.newpage()
+grid.draw(grob_table)
+```
+
+To illustrate how a `TableGrob` works, we'll create a simplified version of this output without using ggplot2. Our first step is to define the constituent grobs that make up our plot:
+
+```{r}
+xtick <- 0:8
+ytick <- seq(0, 50, 10)
+
+points <- pointsGrob(
+  x = mpg$displ / xtick[length(xtick)],
+  y = mpg$hwy / ytick[length(ytick)],
+  default.units = 'npc',
+  size = unit(6, 'pt')
+)
+
+xaxis <- xaxisGrob(
+  at = seq(0, 1, length.out = length(xtick)), 
+  label = xtick
+)
+
+yaxis <- yaxisGrob(
+  at = seq(0, 1, length.out = length(ytick)), 
+  label = ytick
+)
+```
+
+The `points` grob contains the data to be plotted, while `xaxis` and `yaxis` are grobs that draw labelled axes. When we draw the `points` grob, we get the core of a scatter plot:
+
+```{r}
+grid.newpage()
+grid.draw(points)
+```
+
+However, if we want to add axes to this plot, we need a set of viewports laid out in a tabular format so that we can place `xaxis` immediately below `points`, and `yaxis` to the left of `points`. In ggplot2, this is handled by the gtable layout engine. First, we use `gtable()` to define the structure:
+
+```{r}
+library(gtable)
+
+plot_layout <- gtable(
+  widths = unit(c(1.5, 0, 1, 0.5), c('cm', 'cm', 'null', 'cm')),
+  heights = unit(c(0.5, 1, 0, 1.5), c('cm', 'null', 'cm', 'cm'))
+)
+```
+
+The `plot_layout` object is a 4 x 4 `TableGrob` that defines viewports with sizes that match the row `heights` and column `widths` that we passed to `gtable()`. The `gtable_show_layout()` function provides a convenient way to visualise this layout:
+
+```{r}
+gtable_show_layout(plot_layout)
+```
+
+Notice that this layout has one row with height zero, and one column with width zero. We'll place the `xaxis` and `yaxis` grobs into these rows, and allow them to "spill over" into the adjacent rows and columns that specify the margins for the plot.
+
+To place the grobs into the table, we use the `gtable_add_grob()` function. A `TableGrob` layout allows an individual grob to span multiple cells using the arguments `t`, `l`, `b`, and `r` to specify cell indices for the **t**opmost, **l**eftmost, **b**ottom, and **r**ightmost cells spanned by the grob. However, the default is to assume that each grob belongs to exactly one cell, in which case only the `t` and `l` arguments need to be specified: 
+
+```{r}
+plot_layout <- gtable_add_grob(
+  plot_layout,
+  grobs = list(points, xaxis, yaxis),
+  t = c(2, 3, 2), # the row defining the top extent of each grob
+  l = c(3, 3, 2), # the column defining the left extent of each grob
+  clip = 'off'
+)
+```
+
+If we inspect our `plot_layout` object, we see something that has the same structure as the `TableGrob` produced by the ggplot2 code above:
+
+```{r}
+plot_layout
+```
+
+We can now draw our plot using `grid.draw()`:
+
+```{r}
+grid.newpage()
+grid.draw(plot_layout)
+```
+
+Clearly, we're still missing a lot of important details that would be necessary in a real plot, but hopefully it is now clear how ggplot2 arranges a collection of grobs within a structured plot layout.
 
 ## Part 4: A grid grob {#spring4}
 
