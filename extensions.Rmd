@@ -200,7 +200,7 @@ As discussed in Chapter \@ref(internals), the core behaviour of a stat is captur
 - `compute_layer()` splits the data set by the `PANEL` column, calls `compute_panel()`, and reassembles the results.
 - `compute_panel()` splits the panel data by the `group` column, calls `compute_group()`, and reassembles the results. 
 
-Because of this, the only method you usually need to specify as a developer is the `compute_group()` function, whose job is to take the data for a single group and transform it appropriately. This will be sufficient to create a working stat, though it may not yield the best performance. As a consequence developers sometimes find it valuable to offload some of the work to `compute_panel()` where possible: doing so allows you to vectorise computations and avoid an expensive split-combine step. However, as a general rule it is better to begin by modifying `compute_group()` only and see if the performance is adequate.
+Because of this, the only method you usually need to specify as a developer is the `compute_group()` function, whose job is to take the data for a single group and transform it appropriately. This will be sufficient to create a working stat, though it may not yield the best performance. As a consequence developers sometimes find it valuable to offload some of the work to `compute_panel()` where possible: doing so allows you to vectorise computations and avoid an expensive split-combine step (we'll see an example of this later in Section \@ref(spring-stat)) However, as a general rule it is better to begin by modifying `compute_group()` only and see if the performance is adequate.
 
 To illustrate this, we'll start by creating a stat that calculates the convex hull of a set of points, using the `chull()` function included in `grDevices`. As you might expect, most of the work is done by a new ggproto object that we will create:
 
@@ -435,7 +435,7 @@ ggplot(df, aes(x, y)) +
 
 As with stats, geoms have a `setup_params()` method in addition to the `setup_data()` method, which can be used to modify parameters before any drawing takes place (see Section \@ref(modifying-stat-params) for an example). One thing to note in the geom context, however, is that `setup_data()` is called before any position adjustment is done.
 
-### Combining multiple geoms
+### Combining multiple geoms {#combining-multiple-geoms}
 
 A useful technique for defining new geoms is to combine functionality from different geoms. For example, the `geom_smooth()` function for drawing nonparametric regression lines uses functionality from `geom_line()` to draw the regression line and `geom_ribbon()` to draw the shaded error bands. To do this within your new geom, it is helpful to consider the drawing process. In much the same way that a stat works by a tiered succession of calls to `compute_layer()` then `compute_panel()` and finally `compute_group()`, a geom is constructed by calls to  `draw_layer()`, `draw_panel()`, and `draw_group()`. 
 
@@ -546,7 +546,7 @@ Another relatively simple case is where you provide a geom that takes a new type
 
 A last possibility worth mentioning, but outside the scope of this book, is the possibility of creating a new primary scale type. Historically, ggplot2 has had two primary scale types, continuous and discrete. Recently the binned scale type joined which allows for binning of continuous data into discrete bins. It is possible to develop further primary scales, by following the example of `ScaleBinned`. It requires subclassing `Scale` or one of the provided primary scales, and create new `train()` and `map()` methods, among others.
 
-## New positions
+## New positions {#new-scales}
 
 The `Position` ggproto class is somewhat simpler than other ggproto classes, reflecting the fact that the `position_*()` functions have a very narrow scope. The role of the position is to receive and modify the data immediately before it is passed to any drawing functions. Strictly speaking, the position is able to modify the data in any fashion, but there is an implicit expectation that it modifies position aesthetics only. A position possesses `compute_layer()` and `compute_panel()` methods that behave analogously to the equivalent methods for a stat, but it does not possess a `compute_group()` method. It also contains `setup_params()` and `setup_data()` methods that are similar to the `setup_*()` methods for other ggproto classes, with one notable exception: the `setup_params()` method only receives the data as input, and not a list of parameter. The reason for this is that `position_*()` functions are never used on their own in ggplot2: rather, they are always called within the main `geom_*()` or `stat_*()` command that specifies the layer, and the parameters from the main command are not passed to the `position_*()` function call.  
 
