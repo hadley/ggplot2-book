@@ -5,9 +5,12 @@ columns(1, 2 / 3)
 
 # Other aesthetics {#scale-other}
 
-In addition to position and colour, there are several other aesthetics that ggplot2 can use to represent data. In this chapter we'll look at size scales (Section \@ref(scale-size)), shape scales (Section \@ref(scale-shape)), line width scales (Section \@ref(scale-linewidth)), and line type scales (Section \@ref(scale-linetype)), which use visual features other than location and colour to represent data values. Additionally, we'll talk about manual scales (Section \@ref(scale-manual)) and identity scales (Section \@ref(scale-identity)): these don't necessarily use different visual features, but they construct data mappings in an unusual way.  
+In addition to position and colour, there are several other aesthetics that ggplot2 can use to represent data.
+In this chapter we'll look at size scales (Section \@ref(scale-size)), shape scales (Section \@ref(scale-shape)), line width scales (Section \@ref(scale-linewidth)), and line type scales (Section \@ref(scale-linetype)), which use visual features other than location and colour to represent data values.
+Additionally, we'll talk about manual scales (Section \@ref(scale-manual)) and identity scales (Section \@ref(scale-identity)): these don't necessarily use different visual features, but they construct data mappings in an unusual way.
 
 ## Size {#scale-size}
+
 \index{Size}
 
 ```{r, echo=FALSE}
@@ -22,9 +25,14 @@ planets <- data.frame(
 planets$name <- with(planets, factor(name, name))
 ```
 
-The size aesthetic is typically used to scale points and text. The default scale for size aesthetics is `scale_size()` in which a linear increase in the variable is mapped onto a linear increase in the area (not the radius) of the geom. Scaling as a function of area is a sensible default as human perception of size is more closely mimicked by area scaling than by radius scaling. By default the smallest value in the data (more precisely in the scale limits) is mapped to a size of 1 and the largest is mapped to a size of 6. The `range` argument allows you to scale the size of the geoms:
+The size aesthetic is typically used to scale points and text.
+The default scale for size aesthetics is `scale_size()` in which a linear increase in the variable is mapped onto a linear increase in the area (not the radius) of the geom.
+Scaling as a function of area is a sensible default as human perception of size is more closely mimicked by area scaling than by radius scaling.
+By default the smallest value in the data (more precisely in the scale limits) is mapped to a size of 1 and the largest is mapped to a size of 6.
+The `range` argument allows you to scale the size of the geoms:
 
 `r columns(2, 2/3)`
+
 ```{r}
 base <- ggplot(mpg, aes(displ, hwy, size = cyl)) + 
   geom_point()
@@ -33,28 +41,31 @@ base
 base + scale_size(range = c(1, 2))
 ```
 
-
 There are several size scales worth noting briefly:
 
-- `scale_size_area()` and `scale_size_binned_area()` are versions of `scale_size()` and `scale_size_binned()` that ensure that a value of 0 maps to an area of 0. 
+-   `scale_size_area()` and `scale_size_binned_area()` are versions of `scale_size()` and `scale_size_binned()` that ensure that a value of 0 maps to an area of 0.
 
-- `scale_radius()` maps the data value to the radius rather than to the area (Section \@ref(radius-scaling)).
+-   `scale_radius()` maps the data value to the radius rather than to the area (Section \@ref(radius-scaling)).
 
-- `scale_size_binned()` is a size scale that behaves like `scale_size()` but maps continuous values onto discrete size categories, analogous to the binned position and colour scales discussed in Sections \@ref(binned-position) and \@ref(binned-colour) respectively. Legends associated with this scale are discussed in Section \@ref(guide-bins).
+-   `scale_size_binned()` is a size scale that behaves like `scale_size()` but maps continuous values onto discrete size categories, analogous to the binned position and colour scales discussed in Sections \@ref(binned-position) and \@ref(binned-colour) respectively.
+    Legends associated with this scale are discussed in Section \@ref(guide-bins).
 
-- `scale_size_date()` and `scale_size_datetime()` are designed to handle date data, analogous to the date scales discussed in Section \@ref(date-scales).
-
+-   `scale_size_date()` and `scale_size_datetime()` are designed to handle date data, analogous to the date scales discussed in Section \@ref(date-scales).
 
 ### Radius size scales {#radius-scaling}
 
-There are situations where area scaling is undesirable, and for such situations the `scale_radius()` function is provided. To illustrate when `scale_radius()` is appropriate consider a data set containing astronomical data that includes the radius of different planets:
-```{r} 
+There are situations where area scaling is undesirable, and for such situations the `scale_radius()` function is provided.
+To illustrate when `scale_radius()` is appropriate consider a data set containing astronomical data that includes the radius of different planets:
+
+```{r}
 planets
 ```
 
-In this instance a plot that uses the size aesthetic to represent the radius of the planets should use `scale_radius()` rather than the default `scale_size()`. It is also important in this case to set the scale limits so that a planet with radius 0 would be drawn with a disc with radius 0. 
+In this instance a plot that uses the size aesthetic to represent the radius of the planets should use `scale_radius()` rather than the default `scale_size()`.
+It is also important in this case to set the scale limits so that a planet with radius 0 would be drawn with a disc with radius 0.
 
 `r columns(2, 1)`
+
 ```{r}
 base <- ggplot(planets, aes(1, name, size = radius)) + 
   geom_point() + 
@@ -69,12 +80,15 @@ base +
 
 On the left it is difficult to distinguish Jupiter from Saturn, despite the fact that the difference between the two should be double the size of Earth; compare this to the plot on the right where the radius of Jupiter is visibly larger.
 
-
 ### Binned size scales {#guide-bins}
 
-Binned size scales work similarly to binned scales for colour and position aesthetics (Sections \@ref(binned-colour) and \@ref(binned-position)). One difference is how legends are displayed. The default legend for a binned size scale, and all binned scales except position and colour aesthetics, is governed by `guide_bins()`. For instance, in the `mpg` data we could use `scale_size_binned()` to create a binned version of the continuous variable `hwy`:
+Binned size scales work similarly to binned scales for colour and position aesthetics (Sections \@ref(binned-colour) and \@ref(binned-position)).
+One difference is how legends are displayed.
+The default legend for a binned size scale, and all binned scales except position and colour aesthetics, is governed by `guide_bins()`.
+For instance, in the `mpg` data we could use `scale_size_binned()` to create a binned version of the continuous variable `hwy`:
 
 `r columns(2, 1)`
+
 ```{r}
 base <- ggplot(mpg, aes(displ, manufacturer, size = hwy)) +
   geom_point(alpha = .2) +
@@ -83,33 +97,36 @@ base <- ggplot(mpg, aes(displ, manufacturer, size = hwy)) +
 base
 ```
 
-Unlike `guide_legend()`, the guide created for a binned scale by `guide_bins()` does not organise the individual keys into a table. Instead they are arranged in a column (or row) along a single vertical (or horizontal) axis, which by default is displayed with its own axis. The important arguments to `guide_bins()` are listed below:
+Unlike `guide_legend()`, the guide created for a binned scale by `guide_bins()` does not organise the individual keys into a table.
+Instead they are arranged in a column (or row) along a single vertical (or horizontal) axis, which by default is displayed with its own axis.
+The important arguments to `guide_bins()` are listed below:
 
-*   `axis` indicates whether the axis should be drawn (default is `TRUE`)
+-   `axis` indicates whether the axis should be drawn (default is `TRUE`)
 
     ```{r}
     base + guides(size = guide_bins(axis = FALSE))
     ```
 
-*   `direction` is a character string specifying the direction of the guide, either `"vertical"` (the default) or `"horizontal"`
+-   `direction` is a character string specifying the direction of the guide, either `"vertical"` (the default) or `"horizontal"`
 
     `r columns(1, 2/3)`
+
     ```{r}
     base + guides(size = guide_bins(direction = "horizontal"))
     ```
 
-*   `show.limits` specifies whether tick marks are shown at the ends of the 
-    guide axis (default is FALSE)
+-   `show.limits` specifies whether tick marks are shown at the ends of the guide axis (default is FALSE)
 
     `r columns(2, 1)`
+
     ```{r}
     base + guides(size = guide_bins(show.limits = TRUE))
     ```
 
-*   `axis.colour`, `axis.linewidth` and `axis.arrow` are used to
-    control the guide axis that is displayed alongside the legend keys 
+-   `axis.colour`, `axis.linewidth` and `axis.arrow` are used to control the guide axis that is displayed alongside the legend keys
 
     `r columns(2, 1)`
+
     ```{r}
     base + guides(
       size = guide_bins(
@@ -123,15 +140,16 @@ Unlike `guide_legend()`, the guide created for a binned scale by `guide_bins()` 
     )
     ```
 
-*   `keywidth`, `keyheight`, `reverse` and `override.aes` have the same
-  behaviour for `guide_bins()` as they do for `guide_legend()` (see Section \@ref(guide-legend))
-
+-   `keywidth`, `keyheight`, `reverse` and `override.aes` have the same behaviour for `guide_bins()` as they do for `guide_legend()` (see Section \@ref(guide-legend))
 
 ## Shape {#scale-shape}
 
-Values can be mapped to the shape aesthetic. The typical use for this is when you have a small number of discrete categories: if the data variable contains more than 6 values it becomes difficult to distinguish between shapes, and will produce a warning. The default `scale_shape()` function contains a single argument: set `solid = TRUE` (the default) to use a "palette" consisting of three solid shapes and three hollow shapes, or set `solid = FALSE` to use six hollow shapes:
+Values can be mapped to the shape aesthetic.
+The typical use for this is when you have a small number of discrete categories: if the data variable contains more than 6 values it becomes difficult to distinguish between shapes, and will produce a warning.
+The default `scale_shape()` function contains a single argument: set `solid = TRUE` (the default) to use a "palette" consisting of three solid shapes and three hollow shapes, or set `solid = FALSE` to use six hollow shapes:
 
 `r columns(2, 1)`
+
 ```{r}
 base <- ggplot(mpg, aes(displ, hwy, shape = factor(cyl))) + 
   geom_point()
@@ -143,6 +161,7 @@ base + scale_shape(solid = FALSE)
 Although any one plot is unlikely to be readable with more than a 6 distinct markers, there are 25 possible shapes to choose from, each associated with an integer value:
 
 `r columns(1, .3, max_width = .8)`
+
 ```{r, echo=FALSE}
 df <- data.frame(
   shape = 1:25,
@@ -160,6 +179,7 @@ ggplot(df, aes(x, y, shape = shape)) +
 You can specify the marker types for each data value manually using `scale_shape_manual()`:
 
 `r columns(2, 1)`
+
 ```{r}
 base + 
   scale_shape_manual(
@@ -171,9 +191,15 @@ For more information about manual scales see Section \@ref(scale-manual).
 
 ## Line width {#scale-linewidth}
 
-The linewidth aesthetic, introduced in ggplot2 3.4.0, is used to control the width of lines. In earlier versions of ggplot2 the size aesthetic was used for this purpose, which caused some difficulty for complex geoms such as `geom_pointrange()` that contain both points and lines. For these geoms it's often important to be able to separately control the size of the points and the width of the lines. This is illustrated in the plots below. In the leftmost plot both the size and linewidth aesthetics are set at their default values. The middle plot increases the size of the points while leaving the linewidth unchanged, whereas the plot on the right increases the linewidth while leaving the point size unchanged. 
+The linewidth aesthetic, introduced in ggplot2 3.4.0, is used to control the width of lines.
+In earlier versions of ggplot2 the size aesthetic was used for this purpose, which caused some difficulty for complex geoms such as `geom_pointrange()` that contain both points and lines.
+For these geoms it's often important to be able to separately control the size of the points and the width of the lines.
+This is illustrated in the plots below.
+In the leftmost plot both the size and linewidth aesthetics are set at their default values.
+The middle plot increases the size of the points while leaving the linewidth unchanged, whereas the plot on the right increases the linewidth while leaving the point size unchanged.
 
 `r columns(3, 2)`
+
 ```{r}
 base <- ggplot(airquality, aes(x = factor(Month), y = Temp))
 
@@ -193,30 +219,38 @@ base + geom_pointrange(
 In practice you're most likely to set linewidth as a fixed parameter, as shown in the previous example, but it is a true aesthetic and can be mapped onto data values:
 
 `r columns(1, 1/2, 1)`
+
 ```{r}
 ggplot(airquality, aes(Day, Temp, group = Month)) + 
   geom_line(aes(linewidth = Month)) + 
   scale_linewidth(range = c(0.5, 3))
 ```
 
-Linewidth scales behave like size scales in most ways, but there are differences. As discussed earlier the default behaviour of a size scale is to increase linearly with the area of the plot marker (e.g., the diameter of a circular plot marker increases with the square root of the data value). In contrast, the linewidth increases linearly with the data value.
+Linewidth scales behave like size scales in most ways, but there are differences.
+As discussed earlier the default behaviour of a size scale is to increase linearly with the area of the plot marker (e.g., the diameter of a circular plot marker increases with the square root of the data value).
+In contrast, the linewidth increases linearly with the data value.
 
-Binned linewidth scales can be added using `scale_linewidth_binned()`. 
-
+Binned linewidth scales can be added using `scale_linewidth_binned()`.
 
 ## Line type {#scale-linetype}
 
-It is possible to map a variable onto the linetype aesthetic in ggplot2. This works best for discrete variables with a small number of categories, and `scale_linetype()` is an alias for `scale_linetype_discrete()`. Continuous variables cannot be mapped to line types unless `scale_linetype_binned()` is used: although there is a `scale_linetype_continuous()` function, all it does is produce an error. To see why the linetype aesthetic is suited only to cases with a few categories, consider this plot:
+It is possible to map a variable onto the linetype aesthetic in ggplot2.
+This works best for discrete variables with a small number of categories, and `scale_linetype()` is an alias for `scale_linetype_discrete()`.
+Continuous variables cannot be mapped to line types unless `scale_linetype_binned()` is used: although there is a `scale_linetype_continuous()` function, all it does is produce an error.
+To see why the linetype aesthetic is suited only to cases with a few categories, consider this plot:
 
 `r columns(1, 5/12, 0.8)`
+
 ```{r}
 ggplot(economics_long, aes(date, value01, linetype = variable)) +
   geom_line()
 ```
 
-With five categories the plot is quite difficult to read, and it is unlikely you will want to use the linetype aesthetic for more than that. The default "palette" for linetype is supplied by the `scales::linetype_pal()` function, and includes the 13 linetypes shown below:
+With five categories the plot is quite difficult to read, and it is unlikely you will want to use the linetype aesthetic for more than that.
+The default "palette" for linetype is supplied by the `scales::linetype_pal()` function, and includes the 13 linetypes shown below:
 
 `r columns(1, 2/3)`
+
 ```{r}
 df <- data.frame(value = letters[1:13])
 base <- ggplot(df, aes(linetype = value)) +
@@ -230,7 +264,9 @@ base <- ggplot(df, aes(linetype = value)) +
 base
 ```
 
-You can control the line type by specifying a string with up to 8 hexadecimal values (i.e., from 0 to F). In this specification, the first value is the length of the first line segment, the second value is the length of the first space between segments, and so on. This allows you to specify your own line types using `scale_linetype_manual()`, or alternatively, by passing a custom function to the `palette` argument:
+You can control the line type by specifying a string with up to 8 hexadecimal values (i.e., from 0 to F).
+In this specification, the first value is the length of the first line segment, the second value is the length of the first space between segments, and so on.
+This allows you to specify your own line types using `scale_linetype_manual()`, or alternatively, by passing a custom function to the `palette` argument:
 
 ```{r}
 linetypes <- function(n) {
@@ -242,7 +278,9 @@ linetypes <- function(n) {
 base + scale_linetype(palette = linetypes)
 ```
 
-Note that the last four lines are blank, because the `linetypes()` function defined above returns `NA` when the number of categories exceeds 9. The `scale_linetype()` function contains a `na.value` argument used to specify what kind of line is plotted for these values. By default this produces a blank line, but you can override this by setting `na.value = "dotted"`:
+Note that the last four lines are blank, because the `linetypes()` function defined above returns `NA` when the number of categories exceeds 9.
+The `scale_linetype()` function contains a `na.value` argument used to specify what kind of line is plotted for these values.
+By default this produces a blank line, but you can override this by setting `na.value = "dotted"`:
 
 ```{r}
 base + scale_linetype(palette = linetypes, na.value = "dotted")
@@ -250,15 +288,20 @@ base + scale_linetype(palette = linetypes, na.value = "dotted")
 
 Valid line types can be set using a human readable character string: `"blank"`, `"solid"`, `"dashed"`, `"dotted"`, `"dotdash"`, `"longdash"`, and `"twodash"` are all understood.
 
-
 ## Manual scales {#scale-manual}
 
-Manual scales are just a list of valid values that are mapped to the unique discrete values. If you want to customise these scales, you need to create your own new scale with the "manual" version of each: `scale_linetype_manual()`, `scale_shape_manual()`, `scale_colour_manual()`, etc. The manual scale has one important argument, `values`, where you specify the values that the scale should produce if this vector is named, it will match the values of the output to the values of the input; otherwise it will match in order of the levels of the discrete variable. You will need some knowledge of the valid aesthetic values, which are described in `vignette("ggplot2-specs")`. 
-\index{Shape} \index{Line type}  \indexf{scale\_shape\_manual} \indexf{scale\_colour\_manual} \indexf{scale\_linetype\_manual}
+Manual scales are just a list of valid values that are mapped to the unique discrete values.
+If you want to customise these scales, you need to create your own new scale with the "manual" version of each: `scale_linetype_manual()`, `scale_shape_manual()`, `scale_colour_manual()`, etc.
+The manual scale has one important argument, `values`, where you specify the values that the scale should produce if this vector is named, it will match the values of the output to the values of the input; otherwise it will match in order of the levels of the discrete variable.
+You will need some knowledge of the valid aesthetic values, which are described in `vignette("ggplot2-specs")`.
+\index{Shape} \index{Line type} \indexf{scale\_shape\_manual} \indexf{scale\_colour\_manual} \indexf{scale\_linetype\_manual}
 
-Manual scales have appeared earlier, in Sections \@ref(manual-colour) and \@ref(scale-shape). In this example we'll show a creative use of `scale_colour_manual()` to display multiple variables on the same plot and show a useful legend. In most plotting systems, you'd colour the lines and then add a legend: \index{Data!longitudinal}
+Manual scales have appeared earlier, in Sections \@ref(manual-colour) and \@ref(scale-shape).
+In this example we'll show a creative use of `scale_colour_manual()` to display multiple variables on the same plot and show a useful legend.
+In most plotting systems, you'd colour the lines and then add a legend: \index{Data!longitudinal}
 
 `r columns(1, 5/12, 0.8)`
+
 ```{r huron}
 huron <- data.frame(year = 1875:1972, level = as.numeric(LakeHuron))
 ggplot(huron, aes(year)) +
@@ -266,7 +309,8 @@ ggplot(huron, aes(year)) +
   geom_line(aes(y = level - 5), colour = "blue")
 ```
 
-That doesn't work in ggplot because there's no way to add a legend manually. Instead, give the lines informative labels:
+That doesn't work in ggplot because there's no way to add a legend manually.
+Instead, give the lines informative labels:
 
 ```{r huron2}
 ggplot(huron, aes(year)) +
@@ -285,13 +329,16 @@ ggplot(huron, aes(year)) +
   )
 ```
 
-
-
 ## Identity scales {#scale-identity}
 
-Identity scales --- such as `scale_colour_identity()` and `scale_shape_identity()` --- are used when your data is already scaled such that the data and aesthetic spaces are the same. The code below shows an example where the identity scale is useful. `luv_colours` contains the locations of all R's built-in colours in the LUV colour space (the space that HCL is based on). A legend is unnecessary, because the point colour represents itself: the data and aesthetic spaces are the same. \index{Scales!identity} \indexf{scale\_identity}
+Identity scales --- such as `scale_colour_identity()` and `scale_shape_identity()` --- are used when your data is already scaled such that the data and aesthetic spaces are the same.
+The code below shows an example where the identity scale is useful.
+`luv_colours` contains the locations of all R's built-in colours in the LUV colour space (the space that HCL is based on).
+A legend is unnecessary, because the point colour represents itself: the data and aesthetic spaces are the same.
+\index{Scales!identity} \indexf{scale\_identity}
 
 `r columns(1, 1, 0.75)`
+
 ```{r scale-identity}
 head(luv_colours)
 
@@ -300,5 +347,4 @@ geom_point(aes(colour = col), size = 3) +
 scale_color_identity() + 
 coord_equal()
 ```
-
 
