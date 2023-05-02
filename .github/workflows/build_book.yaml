@@ -1,27 +1,35 @@
-# Workflow derived from https://github.com/r-lib/actions/tree/master/examples
-# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 on:
   push:
-    branches: [main, master]
+    branches: main
   pull_request:
-    branches: [main, master]
+    branches: main
+  # to be able to trigger a manual build
+  workflow_dispatch:
   schedule:
     # run every day at 11 PM
     - cron: '0 23 * * *'
 
-name: bookdown
+name: Render and deploy Book to Netlify
+
+env:
+  isExtPR: ${{ github.event.pull_request.head.repo.fork == true }}
+  RUST_BACKTRACE: 1
 
 jobs:
-  bookdown:
+  build-deploy:
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      isExtPR: ${{ github.event.pull_request.head.repo.fork == true }}
-
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
 
-      - uses: r-lib/actions/setup-pandoc@v2
+      - name: Install Quarto
+        uses: quarto-dev/quarto-actions/install-quarto@v1
+        with:
+          # To install LaTeX to build PDF book
+          tinytex: true
+          # uncomment below and fill to pin a version
+          # version: 0.9.105
 
       - uses: r-lib/actions/setup-r@v2
         with:
@@ -29,15 +37,10 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
 
-      - name: Cache bookdown results
-        uses: actions/cache@v3
-        with:
-          path: _bookdown_files
-          key: bookdown-${{ hashFiles('**/*Rmd') }}
-          restore-keys: bookdown-
-
-      - name: Build site
-        run: Rscript -e 'bookdown::render_book("index.Rmd", quiet = TRUE)'
+      - name: Render book to all format
+        # Add any command line argument needed
+        run: |
+          quarto render
 
       - name: Deploy to Netlify
         if: contains(env.isExtPR, 'false')
@@ -45,7 +48,7 @@ jobs:
         uses: nwtgck/actions-netlify@v1.1
         with:
           publish-dir: './_book'
-          production-branch: master
+          production-branch: main
           github-token: ${{ secrets.GITHUB_TOKEN }}
           deploy-message:
             'Deploy from GHA: ${{ github.event.pull_request.title || github.event.head_commit.message }} (${{ github.sha }})'
@@ -53,5 +56,5 @@ jobs:
           enable-commit-comment: false
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_2E }}
         timeout-minutes: 1
