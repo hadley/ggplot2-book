@@ -1,6 +1,7 @@
 # Collective geoms {#collective-geoms}
 
-```{r, include = FALSE}
+```{r}
+#| include: false
 source("common.R")
 columns(1, 2 / 3)
 ```
@@ -24,7 +25,8 @@ It records the heights (`height`) and centered ages (`age`) of 26 boys (`Subject
 `Subject` and `Occasion` are stored as ordered factors.
 \index{nlme} \index{Data!Oxboys@\texttt{Oxboys}}
 
-```{r oxboys}
+```{r}
+#| label: oxboys
 data(Oxboys, package = "nlme")
 head(Oxboys)
 ```
@@ -38,7 +40,8 @@ For example, the following plot shows the growth trajectory for each boy (each `
 
 `r columns(1, 2 / 3, 0.6)`
 
-```{r oxboys-line}
+```{r}
+#| label: oxboys-line
 ggplot(Oxboys, aes(age, height, group = Subject)) + 
   geom_point() + 
   geom_line()
@@ -46,7 +49,8 @@ ggplot(Oxboys, aes(age, height, group = Subject)) +
 
 If you incorrectly specify the grouping variable, you'll get a characteristic sawtooth appearance:
 
-```{r oxboys-line-bad}
+```{r}
+#| label: oxboys-line-bad
 ggplot(Oxboys, aes(age, height)) + 
   geom_point() + 
   geom_line()
@@ -61,7 +65,8 @@ Sometimes we want to plot summaries that use different levels of aggregation: on
 Building on the previous example, suppose we want to add a single smooth line, showing the overall trend for *all* boys.
 If we use the same grouping in both layers, we get one smooth per boy: \indexf{geom\_smooth}
 
-```{r layer18}
+```{r}
+#| label: layer18
 ggplot(Oxboys, aes(age, height, group = Subject)) + 
   geom_line() + 
   geom_smooth(method = "lm", se = FALSE)
@@ -73,7 +78,8 @@ Grouping controls both the display of the geoms, and the operation of the stats:
 Instead of setting the grouping aesthetic in `ggplot()`, where it will apply to all layers, we set it in `geom_line()` so it applies only to the lines.
 There are no discrete variables in the plot so the default grouping variable will be a constant and we get one smooth:
 
-```{r layer19}
+```{r}
+#| label: layer19
 ggplot(Oxboys, aes(age, height)) + 
   geom_line(aes(group = Subject)) + 
   geom_smooth(method = "lm", linewidth = 2, se = FALSE)
@@ -85,7 +91,8 @@ Some plots have a discrete x scale, but you still want to draw lines connecting 
 This is the strategy used in interaction plots, profile plots, and parallel coordinate plots, among others.
 For example, imagine we've drawn boxplots of height at each measurement occasion: \indexf{geom\_boxplot}
 
-```{r oxbox}
+```{r}
+#| label: oxbox
 ggplot(Oxboys, aes(Occasion, height)) + 
   geom_boxplot()
 ```
@@ -94,7 +101,8 @@ There is one discrete variable in this plot, `Occasion`, so we get one boxplot f
 Now we want to overlay lines that connect each individual boy.
 Simply adding `geom_line()` does not work: the lines are drawn within each occasion, not across each subject:
 
-```{r oxbox-line-bad}
+```{r}
+#| label: oxbox-line-bad
 ggplot(Oxboys, aes(Occasion, height)) + 
   geom_boxplot() +
   geom_line(colour = "#3366FF", alpha = 0.5)
@@ -102,7 +110,8 @@ ggplot(Oxboys, aes(Occasion, height)) +
 
 To get the plot we want, we need to override the grouping to say we want one line per boy:
 
-```{r oxbox-line}
+```{r}
+#| label: oxbox-line
 ggplot(Oxboys, aes(Occasion, height)) + 
   geom_boxplot() +
   geom_line(aes(group = Subject), colour = "#3366FF", alpha = 0.5)
@@ -140,7 +149,8 @@ If this is the behaviour you want, you can perform the linear interpolation your
 
 `r columns(1, 2 / 3)`
 
-```{r matching-lines2}
+```{r}
+#| label: matching-lines2
 xgrid <- with(df, seq(min(x), max(x), length = 50))
 interp <- data.frame(
   x = xgrid,
@@ -171,7 +181,8 @@ This works particularly well for bar and area plots, because stacking the indivi
 
 `r columns(2, 2 / 3)`\
 
-```{r bar-split-disc}
+```{r}
+#| label: bar-split-disc
 ggplot(mpg, aes(class)) + 
   geom_bar()
 ggplot(mpg, aes(class, fill = drv)) + 
@@ -183,7 +194,8 @@ The default grouping will only be based on `class`, so each bar is now associate
 Because a bar can only display one colour, ggplot2 reverts to the default grey in this case.
 To show multiple colours, we need multiple bars for each `class`, which we can get by overriding the grouping:
 
-```{r bar-split-cont}
+```{r}
+#| label: bar-split-cont
 ggplot(mpg, aes(class, fill = hwy)) + 
   geom_bar()
 ggplot(mpg, aes(class, fill = hwy, group = hwy)) + 
@@ -201,7 +213,8 @@ If you need fine control over this behaviour, you'll need to create a factor wit
 
 2.  Modify the following plot so that you get one boxplot per integer value of `displ`.
 
-    ```{r, eval = FALSE}
+    ```{r}
+    #| eval: false
     ggplot(mpg, aes(displ, cty)) + 
       geom_boxplot()
     ```
@@ -214,7 +227,8 @@ If you need fine control over this behaviour, you'll need to create a factor wit
 
 4.  How many bars are in each of the following plots?
 
-    ```{r, eval = FALSE}
+    ```{r}
+    #| eval: false
     ggplot(mpg, aes(drv)) + 
       geom_bar()
 
@@ -234,7 +248,8 @@ If you need fine control over this behaviour, you'll need to create a factor wit
     Run the following code and fix the resulting graph.
     Why does this graph make us unhappy?
 
-    ```{r, eval = FALSE}
+    ```{r}
+    #| eval: false
     library(babynames)
     hadley <- dplyr::filter(babynames, name == "Hadley")
     ggplot(hadley, aes(year, n)) + 

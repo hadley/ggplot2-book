@@ -1,4 +1,6 @@
-```{r polishing, include = FALSE}
+```{r}
+#| label: polishing
+#| include: false
 source("common.R")
 ```
 
@@ -32,7 +34,8 @@ For example, imagine you've made the following plot of your data.
 
 `r columns(1, 2/3, 0.75)`
 
-```{r motivation-1}
+```{r}
+#| label: motivation-1
 base <- ggplot(mpg, aes(cty, hwy, color = factor(cyl))) +
   geom_jitter() + 
   geom_abline(colour = "grey50", size = 2)
@@ -50,7 +53,8 @@ First, you need to make sure the plot can stand alone by:
 
 Fortunately, you know how to do that already because you've read Section \@ref(titles) and Chapter \@ref(scale-colour):
 
-```{r motivation-2}
+```{r}
+#| label: motivation-2
 labelled <- base +
   labs(
     x = "City mileage/gallon",
@@ -71,7 +75,8 @@ Next, you need to make sure the plot matches the style guidelines of your journa
 
 In this chapter, you'll learn how to use the theming system to make those changes, as shown below:
 
-```{r motivation-3}
+```{r}
+#| label: motivation-3
 styled <- labelled +
   theme_bw() + 
   theme(
@@ -129,7 +134,8 @@ There are seven other themes built in to ggplot2 1.1.0:
 
 `r columns(3, 3/4)`
 
-```{r built-in}
+```{r}
+#| label: built-in
 df <- data.frame(x = 1:3, y = 1:3)
 base <- ggplot(df, aes(x, y)) + geom_point()
 base + theme_grey() + ggtitle("theme_grey()")
@@ -160,7 +166,10 @@ You're not limited to the themes built-in to ggplot2.
 Other packages, like ggthemes by Jeffrey Arnold, add even more.
 Here are a few of my favourites from ggthemes: \index{ggtheme}
 
-```{r ggtheme, message = FALSE, warning = FALSE}
+```{r}
+#| label: ggtheme
+#| message: false
+#| warning: false
 library(ggthemes)
 base + theme_tufte() + ggtitle("theme_tufte()")
 base + theme_solarized() + ggtitle("theme_solarized()")
@@ -198,7 +207,8 @@ Each element function has a set of parameters that control the appearance:
     Setting the font face is particularly challenging.
     \index{Themes!labels} \indexf{element\_text}
 
-    ```{r element_text}
+    ```{r}
+    #| label: element_text
     base_t <- base + labs(title = "This is a ggplot") + xlab(NULL) + ylab(NULL)
     base_t + theme(plot.title = element_text(size = 16))
     base_t + theme(plot.title = element_text(face = "bold", colour = "red"))
@@ -209,7 +219,8 @@ Each element function has a set of parameters that control the appearance:
     `margin()` has four arguments: the amount of space (in points) to add to the top, right, bottom and left sides of the text.
     Any elements not specified default to 0.
 
-    ```{r element_text-margin}
+    ```{r}
+    #| label: element_text-margin
     # The margins here look asymmetric because there are also plot margins
     base_t + theme(plot.title = element_text(margin = margin()))
     base_t + theme(plot.title = element_text(margin = margin(t = 10, b = 10)))
@@ -218,7 +229,8 @@ Each element function has a set of parameters that control the appearance:
 
 -   `element_line()` draws lines parameterised by `colour`, `linewidth` and `linetype`: \indexf{element\_line} \index{Themes!lines}
 
-    ```{r element_line}
+    ```{r}
+    #| label: element_line
     base + theme(panel.grid.major = element_line(colour = "black"))
     base + theme(panel.grid.major = element_line(linewidth = 2))
     base + theme(panel.grid.major = element_line(linetype = "dotted"))
@@ -227,7 +239,8 @@ Each element function has a set of parameters that control the appearance:
 -   `element_rect()` draws rectangles, mostly used for backgrounds, parameterised by `fill` colour and border `colour`, `linewidth` and `linetype`.\
     \index{Background} \index{Themes!background} \indexf{theme\_rect}
 
-    ```{r element_rect}
+    ```{r}
+    #| label: element_rect
     base + theme(plot.background = element_rect(fill = "grey80", colour = NA))
     base + theme(plot.background = element_rect(colour = "red", linewidth = 2))
     base + theme(panel.background = element_rect(fill = "linen"))
@@ -239,13 +252,15 @@ Each element function has a set of parameters that control the appearance:
     Notice how the plot automatically reclaims the space previously used by these elements: if you don't want this to happen (perhaps because they need to line up with other plots on the page), use `colour = NA, fill = NA` to create invisible elements that still take up space.
     \indexf{element\_blank}
 
-    ```{r element_blank}
+    ```{r}
+    #| label: element_blank
     base
     last_plot() + theme(panel.grid.minor = element_blank())
     last_plot() + theme(panel.grid.major = element_blank())
     ```
 
-    ```{r element_blank-2}
+    ```{r}
+    #| label: element_blank-2
     last_plot() + theme(panel.background = element_blank())
     last_plot() + theme(
       axis.title.x = element_blank(), 
@@ -263,7 +278,8 @@ It returns the previous theme settings, so you can easily restore the original p
 
 `r columns(2, 3/4, 2/3)`
 
-```{r theme-update}
+```{r}
+#| label: theme-update
 old_theme <- theme_update(
   plot.background = element_rect(fill = "lightblue3", colour = NA),
   panel.background = element_rect(fill = "lightblue", colour = NA),
@@ -302,7 +318,8 @@ Note that a small margin is still necessary if you want to draw a border around 
 
 `r columns(3, 3/4)`
 
-```{r plot}
+```{r}
+#| label: plot
 base + theme(plot.background = element_rect(colour = "grey50", linewidth = 2))
 base + theme(
   plot.background = element_rect(colour = "grey50", linewidth = 2),
@@ -332,7 +349,8 @@ The axis elements control the appearance of the axes:
 Note that `axis.text` (and `axis.title`) comes in three forms: `axis.text`, `axis.text.x`, and `axis.text.y`.
 Use the first form if you want to modify the properties of both axes at once: any properties that you don't explicitly set in `axis.text.x` and `axis.text.y` will be inherited from `axis.text`.
 
-```{r axis}
+```{r}
+#| label: axis
 df <- data.frame(x = 1:3, y = 1:3)
 base <- ggplot(df, aes(x, y)) + geom_point()
 
@@ -349,7 +367,8 @@ If you do this, note negative angles tend to look best and you should set `hjust
 
 `r columns(2, 3/4)`
 
-```{r axis-labels}
+```{r}
+#| label: axis-labels
 df <- data.frame(
   x = c("label", "a long label", "an even longer label"), 
   y = 1:3
@@ -386,7 +405,8 @@ These options are illustrated below:
 
 `r columns(3, 3/4)`
 
-```{r legend}
+```{r}
+#| label: legend
 df <- data.frame(x = 1:4, y = 1:4, z = rep(c("a", "b"), each = 2))
 base <- ggplot(df, aes(x, y, colour = z)) + geom_point()
 
@@ -432,7 +452,8 @@ Panel elements control the appearance of the plotting panels:
 The main difference between `panel.background` and `panel.border` is that the background is drawn underneath the data, and the border is drawn on top of it.
 For that reason, you'll always need to assign `fill = NA` when overriding `panel.border`.
 
-```{r panel}
+```{r}
+#| label: panel
 base <- ggplot(df, aes(x, y)) + geom_point()
 # Modify background
 base + theme(panel.background = element_rect(fill = "lightblue"))
@@ -449,7 +470,8 @@ base + theme(
 
 Note that aspect ratio controls the aspect ratio of the *panel*, not the overall plot:
 
-```{r aspect-ratio}
+```{r}
+#| label: aspect-ratio
 base2 <- base + theme(plot.background = element_rect(colour = "grey50"))
 # Wide screen
 base2 + theme(aspect.ratio = 9 / 16)
@@ -477,7 +499,8 @@ The following theme elements are associated with faceted ggplots:
 
 Element `strip.text.x` affects both `facet_wrap()` or `facet_grid()`; `strip.text.y` only affects `facet_grid()`.
 
-```{r faceting}
+```{r}
+#| label: faceting
 df <- data.frame(x = 1:4, y = 1:4, z = c("a", "a", "b", "b"))
 base_f <- ggplot(df, aes(x, y)) + geom_point() + facet_wrap(~z)
 
@@ -519,7 +542,11 @@ When saving a plot to use in another program, you have two basic choices of outp
 
 Figure \@ref(fig:vector-raster) illustrates the basic differences in these formats for a circle.
 
-```{r vector-raster, echo = FALSE, out.width = "100%", fig.cap="The schematic difference between raster (left) and vector (right) graphics."}
+```{r}
+#| label: vector-raster
+#| echo: false
+#| out.width: 100%
+#| fig.cap: The schematic difference between raster (left) and vector (right) graphics.
 knitr::include_graphics("diagrams/vector-raster.png", dpi = 300, auto_pdf = TRUE)
 ```
 

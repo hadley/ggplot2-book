@@ -1,4 +1,6 @@
-```{r setup, include = FALSE}
+```{r}
+#| label: setup
+#| include: false
 source("common.R")
 library(grid)
 set.seed(12L)
@@ -181,7 +183,8 @@ Now that we have our transformation function, our next task is to encapsulate it
 To do this, we'll take what we learned about creating `Stat` objects in Section \@ref(new-stats) and extend it a little.
 Our first step is to write some code that creates a subclass of `Stat` that we'll call `StatSpring`:
 
-```{r, eval = FALSE}
+```{r}
+#| eval: false
 StatSpring <- ggproto("StatSpring", Stat)
 ```
 
@@ -260,7 +263,8 @@ Our spring stat is the latter kind: each spring is defined by a single row of th
 
 As you can see by looking at source code for our `compute_panel()` method, we're doing a bit more than simply calling our `create_spring()` function:
 
-```{r, results='hide'}
+```{r}
+#| results: hide
 function(data, scales, diameter = 1, tension = 0.75, n = 50) {
   cols_to_keep <- setdiff(names(data), c("x", "y", "xend", "yend"))
   springs <- lapply(
@@ -295,7 +299,8 @@ This is important because we're going to draw our springs with `GeomPath`, and w
 Doing so ensures that the geom draws each spring as a distinct path, and won't draw any connecting lines between different springs.
 Again, there are some subtle details to call attention to in the implementation:
 
-```{r, results='hide'}
+```{r}
+#| results: hide
 function(data, params) {
   if (anyDuplicated(data$group)) {
     data$group <- paste(data$group, seq_len(nrow(data)), sep = "-")

@@ -1,6 +1,7 @@
 # Faceting {#facet}
 
-```{r, include = FALSE}
+```{r}
+#| include: false
 source("common.R")
 ```
 
@@ -17,13 +18,20 @@ There are three types of faceting:
 
 The differences between `facet_wrap()` and `facet_grid()` are illustrated in Figure \@ref(fig:facet-sketch).
 
-```{r facet-sketch, echo = FALSE, out.width = "75%", fig.cap="A sketch illustrating the difference between the two faceting systems. `facet_grid()` (left) is fundamentally 2d, being made up of two independent components. `facet_wrap()` (right) is 1d, but wrapped into 2d to save space."}
+```{r}
+#| label: facet-sketch
+#| echo: false
+#| out.width: 75%
+#| fig.cap: A sketch illustrating the difference between the two faceting systems. `facet_grid()`
+#|   (left) is fundamentally 2d, being made up of two independent components. `facet_wrap()`
+#|   (right) is 1d, but wrapped into 2d to save space.
 knitr::include_graphics("diagrams/position-facets.png", dpi = 300, auto_pdf = TRUE)
 ```
 
 Faceted plots have the capability to fill up a lot of space, so for this chapter we will use a subset of the mpg dataset that has a manageable number of levels: three cylinders (4, 6, 8), two types of drive train (4 and f), and six classes. 
 
-```{r mpg2}
+```{r}
+#| label: mpg2
 mpg2 <- subset(mpg, cyl != 5 & drv %in% c("4", "f") & class != "2seater")
 ```
 
@@ -58,7 +66,8 @@ base + facet_wrap(~class, nrow = 3, dir = "v")
    aligned.
 
     `r columns(1, 1 / 3, 0.75)`
-    ```{r grid-v}
+    ```{r}
+    #| label: grid-v
     base + facet_grid(. ~ cyl)
     ```
   
@@ -67,7 +76,8 @@ base + facet_wrap(~class, nrow = 3, dir = "v")
     aligned. This makes it particularly useful for comparing distributions.
 
     `r columns(1, 3 / 2, 0.30)`
-    ```{r mpg2-h}
+    ```{r}
+    #| label: mpg2-h
     base + facet_grid(drv ~ .)
     ```
 
@@ -76,7 +86,8 @@ base + facet_wrap(~class, nrow = 3, dir = "v")
     to take advantage of the aspect ratio of your screen.
 
     `r columns(1, 2 / 3, 0.75)`
-    ```{r grid-vh}
+    ```{r}
+    #| label: grid-vh
     base + facet_grid(drv ~ cyl)
     ```
 
@@ -96,7 +107,8 @@ For both `facet_wrap()` and `facet_grid()` you can control whether the position 
 Fixed scales make it easier to see patterns across panels; free scales make it easier to see patterns within panels.
 
 `r columns(1, 1 / 2.5, 0.75)`
-```{r fixed-vs-free}
+```{r}
+#| label: fixed-vs-free
 p <- ggplot(mpg2, aes(cty, hwy)) + 
   geom_abline() +
   geom_jitter(width = 0.1, height = 0.1) 
@@ -107,7 +119,8 @@ p + facet_wrap(~cyl, scales = "free")
 Free scales are also useful when we want to display multiple time series that were measured on different scales. To do this, we first need to change from 'wide' to 'long' data, stacking the separate variables into a single column.  An example of this is shown below with the long form of the `economics` data. \index{Data!economics\_long@\texttt{economics\_long}}
 
 `r columns(1, 1.2 / 1, 0.75)`
-```{r time}
+```{r}
+#| label: time
 economics_long
 ggplot(economics_long, aes(date, value)) + 
   geom_line() + 
@@ -116,7 +129,8 @@ ggplot(economics_long, aes(date, value)) +
 
 `facet_grid()` has an additional parameter called `space`, which takes the same values as `scales`.  When space is "free", each column (or row) will have width (or height) proportional to the range of the scale for that column (or row).  This makes the scaling equal across the whole plot: 1 cm on each panel maps to the same range of data. (This is somewhat analogous to the 'sliced' axis limits of lattice.) For example, if panel a had range 2 and panel b had range 4, one-third of the space would be given to a, and two-thirds to b. This is most useful for categorical scales, where we can assign space proportionally based on the number of levels in each facet, as illustrated below.
 
-```{r discrete-free}
+```{r}
+#| label: discrete-free
 mpg2$model <- reorder(mpg2$model, mpg2$cty)
 mpg2$manufacturer <- reorder(mpg2$manufacturer, -mpg2$cty)
 ggplot(mpg2, aes(cty, model)) + 
@@ -212,7 +226,8 @@ To facet continuous variables, you must first discretise them. ggplot2 provides 
 They are illustrated below:
 
 `r columns(1, 1/4, 1)`
-```{r discretising}
+```{r}
+#| label: discretising
 # Bins of width 1
 mpg2$disp_w <- cut_width(mpg2$displ, 1)
 # Six bins of equal length
@@ -247,7 +262,8 @@ Note that the faceting formula does not evaluate functions, so you must first cr
     a smooth curve fit to the full dataset.
 
     `r columns(1, 2/3, 0.75)`
-    ```{r, echo = FALSE}
+    ```{r}
+    #| echo: false
     ggplot(mpg2, aes(displ, hwy)) + 
       geom_smooth(data = select(mpg2, -class), se = FALSE) + 
       geom_point() + 

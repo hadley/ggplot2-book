@@ -1,4 +1,6 @@
-```{r mastery, include = FALSE}
+```{r}
+#| label: mastery
+#| include: false
 source("common.R")
 ```
 
@@ -56,7 +58,9 @@ Size and shape are not mapped, but remain at their (constant) default values.
 
 Once we have these mappings, we can create a new dataset that records this information:
 
-```{r mapping, echo = FALSE}
+```{r}
+#| label: mapping
+#| echo: false
 scatter <- with(mpg, data.frame(x = displ, y = hwy, colour = cyl))
 knitr::kable(head(scatter, 8))
 ```
@@ -69,7 +73,8 @@ Neither of those examples makes sense for this data, but we could still draw the
 
 `r columns(2, 2/3)`
 
-```{r other-geoms}
+```{r}
+#| label: other-geoms
 ggplot(mpg, aes(displ, hwy, colour = factor(cyl))) +
   geom_line() + 
   theme(legend.position = "none")
@@ -98,7 +103,8 @@ For example, this plot overlays a per group regression line on top of a scatterp
 
 `r columns(1, 2/3)`
 
-```{r complex-plot}
+```{r}
+#| label: complex-plot
 ggplot(mpg, aes(displ, hwy, colour = factor(cyl))) + 
   geom_point() + 
   geom_smooth(method = "lm")
@@ -133,7 +139,12 @@ There are many ways to do this, but here since `cyl` is a categorical variable w
 A different mapping is used when the variable is continuous.
 \index{Colour!wheel}
 
-```{r colour-wheel, echo = FALSE, out.width = "50%", fig.cap="A colour wheel illustrating the choice of five equally spaced colours. This is the default scale for discrete variables."}
+```{r}
+#| label: colour-wheel
+#| echo: false
+#| out.width: 50%
+#| fig.cap: A colour wheel illustrating the choice of five equally spaced colours. This
+#|   is the default scale for discrete variables.
 knitr::include_graphics("diagrams/colour-wheel.png", dpi = 300)
 ```
 
@@ -142,7 +153,9 @@ As well as aesthetics that have been mapped to variable, we also include aesthet
 We need these so that the aesthetics for each point are completely specified and R can draw the plot.
 The points will be filled circles (shape 19 in R) with a 1-mm diameter:
 
-```{r scaled, echo = FALSE}
+```{r}
+#| label: scaled
+#| echo: false
 rescale01 <- function(x) (x - min(x)) / (max(x) - min(x))
 
 p <- ggplot(mpg, aes(displ, hwy, colour = factor(cyl))) + 
@@ -166,7 +179,9 @@ With a simple example under our belts, let's now turn to look at this slightly m
 
 `r columns(1, 1 / 2, 0.75)`
 
-```{r complex, message = FALSE}
+```{r}
+#| label: complex
+#| message: false
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point() +
   geom_smooth() + 
@@ -205,7 +220,14 @@ In a log-log plot, the data values are not linearly mapped to position on the pl
 
 Figure \@ref(fig:schematic) illustrates the complete process schematically.
 
-```{r schematic, echo = FALSE, out.width = "75%", fig.cap="Schematic description of the plot generation process. Each square represents a layer, and this schematic represents a plot with three layers and three panels. All steps work by transforming individual data frames except for training scales, which doesn't affect the data frame and operates across all datasets simultaneously."}
+```{r}
+#| label: schematic
+#| echo: false
+#| out.width: 75%
+#| fig.cap: Schematic description of the plot generation process. Each square represents
+#|   a layer, and this schematic represents a plot with three layers and three panels.
+#|   All steps work by transforming individual data frames except for training scales,
+#|   which doesn't affect the data frame and operates across all datasets simultaneously.
 knitr::include_graphics("diagrams/mastery-schema.png", dpi = 300, auto_pdf = TRUE)
 ```
 
@@ -251,7 +273,13 @@ Some examples are shown in Figure \@ref(fig:scale-legends).
 
 `r columns(1, 1 / 4, 1)`
 
-```{r scale-legends, echo = FALSE, fig.cap = "Examples of legends from four different scales. From left to right: continuous variable mapped to size, and to colour, discrete variable mapped to shape, and to colour. The ordering of scales seems upside-down, but this matches the labelling of the $y$-axis: small values occur at the bottom."}
+```{r}
+#| label: scale-legends
+#| echo: false
+#| fig.cap: 'Examples of legends from four different scales. From left to right: continuous
+#|   variable mapped to size, and to colour, discrete variable mapped to shape, and to
+#|   colour. The ordering of scales seems upside-down, but this matches the labelling
+#|   of the $y$-axis: small values occur at the bottom.'
 df <- data.frame(
   x = 1:10,
   y = factor(letters[1:5])
@@ -293,7 +321,12 @@ See Chapter \@ref(coord) for more details.
 
 `r columns(3)`
 
-```{r coord, echo = FALSE, fig.cap = "Examples of axes and grid lines for three coordinate systems: Cartesian, semi-log and polar. The polar coordinate system illustrates the difficulties associated with non-Cartesian coordinates: it is hard to draw the axes well."}
+```{r}
+#| label: coord
+#| echo: false
+#| fig.cap: 'Examples of axes and grid lines for three coordinate systems: Cartesian,
+#|   semi-log and polar. The polar coordinate system illustrates the difficulties associated
+#|   with non-Cartesian coordinates: it is hard to draw the axes well.'
 df <- data.frame(x1 = c(1, 10), y1 = c(1, 5))
 p <- ggplot(df, aes(x1, y1)) +
   scale_x_continuous(NULL) + 

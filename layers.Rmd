@@ -1,4 +1,6 @@
-```{r layers, include = FALSE}
+```{r}
+#| label: layers
+#| include: false
 source("common.R")
 columns(1, 2 / 3)
 ```
@@ -20,7 +22,8 @@ So far, whenever we've created a plot with `ggplot()`, we've immediately added o
 But it's important to realise that there really are two distinct steps.
 First, we create a plot with default dataset and aesthetic mappings:
 
-```{r layer1}
+```{r}
+#| label: layer1
 p <- ggplot(mpg, aes(displ, hwy))
 p
 ```
@@ -34,7 +37,9 @@ p + geom_point()
 `geom_point()` is a shortcut.
 Behind the scenes it calls the `layer()` function to create a new layer: \indexf{layer}
 
-```{r layer2, eval = FALSE}
+```{r}
+#| label: layer2
+#| eval: false
 p + layer(
   mapping = NULL, 
   data = NULL,
@@ -96,7 +101,8 @@ To illustrate that idea, we'll generate two new datasets related to the mpg data
 First, we'll fit a loess model and generate predictions from it.
 (This is what `geom_smooth()` does behind the scenes)
 
-```{r loess-pred}
+```{r}
+#| label: loess-pred
 mod <- loess(hwy ~ displ, data = mpg)
 grid <- tibble(displ = seq(min(mpg$displ), max(mpg$displ), length = 50))
 grid$hwy <- predict(mod, newdata = grid)
@@ -106,7 +112,8 @@ grid
 
 Next, we'll isolate observations that are particularly far away from their predicted values:
 
-```{r loess-outlier}
+```{r}
+#| label: loess-outlier
 std_resid <- resid(mod) / mod$s
 outlier <- filter(mpg, abs(std_resid) > 2)
 outlier
@@ -131,7 +138,8 @@ This is a little inconsistent, but it reduces typing for the common case where y
 In this example, every layer uses a different dataset.
 We could define the same plot in another way, omitting the default dataset, and specifying a dataset for each layer:
 
-```{r, eval = FALSE}
+```{r}
+#| eval: false
 ggplot(mapping = aes(displ, hwy)) + 
   geom_point(data = mpg) + 
   geom_line(data = grid) + 
@@ -159,7 +167,8 @@ However, you may prefer it in cases where there isn't a clear primary dataset, o
 
     Use the data to recreate this plot:
 
-    ```{r, echo = FALSE}
+    ```{r}
+    #| echo: false
     ggplot(mpg, aes(class, hwy)) + 
       geom_jitter(width = 0.25) + 
       geom_point(data = class, colour = "red", size = 4) + 
@@ -171,7 +180,9 @@ However, you may prefer it in cases where there isn't a clear primary dataset, o
 The aesthetic mappings, defined with `aes()`, describe how variables are mapped to visual properties or **aesthetics**.
 `aes()` takes a sequence of aesthetic-variable pairs like this: \index{Aesthetics!mapping} \indexf{aes}
 
-```{r layer11, results = "hide"}
+```{r}
+#| label: layer11
+#| results: hide
 aes(x = displ, y = hwy, colour = class)
 ```
 
@@ -181,7 +192,9 @@ Here we map x-position to `displ`, y-position to `hwy`, and colour to `class`.
 The names for the first two arguments can be omitted, in which case they correspond to the x and y variables.
 That makes this specification equivalent to the one above:
 
-```{r layer12, results = "hide"}
+```{r}
+#| label: layer12
+#| results: hide
 aes(displ, hwy, colour = class)
 ```
 
@@ -198,7 +211,8 @@ This breaks containment, so that the plot no longer contains everything it needs
 Aesthetic mappings can be supplied in the initial `ggplot()` call, in individual layers, or in some combination of both.
 All of these calls create the same plot specification: \index{Aesthetics!plot vs. layer}
 
-```{r, eval = FALSE}
+```{r}
+#| eval: false
 ggplot(mpg, aes(displ, hwy, colour = class)) + 
   geom_point()
 ggplot(mpg, aes(displ, hwy)) + 
@@ -253,7 +267,8 @@ Because this value is discrete, the default colour scale uses evenly spaced colo
 
 `r columns(2, 2/3)`
 
-```{r layer15}
+```{r}
+#| label: layer15
 ggplot(mpg, aes(cty, hwy)) + 
   geom_point(colour = "darkblue") 
 
@@ -291,7 +306,8 @@ ggplot(mpg, aes(displ, hwy)) +
 
 1.  Simplify the following plot specifications:
 
-    ```{r, eval = FALSE}
+    ```{r}
+    #| eval: false
     ggplot(mpg) + 
       geom_point(aes(mpg$displ, mpg$hwy))
 
@@ -308,7 +324,8 @@ ggplot(mpg, aes(displ, hwy)) +
     Does it make sense?
     Why/why not?
 
-    ```{r, eval = FALSE}
+    ```{r}
+    #| eval: false
     ggplot(mpg) +
       geom_point(aes(class, cty)) + 
       geom_boxplot(aes(trans, hwy))
@@ -411,19 +428,22 @@ If alternative parameterisations are available, picking the right one for your d
 
     `r columns(2, 2 / 3)`
 
-    ```{r, echo = FALSE}
+    ```{r}
+    #| echo: false
     ggplot(mpg, aes(drv, displ)) + geom_violin()
     ggplot(mpg, aes(hwy, cty)) + 
       geom_count(alpha = 1/3) + 
       theme(legend.position = "none")
     ```
 
-    ```{r, echo = FALSE}
+    ```{r}
+    #| echo: false
     ggplot(mpg, aes(hwy, cty)) + geom_hex(bins = 10) + theme(legend.position = "none")
     ggplot(mpg, aes(cyl, drv)) + geom_jitter(width = 0.2, height = 0.2)
     ```
 
-    ```{r, echo = FALSE}
+    ```{r}
+    #| echo: false
     ggplot(economics, aes(date, psavert)) + geom_area()
     ggplot(economics, aes(uempmed, psavert)) + geom_path()
     ```
@@ -469,7 +489,8 @@ You can either add a `stat_()` function and override the default geom, or add a 
 
 `r columns(1, 1 / 2, 0.75)`
 
-```{r, fig.keep="last"}
+```{r}
+#| fig.keep: last
 ggplot(mpg, aes(trans, cty)) + 
   geom_point() + 
   stat_summary(geom = "point", fun = "mean", colour = "red", size = 4)
@@ -500,7 +521,8 @@ Each statistic lists the variables that it creates in its documentation.
 
 `r columns(2, 2/3)`
 
-```{r hist}
+```{r}
+#| label: hist
 ggplot(diamonds, aes(price)) + 
   geom_histogram(binwidth = 500)
 ggplot(diamonds, aes(price)) + 
@@ -513,7 +535,9 @@ It's easier to compare if we standardise each group to take up the same area:
 
 `r columns(2, 2/3)`
 
-```{r freqpoly, message = FALSE}
+```{r}
+#| label: freqpoly
+#| message: false
 ggplot(diamonds, aes(price, colour = cut)) + 
   geom_freqpoly(binwidth = 500) +
   theme(legend.position = "none")
@@ -543,7 +567,8 @@ The result of this plot is rather surprising: low quality diamonds seem to be mo
 
     `r columns(3, 3/4)`
 
-    ```{r, echo = FALSE}
+    ```{r}
+    #| echo: false
     ggplot(mpg, aes(displ)) + stat_ecdf()
     ggplot(mpg, aes(sample = displ)) + stat_qq()
     ggplot(mpg, aes(displ)) + 
@@ -573,7 +598,8 @@ Three adjustments apply primarily to bars:
 
 `r columns(3, 2 / 3)`
 
-```{r position-bar}
+```{r}
+#| label: position-bar
 dplot <- ggplot(diamonds, aes(color, fill = cut)) + 
   xlab(NULL) + ylab(NULL) + theme(legend.position = "none")
 # position stack is the default for bars, so `geom_bar()` 
@@ -588,7 +614,8 @@ The identity position adjustment isn't useful for bars, because each bar obscure
 
 `r columns(2, 2 / 3)`
 
-```{r position-identity}
+```{r}
+#| label: position-identity
 dplot + geom_bar(position = "identity", alpha = 1 / 2, colour = "grey50")
 
 ggplot(diamonds, aes(color, colour = cut)) + 
@@ -608,7 +635,8 @@ There are three position adjustments that are primarily useful for points:
 Note that the way you pass parameters to position adjustments differs to stats and geoms.
 Instead of including additional arguments in `...`, you construct a position adjustment object, supplying additional arguments in the call:
 
-```{r position-point}
+```{r}
+#| label: position-point
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point(position = "jitter")
 ggplot(mpg, aes(displ, hwy)) + 
@@ -617,7 +645,8 @@ ggplot(mpg, aes(displ, hwy)) +
 
 This is rather verbose, so `geom_jitter()` provides a convenient shortcut:
 
-```{r, eval = FALSE}
+```{r}
+#| eval: false
 ggplot(mpg, aes(displ, hwy)) + 
   geom_jitter(width = 0.05, height = 0.5)
 ```

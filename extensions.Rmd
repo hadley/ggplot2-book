@@ -1,4 +1,5 @@
-```{r include = FALSE}
+```{r}
+#| include: false
 source("common.R")
 ```
 
@@ -187,12 +188,14 @@ So now this works:
 
 `r columns(2, 1)`
 
-```{r, eval=FALSE}
+```{r}
+#| eval: false
 base + coord_annotate("annotation in blue")
 base + coord_annotate("annotation in blue") + theme_dark()
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 # DJN: I'm not sure why, because I can't reproduce the bug elsewhere, but the
 # call to register_theme_element() updates ggplot2:::ggplot_global$element_tree
 # only within *that* chunk, so subsequent chunks don't have ggxyz.panel.annotation
@@ -314,7 +317,8 @@ An example modifying the `setup_data()` method is included later, in Section \@r
 Suppose we want to create `StatDensityCommon`, a stat that computes a density estimate of a variable after estimating a default bandwidth to apply to all groups in the data.
 This could be done in many different ways but for simplicity let's imagine we have a function `common_bandwidth()` that estimates the bandwidth separately for each group using the `bw.nrd0()` function and then returns the average:
 
-```{r common-bandwidth}
+```{r}
+#| label: common-bandwidth
 common_bandwidth <- function(data) {
   split_data <- split(data$x, data$group)
   bandwidth <- mean(vapply(split_data, bw.nrd0, numeric(1)))
@@ -325,7 +329,8 @@ common_bandwidth <- function(data) {
 What we want from `StatDensityCommon` is to use the `common_bandwith()` function to set a common bandwidth before the data are separated by group and passed to the `compute_group()` function.
 This is where the `setup_params()` method is useful:
 
-```{r stat-density-common}
+```{r}
+#| label: stat-density-common
 StatDensityCommon <- ggproto("StatDensityCommon", Stat,
   required_aes = "x",
   
@@ -346,7 +351,8 @@ StatDensityCommon <- ggproto("StatDensityCommon", Stat,
 
 We then define a `stat_*()` function in the usual way:
 
-```{r stat-density-common-2}
+```{r}
+#| label: stat-density-common-2
 stat_density_common <- function(mapping = NULL, data = NULL, 
                                 geom = "line", position = "identity", 
                                 na.rm = FALSE, show.legend = NA, 
@@ -548,7 +554,8 @@ GeomBarbell <- ggproto("GeomBarbell", Geom,
 In this example the `draw_panel()` method returns a list of three grobs, one generated from `GeomSegment` and two from `GeomPoint`.
 As usual, if we want the geom to be exposed to the user we add a wrapper function:
 
-```{r, cache.vars=GeomBarbell}
+```{r}
+#| cache.vars: !expr GeomBarbell
 geom_barbell <- function(mapping = NULL, data = NULL, 
                          stat = "identity", position = "identity", 
                          ..., na.rm = FALSE, show.legend = NA, 
@@ -793,7 +800,9 @@ FacetScatter <- ggproto("FacetScatter", FacetWrap,
 
 To give you a sense of what this output looks like, this is the layout specification that is created when building the plot shown at the end of this section:
 
-```{r facet-scatter, echo=FALSE}
+```{r}
+#| label: facet-scatter
+#| echo: false
 facet_scatter <- function(facets, nrow, ncol, 
                           strip.position = "top", 
                           labeller = "label_value") {
@@ -810,7 +819,9 @@ facet_scatter <- function(facets, nrow, ncol,
 }
 ```
 
-```{r facet-scatter-plot, echo=FALSE}
+```{r}
+#| label: facet-scatter-plot
+#| echo: false
 scatter <- ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
   facet_scatter(vars(manufacturer), nrow = 5, ncol = 6)
@@ -822,7 +833,8 @@ scatter_built$layout$layout
 Next, we'll write the `facet_scatter()` constructor function to expose this functionality to the user.
 For facets this is as simple as creating a new instance of the relevant ggproto object (`FacetScatter` in this case) that passes user-specified parameters to the facet:
 
-```{r, ref.label="facet-scatter"}
+```{r}
+#| ref.label: facet-scatter
 ```
 
 There a couple of things to note about this constructor function.
@@ -836,13 +848,15 @@ In any case, we now have a working facet:
 
 `r columns(1, 1, 1)`
 
-```{r eval=FALSE}
+```{r}
+#| eval: false
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
   facet_scatter(vars(manufacturer), nrow = 5, ncol = 6)
 ```
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 # Use the earlier built one so that the random ROW and COL info
 # matches the layout specification shown above
 scatter_built$plot 

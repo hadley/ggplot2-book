@@ -1,4 +1,5 @@
-```{r include = FALSE}
+```{r}
+#| include: false
 source("common.R")
 ```
 
@@ -37,7 +38,8 @@ Instead, you can save any component to a variable (giving it a name), and then a
 
 `r columns(2, 1, 0.75)`
 
-```{r layer9}
+```{r}
+#| label: layer9
 bestfit <- geom_smooth(
   method = "lm", 
   se = FALSE, 
@@ -57,7 +59,8 @@ If you need more flexibility, you can wrap these reusable snippets in a function
 For example, we could extend our `bestfit` object to a more general function for adding lines of best fit to a plot.
 The following code creates a `geom_lm()` with three parameters: the model `formula`, the line `colour` and the `linewidth`:
 
-```{r geom-lm}
+```{r}
+#| label: geom-lm
 geom_lm <- function(formula = y ~ x, colour = alpha("steelblue", 0.5), 
                     linewidth = 2, ...)  {
   geom_smooth(formula = formula, se = FALSE, method = "lm", colour = colour,
@@ -101,7 +104,9 @@ The following function adds two layers: one to show the mean, and one to show it
 
 `r columns(2, 2/3, 0.75)`
 
-```{r geom-mean-1, warning = FALSE}
+```{r}
+#| label: geom-mean-1
+#| warning: false
 geom_mean <- function() {
   list(
     stat_summary(fun = "mean", geom = "bar", fill = "grey70"),
@@ -115,7 +120,9 @@ ggplot(mpg, aes(drv, cty)) + geom_mean()
 If the list contains any `NULL` elements, they're ignored.
 This makes it easy to conditionally add components:
 
-```{r geom-mean-2, warning = FALSE}
+```{r}
+#| label: geom-mean-2
+#| warning: false
 geom_mean <- function(se = TRUE) {
   list(
     stat_summary(fun = "mean", geom = "bar", fill = "grey70"),
@@ -259,7 +266,8 @@ Keeping these two pieces separate makes life much easier if you later want to re
 
 `r columns(2, 2/3)`
 
-```{r pcp_data}
+```{r}
+#| label: pcp_data
 pcp_data <- function(df) {
   is_numeric <- vapply(df, is.numeric, logical(1))
 
@@ -361,7 +369,8 @@ If you're not familiar with functional programming, read through <https://adv-r.
 
 1.  How could you add a `geom_point()` layer to each element of the following list?
 
-    ```{r, eval = FALSE}
+    ```{r}
+    #| eval: false
     plots <- list(
       ggplot(mpg, aes(displ, hwy)),
       ggplot(diamonds, aes(carat, price)),
@@ -372,7 +381,8 @@ If you're not familiar with functional programming, read through <https://adv-r.
 2.  What does the following function do?
     What's a better name for it?
 
-    ```{r, eval = FALSE}
+    ```{r}
+    #| eval: false
     mystery <- function(...) {
       Reduce(`+`, list(...), accumulate = TRUE)
     }

@@ -1,4 +1,5 @@
-```{r include = FALSE}
+```{r}
+#| include: false
 source("common.R")
 source("internals_ggbuild.R")
 source("internals_gggtable.R")
@@ -96,7 +97,8 @@ Further, if not given explicitly, the `group` aesthetic is calculated from the i
 The `group` aesthetic is, like `PANEL` a special column that must be kept throughout the processing.
 As an example, the plot `p` created earlier contains only the one layer specified by `geom_point()` and at the end of the data preparation process the first 10 rows of the data associated with this layer look like this:
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 data_prepped <- ggbuild(p)$prepared
 head(data_prepped[[1]], n = 10)
 ```
@@ -112,13 +114,15 @@ If the transformation is specified in the scale it is applied *before* any other
 For instance, our original plot `p` involves no scale transformations so the layer data remain untouched at this stage.
 The first three rows are shown below:
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 ggbuild(p)$transformed[[1]] %>% head(n = 3)
 ```
 
 In contrast, if our plot object is `p + scale_x_log10()` and we inspect the layer data at this point in processing, we see that the `x` variable has been transformed appropriately:
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 ggbuild(p + scale_x_log10())$transformed[[1]] %>% head(n = 3)
 ```
 
@@ -126,7 +130,8 @@ The second step in the process is to map the position aesthetics using the posit
 For continuous position scales -- such as those used in our example -- the out of bounds function specified in the `oob` argument (Section \@ref(oob)) is applied at this point, and `NA` values in the layer data are removed.
 This makes little difference for `p`, but if we were plotting `p + xlim(2, 8)` instead the `oob` function -- `scales::censor()` in this case -- would replace `x` values below 2 with `NA` as illustrated below:
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 ggbuild(p + xlim(2, 8))$positioned[[1]] %>% head(n = 3)
 ```
 
@@ -148,14 +153,17 @@ It simply doesn't exist at this point.
 As an example consider the second layer in our plot, which produces the linear regressions.
 Before the stat computations have been performed the data for this layer simply contain the coordinates and the required `PANEL` and `group` columns.
 
-```{r echo=FALSE, message=FALSE}
+```{r}
+#| echo: false
+#| message: false
 bb <- ggbuild(p)
 bb$positioned[[2]] %>% head(n = 3)
 ```
 
 After the stat computations have taken place, the layer data are changed considerably:
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 bb$poststat[[2]] %>% head(n = 3)
 ```
 
@@ -165,7 +173,8 @@ This is possibly where some of the columns gets reparameterised e.g. `x`+`width`
 After this the position adjustment gets applied, so that e.g. overlapping bars are stacked, etc.
 For our example plot `p`, it is at this step that the jittering is applied in the first layer of the plot and the `x` and `y` coordinates are perturbed:
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 ggbuild(p)$geompos[[1]] %>% head(n = 3)
 ```
 
@@ -178,7 +187,8 @@ Further, any default aesthetics from the geom are added so that the data is now 
 At the very last step, both the stat and the facet gets a last chance to modify the data in its final mapped form with their `finish_data()` methods before the build step is done.
 For the plot object `p`, the first few rows from final state of the layer data look like this:
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 ggbuild(p)$built$data[[1]] %>% head(n = 3)
 ```
 
@@ -211,7 +221,8 @@ For most plots this is simple as there is only a single panel, but for e.g. plot
 The output is the basis of the final gtable object.
 At this stage in the process our example plot `p` looks like this:
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 d <- ggplot_build(p)
 x <- gggtable(d)
 grid::grid.newpage()
@@ -229,7 +240,8 @@ In the end the output is a gtable that holds each legend box arranged and styled
 Once created the guide gtable is then added to the main gtable according to the `legend.position` theme setting.
 At this stage, our example plot is complete in most respects: the only thing missing is the title.
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 d <- ggplot_build(p)
 x <- gggtable(d)
 grid::grid.newpage()
@@ -533,7 +545,8 @@ With that in mind it is useful to understand how ggplot2 uses ggproto:
     This is the reason why the `ggproto_parent()` function is rarely called within the ggplot2 source code.
     As an example, the `setup_params()` method in `GeomErrorbar` is defined as:
 
-    ```{r, eval=FALSE}
+    ```{r}
+    #| eval: false
     GeomErrorbar <- ggproto(
       # ...
       setup_params = function(data, params) {
