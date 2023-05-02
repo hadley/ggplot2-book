@@ -1,4 +1,4 @@
-# Position scales and axes {#scale-position}
+# Position scales and axes {#sec-scale-position}
 
 ```{r}
 #| label: setup
@@ -33,21 +33,21 @@ Because position scales are used in every plot, it is useful to understand how t
 In this chapter we'll discuss this in detail.
 The chapter is organised into four main sections:
 
--   Section \@ref(numeric-position-scales) discusses continuous position scales. In addition to covering core topics like controlling scale limits (Section \@ref(position-continuous-limits)), breaks (Section \@ref(position-continuous-breaks)), and labels (Section \@ref(position-continuous-labels)), there are sections providing a detailed coverage of scale transformations (Section \@ref(scale-transformation)) as well as the subtle issues that arise when you need to zoom in or zoom out on a plot (Sections \@ref(zooming-in) and \@ref(zooming-out)).
--   Section \@ref(date-scales) discusses date/time scales, a special type of continuous scale. Because dates and times are a little more complicated than a standard continuous variable, ggplot2 provides special scales to help you control the major and minor breaks (Sections \@ref(date-breaks) and \@ref(date-minor-breaks)) and the labels (Section \@ref(date-labels)) for date/time data.
--   Section \@ref(discrete-position) discusses discrete position scales. It covers limits, breaks, and labels in Section \@ref(scale-labels) and axis label customisation in Section \@ref(guide-axis).
--   Section \@ref(binned-position) discusses binned position scales.
+-   @sec-numeric-position-scales discusses continuous position scales. In addition to covering core topics like controlling scale limits (@sec-position-continuous-limits), breaks (@sec-position-continuous-breaks), and labels (@sec-position-continuous-labels), there are sections providing a detailed coverage of scale transformations (@sec-scale-transformation) as well as the subtle issues that arise when you need to zoom in or zoom out on a plot (@sec-zooming-in and @sec-zooming-out).
+-   @sec-date-scales discusses date/time scales, a special type of continuous scale. Because dates and times are a little more complicated than a standard continuous variable, ggplot2 provides special scales to help you control the major and minor breaks (@sec-date-breaks and @sec-date-minor-breaks) and the labels (@sec-date-labels) for date/time data.
+-   @sec-discrete-position discusses discrete position scales. It covers limits, breaks, and labels in @sec-scale-labels and axis label customisation in @sec-guide-axis.
+-   @sec-binned-position discusses binned position scales.
 
 \index{Scales!position} \index{Positioning!scales}
 
-## Numeric position scales {#numeric-position-scales}
+## Numeric position scales {#sec-numeric-position-scales}
 
 The most common continuous position scales are the default `scale_x_continuous()` and `scale_y_continuous()` functions.
 In the simplest case they map linearly from the data value to a location on the plot.
-There are several other position scales for continuous variables---`scale_x_log10()`, `scale_x_reverse()`, etc---most of which are convenience functions used to provide easy access to common transformations, discussed in in Section \@ref(scale-transformation).
+There are several other position scales for continuous variables---`scale_x_log10()`, `scale_x_reverse()`, etc---most of which are convenience functions used to provide easy access to common transformations, discussed in in @sec-scale-transformation.
 \indexf{scale\_x\_continuous}
 
-### Limits {#position-continuous-limits}
+### Limits {#sec-position-continuous-limits}
 
 \index{Axis!limits} \index{Scales!limits}
 
@@ -99,7 +99,7 @@ base_08 +
 
 However, this code is a little unwieldy.
 Because modifying scale limits is such a common task, ggplot2 provides the `lims()` convenience function to simplify the code.
-Analogous to the `labs()` function used to specify axis labels (Section \@ref(titles)), `lims()` takes name-value pairs as inputs: the argument name is used to specify the aesthetic, and the value is used to specify the scale limits.
+Analogous to the `labs()` function used to specify axis labels (@sec-titles), `lims()` takes name-value pairs as inputs: the argument name is used to specify the aesthetic, and the value is used to specify the scale limits.
 \indexf{xlim} \indexf{ylim} \indexf{lims}
 
 ```{r}
@@ -109,9 +109,9 @@ base_08 + lims(x = c(1, 7), y = c(10, 45))
 
 In the special case where only one axis limit needs to be specified, ggplot2 also provides `xlim()` and `ylim()` helper functions, which can save you a few keystrokes.
 In practice `lims()` tends to be more useful, because it can be used to set limits for several aesthetics at once.
-You'll see an example of `lims()` applied to non-position aesthetics in Section \@ref(colour-discrete-limits).
+You'll see an example of `lims()` applied to non-position aesthetics in @sec-colour-discrete-limits.
 
-### Zooming in {#zooming-in}
+### Zooming in {#sec-zooming-in}
 
 The examples in the previous section expand the scale limits beyond the range spanned by the data.
 It is also possible to narrow the default scale limits, but care is required: when you truncate the scale limits, some data points will fall outside the boundaries you set, and ggplot2 has to make a decision about what to do with these data points.
@@ -139,10 +139,10 @@ Because these "out of bounds" values are no longer available, the end result is 
 With the benefit of hindsight it's clear this wasn't a good design choice, because it is a common source of confusion for users.
 Unfortunately, it would be very hard to change this default without breaking a lot of existing code.
 
-You can learn more about coordinate systems in Section \@ref(cartesian).
-To learn more about how "out of bounds" values are handled for continuous and binned scales, see Section \@ref(oob).
+You can learn more about coordinate systems in @sec-cartesian.
+To learn more about how "out of bounds" values are handled for continuous and binned scales, see @sec-oob.
 
-### Visual range expansion {#zooming-out}
+### Visual range expansion {#sec-zooming-out}
 
 If you have eagle eyes, you'll have noticed that the visual range of the axes actually extends a little bit past the numeric limits that we have specified in the various examples.
 This ensures that the data does not overlap the axes, which is usually (but not always) desirable.
@@ -216,7 +216,7 @@ Note the different behaviour in the left and middle plots: the `add` argument is
 
 <!-- 1.  What does `expand_limits()` do and how does it work?  Read the source code. -->
 
-### Breaks {#position-continuous-breaks}
+### Breaks {#sec-position-continuous-breaks}
 
 Setting the locations of the axis tick marks is a common data visualisation task.
 In ggplot2, axis tick marks and legend tick marks are both special cases of "scale breaks", and can be modified using the `breaks` argument to the scale function.
@@ -295,7 +295,7 @@ base +
 
 Notice the difference between setting an offset of 200 and -200.
 
-### Minor breaks {#minor-breaks}
+### Minor breaks {#sec-minor-breaks}
 
 \index{Minor breaks}\index{Log!ticks}
 
@@ -323,7 +323,7 @@ base + scale_x_log10(minor_breaks = mb)
 
 As with `breaks`, you can also supply a function to `minor_breaks`, such as `scales::minor_breaks_n()` or `scales::minor_breaks_width()` functions that can be helpful in controlling the minor breaks.
 
-### Labels {#position-continuous-labels}
+### Labels {#sec-position-continuous-labels}
 
 Every break is associated with a label and these can be changed by setting the `labels` argument to the scale function:
 
@@ -410,7 +410,7 @@ base + scale_y_continuous(labels = NULL)
 
 <!--     What label function converts 1 to 1st, 2 to 2nd, and so on? -->
 
-### Transformations {#scale-transformation}
+### Transformations {#sec-scale-transformation}
 
 When working with continuous data, the default is to map linearly from the data space onto the aesthetic space.
 It is possible to override this default using scale transformations, which alter the way in which this mapping takes place.
@@ -513,9 +513,9 @@ ggplot(mpg, aes(displ, hwy)) +
 
 Regardless of which method you use, the transformation occurs before any statistical summaries.
 To transform *after* statistical computation use `coord_trans()`.
-See Section \@ref(cartesian) for more details on coordinate systems, and Section \@ref(scale-transformation-extras) if you need to transform something other than a numeric position scale.
+See @sec-cartesian for more details on coordinate systems, and @sec-scale-transformation-extras if you need to transform something other than a numeric position scale.
 
-## Date-time position scales {#date-scales}
+## Date-time position scales {#sec-date-scales}
 
 \index{Date/times} \index{Data!date/time} \index{Time} \index{Scales!date/time} \indexf{scale\_x\_datetime}
 
@@ -527,9 +527,9 @@ You may also find the lubridate package helpful to manipulate date/time data [@l
 Assuming you have appropriately formatted data mapped to the x aesthetic, ggplot2 will use `scale_x_date()` as the default scale for dates and `scale_x_datetime()` as the default scale for date-time data.
 The corresponding scales for other aesthetics follow the usual naming rules.
 Date scales behave similarly to other continuous scales, but contain additional arguments that allow you to work in date-friendly units.
-This section discusses date/time scales for position aesthetics: see Section \@ref(date-colour-scales) for colour and fill aesthetics.
+This section discusses date/time scales for position aesthetics: see @sec-date-colour-scales for colour and fill aesthetics.
 
-### Breaks {#date-breaks}
+### Breaks {#sec-date-breaks}
 
 The `date_breaks` argument allows you to position breaks by date units (years, months, weeks, days, hours, minutes, and seconds).
 For example, `date_breaks = "2 weeks"` will place a major tick mark every two weeks and `date_breaks = "15 years"` will place them every 15 years:
@@ -547,10 +547,10 @@ date_base + scale_x_date(date_breaks = "15 years")
 ```
 
 Compared to the plot on the left, two things have changed in the plot on the right: the tick marks are placed at 15 year intervals, and the label format has changed.
-We'll discuss date labelling in Section \@ref(date-labels), but for now our focus is on the breaks.
+We'll discuss date labelling in @sec-date-labels, but for now our focus is on the breaks.
 
 To understand how ggplot2 interprets `date_breaks = "15 years"`, it is helpful to note that it is merely a convenient shorthand for setting `breaks = scales::breaks_width("15 years")`.
-The longer form is typically unnecessary, but it can be useful if---as discussed in Section \@ref(position-continuous-breaks)---you wish to specify an `offset`.
+The longer form is typically unnecessary, but it can be useful if---as discussed in @sec-position-continuous-breaks---you wish to specify an `offset`.
 For example, suppose the goal is to plot data spanning a calendar year, with monthly breaks.
 Specifying `date_breaks = "1 month"` is equivalent to setting `scales::breaks_width("1 month")`, which produces these breaks:
 
@@ -571,10 +571,10 @@ set_breaks <- scales::breaks_width("1 month", offset = 8)
 set_breaks(the_year)
 ```
 
-### Minor breaks {#date-minor-breaks}
+### Minor breaks {#sec-date-minor-breaks}
 
 Date/times scales also have a `date_minor_breaks` argument that allows you to specify the minor breaks in using date units, in exactly the same fashion that `date_breaks` does for major breaks.
-To illustrate this, we'll define an empty plot with a date scale on the y-axis, and tweak the theme (Chapter \@ref(polishing)) to make the grid lines more visually prominent:
+To illustrate this, we'll define an empty plot with a date scale on the y-axis, and tweak the theme (@sec-polishing) to make the grid lines more visually prominent:
 
 `r columns(2, 1.5)`
 
@@ -598,7 +598,7 @@ Note that in the first plot, the minor breaks are spaced evenly between the mont
 In the second plot, the major and minor beaks follow slightly different patterns: the minor breaks are always spaced 7 days apart but the major breaks are 1 month apart.
 Because the months vary in length, this leads to slightly uneven spacing.
 
-### Labels {#date-labels}
+### Labels {#sec-date-labels}
 
 Date scales contain a `labels` argument that behaves similarly to the corresponding argument for numeric scales, but is often more convenient to use the `date_labels` argument.
 It controls the display of the labels using the same formatting strings as in `strptime()` and `format()`.
@@ -649,7 +649,7 @@ base + scale_x_date(limits = lim, date_labels = "%B\n%Y")
 ```
 
 In these examples we have specified the labels manually via the `date_labels` argument.
-An alternative approach is to pass a labelling function to the `labels` argument, in the same way we described in Section \@ref(position-continuous-labels).
+An alternative approach is to pass a labelling function to the `labels` argument, in the same way we described in @sec-position-continuous-labels.
 You can write your own custom labelling function, but this is often unnecessary.
 The scales package provides convenient functions that can generate labellers for you, notably `scales::label_date()` and `scales::label_date_short()`.
 You rarely need to call `scales::label_date()` directly, because that's the function that `date_labels` uses.
@@ -669,7 +669,7 @@ base +
 
 This can often produce clearer plots: in the example above each year is labelled only once rather than appearing in every label, reducing the amount of visual clutter and making it easier for the viewer to see where each year begins and ends.
 
-## Discrete position scales {#discrete-position}
+## Discrete position scales {#sec-discrete-position}
 
 It is also possible to map discrete variables to position scales, with the default scales being `scale_x_discrete()` and `scale_y_discrete()`.
 For example, the following two plot specifications are equivalent
@@ -687,7 +687,7 @@ ggplot(mpg, aes(x = hwy, y = class)) +
 ```
 
 Internally, ggplot2 handles discrete scales by mapping each category to an integer value and then drawing the geom at the corresponding coordinate location.
-To illustrate this, we can add a custom annotation (see Section \@ref(custom-annotations)) to the plot:
+To illustrate this, we can add a custom annotation (see @sec-custom-annotations) to the plot:
 
 `r columns(1)`
 
@@ -718,13 +718,13 @@ ggplot(mpg, aes(x = drv, y = hwy)) + geom_boxplot()
 ggplot(mpg, aes(x = drv, y = hwy)) + geom_boxplot(width = .4)
 ```
 
-### Limits, breaks, and labels {#scale-labels}
+### Limits, breaks, and labels {#sec-scale-labels}
 
 \index{Axis!labels} \index{Legend!keys}
 
 The limits, breaks.
 and labels for a discrete position scale can be set using the `limits`, `breaks`, and `labels` arguments.
-For the most part these behave identically to the corresponding arguments for numeric scales (Section \@ref(numeric-position-scales)), though there are some differences.
+For the most part these behave identically to the corresponding arguments for numeric scales (@sec-numeric-position-scales), though there are some differences.
 For example, the limits of a discrete scale are not defined in terms of endpoints, but instead correspond to the set of allowable values for that variable.
 Accordingly, ggplot2 expects that the `limits` of a discrete scale should be a character vector that enumerates all possible values in the order they should appear:
 
@@ -755,7 +755,7 @@ base + scale_y_discrete(labels = c(c = "carrot", b = "banana"))
 As with other scales, discrete position scales allow you to pass a function to the `labels` argument.
 The `scales::label_wrap()` function can be particularly valuable for categorical data, as it allows you to wrap long strings across multiple lines.
 
-### Label positions {#guide-axis}
+### Label positions {#sec-guide-axis}
 
 When plotting categorical data it is often necessary to move the axis labels in some way to prevent them from overlapping:
 
@@ -767,7 +767,7 @@ base
 ```
 
 Even when allocated a lot of horizontal space, the axis labels overlap considerably on this plot.
-We can control this with the help of the `guides()` function, which works in a similar way to the `labs()` helper function described in Section \@ref(titles).
+We can control this with the help of the `guides()` function, which works in a similar way to the `labs()` helper function described in @sec-titles.
 Both take the name of different aesthetics (e.g., color, x, fill) as arguments and allow you to specify your own value.
 For a position aesthetic, we use the `guide_axis()` to tell ggplot2 how we want to modify the axis labels.
 For example, we could tell ggplot2 to "dodge" the position of the labels by setting `guide_axis(n.dodge = 3)`, or to rotate them by setting `guide_axis(angle = 90)`:
@@ -790,9 +790,9 @@ base + scale_x_discrete(guide = guide_axis(n.dodge = 3))
 base + scale_x_discrete(guide = guide_axis(angle = 90))
 ```
 
-To learn more about guide functions see Section \@ref(scale-guide).
+To learn more about guide functions see @sec-scale-guide.
 
-## Binned position scales {#binned-position}
+## Binned position scales {#sec-binned-position}
 
 A variation on discrete position scales are binned scales, where a continuous variable is sliced into multiple bins and the discretised variable is plotted.
 For position aesthetics, binned scales are mostly used to create histograms and related plots.
@@ -829,4 +829,4 @@ base +
   scale_y_binned(n.breaks = 15)
 ```
 
-You can read more about how binned scales are used for non-position aesthetics in Sections \@ref(binned-colour) and Section \@ref(guide-bins).
+You can read more about how binned scales are used for non-position aesthetics in @sec-binned-colour and @sec-guide-bins.

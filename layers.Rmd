@@ -1,4 +1,4 @@
-# Build a plot layer by layer {#layers}
+# Build a plot layer by layer {#sec-layers}
 
 ```{r}
 #| label: layers
@@ -51,25 +51,25 @@ p + layer(
 
 This call fully specifies the five components to the layer: \index{Layers!components}
 
--   **mapping**: A set of aesthetic mappings, specified using the `aes()` function and combined with the plot defaults as described in Section \@ref(aes).
+-   **mapping**: A set of aesthetic mappings, specified using the `aes()` function and combined with the plot defaults as described in @sec-aes.
     If `NULL`, uses the default mapping set in `ggplot()`.
 
 -   **data**: A dataset which overrides the default plot dataset.
     It is usually omitted (set to `NULL`), in which case the layer will use the default data specified in `ggplot()`.
-    The requirements for data are explained in more detail in Section \@ref(data).
+    The requirements for data are explained in more detail in @sec-data.
 
 -   **geom**: The name of the geometric object to use to draw each observation.
-    Geoms are discussed in more detail in Section \@ref(data), and Chapters \@ref(individual-geoms) and \@ref(collective-geoms) explore their use in more depth.
+    Geoms are discussed in more detail in @sec-data, and @sec-individual-geoms and @sec-collective-geoms explore their use in more depth.
 
     Geoms can have additional arguments.
     All geoms take aesthetics as parameters.
-    If you supply an aesthetic (e.g. colour) as a parameter, it will not be scaled, allowing you to control the appearance of the plot, as described in Section \@ref(setting-mapping).
+    If you supply an aesthetic (e.g. colour) as a parameter, it will not be scaled, allowing you to control the appearance of the plot, as described in @sec-setting-mapping.
     You can pass params in `...` (in which case stat and geom parameters are automatically teased apart), or in a list passed to `geom_params`.
 
 -   **stat**: The name of the statistical tranformation to use.
     A statistical transformation performs some useful statistical summary, and is key to histograms and smoothers.
     To keep the data as is, use the "identity" stat.
-    Learn more in Section \@ref(stat).
+    Learn more in @sec-stat.
 
     You only need to set one of stat and geom: every geom has a default stat, and every stat a default geom.
 
@@ -77,13 +77,13 @@ This call fully specifies the five components to the layer: \index{Layers!compon
     You can supply params either in `...` (in which case stat and geom parameters are automatically teased apart), or in a list called `stat_params`.
 
 -   **position**: The method used to adjust overlapping objects, like jittering, stacking or dodging.
-    More details in Section \@ref(position).
+    More details in @sec-position.
 
 It's useful to understand the `layer()` function so you have a better mental model of the layer object.
 But you'll rarely use the full `layer()` call because it's so verbose.
 Instead, you'll use the shortcut `geom_` functions: `geom_point(mapping, data, ...)` is exactly equivalent to `layer(mapping, data, geom = "point", ...)`.
 
-## Data {#data}
+## Data {#sec-data}
 
 Every layer must have some data associated with it, and that data must be in a tidy data frame.
 Tidy data frames are described in more detail in R for Data Science (<https://r4ds.had.co.nz>), but for now, all you need to know is that a tidy data frame has variables in the columns and observations in the rows.
@@ -175,7 +175,7 @@ However, you may prefer it in cases where there isn't a clear primary dataset, o
       geom_text(aes(y = 10, label = paste0("n = ", n)), class, size = 3)
     ```
 
-## Aesthetic mappings {#aes}
+## Aesthetic mappings {#sec-aes}
 
 The aesthetic mappings, defined with `aes()`, describe how variables are mapped to visual properties or **aesthetics**.
 `aes()` takes a sequence of aesthetic-variable pairs like this: \index{Aesthetics!mapping} \indexf{aes}
@@ -206,7 +206,7 @@ Never refer to a variable with `$` (e.g., `diamonds$carat`) in `aes()`.
 This breaks containment, so that the plot no longer contains everything it needs, and causes problems if ggplot2 changes the order of the rows, as it does when faceting.
 \indexc{\$}
 
-### Specifying the aesthetics in the plot vs. in the layers {#plots-and-layers}
+### Specifying the aesthetics in the plot vs. in the layers {#sec-plots-and-layers}
 
 Aesthetic mappings can be supplied in the initial `ggplot()` call, in individual layers, or in some combination of both.
 All of these calls create the same plot specification: \index{Aesthetics!plot vs. layer}
@@ -253,7 +253,7 @@ ggplot(mpg, aes(displ, hwy)) +
 Generally, you want to set up the mappings to illuminate the structure underlying the graphic and minimise typing.
 It may take some time before the best approach is immediately obvious, so if you've iterated your way to a complex graphic, it may be worthwhile to rewrite it to make the structure more clear.
 
-### Setting vs. mapping {#setting-mapping}
+### Setting vs. mapping {#sec-setting-mapping}
 
 Instead of mapping an aesthetic property to a variable, you can set it to a *single* value by specifying it in the layer parameters.
 We **map** an aesthetic to a variable (e.g., `aes(colour = cut)`) or **set** it to a constant (e.g., `colour = "red"`).
@@ -287,7 +287,7 @@ ggplot(mpg, aes(cty, hwy)) +
 ```
 
 This is most useful if you always have a column that already contains colours.
-You'll learn more about that in Section \@ref(scale-identity).
+You'll learn more about that in @sec-scale-identity.
 
 It's sometimes useful to map aesthetics to constants.
 For example, if you want to display multiple layers with varying parameters, you can "name" each layer:
@@ -334,7 +334,7 @@ ggplot(mpg, aes(displ, hwy)) +
 3.  What happens if you try to use a continuous variable on the x axis in one layer, and a categorical variable in another layer?
     What happens if you do it in the opposite order?
 
-## Geoms {#geom}
+## Geoms {#sec-geom}
 
 Geometric objects, or **geoms** for short, perform the actual rendering of the layer, controlling the type of plot that you create.
 For example, using a point geom will create a scatterplot, while using a line geom will create a line plot.
@@ -456,7 +456,7 @@ If alternative parameterisations are available, picking the right one for your d
     -   Draw a map.
     -   Label outlying points.
 
-## Stats {#stat}
+## Stats {#sec-stat}
 
 A statistical transformation, or **stat**, transforms the data, typically by summarising it in some manner.
 For example, a useful stat is the smoother, which calculates the smoothed mean of y, conditional on x.
@@ -502,7 +502,7 @@ ggplot(mpg, aes(trans, cty)) +
 
 We think it's best to use the second form because it makes it more clear that you're displaying a summary, not the raw data.
 
-### Generated variables {#generated-variables}
+### Generated variables {#sec-generated-variables}
 
 Internally, a stat takes a data frame as input and returns a data frame as output, and so a stat can add new variables to the original dataset.
 It is possible to map aesthetics to these new variables.
@@ -583,7 +583,7 @@ The result of this plot is rather surprising: low quality diamonds seem to be mo
 
 3.  Read the help for `stat_sum()` then use `geom_count()` to create a plot that shows the proportion of cars that have each combination of `drv` and `trans`.
 
-## Position adjustments {#position}
+## Position adjustments {#sec-position}
 
 \index{Position adjustments}
 

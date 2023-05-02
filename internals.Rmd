@@ -1,4 +1,4 @@
-# Internals of ggplot2 {#internals}
+# Internals of ggplot2 {#sec-internals}
 
 ```{r}
 #| include: false
@@ -18,7 +18,7 @@ This chapter is dedicated to providing a description of how ggplot2 works "behin
 We focus on the design of the system rather than technical details of its implementation, and the goal is to provide a conceptual understanding of how the parts fit together.
 We begin with a general overview of the process that unfolds when a ggplot object is plotted, and then dive into details, describing how the data flows through this whole process and ends up as visual elements in your plot.
 
-## The `plot()` method {#plot-method}
+## The `plot()` method {#sec-plot-method}
 
 To understand the machinery underpinning ggplot2, it is important to recognise that almost everything related to the plot drawing happens when you print the ggplot object, not when you construct it.
 For instance, in the code below, the object `p` is an abstract specification of the plot data, the layers, etc.
@@ -74,9 +74,9 @@ This is an important point, as it means ggplot2 -- or any extension to ggplot2 -
 Rather, its job is to convert user data to one or more graphical primitives such as polygons, lines, points, etc and then hand responsibility over to the grid package.
 
 Although it is not strictly correct to do so, we will refer to this conversion into graphical primitives as the **rendering process**.
-The next two sections follow the data down the rendering rabbit hole through the build step (Section \@ref(ggplotbuild)) and the gtable step (Section \@ref(ggplotgtable)) whereupon -- rather like Alice in Lewis Carroll's novel -- it finally arrives in the grid wonderland as a collection of graphical primitives.
+The next two sections follow the data down the rendering rabbit hole through the build step (@sec-ggplotbuild) and the gtable step (@sec-ggplotgtable) whereupon -- rather like Alice in Lewis Carroll's novel -- it finally arrives in the grid wonderland as a collection of graphical primitives.
 
-## The build step {#ggplotbuild}
+## The build step {#sec-ggplotbuild}
 
 <!-- As may be apparent from the section above, the main actor in the rendering process is the layer data, and the rendering process is really a long progression of steps to convert the data from the format supplied by the user, to a format that fits with the graphic primitives needed to create the desired visual elements. This also means that to gain an understanding of the mechanics of ggplot2 we must understand how data flows through the mechanics and how it transforms along the way. -->
 
@@ -127,7 +127,7 @@ ggbuild(p + scale_x_log10())$transformed[[1]] %>% head(n = 3)
 ```
 
 The second step in the process is to map the position aesthetics using the position scales, which unfolds differently depending on the kind of scale involved.
-For continuous position scales -- such as those used in our example -- the out of bounds function specified in the `oob` argument (Section \@ref(oob)) is applied at this point, and `NA` values in the layer data are removed.
+For continuous position scales -- such as those used in our example -- the out of bounds function specified in the `oob` argument (@sec-oob) is applied at this point, and `NA` values in the layer data are removed.
 This makes little difference for `p`, but if we were plotting `p + xlim(2, 8)` instead the `oob` function -- `scales::censor()` in this case -- would replace `x` values below 2 with `NA` as illustrated below:
 
 ```{r}
@@ -198,9 +198,9 @@ The return value of `ggplot_build()` is a list structure with the `ggplot_built`
 It contains the computed data, as well as a `Layout` object holding information about the trained coordinate system and faceting.
 Further it holds a copy of the original plot object, but now with trained scales.
 
-## The gtable step {#ggplotgtable}
+## The gtable step {#sec-ggplotgtable}
 
-The purpose of `ggplot_gtable()` is to take the output of the build step and, with the help of the gtable package, turn it into an object that can be plotted using grid (we'll talk more about gtable in Section \@ref(tabular-grid)).
+The purpose of `ggplot_gtable()` is to take the output of the build step and, with the help of the gtable package, turn it into an object that can be plotted using grid (we'll talk more about gtable in @sec-tabular-grid).
 At this point the main elements responsible for further computations are the geoms, the coordinate system, the facet, and the theme.
 The stats and position adjustments have all played their part already.
 
@@ -280,16 +280,16 @@ grid::grid.newpage()
 grid::grid.draw(p_gtable)
 ```
 
-## Introducing ggproto {#ggproto}
+## Introducing ggproto {#sec-ggproto}
 
-Sections \@ref(plot-method) to \@ref(ggplotgtable) focus on the sequence of events involved in building a ggplot, but are intentionally vague as to what kind of programming objects perform this work.
+@sec-plot-method to @sec-ggplotgtable focus on the sequence of events involved in building a ggplot, but are intentionally vague as to what kind of programming objects perform this work.
 
 All ggplot2 objects are built using the **ggproto** system for object-oriented programming, and is unusual in that it is used only by ggplot2.
 This is something of a historical accident: ggplot2 originally used proto [@proto] for object-oriented programming, which became a problem once the need for an official extension mechanism arose due to the limitations of the proto system.
 Attempts to switch ggplot2 to other systems such as R6 [@R6] proved difficult, and creating an object-oriented system specific to the needs of ggplot2 turned out to be the least bad solution.
 
 Understanding the ggproto object-oriented programming system is important if you wish to write ggplot2 extensions.
-We will encounter ggproto objects as they are used by ggplot2 in Chapters \@ref(extensions) and \@ref(spring1).
+We will encounter ggproto objects as they are used by ggplot2 in @sec-extensions and @sec-spring1.
 Like the better-known R6 system, ggproto uses reference semantics and allows inheritance and access to methods from parent classes.
 It is accompanied by a set of design principles that, while not enforced by ggproto, is essential to understanding how the system is used in ggplot2.
 To illustrate these concepts, this section introduces the core mechanics of ggproto in a simplified form.
@@ -377,12 +377,12 @@ Printing the object shows the fields and methods with which it is associated:
 Person
 ```
 
-The `Person` ggproto object is essentially a template for the class, and we can use to create specific records of individual people (discussed in Section \@ref(ggproto-instances)).
+The `Person` ggproto object is essentially a template for the class, and we can use to create specific records of individual people (discussed in @sec-ggproto-instances).
 If you are familiar with other object-oriented programming systems you might have been expecting something a little different: often new classes are defined with a dedicated constructor function.
 One quirk of ggproto is that `ggproto()` doesn't do this: rather, the class constructor is itself an object.
 
 Another thing to note when defining methods is the use of `self` as their first argument.
-This is a special argument used to give the method access to the fields and methods associated with the ggproto object (see Section \@ref(ggproto-subclass) for an example).
+This is a special argument used to give the method access to the fields and methods associated with the ggproto object (see @sec-ggproto-subclass for an example).
 The special status of this argument is evident when printing a ggproto method:
 
 ```{r}
@@ -392,9 +392,9 @@ Person$full_name
 This output may seem a little surprising: when we defined `full_name()` earlier we only provided the code listed as the "inner function".
 What has happened is that `ggproto()` automatically enclosed my function within a wrapper function that calls my code as the inner function, while ensuring that an appropriate definition of `self` is used.
 When the method is printed, the console displays both the wrapper function (typically of little interest) and the inner function.
-Output in this format appears in Chapters \@ref(extensions) and \@ref(spring1).
+Output in this format appears in @sec-extensions and @sec-spring1.
 
-### Creating new instances {#ggproto-instances}
+### Creating new instances {#sec-ggproto-instances}
 
 Now that we have defined the `Person` class, we can create instances of the class.
 This is done by passing a ggproto object as the second argument to `ggproto()`, and not specifying a new class name in the first argument.
@@ -423,7 +423,7 @@ Thomas$description()
 Danielle$description()
 ```
 
-### Creating subclasses {#ggproto-subclass}
+### Creating subclasses {#sec-ggproto-subclass}
 
 In the previous example we created `Person` as an entirely new class.
 In practice you will almost never need to do this: instead, you will likely be creating a subclass using an existing ggproto object.
@@ -518,7 +518,7 @@ John$description()
 
 For reasons that we'll discuss below, the use of `ggproto_parent()` is not that prevalent in the ggplot2 source code.
 
-### Style guide for ggproto {#ggproto-style}
+### Style guide for ggproto {#sec-ggproto-style}
 
 Because ggproto is a minimal class system designed to accommodate ggplot2 and nothing else, it important to recognise that ggproto is used in ggplot2 in a very specific way.
 It exists to support the ggplot2 extension system, and you are unlikely to encounter ggproto in any context other than writing ggplot2 extension.
@@ -528,7 +528,7 @@ With that in mind it is useful to understand how ggplot2 uses ggproto:
     The use of ggproto in ggplot2 is not all-encompassing.
     Only select functionality is based on ggproto and it is neither expected nor advised to create entirely new ggproto classes in your extensions.
     As an extension developer, you will never create entirely ggproto objects but rather subclass one of the main ggproto classes provided by ggplot2.
-    Chapters \@ref(extensions) and \@ref(spring1) will go into detail on how to do this.
+    @sec-extensions and @sec-spring1 will go into detail on how to do this.
 
 -   **ggproto classes are stateless**.
     Except for a few internal classes that are used to orchestrate the rendering, ggproto classes in ggplot2 are assumed to be "stateless".
@@ -538,7 +538,7 @@ With that in mind it is useful to understand how ggplot2 uses ggproto:
     With this in mind, there are only two occasions when you should specify the state of a ggproto object in ggplot2.
     First, you can specify the state when creating the object: this is okay because this state should be shared between all instances anyway.
     Second, you can specify state via a params object managed elsewhere.
-    As you'll see later (see Sections \@ref(new-stats) and \@ref(new-geoms)), most ggproto classes have a `setup_params()` method where data can be inspected and specific properties calculated and stored.
+    As you'll see later (see @sec-new-stats and @sec-new-geoms), most ggproto classes have a `setup_params()` method where data can be inspected and specific properties calculated and stored.
 
 -   **ggproto classes have simple inheritance**.
     Because ggproto class instances are stateless, it is relatively safe to call methods that are defined inside other classes, instead of inheriting explicitly from the class.
