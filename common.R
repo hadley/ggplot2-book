@@ -1,8 +1,12 @@
+set.seed(451)
+
 library(ggplot2)
 conflicted::conflict_prefer("Position", "ggplot2")
+
 library(dplyr)
 conflicted::conflict_prefer("filter", "dplyr")
 conflicted::conflict_prefer("pull", "dplyr") # in case git2r is loaded
+
 library(tidyr)
 conflicted::conflict_prefer("extract", "tidyr")
 
@@ -23,6 +27,34 @@ knitr::opts_chunk$set(
 is_latex <- function() {
   identical(knitr::opts_knit$get("rmarkdown.pandoc.to"), "latex")
 }
+
+status <- function(type) {
+  status <- switch(type,
+                   polishing = "should be readable but is currently undergoing final polishing",
+                   restructuring = "is undergoing heavy restructuring and may be confusing or incomplete",
+                   drafting = "is currently a dumping ground for ideas, and we don't recommend reading it",
+                   complete = "is largely complete and just needs final proof reading",
+                   stop("Invalid `type`", call. = FALSE)
+  )
+
+  class <- switch(type,
+                  polishing = "note",
+                  restructuring = "important",
+                  drafting = "important",
+                  complete = "note"
+  )
+
+  callout <- paste0(
+    "\n",
+    "::: {.callout-", class, "} \n",
+    "You are reading the work-in-progress third edition of the ggplot2 book. ",
+    "This chapter ", status, ". \n",
+    "::: \n"
+  )
+
+  cat(callout)
+}
+
 
 # Draw parts of plots -----------------------------------------------------
 
