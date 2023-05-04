@@ -4,7 +4,6 @@
 #| label: setup
 #| include: false
 source("common.R")
-columns(1, 2 / 3)
 ```
 
 Plotting geospatial data is a common visualisation task, and one that requires specialised tools.
@@ -35,9 +34,8 @@ In this plot, each row in the data frame is plotted as a single point, producing
 To turn this scatterplot into a map, we use `geom_polygon()` instead, which draws each county as a distinct polygon.
 This is illustrated in the right panel below.
 
-`r columns(2, 2/3)`
-
 ```{r}
+#| layout-ncol: 2
 ggplot(mi_counties, aes(lon, lat)) + 
   geom_point(size = .25, show.legend = FALSE) +
   coord_quickmap()
@@ -59,8 +57,6 @@ The sf package [@sf] developed by Edzer Pebesma <https://github.com/r-spatial/sf
 
 To introduce these functions, we rely on the ozmaps package by Michael Sumner <https://github.com/mdsumner/ozmaps/> which provides maps for Australian state boundaries, local government areas, electoral boundaries, and so on [@ozmaps].
 To illustrate what an sf data set looks like, we import a data set depicting the borders of Australian states and territories:
-
-`r columns(1, 1)`
 
 ```{r}
 library(ozmaps)
@@ -107,8 +103,6 @@ First, we'll use `dplyr::filter()` to remove the "Other Territories" from the st
 The code below draws a plot with two map layers: the first uses `oz_states` to fill the states in different colours, and the second uses `oz_votes` to draw the electoral boundaries.
 Second, we'll extract the electoral boundaries in a simplified form using the `ms_simplify()` function from the rmapshaper package [@rmapshaper].
 This is generally a good idea if the original data set (in this case `ozmaps::abs_ced`) is stored at a higher resolution than your plot requires, in order to reduce the time taken to render the plot.
-
-`r columns(n = 1, aspect_ratio = 1)`
 
 ```{r}
 oz_states <- ozmaps::ozmap_states %>% filter(NAME != "Other Territories")
@@ -164,8 +158,6 @@ Though `geom_sf()` is special in some ways, it nevertheless behaves in much the 
 For example, we may wish to plot the locations of the Australian capital cities on the map using `geom_point()`.
 The code below illustrates how this is done:
 
-`r columns(n = 1, aspect_ratio = 1)`
-
 ```{r}
 oz_capitals <- tibble::tribble( 
   ~city,           ~lat,     ~lon,
@@ -212,8 +204,6 @@ The Earth is approximately ellipsoidal, but in most instances your spatial data 
 It is not possible to map the surface of an ellipsoid to a plane without some distortion or cutting, and you will have to make choices about what distortions you are prepared to accept when drawing a map.
 This is the job of the **map projection**.
 
-<!-- HW: this discussion is great, and was sorely missing from the previous edition of the book, and indeed my understanding of spatial data when I wrote it -->
-
 Map projections are often classified in terms of the geometric properties that they preserve, e.g.
 
 -   Area-preserving projections ensure that regions of equal area on the globe are drawn with equal area on the map.
@@ -247,9 +237,8 @@ However, should you need to set the CRS yourself, you can specify the `crs` para
 
 [^maps-1]: If there are multiple data sets with a different associated CRS, it uses the CRS from the first layer.
 
-`r columns(2,1)`
-
 ```{r}
+#| layout-ncol: 2
 ggplot(oz_votes) + geom_sf()
 ggplot(oz_votes) + geom_sf() + coord_sf(crs = st_crs(3112))
 ```
@@ -262,9 +251,8 @@ In this section we provide an introduction to a few such tools; more detailed co
 To get started, recall that one advantage to simple features over other representations of spatial data is that geographical units can have complicated structure.
 A good example of this in the Australian maps data is the electoral district of Eden-Monaro, plotted below:
 
-`r columns(2, 2/3)`
-
 ```{r}
+#| layout-ncol: 2
 edenmonaro <- ozmaps::abs_ced %>% filter(NAME == "Eden-Monaro")
 
 p <- ggplot(edenmonaro) + geom_sf()
@@ -381,8 +369,6 @@ Note that the spatial data is also associated with a coordinate reference system
 
 To plot the `sat_vis` data in ggplot2, we can use the `geom_stars()` function provided by the stars package.
 A minimal plot might look like this:
-
-`r columns(2, 1/2, max_width = 2)`
 
 ```{r}
 ggplot() + 

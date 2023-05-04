@@ -3,7 +3,6 @@
 ```{r}
 #| include: false
 source("common.R")
-columns(1, 2 / 3)
 ```
 
 ## Introduction
@@ -165,9 +164,8 @@ The legend allows us to read data values from the colour, showing us that the gr
 If you want to set an aesthetic to a fixed value, without scaling it, do so in the individual layer outside of `aes()`.
 Compare the following two plots: \index{Aesthetics!setting}
 
-`r columns(2, 2/3)`
-
 ```{r}
+#| layout-ncol: 2
 ggplot(mpg, aes(displ, hwy)) + geom_point(aes(colour = "blue"))
 ggplot(mpg, aes(displ, hwy)) + geom_point(colour = "blue")
 ```
@@ -212,8 +210,6 @@ There are two types of faceting: grid and wrapped.
 Wrapped is the most useful, so we'll discuss it here, and you can learn about grid faceting later.
 To facet a plot you simply add a faceting specification with `facet_wrap()`, which takes the name of a variable preceded by `~`.
 \indexf{facet\_wrap}
-
-`r columns(1, 2 / 3, 1)`
 
 ```{r}
 #| label: facet
@@ -265,8 +261,6 @@ You'll learn more in @sec-individual-geoms and @sec-collective-geoms.
 If you have a scatterplot with a lot of noise, it can be hard to see the dominant pattern.
 In this case it's useful to add a smoothed line to the plot with `geom_smooth()`: \index{Smoothing} \indexf{geom\_smooth}
 
-`r columns(1, 2/3)`
-
 ```{r}
 #| label: qplot-smooth
 ggplot(mpg, aes(displ, hwy)) + 
@@ -282,11 +276,10 @@ An important argument to `geom_smooth()` is the `method`, which allows you to ch
 -   `method = "loess"`, the default for small n, uses a smooth local regression (as described in `?loess`).
     The wiggliness of the line is controlled by the `span` parameter, which ranges from 0 (exceedingly wiggly) to 1 (not so wiggly).
 
-    `r columns(2, 2/3)`
-
     ```{r}
     #| label: smooth-loess
     #| fig.align: default
+    #| layout-ncol: 2
     ggplot(mpg, aes(displ, hwy)) + 
       geom_point() + 
       geom_smooth(span = 0.2)
@@ -302,8 +295,6 @@ An important argument to `geom_smooth()` is the `method`, which allows you to ch
     You need to first load mgcv, then use a formula like `formula = y ~ s(x)` or `y ~ s(x, bs = "cs")` (for large data).
     This is what ggplot2 uses when there are more than 1,000 points.
     \index{mgcv}
-
-    `r columns(1, 2/3, 0.5)`
 
     ```{r}
     #| label: smooth-gam
@@ -335,8 +326,6 @@ When a set of data includes a categorical variable and one or more continuous va
 Say we're interested in seeing how fuel economy varies within cars that have the same kind of drivetrain.
 We might start with a scatterplot like this:
 
-`r columns(1, 2/3, 0.5)`
-
 ```{r}
 ggplot(mpg, aes(drv, hwy)) + 
   geom_point()
@@ -357,10 +346,9 @@ There are three useful techniques that help alleviate the problem:
 
 These are illustrated below:
 
-`r columns(3, 1)`
-
 ```{r}
 #| label: jitter-boxplot
+#| layout-ncol: 3
 ggplot(mpg, aes(drv, hwy)) + geom_jitter()
 ggplot(mpg, aes(drv, hwy)) + geom_boxplot()
 ggplot(mpg, aes(drv, hwy)) + geom_violin()
@@ -379,10 +367,9 @@ Histograms and frequency polygons show the distribution of a single numeric vari
 They provide more information about the distribution of a single group than boxplots do, at the expense of needing more space.
 \index{Histogram} \indexf{geom\_histogram}
 
-`r columns(2, 2/3)`
-
 ```{r}
 #| label: dist
+#| layout-ncol: 2
 ggplot(mpg, aes(hwy)) + geom_histogram()
 ggplot(mpg, aes(hwy)) + geom_freqpoly()
 ```
@@ -396,6 +383,7 @@ The default just splits your data into 30 bins, which is unlikely to be the best
 You should always try many bin widths, and you may find you need multiple bin widths to tell the full story of your data.
 
 ```{r}
+#| layout-ncol: 2
 ggplot(mpg, aes(hwy)) + 
   geom_freqpoly(binwidth = 2.5)
 ggplot(mpg, aes(hwy)) + 
@@ -410,10 +398,9 @@ To compare the distributions of different subgroups, you can map a categorical v
 It's easier to compare distributions using the frequency polygon because the underlying perceptual task is easier.
 You can also use faceting: this makes comparisons a little harder, but it's easier to see the distribution of each group.
 
-`r columns(2, 1)`
-
 ```{r}
 #| label: dist-fill
+#| layout-ncol: 2
 ggplot(mpg, aes(displ, colour = drv)) + 
   geom_freqpoly(binwidth = 0.5)
 ggplot(mpg, aes(displ, fill = drv)) + 
@@ -425,8 +412,6 @@ ggplot(mpg, aes(displ, fill = drv)) +
 
 The discrete analogue of the histogram is the bar chart, `geom_bar()`.
 It's easy to use: \index{Barchart} \indexf{geom\_bar}
-
-`r columns(1, 1 / 2.5, 1)`
 
 ```{r}
 #| label: dist-bar
@@ -451,9 +436,8 @@ drugs <- data.frame(
 To display this sort of data, you need to tell `geom_bar()` to not run the default stat which bins and counts the data.
 However, we think it's even better to use `geom_point()` because points take up less space than bars, and don't require that the y axis includes 0.
 
-`r columns(2, 2/3)`
-
 ```{r}
+#| layout-ncol: 2
 ggplot(drugs, aes(drug, effect)) + geom_bar(stat = "identity")
 ggplot(drugs, aes(drug, effect)) + geom_point()
 ```
@@ -471,10 +455,9 @@ The first shows the unemployment rate while the second shows the median number o
 We can already see some differences in these two variables, particularly in the last peak, where the unemployment percentage is lower than it was in the preceding peaks, but the length of unemployment is high.
 \indexf{geom\_line} \indexf{geom\_path} \index{Data!economics@\texttt{economics}}
 
-`r columns(2, 2.4 / 4)`
-
 ```{r}
 #| label: line-employment
+#| layout-ncol: 2
 ggplot(economics, aes(date, unemploy / pop)) +
   geom_line()
 ggplot(economics, aes(date, uempmed)) +
@@ -491,6 +474,7 @@ In the second plot, we colour the points to make it easier to see the direction 
 
 ```{r}
 #| label: path-employ
+#| layout-ncol: 2
 ggplot(economics, aes(unemploy / pop, uempmed)) + 
   geom_path() +
   geom_point()
@@ -541,9 +525,8 @@ This is explained in more depth in @sec-collective-geoms.
 You'll learn the full range of options available in later chapters, but two families of useful helpers let you make the most common modifications.
 `xlab()` and `ylab()` modify the x- and y-axis labels: \indexf{xlab} \indexf{ylab}
 
-`r columns(3, 1)`
-
 ```{r}
+#| layout-ncol: 3
 ggplot(mpg, aes(cty, hwy)) +
   geom_point(alpha = 1 / 3)
 
@@ -562,6 +545,7 @@ ggplot(mpg, aes(cty, hwy)) +
 `xlim()` and `ylim()` modify the limits of axes: \indexf{xlim} \indexf{ylim}
 
 ```{r}
+#| layout-ncol: 3
 ggplot(mpg, aes(drv, hwy)) +
   geom_jitter(width = 0.25)
 
@@ -595,8 +579,6 @@ Once you have a plot object, there are a few things you can do with it:
 -   Render it on screen with `print()`.
     This happens automatically when running interactively, but inside a loop or function, you'll need to `print()` it yourself.
     \indexf{print}
-
-    `r columns(1, 1 / 2)`
 
     ```{r}
     print(p)

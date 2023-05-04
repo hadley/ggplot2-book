@@ -36,10 +36,9 @@ Each component of a ggplot plot is an object.
 Most of the time you create the component and immediately add it to a plot, but you don't have to.
 Instead, you can save any component to a variable (giving it a name), and then add it to multiple plots:
 
-`r columns(2, 1, 0.75)`
-
 ```{r}
 #| label: layer9
+#| layout-ncol: 2
 bestfit <- geom_smooth(
   method = "lm", 
   se = FALSE, 
@@ -61,6 +60,7 @@ The following code creates a `geom_lm()` with three parameters: the model `formu
 
 ```{r}
 #| label: geom-lm
+#| layout-ncol: 2
 geom_lm <- function(formula = y ~ x, colour = alpha("steelblue", 0.5), 
                     linewidth = 2, ...)  {
   geom_smooth(formula = formula, se = FALSE, method = "lm", colour = colour,
@@ -102,11 +102,10 @@ It's not always possible to achieve your goals with a single component.
 Fortunately, ggplot2 has a convenient way of adding multiple components to a plot in one step with a list.
 The following function adds two layers: one to show the mean, and one to show its 95% confidence interval:
 
-`r columns(2, 2/3, 0.75)`
-
 ```{r}
 #| label: geom-mean-1
 #| warning: false
+#| layout-ncol: 2
 geom_mean <- function() {
   list(
     stat_summary(fun = "mean", geom = "bar", fill = "grey70"),
@@ -123,6 +122,7 @@ This makes it easy to conditionally add components:
 ```{r}
 #| label: geom-mean-2
 #| warning: false
+#| layout-ncol: 2
 geom_mean <- function(se = TRUE) {
   list(
     stat_summary(fun = "mean", geom = "bar", fill = "grey70"),
@@ -130,6 +130,7 @@ geom_mean <- function(se = TRUE) {
       stat_summary(fun.data = "mean_cl_normal", geom = "errorbar", width = 0.4)
   )
 }
+
 ggplot(mpg, aes(drv, cty)) + geom_mean()
 ggplot(mpg, aes(drv, cty)) + geom_mean(se = FALSE)
 ```
@@ -188,6 +189,7 @@ Instead, you'll need to think about how you want your function to work, balancin
 To get you started, here's one approach using `modifyList()` and `do.call()`: \indexf{modifyList} \indexf{do.call}
 
 ```{r}
+#| layout-ncol: 2
 geom_mean <- function(..., bar.params = list(), errorbar.params = list()) {
   params <- list(...)
   bar.params <- modifyList(params, bar.params)
@@ -242,8 +244,6 @@ Instead of creating components, you might want to write a function that takes da
 
 For example, you could wrap up the complete code needed to make a piechart:
 
-`r columns(1, 2 / 3, 0.5)`
-
 ```{r}
 piechart <- function(data, mapping) {
   ggplot(data, mapping) +
@@ -264,10 +264,9 @@ PCPs require a transformation of the data, so we recommend writing two functions
 Keeping these two pieces separate makes life much easier if you later want to reuse the same transformation for a different visualisation.
 \index{Parallel coordinate plots}
 
-`r columns(2, 2/3)`
-
 ```{r}
 #| label: pcp_data
+#| layout-ncol: 2
 pcp_data <- function(df) {
   is_numeric <- vapply(df, is.numeric, logical(1))
 
@@ -350,9 +349,8 @@ This means you can apply all of R's great functional programming tools.
 For example, if you wanted to add different geoms to the same base plot, you could put them in a list and use `lapply()`.
 \index{Functional programming} \indexf{lapply}
 
-`r columns(3, 1, 1)`
-
 ```{r}
+#| layout-ncol: 3
 geoms <- list(
   geom_point(),
   geom_boxplot(aes(group = cut_width(displ, 1))),

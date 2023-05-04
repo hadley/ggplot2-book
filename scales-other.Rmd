@@ -4,7 +4,6 @@
 #| label: setup
 #| include: false
 source("common.R")
-columns(1, 2 / 3)
 ```
 
 In addition to position and colour, there are several other aesthetics that ggplot2 can use to represent data.
@@ -34,9 +33,8 @@ Scaling as a function of area is a sensible default as human perception of size 
 By default the smallest value in the data (more precisely in the scale limits) is mapped to a size of 1 and the largest is mapped to a size of 6.
 The `range` argument allows you to scale the size of the geoms:
 
-`r columns(2, 2/3)`
-
 ```{r}
+#| layout-ncol: 2
 base <- ggplot(mpg, aes(displ, hwy, size = cyl)) + 
   geom_point()
 
@@ -67,9 +65,8 @@ planets
 In this instance a plot that uses the size aesthetic to represent the radius of the planets should use `scale_radius()` rather than the default `scale_size()`.
 It is also important in this case to set the scale limits so that a planet with radius 0 would be drawn with a disc with radius 0.
 
-`r columns(2, 1)`
-
 ```{r}
+#| layout-ncol: 2
 base <- ggplot(planets, aes(1, name, size = radius)) + 
   geom_point() + 
   scale_x_continuous(breaks = NULL) + 
@@ -89,8 +86,6 @@ Binned size scales work similarly to binned scales for colour and position aesth
 One difference is how legends are displayed.
 The default legend for a binned size scale, and all binned scales except position and colour aesthetics, is governed by `guide_bins()`.
 For instance, in the `mpg` data we could use `scale_size_binned()` to create a binned version of the continuous variable `hwy`:
-
-`r columns(2, 1)`
 
 ```{r}
 base <- ggplot(mpg, aes(displ, manufacturer, size = hwy)) +
@@ -112,23 +107,17 @@ The important arguments to `guide_bins()` are listed below:
 
 -   `direction` is a character string specifying the direction of the guide, either `"vertical"` (the default) or `"horizontal"`
 
-    `r columns(1, 2/3)`
-
     ```{r}
     base + guides(size = guide_bins(direction = "horizontal"))
     ```
 
 -   `show.limits` specifies whether tick marks are shown at the ends of the guide axis (default is FALSE)
 
-    `r columns(2, 1)`
-
     ```{r}
     base + guides(size = guide_bins(show.limits = TRUE))
     ```
 
 -   `axis.colour`, `axis.linewidth` and `axis.arrow` are used to control the guide axis that is displayed alongside the legend keys
-
-    `r columns(2, 1)`
 
     ```{r}
     base + guides(
@@ -151,9 +140,8 @@ Values can be mapped to the shape aesthetic.
 The typical use for this is when you have a small number of discrete categories: if the data variable contains more than 6 values it becomes difficult to distinguish between shapes, and will produce a warning.
 The default `scale_shape()` function contains a single argument: set `solid = TRUE` (the default) to use a "palette" consisting of three solid shapes and three hollow shapes, or set `solid = FALSE` to use six hollow shapes:
 
-`r columns(2, 1)`
-
 ```{r}
+#| layout-ncol: 2
 base <- ggplot(mpg, aes(displ, hwy, shape = factor(cyl))) + 
   geom_point()
 
@@ -162,8 +150,6 @@ base + scale_shape(solid = FALSE)
 ```
 
 Although any one plot is unlikely to be readable with more than a 6 distinct markers, there are 25 possible shapes to choose from, each associated with an integer value:
-
-`r columns(1, .3, max_width = .8)`
 
 ```{r}
 #| echo: false
@@ -181,8 +167,6 @@ ggplot(df, aes(x, y, shape = shape)) +
 ```
 
 You can specify the marker types for each data value manually using `scale_shape_manual()`:
-
-`r columns(2, 1)`
 
 ```{r}
 base + 
@@ -202,9 +186,8 @@ This is illustrated in the plots below.
 In the leftmost plot both the size and linewidth aesthetics are set at their default values.
 The middle plot increases the size of the points while leaving the linewidth unchanged, whereas the plot on the right increases the linewidth while leaving the point size unchanged.
 
-`r columns(3, 2)`
-
 ```{r}
+#| layout-ncol: 3
 base <- ggplot(airquality, aes(x = factor(Month), y = Temp))
 
 base + geom_pointrange(stat = "summary", fun.data = "median_hilow")
@@ -221,8 +204,6 @@ base + geom_pointrange(
 ```
 
 In practice you're most likely to set linewidth as a fixed parameter, as shown in the previous example, but it is a true aesthetic and can be mapped onto data values:
-
-`r columns(1, 1/2, 1)`
 
 ```{r}
 ggplot(airquality, aes(Day, Temp, group = Month)) + 
@@ -243,8 +224,6 @@ This works best for discrete variables with a small number of categories, and `s
 Continuous variables cannot be mapped to line types unless `scale_linetype_binned()` is used: although there is a `scale_linetype_continuous()` function, all it does is produce an error.
 To see why the linetype aesthetic is suited only to cases with a few categories, consider this plot:
 
-`r columns(1, 5/12, 0.8)`
-
 ```{r}
 ggplot(economics_long, aes(date, value01, linetype = variable)) +
   geom_line()
@@ -252,8 +231,6 @@ ggplot(economics_long, aes(date, value01, linetype = variable)) +
 
 With five categories the plot is quite difficult to read, and it is unlikely you will want to use the linetype aesthetic for more than that.
 The default "palette" for linetype is supplied by the `scales::linetype_pal()` function, and includes the 13 linetypes shown below:
-
-`r columns(1, 2/3)`
 
 ```{r}
 df <- data.frame(value = letters[1:13])
@@ -304,8 +281,6 @@ Manual scales have appeared earlier, in @sec-manual-colour and @sec-scale-shape.
 In this example we'll show a creative use of `scale_colour_manual()` to display multiple variables on the same plot and show a useful legend.
 In most plotting systems, you'd colour the lines and then add a legend: \index{Data!longitudinal}
 
-`r columns(1, 5/12, 0.8)`
-
 ```{r}
 #| label: huron
 huron <- data.frame(year = 1875:1972, level = as.numeric(LakeHuron))
@@ -343,8 +318,6 @@ The code below shows an example where the identity scale is useful.
 `luv_colours` contains the locations of all R's built-in colours in the LUV colour space (the space that HCL is based on).
 A legend is unnecessary, because the point colour represents itself: the data and aesthetic spaces are the same.
 \index{Scales!identity} \indexf{scale\_identity}
-
-`r columns(1, 1, 0.75)`
 
 ```{r}
 #| label: scale-identity

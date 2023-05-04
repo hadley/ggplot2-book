@@ -4,7 +4,6 @@
 #| label: setup
 #| include: false
 source("common.R")
-columns(1, 2 / 3)
 ```
 
 After position, the most commonly used aesthetics are those based on colour, and there are many ways to map values to colours in ggplot2.
@@ -45,8 +44,6 @@ The figure below attempts to show the 3d shape of the space.
 Each slice is a constant luminance (brightness) with hue mapped to angle and chroma to radius.
 You can see the centre of each slice is grey and the colours get more intense as they get closer to the edge.
 
-`r columns(1, 1, 1)`
-
 ```{r}
 #| label: hcl
 #| echo: false
@@ -69,8 +66,6 @@ In addition to the many online tools that can assist with this (e.g., <https://w
 The dichromat package [@dichromat] provides tools for simulating colour blindness, and a set of colour schemes known to work well for colour-blind people.
 Another useful tool is the colorBlindness package [@colorBlindness] which provides a `displayAllColors()` function that helps you approximate the appearance of a given set of colours under different forms of colour blindness.
 As an illustration, it quickly reveals that colours provided by the `rainbow()` palette are not appropriate if you are trying to create plots that are readable by colour blind people, nor do they reproduce well in greyscale:
-
-`r columns(1, 2/3, 1)`
 
 ```{r}
 #| warning: false
@@ -96,8 +91,6 @@ Remember: although we use the `erupt` plot to illustrate concepts using with a f
 Any time we refer to `scale_fill_*()` in this section there is a corresponding `scale_colour_*()` for the colour aesthetic (or `scale_color_*()` if you prefer US spelling).
 \index{Colour!gradients} \index{Scales!colour}
 
-`r columns(3, 1)`
-
 ```{r}
 erupt <- ggplot(faithfuld, aes(waiting, eruptions, fill = density)) +
   geom_raster() +
@@ -114,6 +107,7 @@ For example, ggplot2 supplies two scale functions that bundle pre-specified pale
 The viridis scales [@viridis] are designed to be perceptually uniform in both colour and when reduced to black and white, and to be perceptible to people with various forms of colour blindness.
 
 ```{r}
+#| layout-ncol: 3
 erupt
 erupt + scale_fill_viridis_c()
 erupt + scale_fill_viridis_c(option = "magma")
@@ -124,6 +118,7 @@ A second group of continuous colour scales built in to ggplot2 are derived from 
 We discuss these scales in @sec-colour-discrete, but for illustrative purposes include some examples here:
 
 ```{r}
+#| layout-ncol: 3
 erupt + scale_fill_distiller()
 erupt + scale_fill_distiller(palette = "RdPu")
 erupt + scale_fill_distiller(palette = "YlOrBr")
@@ -133,6 +128,7 @@ There are many other packages that provide useful colour palettes.
 For example, scico [@scico] provides more palettes that are perceptually uniform and suitable for scientific visualisation:
 
 ```{r}
+#| layout-ncol: 3
 erupt + scico::scale_fill_scico(palette = "bilbao") # the default
 erupt + scico::scale_fill_scico(palette = "vik")
 erupt + scico::scale_fill_scico(palette = "lajolla")
@@ -141,6 +137,7 @@ erupt + scico::scale_fill_scico(palette = "lajolla")
 However, as there are a great many palette packages in R, a particularly useful package is paletteer [@paletteer], which aims to provide a common interface:
 
 ```{r}
+#| layout-ncol: 2
 erupt + paletteer::scale_fill_paletteer_c("viridis::plasma")
 erupt + paletteer::scale_fill_paletteer_c("scico::tokyo")
 ```
@@ -151,6 +148,7 @@ The default scale for continuous fill scales is `scale_fill_continuous()` which 
 As a consequence, these three commands produce the same plot using a gradient scale:
 
 ```{r}
+#| layout-ncol: 3
 erupt
 erupt + scale_fill_continuous()
 erupt + scale_fill_gradient()
@@ -172,6 +170,7 @@ The third method is to use `scale_fill_gradientn()` which takes a vector of refe
 By default, the `colours` are presumed to be equally spaced along the scale, but if you prefer you can specify a vector of `values` that correspond to each of the reference colours.
 
 ```{r}
+#| layout-ncol: 3
 erupt + scale_fill_gradient(low = "grey", high = "brown")
 erupt + 
   scale_fill_gradient2(
@@ -188,9 +187,8 @@ Generally, for a two-point gradient scale you want to convey the perceptual impr
 The Munsell colour system is useful for this as it provides an easy way of specifying colours based on their hue, chroma and luminance.
 The munsell package [@munsell] provides easy access to the Munsell colours, which can then be used to specify a gradient scale:
 
-`r columns(2, 1)`
-
 ```{r}
+#| layout-ncol: 2
 munsell::hue_slice("5P") +  # Generate a ggplot with hue_slice()
   annotate(                 # Add arrows for annotation 
     geom = "segment", 
@@ -220,9 +218,8 @@ As an illustration, the middle and right plots below use the **colorspace** pack
 For more information on the colorspace package see <https://colorspace.r-forge.r-project.org/>.
 \index{Colour!palettes} \indexf{scale\_colour\_gradientn} \indexf{scale\_fill\_gradientn}
 
-`r columns(3, 1)`
-
 ```{r}
+#| layout-ncol: 3
 # munsell example
 erupt + scale_fill_gradient2(
   low = munsell::mnsl("5B 7/8"),
@@ -244,6 +241,7 @@ If you use a black and white scale, you might want to set it to something else t
 You can set `na.value = NA` to make missing values invisible, or choose a specific colour if you prefer: \indexc{na.value} \index{Missing values!changing colour}
 
 ```{r}
+#| layout-ncol: 3
 df <- data.frame(x = 1, y = 1:5, z = c(1, 3, 2, NA, 5))
 base <- ggplot(df, aes(x, y)) + 
   geom_tile(aes(fill = z), linewidth = 5) + 
@@ -271,9 +269,8 @@ toy <- data.frame(
 )
 ```
 
-`r columns(2, 2/3)`
-
 ```{r}
+#| layout-ncol: 2
 base <- ggplot(toy, aes(up, up, fill = big)) + 
   geom_tile() + 
   labs(x = NULL, y = NULL) 
@@ -282,9 +279,8 @@ base
 base + scale_fill_continuous(limits = c(0, 10000))
 ```
 
-`r columns(2, 2/3)`
-
 ```{r}
+#| layout-ncol: 2
 base + scale_fill_continuous(breaks = c(1000, 2000, 4000))
 base + scale_fill_continuous(labels = scales::label_dollar())
 ```
@@ -300,8 +296,6 @@ Every scale is associated with a guide that displays the relationship between th
 For position scales, the axes serve this function.
 For colour scales this role is played by the legend, which can be customised with the help of a guide function.
 For continuous colour scales, the default legend takes the form of a "colour bar" displaying a continuous gradient of colours:
-
-`r columns(3)`
 
 ```{r}
 base <- ggplot(mpg, aes(cyl, displ, colour = hwy)) +
@@ -325,6 +319,7 @@ In @sec-guide-axis we introduced the `guides()` function that is used to set cus
 When applied to colour scales, it allows you to create custom legends like these:
 
 ```{r}
+#| layout-ncol: 3
 base + guides(colour = guide_colourbar(reverse = TRUE))
 base + guides(colour = guide_colourbar(barheight = unit(2, "cm")))
 base + guides(colour = guide_colourbar(direction = "horizontal"))
@@ -334,6 +329,7 @@ An alternative way to accomplish the same goal is to specify the `guide` argumen
 These two plot specifications are identical:
 
 ```{r}
+#| layout-ncol: 2
 base + guides(colour = guide_colourbar(reverse = TRUE))
 base + scale_colour_continuous(guide = guide_colourbar(reverse = TRUE))
 ```
@@ -346,9 +342,8 @@ Discrete colour and fill scales occur in many situations.
 A typical example is a barchart that encodes both position and fill to the same variable.
 Many concepts from @sec-colour-continuous apply to discrete scales, which we will illustrate using this barchart as the running example: \index{Colour!discrete scales}
 
-`r columns(3, 1)`
-
 ```{r}
+#| layout-ncol: 3
 df <- data.frame(x = c("a", "b", "c", "d"), y = c(3, 4, 1, 2))
 bars <- ggplot(df, aes(x, y, fill = x)) + 
   geom_bar(stat = "identity") + 
@@ -359,6 +354,7 @@ bars <- ggplot(df, aes(x, y, fill = x)) +
 The default scale for discrete colours is `scale_fill_discrete()` which in turn defaults to `scale_fill_hue()` so these are identical plots:
 
 ```{r}
+#| layout-ncol: 3
 bars
 bars + scale_fill_discrete()
 bars + scale_fill_hue()
@@ -370,7 +366,7 @@ This default scale has some limitations (discussed shortly) so we'll begin by di
 
 `scale_colour_brewer()` is a discrete colour scale that---along with the continuous analog `scale_colour_distiller()` and binned analog `scale_colour_fermenter()`---uses handpicked "ColorBrewer" colours taken from <https://colorbrewer2.org/>.
 These colours have been designed to work well in a wide variety of situations, although the focus is on maps and so the colours tend to work better when displayed in large areas.
-There are many different options: `r columns(1, 2)`
+There are many different options:
 
 ```{r}
 RColorBrewer::display.brewer.all()
@@ -381,9 +377,8 @@ For unordered categorical data, the palettes of most interest are those in the s
 'Set1' and 'Dark2' are particularly good for points, and 'Set2', 'Pastel1', 'Pastel2' and 'Accent' work well for areas.
 \index{Colour!Brewer} \indexf{scale\_colour\_brewer}
 
-`r columns(3, 1)`
-
 ```{r}
+#| layout-ncol: 3
 bars + scale_fill_brewer(palette = "Set1")
 bars + scale_fill_brewer(palette = "Set2")
 bars + scale_fill_brewer(palette = "Accent")
@@ -392,10 +387,9 @@ bars + scale_fill_brewer(palette = "Accent")
 Note that no palette is uniformly good for all purposes.
 Scatter plots typically use small plot markers, and bright colours tend to work better than subtle ones:
 
-`r columns(3, 1)`
-
 ```{r}
 #| label: brewer-pal
+#| layout-ncol: 3
 # scatter plot
 df <- data.frame(
   x = 1:3 + runif(30), 
@@ -417,6 +411,7 @@ Bar plots usually contain large patches of colour, and bright colours can be ove
 Subtle colours tend to work better in this situation:
 
 ```{r}
+#| layout-ncol: 3
 # bar plot
 df <- data.frame(x = 1:3, y = 3:1, z = c("a", "b", "c"))
 area <- ggplot(df, aes(x, y)) + 
@@ -437,6 +432,7 @@ This works well for up to about eight colours, but after that it becomes hard to
 You can control the default chroma and luminance, and the range of hues, with the `h`, `c` and `l` arguments: \indexf{scale\_colour\_hue}
 
 ```{r}
+#| layout-ncol: 3
 bars
 bars + scale_fill_hue(c = 40)
 bars + scale_fill_hue(h = c(180, 300))
@@ -448,6 +444,7 @@ A second is that because the colours all have the same luminance and chroma, the
 If you are intending a discrete colour scale to be printed in black and white, it is better to explicitly use `scale_fill_grey()` which maps discrete data to grays, from light to dark: \indexf{scale\_colour\_grey} \index{Colour!greys}
 
 ```{r}
+#| layout-ncol: 3
 bars + scale_fill_grey()
 bars + scale_fill_grey(start = 0.5, end = 1)
 bars + scale_fill_grey(start = 0, end = 0.5)
@@ -459,6 +456,7 @@ Another alternative is provided by the paletteer package, discussed earlier in c
 By providing a unified interface that spans a large number of packages, paletteer makes it possible to choose among a very large number of palettes in a consistent way:
 
 ```{r}
+#| layout-ncol: 3
 bars + paletteer::scale_fill_paletteer_d("rtist::vangogh")
 bars + paletteer::scale_fill_paletteer_d("colorBlindness::paletteMartin")
 bars + paletteer::scale_fill_paletteer_d("wesanderson::FantasticFox1")
@@ -470,6 +468,7 @@ If none of the preexisting palettes is suitable, or if you have your own preferr
 This can be useful if you wish to choose colours that highlight a secondary grouping structure or draw attention to different comparisons: \indexf{scale\_colour\_manual}
 
 ```{r}
+#| layout-ncol: 3
 bars + 
   scale_fill_manual(
     values = c("sienna1", "sienna4", "hotpink1", "hotpink4")
@@ -509,9 +508,8 @@ This can be important when the same variable is represented in different plots, 
 To demonstrate this, we'll extend the example from @sec-position-continuous-limits.
 Colour represents the fuel type, which can be **r**egular, **e**thanol, **d**iesel, **p**remium or **c**ompressed natural gas.
 
-`r columns(2, 1)`
-
 ```{r}
+#| layout-ncol: 2
 mpg_99 <- mpg %>% filter(year == 1999)
 mpg_08 <- mpg %>% filter(year == 2008)
 
@@ -528,6 +526,7 @@ To ensure a consistent mapping for the colour aesthetic, we can use `lims()` to 
 As discussed in @sec-position-continuous-limits it takes name-value pairs as input, where the name specifies the aesthetic and the value specifies the limits:
 
 ```{r}
+#| layout-ncol: 2
 base_99 + lims(colour = c("c", "d", "e", "p", "r"))
 base_08 + lims(colour = c("c", "d", "e", "p", "r"))
 ```
@@ -536,6 +535,7 @@ The nice thing about `lims()` is that we can set the limits for multiple aesthet
 To ensure that x, y, and colour all use consistent limits we can do this:
 
 ```{r}
+#| layout-ncol: 2
 base_99 + 
   lims(
     x = c(1, 7), 
@@ -557,8 +557,6 @@ We can address this by manually setting the scale breaks, ensuring that only tho
 The second limitation is that the labels are not particularly helpful, which we can address by specifying them manually.
 When setting multiple properties of a single scale, it can be more useful to customise using the arguments to the scale function rather than using the `lims()` helper function:
 
-`r columns(2, 1)`
-
 ```{r}
 base_99 + 
   scale_color_discrete(
@@ -570,9 +568,8 @@ base_99 +
 
 However, there is nothing stopping you from using `lims()` to control the position aesthetic limits, while using `scale_colour_discrete()` to exercise more fine-grained control over the colour aesthetic:
 
-`r columns(2, 1)`
-
 ```{r}
+#| layout-ncol: 2
 base_99 + 
   lims(x = c(1, 7), y = c(10, 45)) +
   scale_color_discrete(
@@ -587,7 +584,6 @@ base_08 +
     limits = c("c", "d", "e", "p", "r"), 
     labels = c("compressed", "diesel", "ethanol", "premium", "regular")
   )
-
 ```
 
 ### Legends {#sec-guide-legend}
@@ -601,10 +597,9 @@ The most useful options are:
 -   `nrow` or `ncol` which specify the dimensions of the table.
     `byrow` controls how the table is filled: `FALSE` fills it by column (the default), `TRUE` fills it by row.
 
-    `r columns(3)`
-
     ```{r}
     #| label: legend-rows-cols
+    #| layout-ncol: 3
     base <- ggplot(mpg, aes(drv, fill = factor(cyl))) + geom_bar() 
 
     base
@@ -615,6 +610,7 @@ The most useful options are:
 -   `reverse` reverses the order of the keys:
 
     ```{r}
+    #| layout-ncol: 2
     base
     base + guides(fill = guide_legend(reverse = TRUE))
     ```
@@ -623,9 +619,8 @@ The most useful options are:
     This is often required when you've used transparency or size to deal with moderate overplotting and also used colour in the plot.
     \indexf{override.aes}
 
-    `r columns(2, 2/3)`
-
     ```{r}
+    #| layout-ncol: 2
     base <- ggplot(mpg, aes(displ, hwy, colour = drv)) +
       geom_point(size = 4, alpha = .2, stroke = 0)
 
@@ -667,9 +662,8 @@ The default scale is `scale_fill_binned()` which in turn defaults to `scale_fill
 As with the binned position scales discussed in @sec-binned-position these scales have an `n.breaks` argument that controls the number of discrete colour categories created by the scale.
 Counterintuitively---because the human visual system is very good at detecting edges---this can sometimes make a continuous colour gradient easier to perceive:
 
-`r columns(3, 1)`
-
 ```{r}
+#| layout-ncol: 3
 erupt + scale_fill_binned()
 erupt + scale_fill_steps()
 erupt + scale_fill_steps(n.breaks = 8)
@@ -679,6 +673,7 @@ In other respects `scale_fill_steps()` is analogous to `scale_fill_gradient()`, 
 There is also a three-colour variant `scale_fill_steps2()` and n-colour scale variant `scale_fill_stepsn()` that behave similarly to their continuous counterparts:
 
 ```{r}
+#| layout-ncol: 3
 erupt + scale_fill_steps(low = "grey", high = "brown")
 erupt + 
   scale_fill_steps2(
@@ -693,6 +688,7 @@ erupt + scale_fill_stepsn(n.breaks = 12, colours = terrain.colors(12))
 The viridis palettes can be used in the same way, by calling the palette generating functions directly when specifying the `colours` argument to `scale_fill_stepsn()`:
 
 ```{r}
+#| layout-ncol: 3
 erupt + scale_fill_stepsn(n.breaks = 9, colours = viridis::viridis(9))
 erupt + scale_fill_stepsn(n.breaks = 9, colours = viridis::magma(9))
 erupt + scale_fill_stepsn(n.breaks = 9, colours = viridis::inferno(9))
@@ -701,6 +697,7 @@ erupt + scale_fill_stepsn(n.breaks = 9, colours = viridis::inferno(9))
 Alternatively, a brewer analog for binned scales also exists, and is called `scale_fill_fermenter()`:
 
 ```{r}
+#| layout-ncol: 3
 erupt + scale_fill_fermenter(n.breaks = 9)
 erupt + scale_fill_fermenter(n.breaks = 9, palette = "Oranges")
 erupt + scale_fill_fermenter(n.breaks = 9, palette = "PuOr")
@@ -723,9 +720,8 @@ The arguments to `guide_coloursteps()` mostly mirror those for `guide_colourbar(
 
 -   `show.limits` indicates whether values should be shown at the ends of the stepped colour bar, analogous to the corresponding argument in `guide_bins()`
 
-    `r columns(2)`
-
     ```{r}
+    #| layout-ncol: 2
     base <- ggplot(mpg, aes(cyl, displ, colour = hwy)) +
       geom_point(size = 2) +
       scale_color_binned()
@@ -744,9 +740,8 @@ When a colour aesthetic is mapped to a date/time type, ggplot2 uses `scale_colou
 These are designed to handle date data, analogous to the date scales discussed in @sec-date-scales.
 These scales have `date_breaks` and `date_labels` arguments that make it a little easier to work with these data, as the slightly contrived example below illustrates:
 
-`r columns(2, 1)`
-
 ```{r}
+#| layout-ncol: 2
 base <- ggplot(economics, aes(psavert, uempmed, colour = date)) + 
   geom_point() 
 
@@ -765,8 +760,6 @@ They are not often useful, but can be a convenient way to visually down-weight l
 `scale_alpha()` is an alias for `scale_alpha_continuous()` since that is the most common use of alpha, and it saves a bit of typing.
 An example of an alpha scale using the eruptions data is shown below:
 
-`r columns(2, 2/3)`
-
 ```{r}
 ggplot(faithfuld, aes(waiting, eruptions, alpha = density)) +
   geom_raster(fill = "maroon") +
@@ -783,10 +776,10 @@ You'll learn more about that in @sec-themes, but for now, all you need to know i
 The position and justification of legends are controlled by the theme setting `legend.position`, which takes values "right", "left", "top", "bottom", or "none" (no legend).
 \index{Legend!layout}
 
-`r columns(2, 2/3)`
-
 ```{r}
 #| label: legend-position
+#| layout-ncol: 2
+#| layout-nrow: 2
 base <- ggplot(toy, aes(up, up)) + 
   geom_point(aes(colour = txt), size = 3) + 
   xlab(NULL) + 
@@ -813,10 +806,9 @@ The numbers represent a relative location in the panel area: `c(0, 1)` is the to
 You control which corner of the legend the `legend.position` refers to with `legend.justification`, which is specified in a similar way.
 Unfortunately positioning the legend exactly where you want it requires a lot of trial and error.
 
-`r columns(3, 1.5)`
-
 ```{r}
 #| label: legend-position-man
+#| layout-ncol: 3
 base <- ggplot(toy, aes(up, up)) + 
   geom_point(aes(colour = txt), size = 3)
 
@@ -847,8 +839,6 @@ There's also a margin around the legends, which you can suppress with `legend.ma
 
 <!-- 1.  What's gone wrong with this plot? How could you fix it? -->
 
-<!--     `r columns(1, 2 / 3)` -->
-
 <!--     ```{r} -->
 
 <!--     ggplot(mpg, aes(displ, hwy)) +  -->
@@ -860,8 +850,6 @@ There's also a margin around the legends, which you can suppress with `legend.ma
 <!--     ``` -->
 
 <!-- 1.  Can you recreate the code for this plot? -->
-
-<!--     `r columns(1, 2 / 3)` -->
 
 <!--     ```{r, echo = FALSE} -->
 

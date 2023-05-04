@@ -3,7 +3,6 @@
 ```{r}
 #| include: false
 source("common.R")
-columns(1, 2 / 3)
 ```
 
 When constructing a data visualisation, it is often necessary to make annotations to the data displayed.
@@ -16,8 +15,6 @@ However, to meet the specific needs that users often have when annotating plots,
 
 When customising a plot, it is often useful to modify the titles associated with the plot, axes, and legends.
 To assist with this task ggplot2 provides the `labs()` helper function, which lets you set the various titles using name-value pairs like `title = My plot title"`, `x = "X axis"` or `fill = "fill legend"`:
-
-`r columns(1, 2/3)`
 
 ```{r}
 #| label: guide-names-helper
@@ -36,8 +33,6 @@ The values supplied to `labs()` are typically text strings, with `\n` used to sp
 The rules by which these expressions are interpreted can be found by typing `?plotmath`.
 \index{Axis!title} \index{Legend!title}
 
-`r columns(2, 1)`
-
 ```{r}
 #| label: guide-names
 values <- seq(from = -2, to = 2, by = .01)
@@ -50,10 +45,9 @@ ggplot(df, aes(x, y)) +
 It is also possible to include (some) markdown in axis and legend titles with the help of the ggtext package [@ggtext] and the ggplot2 theme system (see @sec-polishing).
 To enable markdown you need to set the relevant theme element to `ggtext::element_markdown()`, as demonstrated below:
 
-`r columns(2, 1)`
-
 ```{r}
 #| label: markdown-with-ggtext
+#| layout-ncol: 2
 df <- data.frame(x = 1:3, y = 1:3)
 base <- ggplot(df, aes(x, y)) + 
   geom_point() + 
@@ -85,8 +79,6 @@ The main tool for labelling plots is `geom_text()`, which adds `label` text at t
     This aesthetic *does* allow you to use the name of a system font, but some care is required.
     There are only three fonts that are guaranteed to work everywhere: "sans" (the default), "serif", or "mono".
     To illustrate these:
-
-    `r columns(2, 1)`
 
     ```{r}
     #| label: text-family
@@ -124,6 +116,7 @@ The main tool for labelling plots is `geom_text()`, which adds `label` text at t
 
     ```{r}
     #| label: text-justification
+    #| layout-ncol: 2
     df <- data.frame(
       x = c(1, 1, 2, 2, 1.5),
       y = c(1, 2, 1, 2, 1.5),
@@ -179,9 +172,11 @@ Unlike the aesthetics these only take single values, so they must be the same fo
 
     ```{r}
     #| label: text-overlap
+    #| layout-ncol: 2
     ggplot(mpg, aes(displ, hwy)) + 
       geom_text(aes(label = model)) + 
       xlim(1, 8)
+
     ggplot(mpg, aes(displ, hwy)) + 
       geom_text(aes(label = model), check_overlap = TRUE) + 
       xlim(1, 8)
@@ -192,8 +187,6 @@ Unlike the aesthetics these only take single values, so they must be the same fo
 
 A variation on `geom_text()` is `geom_label()`: it draws a rounded rectangle behind the text.
 This makes it useful for adding labels to plots with busy backgrounds: \indexf{geom\_label}
-
-`r columns(1, 2/3)`
 
 ```{r}
 #| label: label
@@ -221,13 +214,12 @@ Labelling data well poses some challenges:
     The package supplies `geom_text_repel()`, which optimizes the label positioning to avoid overlap.
     It works quite well so long as the number of labels is not excessive:
 
-    `r columns(1, 2/3)`
-
     ```{r}
     #| label: ggrepel
-    mini_mpg <- mpg[sample(nrow(mpg), 20),]
-    ggplot(mpg, aes(displ, hwy)) + geom_point(colour = "red") + 
-    ggrepel::geom_text_repel(data = mini_mpg, aes(label = class))
+    mini_mpg <- mpg[sample(nrow(mpg), 20), ]
+    ggplot(mpg, aes(displ, hwy)) + 
+      geom_point(colour = "red") + 
+      ggrepel::geom_text_repel(data = mini_mpg, aes(label = class))
     ```
 
 -   It can sometimes be difficult to ensure that text labels fit within the space that you want.
@@ -257,7 +249,7 @@ For example, you can use:
 
 Typically, you can either put annotations in the foreground (using `alpha` if needed so you can still see the data), or in the background.
 With the default background, a thick white line makes a useful reference: it's easy to see but it doesn't jump out at you.
-To illustrate how ggplot2 tools can be used to annotate plots we'll start with a time series plotting US unemployment over time: `r columns(1, 3 / 8, 1)`
+To illustrate how ggplot2 tools can be used to annotate plots we'll start with a time series plotting US unemployment over time:
 
 ```{r}
 #| label: umep
@@ -350,8 +342,6 @@ p <- ggplot(mpg, aes(displ, hwy)) +
 The problem with this is that the highlighted category would not be labelled.
 This is easily rectified using `annotate()`
 
-`r columns(1, 2/3)`
-
 ```{r}
 #| label: underplot
 p + 
@@ -381,10 +371,9 @@ This usually makes the plot easier to read because it puts the labels closer to 
 The broader ggplot2 ecosystem contains a variety of other tools to accomplish this in a more automated fashion.
 The [directlabels](https://github.com/tdhock/directlabels) package, by Toby Dylan Hocking, provides a number of tools to make this easier: \index{directlabels}
 
-`r columns(2, 1)`
-
 ```{r}
 #| label: directlabels
+#| layout-ncol: 2
 ggplot(mpg, aes(displ, hwy, colour = class)) + 
   geom_point()
 
@@ -400,8 +389,6 @@ See the directlabels website, <http://directlabels.r-forge.r-project.org>, for o
 Another take on this idea comes from the ggforce package by Thomas Lin Pedersen <https://github.com/thomasp85/ggforce>.
 The ggforce package contains a lot of useful tools to extend ggplot2 functionality, including functions such as `geom_mark_ellipse()` that overlays a plot with circular "highlight" marks.
 For example:
-
-`r columns(1, 1/2, 1)`
 
 ```{r}
 #| label: geom_mark_ellipse
@@ -428,8 +415,6 @@ When used well, annotations can be a powerful tool to help your reader make sens
 One example of this is when you want the reader to compare groups across facets.
 For example, in the plot below it is easy to see the relationship within each facet, but the subtle differences across facets do not pop out:
 
-`r columns(1, 1 / 4, 1)`
-
 ```{r}
 #| label: faceted_noline
 ggplot(diamonds, aes(log10(carat), log10(price))) + 
@@ -438,8 +423,6 @@ ggplot(diamonds, aes(log10(carat), log10(price))) +
 ```
 
 It is much easier to see these subtle differences if we add a reference line:
-
-`r columns(1, 1 / 4, 1)`
 
 ```{r}
 #| label: faceted_line
@@ -456,8 +439,6 @@ This makes it easier to compare the facets to each other because there is shared
 
 A variation on this theme arises when you want each facet of a plot to display data from a single group, with the complete data set plotted unobtrusively in each panel to aid visual comparison.
 The gghighlight package is particularly useful in this context:
-
-`r columns(1, 1, .75)`
 
 ```{r}
 #| label: gghighlight_facet

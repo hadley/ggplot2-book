@@ -50,9 +50,8 @@ You can control how the ribbon is wrapped into a grid with `ncol`, `nrow`, `as.t
 `as.table` controls whether the facets are laid out like a table (`TRUE`), with highest values at the bottom-right, or a plot (`FALSE`), with the highest values at the top-right.
 `dir` controls the direction of wrap: **h**orizontal or **v**ertical.
 
-`r columns(2, 2/3)`
-
 ```{r}
+#| layout-ncol: 2
 base <- ggplot(mpg2, aes(displ, hwy)) + 
   geom_blank() + 
   xlab(NULL) + 
@@ -63,6 +62,7 @@ base + facet_wrap(~class, ncol = 3, as.table = FALSE)
 ```
 
 ```{r}
+#| layout-ncol: 2
 base + facet_wrap(~class, nrow = 3)
 base + facet_wrap(~class, nrow = 3, dir = "v")
 ```
@@ -111,13 +111,13 @@ This is because each column shares an x axis, and each row shares a y axis.
 
 Fixed scales make it easier to see patterns across panels; free scales make it easier to see patterns within panels.
 
-`r columns(1, 1 / 2.5, 0.75)`
-
 ```{r}
 #| label: fixed-vs-free
+#| layout-ncol: 2
 p <- ggplot(mpg2, aes(cty, hwy)) + 
   geom_abline() +
-  geom_jitter(width = 0.1, height = 0.1) 
+  geom_jitter(width = 0.1, height = 0.1)
+
 p + facet_wrap(~cyl)
 p + facet_wrap(~cyl, scales = "free")
 ```
@@ -126,8 +126,6 @@ Free scales are also useful when we want to display multiple time series that we
 To do this, we first need to change from 'wide' to 'long' data, stacking the separate variables into a single column.
 An example of this is shown below with the long form of the `economics` data.
 \index{Data!economics\_long@\texttt{economics\_long}}
-
-`r columns(1, 1.2 / 1, 0.75)`
 
 ```{r}
 #| label: time
@@ -147,6 +145,7 @@ This is most useful for categorical scales, where we can assign space proportion
 #| label: discrete-free
 mpg2$model <- reorder(mpg2$model, mpg2$cty)
 mpg2$manufacturer <- reorder(mpg2$manufacturer, -mpg2$cty)
+
 ggplot(mpg2, aes(cty, model)) + 
   geom_point() + 
   facet_grid(manufacturer ~ ., scales = "free", space = "free") +
@@ -164,8 +163,6 @@ Here ggplot will do what you expect: it will display the map in every facet: mis
 
 Here's a simple example.
 Note how the single red point from `df2` appears in both panels.
-
-`r columns(1, 1 / 2, 0.75)`
 
 ```{r}
 df1 <- data.frame(x = 1:3, y = 1:3, gender = c("f", "f", "m"))
@@ -187,8 +184,6 @@ Both techniques have strengths and weaknesses, based around the relative positio
 This is good if the groups overlap a lot, but it does make small differences harder to see.
 When using aesthetics to differentiate groups, the groups are close together and may overlap, but small differences are easier to see.
 
-`r columns(1, 2/3)`
-
 ```{r}
 df <- data.frame(
   x = rnorm(120, c(0, 2, 4)),
@@ -199,8 +194,6 @@ df <- data.frame(
 ggplot(df, aes(x, y)) + 
   geom_point(aes(colour = z))
 ```
-
-`r columns(1, 1 / 3, 1)`
 
 ```{r}
 ggplot(df, aes(x, y)) + 
@@ -219,6 +212,7 @@ df_sum <- df %>%
   group_by(z) %>% 
   summarise(x = mean(x), y = mean(y)) %>%
   rename(z2 = z)
+
 ggplot(df, aes(x, y)) + 
   geom_point() + 
   geom_point(data = df_sum, aes(colour = z2), size = 4) + 
@@ -251,10 +245,9 @@ ggplot2 provides three helper functions to do so: \index{Faceting!by continuous 
 
 They are illustrated below:
 
-`r columns(1, 1/4, 1)`
-
 ```{r}
 #| label: discretising
+#| layout-ncol: 3
 # Bins of width 1
 mpg2$disp_w <- cut_width(mpg2$displ, 1)
 # Six bins of equal length
@@ -288,8 +281,6 @@ Note that the faceting formula does not evaluate functions, so you must first cr
 
 4.  Recreate the following plot.
     It facets `mpg2` by class, overlaying a smooth curve fit to the full dataset.
-
-    `r columns(1, 2/3, 0.75)`
 
     ```{r}
     #| echo: false

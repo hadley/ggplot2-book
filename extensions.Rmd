@@ -49,9 +49,8 @@ When writing new themes, it is a good idea to provide a few parameters to the us
 One important such aspect is sizing of text and lines but other aspects could be e.g. key and accent colours of the theme.
 For example, we could create a variant of `theme_minimal()` that allows the user to specify the plot background colour:
 
-`r columns(3, 1)`
-
 ```{r}
+#| layout-ncol: 3
 theme_background <- function(background = "white", ...) {
   theme_minimal(...) %+replace%
     theme(
@@ -100,6 +99,7 @@ Both themes are intended to do the same thing: change the defaults to `theme_cla
 At first glance, it appears that both versions behave in line with the user expectations:
 
 ```{r}
+#| layout-ncol: 3
 base + theme_classic()
 base + theme_predictable()
 base + theme_surprising()
@@ -108,6 +108,7 @@ base + theme_surprising()
 However, suppose the user of your theme wants to remove the axis lines:
 
 ```{r}
+#| layout-ncol: 3
 base + theme_classic() + theme(axis.line = element_blank())
 base + theme_predictable() + theme(axis.line = element_blank())
 base + theme_surprising() + theme(axis.line = element_blank())
@@ -186,16 +187,16 @@ coord_annotate <- function(label = "panel annotation") {
 
 So now this works:
 
-`r columns(2, 1)`
-
 ```{r}
 #| eval: false
+#| layout-ncol: 2
 base + coord_annotate("annotation in blue")
 base + coord_annotate("annotation in blue") + theme_dark()
 ```
 
 ```{r}
 #| echo: false
+#| layout-ncol: 2
 # DJN: I'm not sure why, because I can't reproduce the bug elsewhere, but the
 # call to register_theme_element() updates ggplot2:::ggplot_global$element_tree
 # only within *that* chunk, so subsequent chunks don't have ggxyz.panel.annotation
@@ -284,9 +285,8 @@ stat_chull <- function(mapping = NULL, data = NULL,
 
 and our stat can now be used in plots:
 
-`r columns(2, 1)`
-
 ```{r}
+#| layout-ncol: 2
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
   stat_chull(fill = NA, colour = "black")
@@ -376,8 +376,6 @@ stat_density_common <- function(mapping = NULL, data = NULL,
 
 We can now apply our new stat
 
-`r columns(1, 1)`
-
 ```{r}
 ggplot(mpg, aes(displ, colour = drv)) + 
   stat_density_common()
@@ -438,8 +436,6 @@ geom_chull <- function(mapping = NULL, data = NULL, stat = "chull",
 For the sake of consistency we would also define `stat_chull()` to use this as the default.
 In any case, we now have a new `geom_chull()` function that works fairly well without the user needing to set parameters:
 
-`r columns(1, 1)`
-
 ```{r}
 ggplot(mpg, aes(displ, hwy)) + 
   geom_chull() +
@@ -491,8 +487,6 @@ geom_spike <- function(mapping = NULL, data = NULL,
 ```
 
 We are now able to use `geom_spike()` in plots:
-
-`r columns(1, 1/2, 1)`
 
 ```{r}
 df <- data.frame(
@@ -555,7 +549,6 @@ In this example the `draw_panel()` method returns a list of three grobs, one gen
 As usual, if we want the geom to be exposed to the user we add a wrapper function:
 
 ```{r}
-#| cache.vars: !expr GeomBarbell
 geom_barbell <- function(mapping = NULL, data = NULL, 
                          stat = "identity", position = "identity", 
                          ..., na.rm = FALSE, show.legend = NA, 
@@ -575,9 +568,8 @@ geom_barbell <- function(mapping = NULL, data = NULL,
 
 We are now able to use the composite geom:
 
-`r columns(2, 1)`
-
 ```{r}
+#| layout-ncol: 2
 df <- data.frame(x = 1:10, xend = 0:9, y = 0, yend = 1:10)
 base <- ggplot(df, aes(x, y, xend = xend, yend = yend))
 
@@ -615,8 +607,6 @@ random_colours <- function(n) {
 ```
 
 We can then write a `scale_fill_random()` constructor function that passes the palette to `discrete_scale()` and then use it in plots:
-
-`r columns(1, 1)`
 
 ```{r}
 scale_fill_random <- function(..., aesthetics = "fill") {
@@ -713,9 +703,8 @@ position_jitternormal <- function(sd_x = .15, sd_y = .15) {
 We are now able to use our new position function when creating plots.
 To see the difference between `position_jitter()` and the `position_jitternormal()` function we have just defined, compare the following plots:
 
-`r columns(2, 1)`
-
 ```{r}
+#| layout-ncol: 2
 df <- data.frame(
   x = sample(1:3, 1500, TRUE),
   y = sample(1:3, 1500, TRUE)
@@ -845,8 +834,6 @@ Relatedly, note the use of `rlang::quos_auto_name()`: the `vars()` function retu
 As long as you're expecting the user to use `vars()` this is all the preprocessing you need, but if you want to support other input formats you'll need to be a little fancier (you can see how to do this by looking at the ggplot2 source code).
 
 In any case, we now have a working facet:
-
-`r columns(1, 1, 1)`
 
 ```{r}
 #| eval: false

@@ -4,7 +4,6 @@
 #| label: layers
 #| include: false
 source("common.R")
-columns(1, 2 / 3)
 ```
 
 ## Introduction
@@ -236,9 +235,8 @@ If you only have one layer in the plot, the way you specify aesthetics doesn't m
 However, the distinction is important when you start adding additional layers.
 These two plots are both valid and interesting, but focus on quite different aspects of the data:
 
-`r columns(2, 2 / 3)`
-
 ```{r}
+#| layout-ncol: 2
 ggplot(mpg, aes(displ, hwy, colour = class)) + 
   geom_point() + 
   geom_smooth(method = "lm", se = FALSE) +
@@ -265,10 +263,9 @@ The second plot **maps** (not sets) the colour to the value 'darkblue'.
 This effectively creates a new variable containing only the value 'darkblue' and then scales it with a colour scale.
 Because this value is discrete, the default colour scale uses evenly spaced colours on the colour wheel, and since there is only one value this colour is pinkish.
 
-`r columns(2, 2/3)`
-
 ```{r}
 #| label: layer15
+#| layout-ncol: 2
 ggplot(mpg, aes(cty, hwy)) + 
   geom_point(colour = "darkblue") 
 
@@ -277,8 +274,6 @@ ggplot(mpg, aes(cty, hwy)) +
 ```
 
 A third approach is to map the value, but override the default scale:
-
-`r columns(1, 2 / 3, 0.5)`
 
 ```{r}
 ggplot(mpg, aes(cty, hwy)) + 
@@ -291,8 +286,6 @@ You'll learn more about that in @sec-scale-identity.
 
 It's sometimes useful to map aesthetics to constants.
 For example, if you want to display multiple layers with varying parameters, you can "name" each layer:
-
-`r columns(1, 2 / 3)`
 
 ```{r}
 ggplot(mpg, aes(displ, hwy)) + 
@@ -426,10 +419,9 @@ If alternative parameterisations are available, picking the right one for your d
 
 4.  For each of the plots below, identify the geom used to draw it.
 
-    `r columns(2, 2 / 3)`
-
     ```{r}
     #| echo: false
+    #| layout-ncol: 2
     ggplot(mpg, aes(drv, displ)) + geom_violin()
     ggplot(mpg, aes(hwy, cty)) + 
       geom_count(alpha = 1/3) + 
@@ -438,12 +430,14 @@ If alternative parameterisations are available, picking the right one for your d
 
     ```{r}
     #| echo: false
+    #| layout-ncol: 2
     ggplot(mpg, aes(hwy, cty)) + geom_hex(bins = 10) + theme(legend.position = "none")
     ggplot(mpg, aes(cyl, drv)) + geom_jitter(width = 0.2, height = 0.2)
     ```
 
     ```{r}
     #| echo: false
+    #| layout-ncol: 2
     ggplot(economics, aes(date, psavert)) + geom_area()
     ggplot(economics, aes(uempmed, psavert)) + geom_path()
     ```
@@ -487,8 +481,6 @@ Other stats can't be created with a `geom_` function:
 There are two ways to use these functions.
 You can either add a `stat_()` function and override the default geom, or add a `geom_()` function and override the default stat:
 
-`r columns(1, 1 / 2, 0.75)`
-
 ```{r}
 #| fig.keep: last
 ggplot(mpg, aes(trans, cty)) + 
@@ -519,12 +511,12 @@ This prevents confusion in case the original dataset includes a variable with th
 Each statistic lists the variables that it creates in its documentation.
 \indexc{stat} Compare the y-axes on these two plots:
 
-`r columns(2, 2/3)`
-
 ```{r}
 #| label: hist
+#| layout-ncol: 2
 ggplot(diamonds, aes(price)) + 
   geom_histogram(binwidth = 500)
+
 ggplot(diamonds, aes(price)) + 
   geom_histogram(aes(y = after_stat(density)), binwidth = 500)
 ```
@@ -533,11 +525,10 @@ This technique is particularly useful when you want to compare the distribution 
 For example, it's hard to compare the distribution of `price` within `cut` because some groups are quite small.
 It's easier to compare if we standardise each group to take up the same area:
 
-`r columns(2, 2/3)`
-
 ```{r}
 #| label: freqpoly
 #| message: false
+#| layout-ncol: 2
 ggplot(diamonds, aes(price, colour = cut)) + 
   geom_freqpoly(binwidth = 500) +
   theme(legend.position = "none")
@@ -565,10 +556,10 @@ The result of this plot is rather surprising: low quality diamonds seem to be mo
 
 2.  What stats were used to create the following plots?
 
-    `r columns(3, 3/4)`
-
     ```{r}
     #| echo: false
+    #| layout-ncol: 3
+    #| warning: false
     ggplot(mpg, aes(displ)) + stat_ecdf()
     ggplot(mpg, aes(sample = displ)) + stat_qq()
     ggplot(mpg, aes(displ)) + 
@@ -596,10 +587,9 @@ Three adjustments apply primarily to bars:
 -   `position_fill()`: stack overlapping bars, scaling so the top is always at 1.
 -   `position_dodge()`: place overlapping bars (or boxplots) side-by-side.
 
-`r columns(3, 2 / 3)`
-
 ```{r}
 #| label: position-bar
+#| layout-ncol: 3
 dplot <- ggplot(diamonds, aes(color, fill = cut)) + 
   xlab(NULL) + ylab(NULL) + theme(legend.position = "none")
 # position stack is the default for bars, so `geom_bar()` 
@@ -612,10 +602,9 @@ dplot + geom_bar(position = "dodge")
 There's also a position adjustment that does nothing: `position_identity()`.
 The identity position adjustment isn't useful for bars, because each bar obscures the bars behind, but there are many geoms that don't need adjusting, like lines:
 
-`r columns(2, 2 / 3)`
-
 ```{r}
 #| label: position-identity
+#| layout-ncol: 2
 dplot + geom_bar(position = "identity", alpha = 1 / 2, colour = "grey50")
 
 ggplot(diamonds, aes(color, colour = cut)) + 
@@ -637,8 +626,10 @@ Instead of including additional arguments in `...`, you construct a position adj
 
 ```{r}
 #| label: position-point
+#| layout-ncol: 2
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point(position = "jitter")
+
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point(position = position_jitter(width = 0.05, height = 0.5))
 ```
