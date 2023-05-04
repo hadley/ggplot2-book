@@ -1,11 +1,14 @@
-# Statistical summaries {#statistical-summaries}
+# Statistical summaries {#sec-statistical-summaries}
 
-```{r, include = FALSE}
+```{r}
+#| echo: false
+#| message: false
+#| results: asis
 source("common.R")
-columns(1, 2 / 3)
+status("drafting")
 ```
 
-## Revealing uncertainty {#uncertainty}
+## Revealing uncertainty {#sec-uncertainty}
 
 If you have information about the uncertainty present in your data, whether it be from a model or from distributional assumptions, it's a good idea to display it.
 There are four basic families of geoms that can be used for this job, depending on whether the x values are discrete or continuous, and whether or not you want to display the middle of the interval, or just the extent:
@@ -16,12 +19,11 @@ There are four basic families of geoms that can be used for this job, depending 
 -   Continuous x, range & center: `geom_smooth(stat = "identity")`
 
 These geoms assume that you are interested in the distribution of y conditional on x and use the aesthetics `ymin` and `ymax` to determine the range of the y values.
-If you want the opposite, see Section \@ref(coord-flip).
+If you want the opposite, see @sec-coord-flip.
 \index{Error bars} \indexf{geom\_ribbon} \indexf{geom\_smooth} \indexf{geom\_errorbar} \indexf{geom\_linerange} \indexf{geom\_crossbar} \indexf{geom\_pointrange}
 
-`r columns(3, 1)`
-
 ```{r}
+#| layout-ncol: 3
 y <- c(18, 11, 16)
 df <- data.frame(x = 1:3, y = y, se = c(1.2, 0.5, 1.0))
 
@@ -32,6 +34,7 @@ base + geom_smooth(stat = "identity")
 ```
 
 ```{r}
+#| layout-ncol: 3
 base + geom_errorbar()
 base + geom_linerange()
 base + geom_ribbon()
@@ -41,7 +44,7 @@ Because there are so many different ways to calculate standard errors, the calcu
 \index{Standard errors} For very simple cases, ggplot2 provides some tools in the form of summary functions described below, otherwise you will have to do it yourself.
 R for Data Science (<https://r4ds.had.co.nz>) contains more advice on working with more sophisticated models.
 
-## Weighted data {#weighting}
+## Weighted data {#sec-weighting}
 
 When you have aggregated data where each row in the dataset represents multiple observations, you need some way to take into account the weighting variable.
 We will use some data collected on Midwest states in the 2000 US census in the built-in `midwest` data frame.
@@ -58,9 +61,9 @@ The choice of a weighting variable profoundly affects what we are looking at in 
 There are two aesthetic attributes that can be used to adjust for weights.
 Firstly, for simple geoms like lines and points, use the size aesthetic:
 
-`r columns(2, 2/3)`
-
-```{r miss-basic}
+```{r}
+#| label: miss-basic
+#| layout-ncol: 2
 # Unweighted
 ggplot(midwest, aes(percwhite, percbelowpoverty)) + 
   geom_point()
@@ -77,9 +80,9 @@ Weights are supported for every case where it makes sense: smoothers, quantile r
 You can't see this weighting variable directly, and it doesn't produce a legend, but it will change the results of the statistical summary.
 The following code shows how weighting by population density affects the relationship between percent white and percent below the poverty line.
 
-`r columns(2, 2/3)`
-
-```{r weight-lm}
+```{r}
+#| label: weight-lm
+#| layout-ncol: 2
 # Unweighted
 ggplot(midwest, aes(percwhite, percbelowpoverty)) + 
   geom_point() + 
@@ -95,7 +98,9 @@ ggplot(midwest, aes(percwhite, percbelowpoverty)) +
 When we weight a histogram or density plot by total population, we change from looking at the distribution of the number of counties, to the distribution of the number of people.
 The following code shows the difference this makes for a histogram of the percentage below the poverty line: \index{Histogram!weighted}
 
-```{r weight-hist}
+```{r}
+#| label: weight-hist
+#| layout-ncol: 2
 ggplot(midwest, aes(percbelowpoverty)) +
   geom_histogram(binwidth = 1) + 
   ylab("Counties")
@@ -105,7 +110,7 @@ ggplot(midwest, aes(percbelowpoverty)) +
   ylab("Population (1000s)")
 ```
 
-## Diamonds data {#diamonds}
+## Diamonds data {#sec-diamonds}
 
 To demonstrate tools for large datasets, we'll use the built-in `diamonds` dataset, which consists of price and quality information for \~54,000 diamonds:
 
@@ -113,27 +118,32 @@ To demonstrate tools for large datasets, we'll use the built-in `diamonds` datas
 diamonds 
 ```
 
-The data contains the four C's of diamond quality: carat, cut, colour and clarity; and five physical measurements: depth, table, x, y and z, as described in Figure \@ref(fig:diamond-dim).
+The data contains the four C's of diamond quality: carat, cut, colour and clarity; and five physical measurements: depth, table, x, y and z, as described in the figure below.
 \index{Data!diamonds@\texttt{diamonds}}
 
-```{r diamond-dim, echo = FALSE, out.width = "100%", fig.cap="How the variables x, y, z, table and depth are measured."}
+```{r}
+#| label: diamond-dim
+#| echo: false
+#| out.width: 100%
+#| fig.cap: How the variables x, y, z, table and depth are measured.
 knitr::include_graphics("diagrams/diamond-dimensions.png", dpi = 300)
 ```
 
 The dataset has not been well cleaned, so as well as demonstrating interesting facts about diamonds, it also shows some data quality problems.
 
-## Displaying distributions {#distributions}
+## Displaying distributions {#sec-distributions}
 
 There are a number of geoms that can be used to display distributions, depending on the dimensionality of the distribution, whether it is continuous or discrete, and whether you are interested in the conditional or joint distribution.
 \index{Distributions}
 
 For 1d continuous distributions the most important geom is the histogram, `geom_histogram()`: \indexf{geom\_histogram}
 
-`r columns(2, 2/3)`
-
-```{r geom-1d-con}
+```{r}
+#| label: geom-1d-con
+#| layout-ncol: 2
 ggplot(diamonds, aes(depth)) + 
   geom_histogram()
+
 ggplot(diamonds, aes(depth)) + 
   geom_histogram(binwidth = 0.1) + 
   xlim(55, 70)
@@ -158,13 +168,14 @@ The conditional density plot uses `position_fill()` to stack each bin, scaling i
 This plot is perceptually challenging because you need to compare bar heights, not positions, but you can see the strongest patterns.
 \indexf{position\_fill}
 
-`r columns(2, 2 / 3)`
-
-```{r compare-dist}
+```{r}
+#| label: compare-dist
+#| layout-ncol: 2
 ggplot(diamonds, aes(depth)) + 
   geom_freqpoly(aes(colour = cut), binwidth = 0.1, na.rm = TRUE) +
   xlim(58, 68) + 
   theme(legend.position = "none")
+
 ggplot(diamonds, aes(depth)) + 
   geom_histogram(aes(fill = cut), binwidth = 0.1, position = "fill",
     na.rm = TRUE) +
@@ -187,11 +198,14 @@ Use a density plot when you know that the underlying density is smooth, continuo
 You can use the `adjust` parameter to make the density more or less smooth.
 \index{Density plot} \indexf{geom\_density}
 
-```{r geom-density}
+```{r}
+#| label: geom-density
+#| layout-ncol: 2
 ggplot(diamonds, aes(depth)) +
   geom_density(na.rm = TRUE) + 
   xlim(58, 68) + 
   theme(legend.position = "none")
+
 ggplot(diamonds, aes(depth, fill = cut, colour = cut)) +
   geom_density(alpha = 0.2, na.rm = TRUE) + 
   xlim(58, 68) + 
@@ -212,11 +226,12 @@ Here are three options:
     For continuous x, you'll also need to set the group aesthetic to define how the x variable is broken up into bins.
     A useful helper function is `cut_width()`: \indexf{cut\_width}
 
-    `r columns(2, 2 / 3)`
-
-    ```{r geom-boxplot}
+    ```{r}
+    #| label: geom-boxplot
+    #| layout-ncol: 2
     ggplot(diamonds, aes(clarity, depth)) + 
       geom_boxplot()
+
     ggplot(diamonds, aes(carat, depth)) + 
       geom_boxplot(aes(group = cut_width(carat, 0.1))) + 
       xlim(NA, 2.05)
@@ -226,8 +241,10 @@ Here are three options:
     The underlying computation is the same, but the results are displayed in a similar fashion to the boxplot: \indexf{geom\_violion} \index{Violin plot}
 
     ```{r}
+    #| layout-ncol: 2
     ggplot(diamonds, aes(clarity, depth)) + 
       geom_violin()
+
     ggplot(diamonds, aes(carat, depth)) + 
       geom_violin(aes(group = cut_width(carat, 0.1))) + 
       xlim(NA, 2.05)
@@ -250,7 +267,7 @@ Here are three options:
     What computed variable do you need to map to `y` to make the two plots comparable?
     (You can either modify `geom_freqpoly()` or `geom_density()`.)
 
-## Dealing with overplotting {#overplotting}
+## Dealing with overplotting {#sec-overplotting}
 
 The scatterplot is a very important tool for assessing the relationship between two continuous variables.
 However, when the data is large, points will be often plotted on top of each other, obscuring the true relationship.
@@ -266,9 +283,10 @@ These tend to be most effective for smaller datasets:
     The following code shows some options for 2000 points sampled from a bivariate normal distribution.
     \indexf{geom\_point}
 
-    `r columns(3, 1)`
-
-    ```{r overp-glyph, dev='png'}
+    ```{r}
+    #| label: overp-glyph
+    #| dev: png
+    #| layout-ncol: 3
     df <- data.frame(x = rnorm(2000), y = rnorm(2000))
     norm <- ggplot(df, aes(x, y)) + xlab(NULL) + ylab(NULL)
     norm + geom_point()
@@ -281,7 +299,10 @@ These tend to be most effective for smaller datasets:
     Values smaller than \~$1/500$ are rounded down to zero, giving completely transparent points.
     \indexc{alpha} \index{Transparency} \index{Colour!transparency} \index{Alpha blending}
 
-    ```{r overp-alpha, dev = "png"}
+    ```{r}
+    #| label: overp-alpha
+    #| dev: png
+    #| layout-ncol: 3
     norm + geom_point(alpha = 1 / 3)
     norm + geom_point(alpha = 1 / 5)
     norm + geom_point(alpha = 1 / 10)
@@ -302,26 +323,28 @@ Alternatively, we can think of overplotting as a 2d density estimation problem, 
     The code below compares square and hexagonal bins, using parameters `bins` and `binwidth` to control the number and size of the bins.
     \index{Histogram!2d} \indexf{geom\_hexagon} \indexf{geom\_hex} \indexf{geom\_bin2d}
 
-    `r columns(2, 2/3)`
-
-    ```{r overp-bin}
+    ```{r}
+    #| label: overp-bin
+    #| layout-ncol: 2
     norm + geom_bin2d()
     norm + geom_bin2d(bins = 10)
     ```
 
-    ```{r overp-bin-hex}
+    ```{r}
+    #| label: overp-bin-hex
+    #| layout-ncol: 2
     norm + geom_hex()
     norm + geom_hex(bins = 10)
     ```
 
--   Estimate the 2d density with `stat_density2d()`, and then display using one of the techniques for showing 3d surfaces in Section \@ref(surface).
+-   Estimate the 2d density with `stat_density2d()`, and then display using one of the techniques for showing 3d surfaces in @sec-surface.
 
--   If you are interested in the conditional distribution of y given x, then the techniques of Section \@ref(distribution) will also be useful.
+-   If you are interested in the conditional distribution of y given x, then the techniques of @sec-distribution will also be useful.
 
 Another approach to dealing with overplotting is to add data summaries to help guide the eye to the true shape of the pattern within the data.
 For example, you could add a smooth line showing the centre of the data with `geom_smooth()` or use one of the summaries below.
 
-## Statistical summaries {#summary}
+## Statistical summaries {#sec-summary}
 
 \indexf{stat\_summary\_bin} \indexf{stat\_summary\_2d} \index{Stats!summary}
 
@@ -334,9 +357,8 @@ Now we're going to explore how to use `stat_summary_bin()` and `stat_summary_2d(
 Let's start with a couple of examples with the diamonds data.
 The first example in each pair shows how we can count the number of diamonds in each bin; the second shows how we can compute the average price.
 
-`r columns(2, 2/3)`
-
 ```{r}
+#| layout-ncol: 2
 ggplot(diamonds, aes(color)) + 
   geom_bar()
 
@@ -345,6 +367,7 @@ ggplot(diamonds, aes(color, price)) +
 ```
 
 ```{r}
+#| layout-ncol: 2
 ggplot(diamonds, aes(table, depth)) + 
   geom_bin2d(binwidth = 1, na.rm = TRUE) + 
   xlim(50, 70) + 
@@ -361,12 +384,12 @@ To get more help on the arguments associated with the two transformations, look 
 You can control the size of the bins and the summary functions.
 `stat_summary_bin()` can produce `y`, `ymin` and `ymax` aesthetics, also making it useful for displaying measures of spread.
 See the docs for more details.
-You'll learn more about how geoms and stats interact in Section \@ref(stat).
+You'll learn more about how geoms and stats interact in @sec-stat.
 
 These summary functions are quite constrained but are often useful for a quick first pass at a problem.
 If you find them restraining, you'll need to do the summaries yourself (see R for Data Science <https://r4ds.had.co.nz> for details)
 
-## Surfaces {#surface}
+## Surfaces {#sec-surface}
 
 \index{Surface plots} \index{Contour plot} \indexf{geom\_contour} \index{3d}
 
@@ -387,7 +410,7 @@ ggplot(faithfuld, aes(eruptions, waiting)) +
 ```
 
 The reference to the `..level..` variable in this code may seem confusing, because there is no variable called `..level..` in the `faithfuld` data.
-In this context the `..` notation refers to a variable computed internally (see Section \@ref(generated-variables)).
+In this context the `..` notation refers to a variable computed internally (see @sec-generated-variables).
 To display the same density as a heat map, you can use `geom_raster()`:
 
 ```{r}

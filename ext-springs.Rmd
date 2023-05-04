@@ -1,13 +1,19 @@
-```{r setup, include = FALSE}
+# A case study {#sec-spring1}
+
+```{r}
+#| echo: false
+#| message: false
+#| results: asis
 source("common.R")
-library(grid)
-set.seed(12L)
-columns(1, 1 / 1.61, 1)
+status("polishing")
 ```
 
-# A case study {#spring1}
+```{r}
+#| include: false
+library(grid)
+```
 
-Chapter \@ref(extensions) provided a high-level overview of creating ggplot2 extensions, building on the discussion of ggplot2 internals in Chapter \@ref(internals).
+@sec-extensions provided a high-level overview of creating ggplot2 extensions, building on the discussion of ggplot2 internals in @sec-internals.
 In this chapter we'll take that knowledge a step further, providing a deeper dive into the process of developing full-featured extensions.
 To do this, we'll take a single example --- building a new geom that looks like a spring --- and follow it all the way through the development process.
 
@@ -18,16 +24,16 @@ This makes them ideal for our purposes!
 
 We'll develop the extension in five phases:
 
-1.  We'll start as simple as possible by using the existing `geom_path()`, pairing it with a new stat (Section \@ref(spring-stat)).
-2.  The new stat only allows fixed diameter and tension, so we'll next allow these to be used as aesthetics (Section \@ref(spring2)).
-3.  A stat is a great place to start but has some fundamental restrictions so we'll next convert our work to a proper geom (Section \@ref(spring3)).
-4.  Geoms can only use dimensions relative to the data, and can't use absolute sizes like 2cm, so next we'll show you how to draw the spring with grid (Section \@ref(spring4)).
-5.  We'll finish up by providing a custom scale and legend to pair with the geom (Section \@ref(spring5)).
+1.  We'll start as simple as possible by using the existing `geom_path()`, pairing it with a new stat (@sec-spring-stat).
+2.  The new stat only allows fixed diameter and tension, so we'll next allow these to be used as aesthetics (@sec-spring2).
+3.  A stat is a great place to start but has some fundamental restrictions so we'll next convert our work to a proper geom (@sec-spring3).
+4.  Geoms can only use dimensions relative to the data, and can't use absolute sizes like 2cm, so next we'll show you how to draw the spring with grid (@sec-spring4).
+5.  We'll finish up by providing a custom scale and legend to pair with the geom (@sec-spring5).
 
 Once you've worked your way through this chapter, we highly recommend browsing the ggplot2 source code to look at how other stats and geoms are implemented.
 They will often be more complicated than what you need, but they'll give you a sense of the things you can do.
 
-## What is a spring? {#intuitive-spring}
+## What is a spring? {#sec-intuitive-spring}
 
 Developing an extension usually starts with an idea of what you want to draw.
 In this case, we want to draw a spring between two points, so we need some code that will draw a plausible-looking spring!
@@ -83,7 +89,7 @@ The code we've written up to this point is perfectly fine for a single plot, but
 
 We'll consider these questions as we work through the chapter.
 
-## Part 1: A stat {#spring-stat}
+## Part 1: A stat {#sec-spring-stat}
 
 Let's start turning this idea into a ggplot2 extension.
 Because we're creating an extension that draws a new ggplot2 layer, we need to decide whether the ggproto object we create should be a `Stat` or a `Geom`.
@@ -151,7 +157,7 @@ create_spring <- function(x,
 }
 ```
 
-This function preserves the logic of the spring code we wrote in Section \@ref(intuitive-spring), but it does a few new things that matter a lot when writing extensions:
+This function preserves the logic of the spring code we wrote in @sec-intuitive-spring, but it does a few new things that matter a lot when writing extensions:
 
 -   It is precise in specifying the parameters that define the spring.
 -   It explicitly checks the input, and uses `rlang::abort()` to throw an error if the user passes an invalid value to the function.
@@ -178,17 +184,18 @@ ggplot(spring) +
 ### Creating the stat
 
 Now that we have our transformation function, our next task is to encapsulate it into a `Stat`.
-To do this, we'll take what we learned about creating `Stat` objects in Section \@ref(new-stats) and extend it a little.
+To do this, we'll take what we learned about creating `Stat` objects in @sec-new-stats and extend it a little.
 Our first step is to write some code that creates a subclass of `Stat` that we'll call `StatSpring`:
 
-```{r, eval = FALSE}
+```{r}
+#| eval: false
 StatSpring <- ggproto("StatSpring", Stat)
 ```
 
 This creates a new `Stat` subclass named `StatSpring`.
 This class doesn't do anything interesting at this point: the only thing this code does so far is give the class a name.[^ext-springs-4]
 To make this useful, we'll need to specify the methods that will build in the functionality we desire.
-In Section \@ref(new-stats) we created a `Stat` by overriding the default method `compute_group()` and the default field for `required_aes`,[^ext-springs-5] but `Stat` objects have many properties you can modify
+In @sec-new-stats we created a `Stat` by overriding the default method `compute_group()` and the default field for `required_aes`,[^ext-springs-5] but `Stat` objects have many properties you can modify
 . If we print the `Stat` object, we can see a list of those properties
 :
 
@@ -253,14 +260,15 @@ We can print any of these methods with a command such as `StatSpring$compute_pan
 ### Methods
 
 Let's take a closer look at the methods defined for our `StatSpring`.
-As discussed in Section \@ref(new-stats) the most important methods for a stat are the three `compute_*` methods.
+As discussed in @sec-new-stats the most important methods for a stat are the three `compute_*` methods.
 One of these must always be defined, usually `compute_group()` or `compute_panel()`.
 As a rule of thumb, if the stat operates on multiple rows we start by implementing a `compute_group()` method, and if the stat operates on single rows we implement a `compute_panel()` method.
 Our spring stat is the latter kind: each spring is defined by a single row of the original data, so we'll use the `compute_panel()` method which receives all the data for a single panel.
 
 As you can see by looking at source code for our `compute_panel()` method, we're doing a bit more than simply calling our `create_spring()` function:
 
-```{r, results='hide'}
+```{r}
+#| results: hide
 function(data, scales, diameter = 1, tension = 0.75, n = 50) {
   cols_to_keep <- setdiff(names(data), c("x", "y", "xend", "yend"))
   springs <- lapply(
@@ -295,7 +303,8 @@ This is important because we're going to draw our springs with `GeomPath`, and w
 Doing so ensures that the geom draws each spring as a distinct path, and won't draw any connecting lines between different springs.
 Again, there are some subtle details to call attention to in the implementation:
 
-```{r, results='hide'}
+```{r}
+#| results: hide
 function(data, params) {
   if (anyDuplicated(data$group)) {
     data$group <- paste(data$group, seq_len(nrow(data)), sep = "-")
@@ -446,9 +455,9 @@ It works, but it has some limitations that we now need to think about.
 
 One shortcoming of our implementation is that diameter and tension are constants that can only be set for the full layer.
 These settings feel more like aesthetics and it would be nice if their values could be mapped to a variable in the data.
-We'll discuss solutions to this problem in Sections \@ref(spring2) and \@ref(spring3).
+We'll discuss solutions to this problem in @sec-spring2 and @sec-spring3.
 
-## Part 2: Adding aesthetics {#spring2}
+## Part 2: Adding aesthetics {#sec-spring2}
 
 The stat we created in the last section treats the `diameter` and `tension` as constant arguments: they're not aesthetics and the user can't map them onto a variable in the data.
 We can fix this by making a few small changes to the `StatSpring` code:
@@ -486,7 +495,7 @@ StatSpring <- ggproto("StatSpring", Stat,
 ```
 
 The main difference with our previous attempt is that the `diameter` and `tension` arguments to `compute_panel()` have gone away, and they're now taken from the data (just like `x`, `y`, etc).
-This has a downside that we'll fix in Section \@ref(spring3): we can no longer set fixed aesthetics.
+This has a downside that we'll fix in @sec-spring3: we can no longer set fixed aesthetics.
 Because of this, we'll need to remove those arguments from the constructor function:
 
 ```{r}
@@ -556,7 +565,7 @@ Unfortunately, there's a major downside: these features no longer can be set glo
 We're still also missing a way to control the scaling of the two aesthetics.
 Fixing both these problems requires the same next step: move our implementation away from `Stat` and towards a proper `Geom`.
 
-## Part 3: A geom {#spring3}
+## Part 3: A geom {#sec-spring3}
 
 In many cases a Stat-centred approach is sufficient, for example, many of the graphic primitives provided by the [ggforce](https://ggforce.data-imaginist.com) package are Stats.
 But we need to go further with the spring geom because the `tension` and `diameter` aesthetics need to be specified in units that are unrelated to the coordinate system.
@@ -564,9 +573,9 @@ Consequently, we'll rewrite our geom to be a proper `Geom` extension.
 
 ### Geom extensions
 
-As discussed in Chapter \@ref(extensions), there are many similarities between `Stat` and `Geom` extensions.
+As discussed in @sec-extensions, there are many similarities between `Stat` and `Geom` extensions.
 The biggest difference is that `Stat` extensions return a modified version of the input data, whereas `Geom` extensions return graphical objects.
-In some cases creating a new geom requires you to use the grid package (we'll cover this in Section \@ref(spring4)), but often you don't have to.
+In some cases creating a new geom requires you to use the grid package (we'll cover this in @sec-spring4), but often you don't have to.
 
 Much like stat objects, geom objects in ggproto have several methods and fields you can modify.
 You can see the list by printing the object:
@@ -659,10 +668,10 @@ Despite the length of this code, most of it is familiar:
 
 One aspect to this code may surprise developers who are used to object-oriented design from other languages.
 Calling the method of a kindred object directly, as we do when invoking `GeomPath$draw_panel()` from within `GeomSpring$draw_panel()`, is not considered good practice in other object-oriented systems.
-However, because ggproto objects are stateless (Section \@ref(ggproto-style)), this is exactly as safe as subclassing `GeomPath` and calling the parent method.
+However, because ggproto objects are stateless (@sec-ggproto-style), this is exactly as safe as subclassing `GeomPath` and calling the parent method.
 You can see this approach all over the place in the ggplot2 source code.
 
-### Constructor
+### A constructor
 
 As with our earlier attempts the final step is to write a constructor function `geom_spring()`.
 The code is not much different to earlier versions: we use `GeomSpring` instead of `GeomPath`, and we use the identity stat instead of `StatSpring`.
@@ -705,6 +714,7 @@ geom_spring <- function(mapping = NULL,
 We now have a proper geom with working default aesthetics and the ability to setting aesthetics as parameters:
 
 ```{r}
+#| layout-ncol: 2
 ggplot(df, aes(x, y, xend = xend, yend = yend)) + 
   geom_spring(aes(tension = tension, diameter = diameter))
 ggplot(df, aes(x, y, xend = xend, yend = yend)) + 
@@ -728,7 +738,7 @@ ggplot() +
   geom_spring(aes(x = 0, y = 0, xend = 100, yend = 80))
 ```
 
-We'll address this issue in Section \@ref(spring4).
+We'll address this issue in @sec-spring4.
 
 ### Post-mortem
 
@@ -996,12 +1006,12 @@ grid.draw(surprises)
 If you run this code interactively and resize the plotting window you'll see that the three objects change shape based on the size of the plotting window.
 This is not the most useful way to employ grid, of course, but hopefully you can see how this technique can be used to do real work.
 
-### Tabular grid {#tabular-grid}
+### Tabular grid {#sec-tabular-grid}
 
 The last aspect to grid we'll discuss here is the layout engine provided by the gtable package.
 It's not necessary to know about gtable in order to build our spring grob, but there are other kinds of ggplot2 extensions that do require this knowledge, so we'll give a brief overview here.
 
-As discussed in Section \@ref(ggplotgtable), when ggplot2 passes the plot to grid for rendering it does so by creating a gtable object with `ggplot_gtable()`.
+As discussed in @sec-ggplotgtable, when ggplot2 passes the plot to grid for rendering it does so by creating a gtable object with `ggplot_gtable()`.
 We can extract this object using the `ggplotGrob()` function:
 
 ```{r}
@@ -1104,7 +1114,7 @@ grid.draw(plot_layout)
 
 Clearly, we're still missing a lot of important details that would be necessary in a real plot, but hopefully it is now clear how ggplot2 arranges a collection of grobs within a structured plot layout.
 
-## Part 4: A grid grob {#spring4}
+## Part 4: A grid grob {#sec-spring4}
 
 Let's return to the problem at hand.
 Armed with our new knowledge of the grid system, we can construct a spring grob that specifies the diameter in absolute units.
@@ -1388,7 +1398,7 @@ While the geom is now done, we still have a little work to do.
 We need to create a diameter scale and provide legend keys that can correctly communicate diameter and tension.
 This will be the topic of the final section.
 
-## Part 5: Scales {#spring5}
+## Part 5: Scales {#sec-spring5}
 
 The last step in our process is to define new scales.
 We want to do this because we have defined two new aesthetics (diameter and tension), and we'd like users to be able to scale them.
@@ -1398,7 +1408,7 @@ This is the goal of this final section.
 ### Scaling
 
 Thankfully, compared to the work we've done so far, creating new scales is not a huge undertaking.
-We discussed the basic ideas in Section \@ref(new-scales), and we can apply those concepts here without too much pain.
+We discussed the basic ideas in @sec-new-scales, and we can apply those concepts here without too much pain.
 Our main task is to create a function with the appropriate name that outputs a `Scale` object.
 Most scale functions are simple wrappers around one of the three fundamental scale constructor functions, `continuous_scale()`, `discrete_scale()`, and `binned_scale()`.
 Here's how we do that for the tension aesthetic:
@@ -1581,6 +1591,5 @@ ggplot(df) +
 
 This concludes our detailed case study on creating a spring geom.
 Hopefully it has become clear that there are many different ways to achieve the same geom extension and where you end up is largely guided by your needs and how much energy you want to put into it.
-The case study focused on layers and (to a lesser extent) scales, but hopefully you can use the simpler examples from Chapter \@ref(extensions) to guide you if you want to explore other types of ggplot2 extensions.
+The case study focused on layers and (to a lesser extent) scales, but hopefully you can use the simpler examples from @sec-extensions to guide you if you want to explore other types of ggplot2 extensions.
 You can also study the source code of the facet and coord classes in ggplot2 and the extensions available in ggforce and other packages.
-

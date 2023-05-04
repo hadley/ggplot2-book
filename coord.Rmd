@@ -1,7 +1,11 @@
-# Coordinate systems {#coord}
+# Coordinate systems {#sec-coord}
 
-```{r, include = FALSE}
+```{r}
+#| echo: false
+#| message: false
+#| results: asis
 source("common.R")
+status("drafting")
 ```
 
 Coordinate systems have two main jobs: \index{Coordinate systems}
@@ -34,7 +38,7 @@ The closest distance between two points may no longer be a straight line.
 
 Each coordinate system is described in more detail below.
 
-## Linear coordinate systems {#cartesian}
+## Linear coordinate systems {#sec-cartesian}
 
 There are three linear coordinate systems: `coord_cartesian()`, `coord_flip()`, `coord_fixed()`.
 \index{Coordinate systems!Cartesian} \indexf{coord\_cartesian}
@@ -48,9 +52,9 @@ The key difference is how the limits work: when setting scale limits, any data o
 Setting coordinate system limits is like looking at the plot under a magnifying glass.
 \index{Zooming}
 
-`r columns(3, 1)`
-
-```{r limits-smooth}
+```{r}
+#| label: limits-smooth
+#| layout-ncol: 3
 base <- ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
   geom_smooth()
@@ -63,13 +67,15 @@ base + scale_x_continuous(limits = c(4, 6))
 base + coord_cartesian(xlim = c(4, 6))
 ```
 
-### Flipping the axes with `coord_flip()` {#coord-flip}
+### Flipping the axes with `coord_flip()` {#sec-coord-flip}
 
 Most statistics and geoms assume you are interested in y values conditional on x values (e.g., smooth, summary, boxplot, line): in most statistical models, the x values are assumed to be measured without error.
 If you are interested in x conditional on y (or you just want to rotate the plot 90 degrees), you can use `coord_flip()` to exchange the x and y axes.
 Compare this with just exchanging the variables mapped to x and y: \index{Rotating} \index{Coordinate systems!flipped} \indexf{coord\_flip}
 
-```{r coord-flip}
+```{r}
+#| label: coord-flip
+#| layout-ncol: 3
 ggplot(mpg, aes(displ, cty)) + 
   geom_point() + 
   geom_smooth()
@@ -94,16 +100,16 @@ The aspect ratio will also be set to ensure that the mapping is maintained regar
 See the documentation of `coord_fixed()` for more details.
 \index{Aspect ratio} \index{Coordinate systems!equal} \indexf{coord\_equal}
 
-## Non-linear coordinate systems {#coord-non-linear}
+## Non-linear coordinate systems {#sec-coord-non-linear}
 
 Unlike linear coordinates, non-linear coordinates can change the shape of geoms.
 For example, in polar coordinates a rectangle becomes an arc; in a map projection, the shortest path between two points is not necessarily a straight line.
 The code below shows how a line and a rectangle are rendered in a few different coordinate systems.
 \index{Transformation!coordinate system} \index{Coordinate systems!non-linear}
 
-`r columns(3, 1)`
-
-```{r coord-trans-ex}
+```{r}
+#| label: coord-trans-ex
+#| layout-ncol: 3
 rect <- data.frame(x = 50, y = 50)
 line <- data.frame(x = c(1, 200), y = c(100, 1))
 base <- ggplot(mapping = aes(x, y)) + 
@@ -115,7 +121,9 @@ base + coord_polar("x")
 base + coord_polar("y")
 ```
 
-```{r coord-trans-ex-2}
+```{r}
+#| label: coord-trans-ex-2
+#| layout-ncol: 3
 base + coord_flip()
 base + coord_trans(y = "log10")
 base + coord_fixed()
@@ -136,8 +144,6 @@ With this assumption in hand, we can transform lines and polygons by breaking th
 This process is called munching and is illustrated below: \index{Munching}
 
 1.  We start with a line parameterised by its two endpoints:
-
-    `r columns(1, 1, 0.40)`
 
     ```{r}
     df <- data.frame(r = c(0, 1), theta = c(0, 3 / 2 * pi))
@@ -164,8 +170,6 @@ This process is called munching and is illustrated below: \index{Munching}
 
 3.  We transform the locations of each piece:
 
-    `r columns(1, 2.2 / 3, 0.40)`
-
     ```{r}
     transformed <- transform(munched,
       x = r * sin(theta),
@@ -183,15 +187,16 @@ Internally ggplot2 uses many more segments so that the result looks smooth.
 ### Transformations with `coord_trans()`
 
 Like limits, we can also transform the data in two places: at the scale level or at the coordinate system level.
-`coord_trans()` has arguments `x` and `y` which should be strings naming the transformer or transformer objects (see Section \@ref(scale-position)).
+`coord_trans()` has arguments `x` and `y` which should be strings naming the transformer or transformer objects (see @sec-scale-position).
 Transforming at the scale level occurs before statistics are computed and does not change the shape of the geom.
 Transforming at the coordinate system level occurs after the statistics have been computed, and does affect the shape of the geom.
 Using both together allows us to model the data on a transformed scale and then backtransform it for interpretation: a common pattern in analysis.
 \index{Transformation!coordinate system} \index{Coordinate systems!transformed} \indexf{coord\_trans}
 
-`r columns(3, 1)`
-
-```{r backtrans, warning=FALSE}
+```{r}
+#| label: backtrans
+#| warning: false
+#| layout-ncol: 3
 # Linear model on original scale is poor fit
 base <- ggplot(diamonds, aes(carat, price)) + 
   stat_bin2d() + 
@@ -225,9 +230,9 @@ The code below shows how we can turn a bar into a pie chart or a bullseye chart 
 The documentation includes other examples.
 \index{Polar coordinates} \index{Coordinate systems!polar} \indexf{coord\_polar}
 
-`r columns(3, 1)`
-
-```{r polar}
+```{r}
+#| label: polar
+#| layout-ncol: 3
 base <- ggplot(mtcars, aes(factor(1), fill = factor(cyl))) +
   geom_bar(width = 1) + 
   theme(legend.position = "none") + 
@@ -253,9 +258,9 @@ There are two ways to do this with ggplot2: \index{Maps!projections} \index{Coor
 -   `coord_quickmap()` is a quick and dirty approximation that sets the aspect ratio to ensure that 1m of latitude and 1m of longitude are the same distance in the middle of the plot.
     This is a reasonable place to start for smaller regions, and is very fast.
 
-    `r columns(2, 1, 0.75)`
-
-    ```{r map-nz}
+    ```{r}
+    #| label: map-nz
+    #| layout-ncol: 2
     # Prepare a map of NZ
     nzmap <- ggplot(map_data("nz"), aes(long, lat, group = group)) +
       geom_polygon(fill = "white", colour = "black") +
@@ -271,9 +276,10 @@ There are two ways to do this with ggplot2: \index{Maps!projections} \index{Coor
     It takes the same arguments as `mapproj::mapproject()` for controlling the projection.
     It is much slower than `coord_quickmap()` because it must munch the data and transform each piece.
 
-    `r columns(3, 1)`
-
-    ```{r map-world, dev = "png"}
+    ```{r}
+    #| label: map-world
+    #| layout-ncol: 3
+    #| dev: png
     world <- map_data("world")
     worldmap <- ggplot(world, aes(long, lat, group = group)) +
       geom_path() +
@@ -285,4 +291,3 @@ There are two ways to do this with ggplot2: \index{Maps!projections} \index{Coor
     worldmap + coord_map("ortho")
     worldmap + coord_map("stereographic")
     ```
-

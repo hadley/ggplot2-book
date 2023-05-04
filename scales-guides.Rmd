@@ -1,16 +1,20 @@
-```{r setup, include = FALSE}
-source("common.R")
-columns(1, 2 / 3)
-```
+# Scales and guides {#sec-scales-guides}
 
-# Scales and guides {#scales-guides}
+```{r}
+#| echo: false
+#| message: false
+#| results: asis
+source("common.R")
+status("drafting")
+```
 
 ```{=html}
 <!-- DN: might be worth adding a section summarising how lims/labs/guides
 span the same space as scale_*(name = , limits = , guide =), and highlighting
 how scale_* has extra scale stuff, and the helpers have extra theme stuff ??? -->
 ```
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 toy <- data.frame(
   const = 1, 
   up = 1:4,
@@ -20,12 +24,12 @@ toy <- data.frame(
 )
 ```
 
-The scales toolbox in Chapters \@ref(scale-position) to \@ref(scale-other) provides extensive guidance for how to work with scales, focusing on solving common data visualisation problems.
-The practical goals of the toolbox mean that topics are introduced when they are most relevant: for example, scale transformations are discussed in relation to continuous position scales (Section \@ref(scale-transformation)) because that is the most common situation in which you might want to transform a scale.
-However, because ggplot2 aims to provide a grammar of graphics, there is nothing preventing you from transforming other kinds of scales (see Section \@ref(scale-transformation-extras)).
+The scales toolbox in @sec-scale-position to @sec-scale-other provides extensive guidance for how to work with scales, focusing on solving common data visualisation problems.
+The practical goals of the toolbox mean that topics are introduced when they are most relevant: for example, scale transformations are discussed in relation to continuous position scales (@sec-scale-transformation) because that is the most common situation in which you might want to transform a scale.
+However, because ggplot2 aims to provide a grammar of graphics, there is nothing preventing you from transforming other kinds of scales (see @sec-scale-transformation-extras).
 This chapter aims to illustrate these concepts: We'll discuss the theory underpinning scales and guides, and give examples showing how concepts that we've discussed specifically for position or colour scales also apply elsewhere.
 
-## Theory of scales and guides {#scales-guides-theory}
+## Theory of scales and guides {#sec-scales-guides-theory}
 
 Formally, each scale is a function from a region in data space (the domain of the scale) to a region in aesthetic space (the range of the scale).
 The axis or legend is the inverse function, known as the guide: it allows you to convert visual properties back to data.
@@ -38,38 +42,44 @@ The commonalities between the two are illustrated below:
 | `breaks`      | Ticks & grid line | Key       |
 | `labels`      | Tick label        | Key label |
 
-`r columns(1, 2/3, max_width = 1)`
-
-```{r guides, echo = FALSE, out.width = "100%", fig.cap = "Common components of axes and legends"}
+```{r}
+#| label: guides
+#| echo: false
+#| out.width: 100%
+#| fig.cap: Common components of axes and legends
 knitr::include_graphics("diagrams/scale-guides.png", dpi = 300, auto_pdf = TRUE)
 ```
 
 However, legends are more complicated than axes, and consequently there are a number of topics that are specific to legends:
 
-1.  A legend can display multiple aesthetics (e.g. colour and shape), from multiple layers (Section \@ref(sub-layers-legends)), and the symbol displayed in a legend varies based on the geom used in the layer (Section \@ref(legend-glyph))
+1.  A legend can display multiple aesthetics (e.g. colour and shape), from multiple layers (@sec-sub-layers-legends), and the symbol displayed in a legend varies based on the geom used in the layer (@sec-legend-glyph)
 
 2.  Axes always appear in the same place.
     Legends can appear in different places, so you need some global way of positioning them.
-    (Section \@ref(legend-layout))
+
+    (1) 
 
 3.  Legends have more details that can be tweaked: should they be displayed vertically or horizontally?
     How many columns?
     How big should the keys be?
-    This is discussed in (Section \@ref(scale-guide))
+    This is discussed in (@sec-scale-guide)
 
-### Scale specification {#scale-usage}
+### Scale specification {#sec-scale-usage}
 
 An important property of ggplot2 is the principle that every aesthetic in your plot is associated with exactly one scale.
 For instance, when you write this
 
-```{r default-scales, fig.show = "hide"}
+```{r}
+#| label: default-scales
+#| fig.show: hide
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point(aes(colour = class))
 ```
 
 ggplot2 adds a default scale for each aesthetic used in the plot:
 
-```{r, fig.show = "hide"}
+```{r}
+#| fig.show: hide
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point(aes(colour = class)) +
   scale_x_continuous() + 
@@ -82,20 +92,24 @@ In this example `hwy` is a continuous variable mapped to the y aesthetic so the 
 Specifying these defaults would be tedious so ggplot2 does it for you.
 But if you want to override the defaults, you'll need to add the scale yourself, like this: \index{Scales!defaults}
 
-```{r, fig.show = "hide"}
+```{r}
+#| fig.show: hide
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point(aes(colour = class)) + 
   scale_x_continuous(name = "A really awesome x axis label") +
   scale_y_continuous(name = "An amazingly great y axis label")
 ```
 
-In practice you would typically use `labs()` for this, discussed in Section \@ref(titles), but it is conceptually helpful to understand that axis labels and legend titles are both examples of scale names: see Section \@ref(scale-names).
+In practice you would typically use `labs()` for this, discussed in @sec-titles, but it is conceptually helpful to understand that axis labels and legend titles are both examples of scale names: see @sec-scale-names.
 
 The use of `+` to "add" scales to a plot is a little misleading because if you supply two scales for the same aesthetic, the last scale takes precedence.
 In other words, when you `+` a scale, you're not actually adding it to the plot, but overriding the existing scale.
 This means that the following two specifications are equivalent: \indexc{+}
 
-```{r multiple-scales, fig.show = "hide"}
+```{r}
+#| label: multiple-scales
+#| fig.show: hide
+#| layout-ncol: 2
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
   scale_x_continuous(name = "Label 1") +
@@ -112,7 +126,8 @@ If you see this in your own code, you should make sure that you're only adding o
 If you're making small tweaks to the scales, you might continue to use the default scales, supplying a few extra arguments.
 If you want to make more radical changes you will override the default scales with alternatives:
 
-```{r, fig.show = "hide"}
+```{r}
+#| fig.show: hide
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point(aes(colour = class)) +
   scale_x_sqrt() + 
@@ -176,18 +191,18 @@ Although you should never need to call these constructor functions, they provide
 
 <!--     What happens if you pair a continuous variable with a discrete scale? -->
 
-## Scale names {#scale-names}
+## Scale names {#sec-scale-names}
 
-Extend discussion of `labs()` in Section \@ref(titles).
+Extend discussion of `labs()` in @sec-titles.
 
-## Scale breaks {#scale-breaks}
+## Scale breaks {#sec-scale-breaks}
 
 Discussion of what unifies the concept of `breaks` across continuous, discrete and binned scales: they are specific data values at which the guide needs to display something.
 Include additional detail about break functions.
 
-## Scale limits {#oob}
+## Scale limits {#sec-oob}
 
-Section \@ref(scales-guides-theory) introduced the concept that a scale defines a mapping from the data space to the aesthetic space.
+@sec-scales-guides-theory introduced the concept that a scale defines a mapping from the data space to the aesthetic space.
 Scale limits are an extension of this idea: they dictate the **region** of the data space over which the mapping is defined.
 At a theoretical level this region is defined differently depending on the fundamental scale type.
 For continuous and binned scales, the data space is inherently continuous and one-dimensional, so the limits can be specified by two end points.
@@ -209,15 +224,14 @@ continuous. try to cover most of the oob_* functions. might be valuable to highl
 oob_keep() for position scales, as a way of making limits behave like zoom -->
 ```
 The default behaviour in ggplot2 is to convert out of bounds values to `NA`, the logic for this being that if a data value is not part of the mapped region, it should be treated as missing.
-This can occasionally lead to unexpected behaviour, as illustrated in Section \@ref(zooming-in).
+This can occasionally lead to unexpected behaviour, as illustrated in @sec-zooming-in.
 You can override this default by setting `oob` argument of the scale, a function that is applied to all observations outside the scale limits.
 The default is `scales::oob_censor()` which replaces any value outside the limits with `NA`.
 Another option is `scales::oob_squish()` which squishes all values into the range.
 An example using a fill scale is shown below:
 
-`r columns(3,1)`
-
 ```{r}
+#| layout-ncol: 3
 df <- data.frame(x = 1:6, y = 8:13)
 base <- ggplot(df, aes(x, y)) + 
   geom_col(aes(fill = x)) +                    # bar chart
@@ -232,7 +246,7 @@ On the left the default fill colours are shown, ranging from dark blue to light 
 In the middle panel the scale limits for the fill aesthetic are reduced so that the values for the three rightmost bars are replace with `NA` and are mapped to a grey shade.
 In some cases, this is desired behaviour but often it is not: the right panel addresses this by modifying the `oob` function appropriately.
 
-## Scale guides {#scale-guide}
+## Scale guides {#sec-scale-guide}
 
 Scale guides are more complex than scale names: where the `name` argument (and `labs()` ) takes text as input, the `guide` argument (and `guides()`) require a guide object created by a **guide function** such as `guide_colourbar()` and `guide_legend()`.
 These arguments to these functions offer additional fine control over the guide.
@@ -249,28 +263,27 @@ The table below summarises the default guide functions associated with different
 
 Each of these guide types has appeared earlier in the toolbox:
 
--   `guide_colourbar()` is discussed in Section \@ref(guide-colourbar)
--   `guide_coloursteps()` is discussed in Section \@ref(guide-coloursteps)
--   `guide_axis()` is discussed in Section \@ref(guide-axis)
--   `guide_legend()` is discussed in Section \@ref(guide-legend)
--   `guide_bins()` is discussed in Section \@ref(guide-bins)
+-   `guide_colourbar()` is discussed in @sec-guide-colourbar
+-   `guide_coloursteps()` is discussed in @sec-guide-coloursteps
+-   `guide_axis()` is discussed in @sec-guide-axis
+-   `guide_legend()` is discussed in @sec-guide-legend
+-   `guide_bins()` is discussed in @sec-guide-bins
 
 In addition to the functionality discussed in those sections, the guide functions have many arguments that are equivalent to theme settings like text colour, size, font etc, but only apply to a single guide.
-For information about those settings, see Chapter \@ref(polishing).
+For information about those settings, see @sec-polishing.
 
 New stuff: show examples where something other than the default guide is used...
 
-## Scale transformation {#scale-transformation-extras}
+## Scale transformation {#sec-scale-transformation-extras}
 
-The most common use for scale transformations is to adjust a continuous position scale, as discussed in Section \@ref(scale-transformation).
+The most common use for scale transformations is to adjust a continuous position scale, as discussed in @sec-scale-transformation.
 However, they can sometimes be helpful to when applied to other aesthetics.
 Often this is purely a matter of visual emphasis.
 An example of this for the Old Faithful density plot is shown below.
 The linearly mapped scale on the left makes it easy to see the peaks of the distribution, whereas the transformed representation on the right makes it easier to see the regions of non-negligible density around those peaks: \index{Transformation!scales}
 
-`r columns(2, 2/3)`
-
 ```{r}
+#| layout-ncol: 2
 base <- ggplot(faithfuld, aes(waiting, eruptions)) + 
   geom_raster(aes(fill = density)) + 
   scale_x_continuous(NULL, NULL, expand = c(0, 0)) +
@@ -282,9 +295,8 @@ base + scale_fill_continuous(trans = "sqrt")
 
 Transforming size aesthetics is also possible:
 
-`r columns(2, 2/3)`
-
 ```{r}
+#| layout-ncol: 2
 df <- data.frame(x = runif(20), y = runif(20), z = sample(20))
 base <- ggplot(df, aes(x, y, size = z)) + geom_point()
 
@@ -300,7 +312,6 @@ In the plot on the right, the size scale is reversed, and `z` is more naturally 
 
 ### Binned scales
 
-`r columns(2)`
 ```{r}
 base <- ggplot(mpg, aes(hwy)) + geom_bar()
 
@@ -310,7 +321,6 @@ p2 <- base + scale_x_binned(breaks = seq(-50,50,10), limits = c(-50, 50), trans 
 
 Binned scales can be transformed, much like continuous scales, but some care is required because the bins are constructed in the transformed space. In some cases this can produce undesirable outcomes. In the code below, we take a uniformly distributed variable and use `scale_x_binned()` and `geom_bar()` to construct a histogram of the logarithmically transformed data. 
 
-`r columns(1, 1/2, 1)`
 ```{r}
 df <- data.frame(val = runif(10000, 1, 20000))
 ggplot(df, aes(log10(val))) + geom_bar() + scale_x_binned()
@@ -318,14 +328,12 @@ ggplot(df, aes(log10(val))) + geom_bar() + scale_x_binned()
 
 In this example the transformation takes place in the data: the x aesthetic is mapped to the value of `log10(val)`, and no scale transformation is applied. The bins are evenly spaced on this logarithmic scale. Alternatively, you can specify the transformation by setting `trans = "log10"` in the scale function:
 
-`r columns(1, 1/2, 1)`
 ```{r}
 ggplot(df, aes(val)) + geom_bar() + scale_x_binned(trans="log10") 
 ```
 
 The unevenly spaced bins occur due to an interaction of two things: (1) binned scales use breaks to construct the bins, and (2) the default breaks for a transformed scale are specified by the transformation and are designed to look nice, but may not be good for binning data. The solution to this is to override the default breaks: 
 
-`r columns(1, 1/2, 1)`
 ```{r}
 ggplot(df, aes(val)) + geom_bar() + 
   scale_x_binned(trans="log10", breaks = 3^(0:9))  
@@ -334,12 +342,12 @@ ggplot(df, aes(val)) + geom_bar() +
 -->
 ````
 
-## Legend merging and splitting {#legend-merge-split}
+## Legend merging and splitting {#sec-legend-merge-split}
 
 There is always a one-to-one correspondence between position scales and axes.
 But the connection between non-position scales and legend is more complex: one legend may need to draw symbols from multiple layers ("merging"), or one aesthetic may need multiple legends ("splitting").
 
-### Merging legends {#sub-layers-legends}
+### Merging legends {#sec-sub-layers-legends}
 
 \index{Legend}
 
@@ -348,9 +356,10 @@ For example, if you've mapped colour to both points and lines, the keys will sho
 If you've mapped fill colour, you get a rectangle.
 Note the way the legend varies in the plots below:
 
-`r columns(3)`
-
-```{r legend-geom, echo = FALSE}
+```{r}
+#| label: legend-geom
+#| echo: false
+#| layout-ncol: 3
 base <- ggplot(toy, aes(const, up, colour = txt))
 base + geom_point()
 base + geom_point() + geom_path(aes(group = 1))
@@ -361,9 +370,8 @@ By default, a layer will only appear if the corresponding aesthetic is mapped to
 You can override whether or not a layer appears in the legend with `show.legend`: `FALSE` to prevent a layer from ever appearing in the legend; `TRUE` forces it to appear when it otherwise wouldn't.
 Using `TRUE` can be useful in conjunction with the following trick to make points stand out:
 
-`r columns(2, 2/3)`
-
 ```{r}
+#| layout-ncol: 2
 ggplot(toy, aes(up, up)) + 
   geom_point(size = 4, colour = "grey20") +
   geom_point(aes(colour = txt), size = 2) 
@@ -378,9 +386,9 @@ It does this by combining legends where the same variable is mapped to different
 The figure below shows how this works for points: if both colour and shape are mapped to the same variable, then only a single legend is necessary.
 \index{Legend!merging}
 
-`r columns(3)`
-
-```{r legend-merge}
+```{r}
+#| label: legend-merge
+#| layout-ncol: 3
 base <- ggplot(toy, aes(const, up)) +
   scale_x_continuous(NULL, breaks = NULL)
 base + geom_point(aes(colour = txt))
@@ -392,9 +400,8 @@ In order for legends to be merged, they must have the same `name`.
 So if you change the name of one of the scales, you'll need to change it for all of them.
 One way to do this is by using `labs()` helper function:
 
-`r columns(3, 3/2)`
-
 ```{r}
+#| layout-ncol: 3
 base <- ggplot(toy, aes(const, up)) + 
   geom_point(aes(shape = txt, colour = txt)) + 
   scale_x_continuous(NULL, breaks = NULL)
@@ -414,9 +421,8 @@ The `ggnewscale::new_scale_colour()` command acts as an instruction to ggplot2 t
 To illustrate this the plot on the left uses `geom_point()` to display a large marker for each vehicle make in the `mpg` data, with a single colour scale that maps to the year.
 On the right, a second `geom_point()` layer is overlaid on the plot using small markers: this layer is associated with a different colour scale, used to indicate whether the vehicle has a 4-cylinder engine.
 
-`r columns(2, 2/3)`
-
 ```{r}
+#| layout-ncol: 2
 base <- ggplot(mpg, aes(displ, hwy)) + 
   geom_point(aes(colour = factor(year)), size = 5) + 
   scale_colour_brewer("year", type = "qual", palette = 5) 
@@ -430,16 +436,15 @@ base +
 
 Additional details, including functions that apply to other scale types, are available on the package website, <https://github.com/eliocamp/ggnewscale>.
 
-## Legend key glyphs {#legend-glyph}
+## Legend key glyphs {#sec-legend-glyph}
 
 In most cases the default glyphs shown in the legend key will be appropriate to the layer and the aesthetic.
 Line plots of different colours will show up as lines of different colours in the legend, boxplots will appear as small boxplots in the legend, and so on.
 Should you need to override this behaviour, the `key_glyph` argument can be used to associate a particular layer with a different kind of glyph.
 For example:
 
-`r columns(2, 1/2)`
-
 ```{r}
+#| layout-ncol: 2
 base <- ggplot(economics, aes(date, psavert, color = "savings"))
 
 base + geom_line()
@@ -456,4 +461,3 @@ You can pass the desired key drawing function directly: for example, `base + geo
 <!--     axes and legends? What do they do? Compare and contrast their -->
 
 <!--     operation for axes vs. legends. -->
-

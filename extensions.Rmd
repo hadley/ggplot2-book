@@ -1,13 +1,17 @@
-```{r include = FALSE}
-source("common.R")
-```
+# Extending ggplot2 {#sec-extensions}
 
-# Extending ggplot2 {#extensions}
+```{r}
+#| echo: false
+#| message: false
+#| results: asis
+source("common.R")
+status("polishing")
+```
 
 The ggplot2 package has been designed in a way that makes it relatively easy to extend the functionality with new types of the common grammar components.
 The extension system allows you to distribute these extensions as packages should you choose to, but the ease with which extensions can be made means that writing one-off extensions to solve a particular plotting challenge is also viable.
 This chapter discusses different ways ggplot2 can be extended and highlights specific issues to keep in mind.
-We'll present small examples throughout the chapter, but to see a worked example from beginning to end, see Chapters \@ref(spring1).
+We'll present small examples throughout the chapter, but to see a worked example from beginning to end, see @sec-spring1.
 
 ## New themes
 
@@ -42,15 +46,14 @@ theme_minimal <- function(base_size = 11,
 }
 ```
 
-As you can see, the code doesn't look much different to the code you normally write when styling a plot (Chapter \@ref(polishing)).
+As you can see, the code doesn't look much different to the code you normally write when styling a plot (@sec-polishing).
 The `theme_minimal()` function uses `theme_bw()` as the base theme, and then replaces certain parts of it with its own style using the `%+replace%` operator.
 When writing new themes, it is a good idea to provide a few parameters to the user for defining overarching aspects of the theme.
 One important such aspect is sizing of text and lines but other aspects could be e.g. key and accent colours of the theme.
 For example, we could create a variant of `theme_minimal()` that allows the user to specify the plot background colour:
 
-`r columns(3, 1)`
-
 ```{r}
+#| layout-ncol: 3
 theme_background <- function(background = "white", ...) {
   theme_minimal(...) %+replace%
     theme(
@@ -99,6 +102,7 @@ Both themes are intended to do the same thing: change the defaults to `theme_cla
 At first glance, it appears that both versions behave in line with the user expectations:
 
 ```{r}
+#| layout-ncol: 3
 base + theme_classic()
 base + theme_predictable()
 base + theme_surprising()
@@ -107,6 +111,7 @@ base + theme_surprising()
 However, suppose the user of your theme wants to remove the axis lines:
 
 ```{r}
+#| layout-ncol: 3
 base + theme_classic() + theme(axis.line = element_blank())
 base + theme_predictable() + theme(axis.line = element_blank())
 base + theme_surprising() + theme(axis.line = element_blank())
@@ -131,9 +136,9 @@ base +
 
 In this code, the specific-first inheritance rule applies, and as such setting `axis.line` does not override the more specific `axis.line.x`.
 
-### Defining theme elements {#defining-theme-elements}
+### Defining theme elements {#sec-defining-theme-elements}
 
-In Chapter \@ref(polishing) we saw that the structure of a ggplot2 theme is defined by the element tree.
+In @sec-polishing we saw that the structure of a ggplot2 theme is defined by the element tree.
 The element tree specifies what type each theme element has and where it inherits its value from (you can use the `get_element_tree()` function to return this tree as a list).
 The extension system for ggplot2 makes it possible to define new theme elements by registering them as part of the element tree using the `register_theme_elements()` function.
 Let's say you're writing a new package called "ggxyz" that includes a panel annotation as part of the coordinate system and you want this panel annotation to be a theme element:
@@ -163,7 +168,7 @@ There are two points to note here when defining new theme elements in a package:
 
 Once the element tree has been updated, the package can define a new coordinate system that uses the new theme element.
 A simple way to do this is to define a function that creates a new instance of the `CoordCartesian` ggproto object.
-We'll talk more about this in Section \@ref(new-coords), but for now it is sufficient to note that this code will work:
+We'll talk more about this in @sec-new-coords, but for now it is sufficient to note that this code will work:
 
 ```{r}
 coord_annotate <- function(label = "panel annotation") {
@@ -185,14 +190,16 @@ coord_annotate <- function(label = "panel annotation") {
 
 So now this works:
 
-`r columns(2, 1)`
-
-```{r, eval=FALSE}
+```{r}
+#| eval: false
+#| layout-ncol: 2
 base + coord_annotate("annotation in blue")
 base + coord_annotate("annotation in blue") + theme_dark()
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
+#| layout-ncol: 2
 # DJN: I'm not sure why, because I can't reproduce the bug elsewhere, but the
 # call to register_theme_element() updates ggplot2:::ggplot_global$element_tree
 # only within *that* chunk, so subsequent chunks don't have ggxyz.panel.annotation
@@ -216,7 +223,7 @@ base + coord_annotate("annotation in blue") + theme_dark()
 
 Having modified the element tree, it is worth mentioning the `reset_theme_settings()` function restores the default element tree, discards all new element definitions, and (unless turned off) resets the currently active theme to the default.
 
-## New stats {#new-stats}
+## New stats {#sec-new-stats}
 
 It may seem surprising, but creating new stats is one of the most useful ways to extend the capabilities of ggplot2.
 When users add new layers to a plot they most often use a geom function, and so it is tempting as a developer to think that your ggplot2 extension should be encapsulated as a new geom.
@@ -227,7 +234,7 @@ As long as the desired behaviour can be encapsulated in a stat, there is no need
 
 ### Creating stats
 
-As discussed in Chapter \@ref(internals), the core behaviour of a stat is captured by a tiered succession of calls to `compute_layer()`, `compute_panel()`, and `compute_group()`, all of which are methods associated with the ggproto object defining the stat.
+As discussed in @sec-internals, the core behaviour of a stat is captured by a tiered succession of calls to `compute_layer()`, `compute_panel()`, and `compute_group()`, all of which are methods associated with the ggproto object defining the stat.
 By default the top two functions don't do very much, they simply split the data and then pass it down to the function below:
 
 -   `compute_layer()` splits the data set by the `PANEL` column, calls `compute_panel()`, and reassembles the results.
@@ -235,7 +242,7 @@ By default the top two functions don't do very much, they simply split the data 
 
 Because of this, the only method you usually need to specify as a developer is the `compute_group()` function, whose job is to take the data for a single group and transform it appropriately.
 This will be sufficient to create a working stat, though it may not yield the best performance.
-As a consequence developers sometimes find it valuable to offload some of the work to `compute_panel()` where possible: doing so allows you to vectorise computations and avoid an expensive split-combine step (we'll see an example of this later in Section \@ref(spring-stat)) However, as a general rule it is better to begin by modifying `compute_group()` only and see if the performance is adequate.
+As a consequence developers sometimes find it valuable to offload some of the work to `compute_panel()` where possible: doing so allows you to vectorise computations and avoid an expensive split-combine step (we'll see an example of this later in @sec-spring-stat) However, as a general rule it is better to begin by modifying `compute_group()` only and see if the performance is adequate.
 
 To illustrate this, we'll start by creating a stat that calculates the convex hull of a set of points, using the `chull()` function included in `grDevices`.
 As you might expect, most of the work is done by a new ggproto object that we will create:
@@ -249,7 +256,7 @@ StatChull <- ggproto("StatChull", Stat,
 )
 ```
 
-As described in Section \@ref(ggproto) the first two arguments to `ggproto()` are used to indicate that this object defines a new class (conveniently named `"StatChull"`) which inherits fields and methods from the `Stat` object.
+As described in @sec-ggproto the first two arguments to `ggproto()` are used to indicate that this object defines a new class (conveniently named `"StatChull"`) which inherits fields and methods from the `Stat` object.
 We then specify only those fields and methods that need to be altered from the defaults provided by `Stat`, in this case `compute_group()` and `required_aes`.
 Our `compute_group()` function takes two inputs, `data` and `scales`---because this is what ggplot2 expects---but the actual computation is dependent only on the `data`.
 Note that because the computation necessarily requires both position aesthetics to be present, we have also specified the `required_aes` field to make sure that ggplot2 knows that these aesthetics are required.
@@ -281,9 +288,8 @@ stat_chull <- function(mapping = NULL, data = NULL,
 
 and our stat can now be used in plots:
 
-`r columns(2, 1)`
-
 ```{r}
+#| layout-ncol: 2
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
   stat_chull(fill = NA, colour = "black")
@@ -294,13 +300,13 @@ ggplot(mpg, aes(displ, hwy, colour = drv)) +
 ```
 
 When creating new stats it is usually a good idea to provide an accompanying `geom_*()` constructor as well as the `stat_*()` constructor, because most users are accustomed to adding plot layers with geoms rather than stats.
-We'll show what a `geom_chull()` function might look like in Section \@ref(new-geoms).
+We'll show what a `geom_chull()` function might look like in @sec-new-geoms.
 
 Note that it is not always possible to define `geom_*()` constructor in a sensible way.
 This can happen when there is no obvious default geom for the new stat, or if the stat is intended to offer a slight modification to an existing geom/stat pair.
 In such cases it may be wise to provide only a `stat_*()` function.
 
-### Modifying parameters and data {#modifying-stat-params}
+### Modifying parameters and data {#sec-modifying-stat-params}
 
 When defining new stats, it is often necessary to specify the `setup_params()` and/or `setup_data()` functions.
 These are called before the `compute_*()` functions and they allow the Stat to react and modify itself in response to the parameters and data (especially the data, as this is not available when the stat is constructed):
@@ -309,12 +315,13 @@ These are called before the `compute_*()` functions and they allow the Stat to r
 -   The `setup_data()` function is called next. It also takes `data` and `params` as input---though the parameters it receives are the modified parameters returned from `setup_params()`---and returns the modified layer data. It is important that no matter what modifications happen in `setup_data()` the `PANEL` and `group` columns remain intact.
 
 In the example below we show how to use the `setup_params()` method to define a new stat.
-An example modifying the `setup_data()` method is included later, in Section \@ref(modifying-geoms).
+An example modifying the `setup_data()` method is included later, in @sec-modifying-geom-data.
 
 Suppose we want to create `StatDensityCommon`, a stat that computes a density estimate of a variable after estimating a default bandwidth to apply to all groups in the data.
 This could be done in many different ways but for simplicity let's imagine we have a function `common_bandwidth()` that estimates the bandwidth separately for each group using the `bw.nrd0()` function and then returns the average:
 
-```{r common-bandwidth}
+```{r}
+#| label: common-bandwidth
 common_bandwidth <- function(data) {
   split_data <- split(data$x, data$group)
   bandwidth <- mean(vapply(split_data, bw.nrd0, numeric(1)))
@@ -325,7 +332,8 @@ common_bandwidth <- function(data) {
 What we want from `StatDensityCommon` is to use the `common_bandwith()` function to set a common bandwidth before the data are separated by group and passed to the `compute_group()` function.
 This is where the `setup_params()` method is useful:
 
-```{r stat-density-common}
+```{r}
+#| label: stat-density-common
 StatDensityCommon <- ggproto("StatDensityCommon", Stat,
   required_aes = "x",
   
@@ -346,7 +354,8 @@ StatDensityCommon <- ggproto("StatDensityCommon", Stat,
 
 We then define a `stat_*()` function in the usual way:
 
-```{r stat-density-common-2}
+```{r}
+#| label: stat-density-common-2
 stat_density_common <- function(mapping = NULL, data = NULL, 
                                 geom = "line", position = "identity", 
                                 na.rm = FALSE, show.legend = NA, 
@@ -370,14 +379,12 @@ stat_density_common <- function(mapping = NULL, data = NULL,
 
 We can now apply our new stat
 
-`r columns(1, 1)`
-
 ```{r}
 ggplot(mpg, aes(displ, colour = drv)) + 
   stat_density_common()
 ```
 
-## New geoms {#new-geoms}
+## New geoms {#sec-new-geoms}
 
 While many things can be achieved by creating new stats, there are situations where creating a new geom is necessary.
 Some of these are
@@ -389,7 +396,7 @@ Some of these are
 Creating new geoms can feel slightly more daunting than creating new stats as the end result is a collection of grobs rather than a modified data.frame and this is something outside of the comfort zone of many developers.
 Still, apart from the last point above, it is possible to get by without having to think too much about grid and grobs.
 
-### Modifying geom defaults {#modifying-geom-defaults}
+### Modifying geom defaults {#sec-modifying-geom-defaults}
 
 In many situations your new geom may simply be an existing geom that expects slightly different input or has different default parameter values.
 The `stat_chull()` example from the previous section is a good example of this.
@@ -432,15 +439,13 @@ geom_chull <- function(mapping = NULL, data = NULL, stat = "chull",
 For the sake of consistency we would also define `stat_chull()` to use this as the default.
 In any case, we now have a new `geom_chull()` function that works fairly well without the user needing to set parameters:
 
-`r columns(1, 1)`
-
 ```{r}
 ggplot(mpg, aes(displ, hwy)) + 
   geom_chull() +
   geom_point()
 ```
 
-### Modifying geom data {#modifying-geom-data}
+### Modifying geom data {#sec-modifying-geom-data}
 
 In other cases you may want to define a geom that is visually equivalent to an existing geom, but accepts data in a different format.
 An example of this in the ggplot2 source code is `geom_spoke()`, a variation of `geom_segment()` that accepts data in polar coordinates.
@@ -486,8 +491,6 @@ geom_spike <- function(mapping = NULL, data = NULL,
 
 We are now able to use `geom_spike()` in plots:
 
-`r columns(1, 1/2, 1)`
-
 ```{r}
 df <- data.frame(
   x = 1:10,
@@ -500,10 +503,10 @@ ggplot(df, aes(x, y)) +
   coord_equal()
 ```
 
-As with stats, geoms have a `setup_params()` method in addition to the `setup_data()` method, which can be used to modify parameters before any drawing takes place (see Section \@ref(modifying-stat-params) for an example).
+As with stats, geoms have a `setup_params()` method in addition to the `setup_data()` method, which can be used to modify parameters before any drawing takes place (see @sec-modifying-stat-params for an example).
 One thing to note in the geom context, however, is that `setup_data()` is called before any position adjustment is done.
 
-### Combining multiple geoms {#combining-multiple-geoms}
+### Combining multiple geoms {#sec-combining-multiple-geoms}
 
 A useful technique for defining new geoms is to combine functionality from different geoms.
 For example, the `geom_smooth()` function for drawing nonparametric regression lines uses functionality from `geom_line()` to draw the regression line and `geom_ribbon()` to draw the shaded error bands.
@@ -548,7 +551,7 @@ GeomBarbell <- ggproto("GeomBarbell", Geom,
 In this example the `draw_panel()` method returns a list of three grobs, one generated from `GeomSegment` and two from `GeomPoint`.
 As usual, if we want the geom to be exposed to the user we add a wrapper function:
 
-```{r, cache.vars=GeomBarbell}
+```{r}
 geom_barbell <- function(mapping = NULL, data = NULL, 
                          stat = "identity", position = "identity", 
                          ..., na.rm = FALSE, show.legend = NA, 
@@ -568,9 +571,8 @@ geom_barbell <- function(mapping = NULL, data = NULL,
 
 We are now able to use the composite geom:
 
-`r columns(2, 1)`
-
 ```{r}
+#| layout-ncol: 2
 df <- data.frame(x = 1:10, xend = 0:9, y = 0, yend = 1:10)
 base <- ggplot(df, aes(x, y, xend = xend, yend = yend))
 
@@ -579,23 +581,23 @@ base + geom_barbell(shape = 4, linetype = "dashed")
 ```
 
 If you cannot leverage any existing geom implementation for creating the grobs, you'd have to implement the full `draw_*()` method from scratch, which requires a little more understanding of the grid package.
-For more information about grid and an example that uses this to construct a geom from grid primitives, see Chapter \@ref(spring1).
+For more information about grid and an example that uses this to construct a geom from grid primitives, see @sec-spring1.
 
-## New coords {#new-coords}
+## New coords {#sec-new-coords}
 
-The primary role of the coord is to rescale the position aesthetics onto the [0, 1] range, potentially transforming them in the process.
-Defining new coords is relatively rare: the coords described in Chapter \@ref(coord) are suitable for most non-cartographic cases, and with the introduction of `coord_sf()` discussed in Chapter \@ref(maps), ggplot2 is able to capture most cartographic projections out of the box.
+The primary role of the coord is to rescale the position aesthetics onto the \[0, 1\] range, potentially transforming them in the process.
+Defining new coords is relatively rare: the coords described in @sec-coord are suitable for most non-cartographic cases, and with the introduction of `coord_sf()` discussed in @sec-maps, ggplot2 is able to capture most cartographic projections out of the box.
 
 The most common situation in which developers may need to know the internals of coordinate systems is when defining new geoms.
 It is not uncommon for one of the `draw_*()` methods in a geom to call the `transform()` method of the coord.
 For example, the `transform()` method for `CoordCartesian` is used to rescale position data but does not transform it in any other way, and the geom may need to apply this rescaling to draw the grob properly.
-An example of this use appears in Chapter \@ref(spring1).
+An example of this use appears in @sec-spring1.
 
 In addition to transforming position data, the coord has responsibility for rendering the axes, axis labels, panel foreground and panel background.
 Additionally, the coord can intercept and modify the layer data and the facet layout.
-Much of this functionality is available to developers to leverage if it is absolutely necessary (an example is shown in Section \@ref(defining-theme-elements)), but in the majority of cases it is better to leave this functionality alone.
+Much of this functionality is available to developers to leverage if it is absolutely necessary (an example is shown in @sec-defining-theme-elements), but in the majority of cases it is better to leave this functionality alone.
 
-## New scales {#new-scales}
+## New scales {#sec-new-scales}
 
 There are three ways one might want to extend ggplot2 with new scales.
 The simplest case is when you want to provide a convenient wrapper for a new palette, typically for a colour or fill aesthetic.
@@ -608,8 +610,6 @@ random_colours <- function(n) {
 ```
 
 We can then write a `scale_fill_random()` constructor function that passes the palette to `discrete_scale()` and then use it in plots:
-
-`r columns(1, 1)`
 
 ```{r}
 scale_fill_random <- function(..., aesthetics = "fill") {
@@ -638,7 +638,7 @@ Recently the binned scale type joined which allows for binning of continuous dat
 It is possible to develop further primary scales, by following the example of `ScaleBinned`.
 It requires subclassing `Scale` or one of the provided primary scales, and create new `train()` and `map()` methods, among others.
 
-## New positions {#new-scales}
+## New positions
 
 The `Position` ggproto class is somewhat simpler than other ggproto classes, reflecting the fact that the `position_*()` functions have a very narrow scope.
 The role of the position is to receive and modify the data immediately before it is passed to any drawing functions.
@@ -706,9 +706,8 @@ position_jitternormal <- function(sd_x = .15, sd_y = .15) {
 We are now able to use our new position function when creating plots.
 To see the difference between `position_jitter()` and the `position_jitternormal()` function we have just defined, compare the following plots:
 
-`r columns(2, 1)`
-
 ```{r}
+#| layout-ncol: 2
 df <- data.frame(
   x = sample(1:3, 1500, TRUE),
   y = sample(1:3, 1500, TRUE)
@@ -793,7 +792,9 @@ FacetScatter <- ggproto("FacetScatter", FacetWrap,
 
 To give you a sense of what this output looks like, this is the layout specification that is created when building the plot shown at the end of this section:
 
-```{r facet-scatter, echo=FALSE}
+```{r}
+#| label: facet-scatter
+#| echo: false
 facet_scatter <- function(facets, nrow, ncol, 
                           strip.position = "top", 
                           labeller = "label_value") {
@@ -810,7 +811,9 @@ facet_scatter <- function(facets, nrow, ncol,
 }
 ```
 
-```{r facet-scatter-plot, echo=FALSE}
+```{r}
+#| label: facet-scatter-plot
+#| echo: false
 scatter <- ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
   facet_scatter(vars(manufacturer), nrow = 5, ncol = 6)
@@ -822,7 +825,8 @@ scatter_built$layout$layout
 Next, we'll write the `facet_scatter()` constructor function to expose this functionality to the user.
 For facets this is as simple as creating a new instance of the relevant ggproto object (`FacetScatter` in this case) that passes user-specified parameters to the facet:
 
-```{r, ref.label="facet-scatter"}
+```{r}
+#| ref.label: facet-scatter
 ```
 
 There a couple of things to note about this constructor function.
@@ -834,15 +838,15 @@ As long as you're expecting the user to use `vars()` this is all the preprocessi
 
 In any case, we now have a working facet:
 
-`r columns(1, 1, 1)`
-
-```{r eval=FALSE}
+```{r}
+#| eval: false
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
   facet_scatter(vars(manufacturer), nrow = 5, ncol = 6)
 ```
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 # Use the earlier built one so that the random ROW and COL info
 # matches the layout specification shown above
 scatter_built$plot 
