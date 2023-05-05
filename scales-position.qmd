@@ -72,6 +72,7 @@ However, when creating the plots individually the scale limits in different plot
 
 ```{r}
 #| layout-ncol: 2
+#| fig-width: 4
 mpg_99 <- mpg %>% filter(year == 1999)
 mpg_08 <- mpg %>% filter(year == 2008)
 
@@ -87,6 +88,7 @@ To ensure consistent axis scaling, we can set the `limits` argument to each scal
 
 ```{r}
 #| layout-ncol: 2
+#| fig-width: 4
 base_99 + 
   scale_x_continuous(limits = c(1, 7)) +
   scale_y_continuous(limits = c(10, 45))
@@ -103,6 +105,7 @@ Analogous to the `labs()` function used to specify axis labels (@sec-titles), `l
 
 ```{r}
 #| layout-ncol: 2
+#| fig-width: 4
 base_99 + lims(x = c(1, 7), y = c(10, 45))
 base_08 + lims(x = c(1, 7), y = c(10, 45))
 ```
@@ -121,6 +124,7 @@ If your goal is to zoom in on part of the plot, it is usually better to use the 
 
 ```{r}
 #| layout-ncol: 3
+#| fig-width: 3
 base <- ggplot(mpg, aes(drv, hwy)) + 
   geom_hline(yintercept = 28, colour = "red") + 
   geom_boxplot() 
@@ -151,6 +155,7 @@ For example, one case where it's usually preferable to remove this space is when
 
 ```{r}
 #| layout-ncol: 2
+#| fig-width: 4
 base <- ggplot(faithfuld, aes(waiting, eruptions)) + 
   geom_raster(aes(fill = density)) + 
   theme(legend.position = "none") + 
@@ -167,6 +172,7 @@ These correspond to the `add` and `mult` arguments to `expansion()`, which can b
 
 ```{r}
 #| layout-ncol: 3
+#| fig-width: 3
 # Additive expansion of three units on both axes
 base + 
   scale_x_continuous(expand = expansion(add = 3)) + 
@@ -232,6 +238,7 @@ To set breaks manually, pass a vector of data values to `breaks`, or set `breaks
 In the plot below, removing the y-axis breaks also removes the corresponding grid lines:
 
 ```{r}
+#| fig-height: 2
 base <- ggplot(toy, aes(big, const)) + 
   geom_point() + 
   labs(x = NULL, y = NULL) +
@@ -244,6 +251,8 @@ Alternatively, notice that when the breaks are set manually it moves the major g
 
 ```{r}
 #| layout-ncol: 2
+#| fig-width: 4
+#| fig-height: 2
 base + scale_x_continuous(breaks = c(1000, 2000, 4000))
 base + scale_x_continuous(breaks = c(1000, 1500, 2000, 4000))
 ```
@@ -265,6 +274,8 @@ If you need to specify exact breaks it is better to do so manually.
 
 ```{r}
 #| layout-ncol: 3
+#| fig-width: 3
+#| fig-height: 2
 base 
 base + scale_x_continuous(breaks = scales::breaks_extended())
 base + scale_x_continuous(breaks = scales::breaks_extended(n = 2))
@@ -276,6 +287,8 @@ The first example below shows how to fix the width at a specific value; the seco
 
 ```{r}
 #| layout-ncol: 3
+#| fig-width: 3
+#| fig-height: 2
 base + 
   scale_x_continuous(breaks = scales::breaks_width(800))
 base + 
@@ -304,6 +317,8 @@ The following plots illustrate the effect of setting the minor breaks:
 
 ```{r}
 #| layout-ncol: 2
+#| fig-width: 4
+#| fig-height: 2
 base <- ggplot(toy, aes(log, const)) + 
   geom_point() + 
   labs(x = NULL, y = NULL) +
@@ -321,6 +336,8 @@ Every break is associated with a label and these can be changed by setting the `
 
 ```{r}
 #| layout-ncol: 2
+#| fig-width: 4
+#| fig-height: 2
 base <- ggplot(toy, aes(big, const)) + 
   geom_point() + 
   labs(x = NULL, y = NULL) +
@@ -351,6 +368,8 @@ A few examples are shown below to illustrate how these functions are used:
 ```{r}
 #| label: breaks-functions
 #| layout-ncol: 3
+#| fig-width: 3
+#| fig-height: 3
 base <- ggplot(toy, aes(big, const)) + 
   geom_point() + 
   labs(x = NULL, y = NULL) +
@@ -369,6 +388,8 @@ Notice the difference between setting `breaks = NULL` and `labels = NULL`:
 
 ```{r}
 #| layout-ncol: 2
+#| fig-width: 4
+#| fig-height: 2
 base + scale_y_continuous(breaks = NULL)
 base + scale_y_continuous(labels = NULL)
 ```
@@ -407,6 +428,7 @@ In some cases you don't need to dive into the details, because there are conveni
 
 ```{r}
 #| layout-ncol: 3
+#| fig-width: 3
 base <- ggplot(mpg, aes(displ, hwy)) + geom_point()
 
 base
@@ -419,6 +441,7 @@ Every continuous scale takes a `trans` argument, allowing the use of a variety o
 
 ```{r}
 #| layout-ncol: 2
+#| fig-width: 4
 # convert from fuel economy to fuel consumption
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
@@ -455,6 +478,7 @@ The following are equivalent:
 ```{r}
 #| fig.show: hide
 #| layout-ncol: 2
+#| fig-width: 4
 ggplot(mpg, aes(displ, hwy)) + 
   geom_point() + 
   scale_y_continuous(trans = "reciprocal")
@@ -470,6 +494,7 @@ Thus, these two plot specifications are also equivalent:
 ```{r}
 #| fig.show: hide
 #| layout-ncol: 2
+#| fig-width: 4
 ggplot(diamonds, aes(price, carat)) + 
   geom_bin2d() + 
   scale_x_continuous(trans = "log10") +
@@ -489,6 +514,7 @@ As a consequence, these plot specifications are slightly different:
 
 ```{r}
 #| layout-ncol: 2
+#| fig-width: 4
 # manual transformation
 ggplot(mpg, aes(log10(displ), hwy)) + 
   geom_point()
@@ -525,6 +551,7 @@ For example, `date_breaks = "2 weeks"` will place a major tick mark every two we
 ```{r}
 #| label: date-scale
 #| layout-ncol: 2
+#| fig-width: 4
 date_base <- ggplot(economics, aes(date, psavert)) + 
   geom_line(na.rm = TRUE) +
   labs(x = NULL, y = NULL)
@@ -566,6 +593,8 @@ To illustrate this, we'll define an empty plot with a date scale on the y-axis, 
 ```{r}
 #| label: date-scale-2
 #| layout-ncol: 2
+#| fig-width: 4
+#| fig-height: 3
 df <- data.frame(y = as.Date(c("2022-01-01", "2022-04-01")))
 base <- ggplot(df, aes(y = y)) + 
   labs(y = NULL) + 
@@ -615,6 +644,7 @@ Using `%y` ensures that only the last two digits are displayed:
 ```{r}
 #| label: date-scale-3
 #| layout-ncol: 2
+#| fig-width: 4
 base <- ggplot(economics, aes(date, psavert)) + 
   geom_line(na.rm = TRUE) +
   labs(x = NULL, y = NULL)
@@ -628,6 +658,8 @@ It can be useful to include the line break character `\n` in a formatting string
 ```{r}
 #| label: date-scale-4
 #| layout-ncol: 2
+#| fig-width: 4
+#| fig-height: 3
 lim <- as.Date(c("2004-01-01", "2005-01-01"))
 
 base + scale_x_date(limits = lim, date_labels = "%b %y")
@@ -644,6 +676,7 @@ The goal of `label_date_short()` is to automatically construct short labels that
 
 ```{r}
 #| label: date-scale-5
+#| fig-height: 3
 base + 
   scale_x_date(
     limits = lim, 
@@ -693,6 +726,7 @@ Because each category has width 1 in a discrete scale, setting `width = .4` when
 
 ```{r}
 #| layout-ncol: 2
+#| fig-width: 4
 ggplot(mpg, aes(x = drv, y = hwy)) + geom_boxplot()
 ggplot(mpg, aes(x = drv, y = hwy)) + geom_boxplot(width = .4)
 ```
@@ -709,6 +743,7 @@ Accordingly, ggplot2 expects that the `limits` of a discrete scale should be a c
 
 ```{r}
 #| layout-ncol: 3
+#| fig-width: 3
 base <- ggplot(toy, aes(const, txt)) + 
   geom_label(aes(label = txt)) +
   scale_x_continuous(breaks = NULL) +
@@ -725,6 +760,7 @@ This allows you to change some labels and not others, without altering the order
 
 ```{r}
 #| layout-ncol: 2
+#| fig-width: 4
 base + scale_y_discrete(breaks = c("b", "c"))
 base + scale_y_discrete(labels = c(c = "carrot", b = "banana")) 
 ```
@@ -749,6 +785,7 @@ For example, we could tell ggplot2 to "dodge" the position of the labels by sett
 
 ```{r}
 #| layout-ncol: 2
+#| fig-width: 4
 base + guides(x = guide_axis(n.dodge = 3))
 base + guides(x = guide_axis(angle = 90))
 ```
@@ -759,6 +796,7 @@ So the code below achieves the same result:
 ```{r}
 #| fig.show: hide
 #| layout-ncol: 2
+#| fig-width: 4
 base + scale_x_discrete(guide = guide_axis(n.dodge = 3))
 base + scale_x_discrete(guide = guide_axis(angle = 90))
 ```
@@ -773,6 +811,7 @@ The example below shows how to approximate the behaviour of `geom_histogram()` u
 
 ```{r}
 #| layout-ncol: 2
+#| fig-width: 4
 ggplot(mpg, aes(hwy)) + geom_histogram(bins = 8)
 ggplot(mpg, aes(hwy)) + 
   geom_bar() +
