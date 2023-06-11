@@ -17,10 +17,10 @@ devtools::install_deps()
 
 ## Build the book
 
-In RStudio, press Cmd/Ctrl + Shift + B. Or run:
+In RStudio terminal, run:
 
-```R
-bookdown::render_book("index.Rmd")
+```
+quarto render
 ```
 
 
