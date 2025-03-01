@@ -19,7 +19,6 @@ gggtable <- function(data) {
   theme <- ggplot2:::plot_theme(plot) # ******
 
   geom_grobs <- Map(function(l, d) l$draw_geom(d, layout), plot$layers, data)
-  layout$setup_panel_guides(plot$guides, plot$layers, plot$mapping)
   plot_table <- layout$render(geom_grobs, data, theme, plot$labels)
 
   # Record the state after the panel layouts have done their job (I think!)
@@ -32,75 +31,8 @@ gggtable <- function(data) {
     position <- "manual"
   }
 
-  legend_box <- if (position != "none") {
-    ggplot2:::build_guides(plot$scales, plot$layers, plot$mapping, position, theme, plot$guides, plot$labels) # ******
-  } else {
-    zeroGrob()
-  }
-
-  if (ggplot2:::is.zero(legend_box)) { # ******
-    position <- "none"
-  } else {
-    # these are a bad hack, since it modifies the contents of viewpoint directly...
-    legend_width  <- gtable:::gtable_width(legend_box)  # ******
-    legend_height <- gtable:::gtable_height(legend_box) # ******
-
-    # Set the justification of the legend box
-    # First value is xjust, second value is yjust
-    just <- grid::valid.just(theme$legend.justification) # ******
-    xjust <- just[1]
-    yjust <- just[2]
-
-    if (position == "manual") {
-      xpos <- theme$legend.position[1]
-      ypos <- theme$legend.position[2]
-
-      # x and y are specified via theme$legend.position (i.e., coords)
-      legend_box <- grid::editGrob(legend_box,                                                         # ******
-                                   vp = grid::viewport(x = xpos, y = ypos, just = c(xjust, yjust),     # ******
-                                                       height = legend_height, width = legend_width))
-    } else {
-      # x and y are adjusted using justification of legend box (i.e., theme$legend.justification)
-      legend_box <- grid::editGrob(legend_box, # ******
-                                   vp = grid::viewport(x = xjust, y = yjust, just = c(xjust, yjust))) # ******
-      legend_box <- gtable:::gtable_add_rows(legend_box, unit(yjust, 'null'))        # ******
-      legend_box <- gtable:::gtable_add_rows(legend_box, unit(1 - yjust, 'null'), 0) # ******
-      legend_box <- gtable:::gtable_add_cols(legend_box, unit(xjust, 'null'), 0)     # ******
-      legend_box <- gtable:::gtable_add_cols(legend_box, unit(1 - xjust, 'null'))    # ******
-    }
-  }
-
-  panel_dim <-  find_panel(plot_table)
-  # for align-to-device, use this:
-  # panel_dim <-  summarise(plot_table$layout, t = min(t), r = max(r), b = max(b), l = min(l))
-
-  theme$legend.box.spacing <- theme$legend.box.spacing %||% unit(0.2, 'cm')
-  if (position == "left") {
-    plot_table <- gtable::gtable_add_cols(plot_table, theme$legend.box.spacing, pos = 0) # ******
-    plot_table <- gtable::gtable_add_cols(plot_table, legend_width, pos = 0) # ******
-    plot_table <- gtable::gtable_add_grob(plot_table, legend_box, clip = "off", # ******
-                                          t = panel_dim$t, b = panel_dim$b, l = 1, r = 1, name = "guide-box")
-  } else if (position == "right") {
-    plot_table <- gtable::gtable_add_cols(plot_table, theme$legend.box.spacing, pos = -1) # ******
-    plot_table <- gtable::gtable_add_cols(plot_table, legend_width, pos = -1) # ******
-    plot_table <- gtable::gtable_add_grob(plot_table, legend_box, clip = "off", # ******
-                                          t = panel_dim$t, b = panel_dim$b, l = -1, r = -1, name = "guide-box")
-  } else if (position == "bottom") {
-    plot_table <- gtable::gtable_add_rows(plot_table, theme$legend.box.spacing, pos = -1) # ******
-    plot_table <- gtable::gtable_add_rows(plot_table, legend_height, pos = -1) # ******
-    plot_table <- gtable::gtable_add_grob(plot_table, legend_box, clip = "off", # ******
-                                          t = -1, b = -1, l = panel_dim$l, r = panel_dim$r, name = "guide-box")
-  } else if (position == "top") {
-    plot_table <- gtable::gtable_add_rows(plot_table, theme$legend.box.spacing, pos = 0) # ******
-    plot_table <- gtable::gtable_add_rows(plot_table, legend_height, pos = 0) # ******
-    plot_table <- gtable::gtable_add_grob(plot_table, legend_box, clip = "off", # ******
-                                          t = 1, b = 1, l = panel_dim$l, r = panel_dim$r, name = "guide-box")
-  } else if (position == "manual") {
-    # should guide box expand whole region or region without margin?
-    plot_table <- gtable::gtable_add_grob(plot_table, legend_box, # ******
-                                          t = panel_dim$t, b = panel_dim$b, l = panel_dim$l, r = panel_dim$r,
-                                          clip = "off", name = "guide-box")
-  }
+  legend_box <- plot$guides$assemble(theme)
+  plot_table <- ggplot2:::table_add_legends(plot_table, legend_box, theme)
 
   # Record the state of the gtable after the legends have been added
   all_states$legend <- plot_table  # ******
