@@ -50,7 +50,7 @@ ggbuild <- function(plot) {
 
 
   # Transform all scales
-  data <- lapply(data, ggplot2:::scales_transform_df, scales = scales) # ******
+  data <- lapply(data, scales$transform_df) # ******
 
   # Record the layer data after scale transformation applied
   all_steps$transformed <- data # ******
@@ -74,7 +74,7 @@ ggbuild <- function(plot) {
   all_steps$poststat <- data # ******
 
   # Make sure missing (but required) aesthetics are added
-  ggplot2:::scales_add_missing(plot, c("x", "y"), plot$plot_env) # ******
+  scales$add_missing(c("x", "y"), plot$plot_env) # ******
 
   # Reparameterise geoms from (e.g.) y and width to ymin and ymax
   data <- by_layer(function(l, d) l$compute_geom_1(d))
@@ -96,8 +96,8 @@ ggbuild <- function(plot) {
   # Train and map non-position scales
   npscales <- scales$non_position_scales()
   if (npscales$n() > 0) {
-    lapply(data, ggplot2:::scales_train_df, scales = npscales) # ******
-    data <- lapply(data, ggplot2:::scales_map_df, scales = npscales) # ******
+    lapply(data, npscales$train_df) # ******
+    data <- lapply(data, npscales$map_df) # ******
   }
 
   # Fill in defaults etc.
