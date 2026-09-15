@@ -72,7 +72,7 @@ For instance, when you write this
 ```{r}
 #| label: default-scales
 #| fig.show: hide
-ggplot(mpg, aes(displ, hwy)) + 
+ggplot(mpg, aes(displ, hwy)) +
   geom_point(aes(colour = class))
 ```
 
@@ -80,10 +80,10 @@ ggplot2 adds a default scale for each aesthetic used in the plot:
 
 ```{r}
 #| fig.show: hide
-ggplot(mpg, aes(displ, hwy)) + 
+ggplot(mpg, aes(displ, hwy)) +
   geom_point(aes(colour = class)) +
-  scale_x_continuous() + 
-  scale_y_continuous() + 
+  scale_x_continuous() +
+  scale_y_continuous() +
   scale_colour_discrete()
 ```
 
@@ -94,8 +94,8 @@ But if you want to override the defaults, you'll need to add the scale yourself,
 
 ```{r}
 #| fig.show: hide
-ggplot(mpg, aes(displ, hwy)) + 
-  geom_point(aes(colour = class)) + 
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(colour = class)) +
   scale_x_continuous(name = "A really awesome x axis label") +
   scale_y_continuous(name = "An amazingly great y axis label")
 ```
@@ -111,13 +111,13 @@ This means that the following two specifications are equivalent: \indexc{+}
 #| fig.show: hide
 #| layout-ncol: 2
 #| fig-width: 4
-ggplot(mpg, aes(displ, hwy)) + 
-  geom_point() + 
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point() +
   scale_x_continuous(name = "Label 1") +
   scale_x_continuous(name = "Label 2")
 
-ggplot(mpg, aes(displ, hwy)) + 
-  geom_point() + 
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point() +
   scale_x_continuous(name = "Label 2")
 ```
 
@@ -129,9 +129,9 @@ If you want to make more radical changes you will override the default scales wi
 
 ```{r}
 #| fig.show: hide
-ggplot(mpg, aes(displ, hwy)) + 
+ggplot(mpg, aes(displ, hwy)) +
   geom_point(aes(colour = class)) +
-  scale_x_sqrt() + 
+  scale_x_sqrt() +
   scale_colour_brewer()
 ```
 
@@ -148,7 +148,7 @@ You've probably already figured out the scheme, but to be concrete, it's made up
 
 The naming structure is often helpful, but can sometimes be ambiguous.
 For example, it is immediately clear that `scale_x_*()` functions apply to the x aesthetic, but it takes a little more thought to recognise that they also govern the behaviour of other aesthetics that describe a horizontal position (e.g., the `xmin`, `xmax`, and `xend` aesthetics).
-Similarly, while the name `scale_colour_continuous()` clearly refers to the colour scale associated with a continuous variables, it is less obvious that `scale_colour_distiller()` is simply a different method for creating colour scales for continuous variables.
+Similarly, while the name `scale_colour_continuous()` clearly refers to the colour scale associated with a continuous variable, it is less obvious that `scale_colour_distiller()` is simply a different method for creating colour scales for continuous variables.
 
 ### Fundamental scale types
 
@@ -236,7 +236,7 @@ An example using a fill scale is shown below:
 #| fig-width: 3
 #| fig-height: 4
 df <- data.frame(x = 1:6, y = 8:13)
-base <- ggplot(df, aes(x, y)) + 
+base <- ggplot(df, aes(x, y)) +
   geom_col(aes(fill = x)) +                    # bar chart
   geom_vline(xintercept = 3.5, colour = "red") # for visual clarity only
 
@@ -246,13 +246,13 @@ base + scale_fill_gradient(limits = c(1, 3), oob = scales::squish)
 ```
 
 On the left the default fill colours are shown, ranging from dark blue to light blue.
-In the middle panel the scale limits for the fill aesthetic are reduced so that the values for the three rightmost bars are replace with `NA` and are mapped to a grey shade.
+In the middle panel the scale limits for the fill aesthetic are reduced so that the values for the three rightmost bars are replaced with `NA` and are mapped to a grey shade.
 In some cases, this is desired behaviour but often it is not: the right panel addresses this by modifying the `oob` function appropriately.
 
 ## Scale guides {#sec-scale-guide}
 
-Scale guides are more complex than scale names: where the `name` argument (and `labs()` ) takes text as input, the `guide` argument (and `guides()`) require a guide object created by a **guide function** such as `guide_colourbar()` and `guide_legend()`.
-These arguments to these functions offer additional fine control over the guide.
+Scale guides are more complex than scale names: where the `name` argument (and `labs()`) takes text as input, the `guide` argument (and `guides()`) require a guide object created by a **guide function** such as `guide_colourbar()` and `guide_legend()`.
+The arguments to these functions offer additional fine control over the guide.
 
 The table below summarises the default guide functions associated with different scale types:
 
@@ -280,7 +280,7 @@ New stuff: show examples where something other than the default guide is used...
 ## Scale transformation {#sec-scale-transformation-extras}
 
 The most common use for scale transformations is to adjust a continuous position scale, as discussed in @sec-scale-transformation.
-However, they can sometimes be helpful to when applied to other aesthetics.
+However, they can sometimes be helpful when applied to other aesthetics.
 Often this is purely a matter of visual emphasis.
 An example of this for the Old Faithful density plot is shown below.
 The linearly mapped scale on the left makes it easy to see the peaks of the distribution, whereas the transformed representation on the right makes it easier to see the regions of non-negligible density around those peaks: \index{Transformation!scales}
@@ -289,8 +289,8 @@ The linearly mapped scale on the left makes it easy to see the peaks of the dist
 #| layout-ncol: 2
 #| fig-width: 4
 #| fig-height: 4
-base <- ggplot(faithfuld, aes(waiting, eruptions)) + 
-  geom_raster(aes(fill = density)) + 
+base <- ggplot(faithfuld, aes(waiting, eruptions)) +
+  geom_raster(aes(fill = density)) +
   scale_x_continuous(NULL, NULL, expand = c(0, 0)) +
   scale_y_continuous(NULL, NULL, expand = c(0, 0))
   
@@ -322,8 +322,8 @@ In the plot on the right, the size scale is reversed, and `z` is more naturally 
 ```{r}
 base <- ggplot(mpg, aes(hwy)) + geom_bar()
 
-p1 <- base + scale_x_binned(breaks = seq(-50,50,10), limits = c(-50, 50))
-p2 <- base + scale_x_binned(breaks = seq(-50,50,10), limits = c(-50, 50), trans = "reverse")
+p1 <- base + scale_x_binned(breaks = seq(-50, 50, 10), limits = c(-50, 50))
+p2 <- base + scale_x_binned(breaks = seq(-50, 50, 10), limits = c(-50, 50), trans = "reverse")
 ```
 
 Binned scales can be transformed, much like continuous scales, but some care is required because the bins are constructed in the transformed space. In some cases this can produce undesirable outcomes. In the code below, we take a uniformly distributed variable and use `scale_x_binned()` and `geom_bar()` to construct a histogram of the logarithmically transformed data. 
@@ -336,14 +336,14 @@ ggplot(df, aes(log10(val))) + geom_bar() + scale_x_binned()
 In this example the transformation takes place in the data: the x aesthetic is mapped to the value of `log10(val)`, and no scale transformation is applied. The bins are evenly spaced on this logarithmic scale. Alternatively, you can specify the transformation by setting `trans = "log10"` in the scale function:
 
 ```{r}
-ggplot(df, aes(val)) + geom_bar() + scale_x_binned(trans="log10") 
+ggplot(df, aes(val)) + geom_bar() + scale_x_binned(trans = "log10") 
 ```
 
 The unevenly spaced bins occur due to an interaction of two things: (1) binned scales use breaks to construct the bins, and (2) the default breaks for a transformed scale are specified by the transformation and are designed to look nice, but may not be good for binning data. The solution to this is to override the default breaks: 
 
 ```{r}
-ggplot(df, aes(val)) + geom_bar() + 
-  scale_x_binned(trans="log10", breaks = 3^(0:9))  
+ggplot(df, aes(val)) + geom_bar() +
+  scale_x_binned(trans = "log10", breaks = 3^(0:9))  
 ```
 
 -->
@@ -383,11 +383,11 @@ Using `TRUE` can be useful in conjunction with the following trick to make point
 #| layout-ncol: 2
 #| fig-width: 4
 #| fig-height: 4
-ggplot(toy, aes(up, up)) + 
+ggplot(toy, aes(up, up)) +
   geom_point(size = 4, colour = "grey20") +
   geom_point(aes(colour = txt), size = 2) 
 
-ggplot(toy, aes(up, up)) + 
+ggplot(toy, aes(up, up)) +
   geom_point(size = 4, colour = "grey20", show.legend = TRUE) +
   geom_point(aes(colour = txt), size = 2) 
 ```
@@ -417,8 +417,8 @@ One way to do this is by using `labs()` helper function:
 #| layout-ncol: 3
 #| fig-width: 3
 #| fig-height: 4
-base <- ggplot(toy, aes(const, up)) + 
-  geom_point(aes(shape = txt, colour = txt)) + 
+base <- ggplot(toy, aes(const, up)) +
+  geom_point(aes(shape = txt, colour = txt)) +
   scale_x_continuous(NULL, breaks = NULL)
 
 base
@@ -439,14 +439,14 @@ On the right, a second `geom_point()` layer is overlaid on the plot using small 
 ```{r}
 #| layout-ncol: 2
 #| fig-width: 4
-base <- ggplot(mpg, aes(displ, hwy)) + 
-  geom_point(aes(colour = factor(year)), size = 5) + 
+base <- ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(colour = factor(year)), size = 5) +
   scale_colour_brewer("year", type = "qual", palette = 5) 
 
 base
 base + 
-  ggnewscale::new_scale_colour() + 
-  geom_point(aes(colour = cyl == 4), size = 1, fill = NA) + 
+  ggnewscale::new_scale_colour() +
+  geom_point(aes(colour = cyl == 4), size = 1, fill = NA) +
   scale_colour_manual("4 cylinder", values = c("grey60", "black"))
 ```
 
