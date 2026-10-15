@@ -15,7 +15,7 @@ source("internals_gggtable.R")
 ```
 
 Throughout this book we have described ggplot2 from the perspective of a user rather than a developer.
-From the user point of view, the important thing is to understand how the interface to ggplot2 works.
+From the user's point of view, the important thing is to understand how the interface to ggplot2 works.
 To make a data visualisation the user needs to know how functions like `ggplot()` and `geom_point()` can be used to *specify* a plot, but very few users need to understand how ggplot2 translates this plot specification into an image.
 For a ggplot2 developer who hopes to design extensions, however, this understanding is paramount.
 
@@ -90,7 +90,7 @@ The next two sections follow the data down the rendering rabbit hole through the
 ### Data preparation
 
 The first part of the processing is to get the data associated with each layer and get it into a predictable format.
-A layer can either provide data in one of three ways: it can supply its own (e.g., if the `data` argument to a geom is a data frame), it can inherit the global data supplied to `ggplot()`, or else it might provide a function that returns a data frame when applied to the global data.
+A layer can provide data in one of three ways: it can supply its own (e.g., if the `data` argument to a geom is a data frame), it can inherit the global data supplied to `ggplot()`, or else it might provide a function that returns a data frame when applied to the global data.
 In all three cases the result is a data frame that is passed to the plot layout, which orchestrates coordinate systems and facets.
 When this happens the data is first passed to the plot coordinate system which may change it (but usually doesn't), and then to the facet which inspects the data to figure out how many panels the plot should have and how they should be organised.
 During this process the data associated with each layer will be augmented with a `PANEL` column.
@@ -99,7 +99,7 @@ This column will (must) be kept throughout the rendering process and is used to 
 The last part of the data preparation is to convert the layer data into calculated aesthetic values.
 This involves evaluating all aesthetic expressions from `aes()` on the layer data.
 Further, if not given explicitly, the `group` aesthetic is calculated from the interaction of all non-continuous aesthetics.
-The `group` aesthetic is, like `PANEL` a special column that must be kept throughout the processing.
+The `group` aesthetic is, like `PANEL`, a special column that must be kept throughout the processing.
 As an example, the plot `p` created earlier contains only the one layer specified by `geom_point()` and at the end of the data preparation process the first 10 rows of the data associated with this layer look like this:
 
 ```{r}
@@ -174,7 +174,7 @@ bb$poststat[[2]] %>% head(n = 3)
 
 At this point the geom takes over from the stat (almost).
 The first action it takes is to inspect the data, update its parameters and possibly make a first pass modification of the data (same setup as for stat).
-This is possibly where some of the columns gets reparameterised e.g. `x`+`width` gets changed to `xmin`+`xmax`.
+This is possibly where some of the columns get reparameterised e.g. `x`+`width` gets changed to `xmin`+`xmax`.
 After this the position adjustment gets applied, so that e.g. overlapping bars are stacked, etc.
 For our example plot `p`, it is at this step that the jittering is applied in the first layer of the plot and the `x` and `y` coordinates are perturbed:
 
@@ -189,7 +189,7 @@ In some cases (e.g., in the histogram example above) one of the position aesthet
 
 The last part of the data transformation is to train and map all non-positional aesthetics, i.e. convert whatever discrete or continuous input that is mapped to graphical parameters such as colours, linetypes, sizes etc.
 Further, any default aesthetics from the geom are added so that the data is now in a predictable state for the geom.
-At the very last step, both the stat and the facet gets a last chance to modify the data in its final mapped form with their `finish_data()` methods before the build step is done.
+At the very last step, both the stat and the facet get a last chance to modify the data in its final mapped form with their `finish_data()` methods before the build step is done.
 For the plot object `p`, the first few rows from final state of the layer data look like this:
 
 ```{r}
@@ -201,7 +201,7 @@ ggbuild(p)$built$data[[1]] %>% head(n = 3)
 
 The return value of `ggplot_build()` is a list structure with the `ggplot_built` class.
 It contains the computed data, as well as a `Layout` object holding information about the trained coordinate system and faceting.
-Further it holds a copy of the original plot object, but now with trained scales.
+Further, it holds a copy of the original plot object, but now with trained scales.
 
 ## The gtable step {#sec-ggplotgtable}
 
@@ -289,7 +289,7 @@ grid::grid.draw(p_gtable)
 
 @sec-plot-method to @sec-ggplotgtable focus on the sequence of events involved in building a ggplot, but are intentionally vague as to what kind of programming objects perform this work.
 
-All ggplot2 objects are built using the **ggproto** system for object-oriented programming, and is unusual in that it is used only by ggplot2.
+All ggplot2 objects are built using the **ggproto** system for object-oriented programming, a system that is unusual in that it is used only by ggplot2.
 This is something of a historical accident: ggplot2 originally used proto [@proto] for object-oriented programming, which became a problem once the need for an official extension mechanism arose due to the limitations of the proto system.
 Attempts to switch ggplot2 to other systems such as R6 [@R6] proved difficult, and creating an object-oriented system specific to the needs of ggplot2 turned out to be the least bad solution.
 
@@ -382,7 +382,7 @@ Printing the object shows the fields and methods with which it is associated:
 Person
 ```
 
-The `Person` ggproto object is essentially a template for the class, and we can use to create specific records of individual people (discussed in @sec-ggproto-instances).
+The `Person` ggproto object is essentially a template for the class, and we can use it to create specific records of individual people (discussed in @sec-ggproto-instances).
 If you are familiar with other object-oriented programming systems you might have been expecting something a little different: often new classes are defined with a dedicated constructor function.
 One quirk of ggproto is that `ggproto()` doesn't do this: rather, the class constructor is itself an object.
 
@@ -525,8 +525,8 @@ For reasons that we'll discuss below, the use of `ggproto_parent()` is not that 
 
 ### Style guide for ggproto {#sec-ggproto-style}
 
-Because ggproto is a minimal class system designed to accommodate ggplot2 and nothing else, it important to recognise that ggproto is used in ggplot2 in a very specific way.
-It exists to support the ggplot2 extension system, and you are unlikely to encounter ggproto in any context other than writing ggplot2 extension.
+Because ggproto is a minimal class system designed to accommodate ggplot2 and nothing else, it is important to recognise that ggproto is used in ggplot2 in a very specific way.
+It exists to support the ggplot2 extension system, and you are unlikely to encounter ggproto in any context other than writing ggplot2 extensions.
 With that in mind it is useful to understand how ggplot2 uses ggproto:
 
 -   **ggproto classes are used selectively**.
