@@ -308,7 +308,7 @@ ggplot(mpg, aes(displ, hwy, colour = drv)) +
 When creating new stats it is usually a good idea to provide an accompanying `geom_*()` constructor as well as the `stat_*()` constructor, because most users are accustomed to adding plot layers with geoms rather than stats.
 We'll show what a `geom_chull()` function might look like in @sec-new-geoms.
 
-Note that it is not always possible to define `geom_*()` constructor in a sensible way.
+Note that it is not always possible to define a `geom_*()` constructor in a sensible way.
 This can happen when there is no obvious default geom for the new stat, or if the stat is intended to offer a slight modification to an existing geom/stat pair.
 In such cases it may be wise to provide only a `stat_*()` function.
 
@@ -335,7 +335,7 @@ common_bandwidth <- function(data) {
 }
 ```
 
-What we want from `StatDensityCommon` is to use the `common_bandwith()` function to set a common bandwidth before the data are separated by group and passed to the `compute_group()` function.
+What we want from `StatDensityCommon` is to use the `common_bandwidth()` function to set a common bandwidth before the data are separated by group and passed to the `compute_group()` function.
 This is where the `setup_params()` method is useful:
 
 ```{r}
@@ -344,7 +344,7 @@ StatDensityCommon <- ggproto("StatDensityCommon", Stat,
   required_aes = "x",
   
   setup_params = function(data, params) {
-    if(is.null(params$bandwith)) {
+    if(is.null(params$bandwidth)) {
       params$bandwidth <- common_bandwidth(data)
       message("Picking bandwidth of ", signif(params$bandwidth, 3))
     }
@@ -406,7 +406,7 @@ Still, apart from the last point above, it is possible to get by without having 
 
 In many situations your new geom may simply be an existing geom that expects slightly different input or has different default parameter values.
 The `stat_chull()` example from the previous section is a good example of this.
-Notice that in when creating plots using `stat_chull()` we had to manually specify the `fill` and `colour` parameters if those were not mapped to aesthetics.
+Notice that when creating plots using `stat_chull()` we had to manually specify the `fill` and `colour` parameters if those were not mapped to aesthetics.
 The reason for this is that `GeomPolygon` creates a borderless filled polygon by default, and this is not well suited to the needs of our convex hull geom.
 To make our lives a little easier then, we can create a subclass of `GeomPolygon` that modifies the defaults so that it produces a hollow polygon by default.
 We can do this in a straightforward way by overriding the `default_aes` value:
@@ -645,7 +645,7 @@ A last possibility worth mentioning, but outside the scope of this book, is the 
 Historically, ggplot2 has had two primary scale types, continuous and discrete.
 Recently the binned scale type joined which allows for binning of continuous data into discrete bins.
 It is possible to develop further primary scales, by following the example of `ScaleBinned`.
-It requires subclassing `Scale` or one of the provided primary scales, and create new `train()` and `map()` methods, among others.
+It requires subclassing `Scale` or one of the provided primary scales, and creating new `train()` and `map()` methods, among others.
 
 ## New positions
 
@@ -653,7 +653,7 @@ The `Position` ggproto class is somewhat simpler than other ggproto classes, ref
 The role of the position is to receive and modify the data immediately before it is passed to any drawing functions.
 Strictly speaking, the position is able to modify the data in any fashion, but there is an implicit expectation that it modifies position aesthetics only.
 A position possesses `compute_layer()` and `compute_panel()` methods that behave analogously to the equivalent methods for a stat, but it does not possess a `compute_group()` method.
-It also contains `setup_params()` and `setup_data()` methods that are similar to the `setup_*()` methods for other ggproto classes, with one notable exception: the `setup_params()` method only receives the data as input, and not a list of parameter.
+It also contains `setup_params()` and `setup_data()` methods that are similar to the `setup_*()` methods for other ggproto classes, with one notable exception: the `setup_params()` method only receives the data as input, and not a list of parameters.
 The reason for this is that `position_*()` functions are never used on their own in ggplot2: rather, they are always called within the main `geom_*()` or `stat_*()` command that specifies the layer, and the parameters from the main command are not passed to the `position_*()` function call.
 
 To give a simple example, we'll implement a slightly simplified version of the `position_jitternormal()` function from the ggforce package, which behaves in the same way as `position_jitter()` except that the perturbations are sampled from a normal distribution rather than a uniform distribution.
@@ -743,7 +743,7 @@ This power comes at a cost: facets are responsible for receiving all the panels,
 To create an entirely new faceting system requires an in-depth understanding of grid and gtable, and can be a daunting challenge.
 Fortunately, you don't always need to create the facet from scratch.
 For example, if your new facet will produce panels that lie on a grid, you can often subclass `FacetWrap` or `FacetGrid` and modify one or two methods.
-In particular, you may wish to define new `compute_layout()` and/OR `map_data()` methods:
+In particular, you may wish to define new `compute_layout()` and/or `map_data()` methods:
 
 -   The `compute_layout()` method receives the original data set and creates a layout specification, a data frame with one row per panel that indicates where each panel falls on the grid, along with information about which axis limits should be free and which should be fixed.
 
@@ -839,7 +839,7 @@ For facets this is as simple as creating a new instance of the relevant ggproto 
 #| ref.label: facet-scatter
 ```
 
-There a couple of things to note about this constructor function.
+There are a couple of things to note about this constructor function.
 First, to keep the example simple, `facet_scatter()` contains fewer arguments than `facet_wrap()`, and we've made `nrow` and `ncol` required arguments: the user needs to specify the size of the grid over which the panels should be scattered.
 Second, the `facet_scatter()` function requires you to specify the facets using `vars()`.
 It won't work if the user tries to supply a formula.
