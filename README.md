@@ -3,29 +3,25 @@
 
 [![Upstream build status](https://github.com/hadley/ggplot2-book/actions/workflows/bookdown.yaml/badge.svg?event=push)](https://github.com/hadley/ggplot2-book/actions)
 
-This repository is a personal fork of the source repository
-for **ggplot2: Elegant Graphics for Data Analysis**.
+This repository is a personal fork of the source repository for **ggplot2: Elegant Graphics for Data Analysis**.
 
-The book is maintained by the original authors and the
-ggplot2 community. This fork is used for learning R,
-statistical graphics, exploring the book source, and
-preparing focused documentation contributions.
+The book is maintained by its original authors and the ggplot2 community. This fork is used for learning R, exploring statistical graphics, studying the book source, and preparing focused documentation contributions.
 
-## Official book
+## Official Book
 
-Read the book: https://ggplot2-book.org/
+- **Read the book:** https://ggplot2-book.org/
+- **Original repository:** https://github.com/hadley/ggplot2-book
 
-Original repository:
-https://github.com/hadley/ggplot2-book
+## Installing Dependencies
 
-## Installing dependencies
+Install the required R packages:
 
 ```r
 install.packages("devtools")
 devtools::install_deps()
 ```
 
-## Building the book
+## Building the Book
 
 In RStudio, press `Ctrl + Shift + B`, or run:
 
@@ -39,7 +35,7 @@ Please follow the original project's contribution guidelines:
 
 https://github.com/hadley/ggplot2-book/blob/main/contributing.md
 
-## Purpose of this fork
+## Purpose of This Fork
 
 - Learn advanced R visualisation.
 - Practise the Grammar of Graphics.
@@ -49,7 +45,6 @@ https://github.com/hadley/ggplot2-book/blob/main/contributing.md
 
 ## Attribution
 
-Original work: Hadley Wickham and the ggplot2
-book contributors.
+Original work: Hadley Wickham and the ggplot2 book contributors.
 
-This fork is not the official ggplot2 book repository.
+This repository is a personal fork and is not the official ggplot2 book repository.
