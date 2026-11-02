@@ -1,26 +1,50 @@
-# ggplot2 book
 
-<!-- badges: start -->
-[![Build status](https://github.com/hadley/ggplot2-book/actions/workflows/bookdown.yaml/badge.svg?event=push)](https://github.com/hadley/ggplot2-book/actions)
-<!-- badges: end -->
+# ggplot2 Book — Learning and Open-Source Contributions
 
-This is code and text behind the [ggplot2: elegant graphics for data analysis](http://ggplot2-book.org/) book. Please help us make it better by [contributing](contributing.md)!
+[![Upstream build status](https://github.com/hadley/ggplot2-book/actions/workflows/bookdown.yaml/badge.svg?event=push)](https://github.com/hadley/ggplot2-book/actions)
 
-## Installing dependencies
+This repository is a personal fork of the source repository for **ggplot2: Elegant Graphics for Data Analysis**.
 
-Install the R packages used by the book with:
+The book is maintained by its original authors and the ggplot2 community. This fork is used for learning R, exploring statistical graphics, studying the book source, and preparing focused documentation contributions.
+
+## Official Book
+
+- **Read the book:** https://ggplot2-book.org/
+- **Original repository:** https://github.com/hadley/ggplot2-book
+
+## Installing Dependencies
+
+Install the required R packages:
 
 ```r
-# install.packages("devtools")
+install.packages("devtools")
 devtools::install_deps()
 ```
 
-## Build the book
+## Building the Book
 
-In RStudio, press Cmd/Ctrl + Shift + B. Or run:
+In RStudio, press `Ctrl + Shift + B`, or run:
 
-```R
+```r
 bookdown::render_book("index.Rmd")
 ```
 
+## Contributing
 
+Please follow the original project's contribution guidelines:
+
+https://github.com/hadley/ggplot2-book/blob/main/contributing.md
+
+## Purpose of This Fork
+
+- Learn advanced R visualisation.
+- Practise the Grammar of Graphics.
+- Study the ggplot2 source and bookdown workflow.
+- Prepare documentation improvements and bug fixes.
+- Contribute changes through pull requests.
+
+## Attribution
+
+Original work: Hadley Wickham and the ggplot2 book contributors.
+
+This repository is a personal fork and is not the official ggplot2 book repository.
